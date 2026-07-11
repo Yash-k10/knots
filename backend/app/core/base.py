@@ -1,0 +1,20 @@
+# Import Base and all models here so that Alembic can detect them.
+from app.core.database import Base # noqa
+from app.users.models.role import Role # noqa
+from app.users.models.user import User # noqa
+from app.profiles.models.profile import Profile # noqa
+from app.profiles.models.employment_history import EmploymentHistory # noqa
+from app.posts.models.post import Post # noqa
+from app.posts.models.comment import Comment # noqa
+from app.posts.models.like import Like # noqa
+from app.connections.models.connection import Connection # noqa
+from app.messaging.models.message import Message # noqa
+from app.jobs.models.company import Company # noqa
+from app.jobs.models.job import Job # noqa
+from app.jobs.models.referral import ReferralRequest # noqa
+from app.events.models.event import Event # noqa
+from app.clubs.models.club import Club # noqa
+from app.clubs.models.club_member import ClubMember # noqa
+from app.notifications.models.notification import Notification # noqa
+from app.admin.models.audit import AuditLog # noqa
+from app.ai.models.ai_log import AILog # noqa

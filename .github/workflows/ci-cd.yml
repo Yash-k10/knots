@@ -1,0 +1,65 @@
+name: KNOTS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest black
+
+      - name: Run Ruff Linter
+        run: |
+          cd backend
+          ruff check .
+
+      - name: Run Black Formatter Check
+        run: |
+          cd backend
+          black --check .
+
+      - name: Run Compilation / Import Check
+        run: |
+          cd backend
+          python -c "import app.main; print('Backend loaded successfully')"
+
+  frontend-lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run TypeScript Compiler Check
+        run: |
+          cd frontend
+          npm run build
