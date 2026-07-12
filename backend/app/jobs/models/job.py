@@ -18,4 +18,6 @@ class Job(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     company = relationship("Company", back_populates="jobs")
-    referrals = relationship("ReferralRequest", back_populates="job", cascade="all, delete-orphan")
+    referrals = relationship(
+        "ReferralRequest", back_populates="job", cascade="all, delete-orphan"
+    )

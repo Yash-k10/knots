@@ -14,8 +14,7 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 @router.get("", response_model=APIResponse[List[NotificationResponse]])
 async def read_notifications(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Retrieve notifications for the logged in user."""
     service = NotificationService(db)

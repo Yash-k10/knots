@@ -16,4 +16,6 @@ class ProfileService:
             data = profile_in.dict()
             data["user_id"] = user_id
             return await self.repository.create(data)
-        return await self.repository.update(profile, profile_in.dict(exclude_unset=True))
+        return await self.repository.update(
+            profile, profile_in.dict(exclude_unset=True)
+        )

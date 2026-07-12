@@ -15,7 +15,7 @@ router = APIRouter(prefix="/messages", tags=["Messaging"])
 async def send_message(
     payload: MessageCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Send a direct message to another user."""
     service = MessageService(db)

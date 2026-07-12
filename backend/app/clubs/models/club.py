@@ -13,4 +13,6 @@ class Club(Base):
     category = Column(String(50), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    members = relationship("ClubMember", back_populates="club", cascade="all, delete-orphan")
+    members = relationship(
+        "ClubMember", back_populates="club", cascade="all, delete-orphan"
+    )

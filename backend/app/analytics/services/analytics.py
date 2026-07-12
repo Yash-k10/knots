@@ -10,8 +10,5 @@ class AnalyticsService:
     async def get_system_stats(self) -> SystemStats:
         # Boilerplate counts
         return SystemStats(
-            total_users=120,
-            total_connections=450,
-            total_jobs=35,
-            total_posts=180
+            total_users=120, total_connections=450, total_jobs=35, total_posts=180
         )

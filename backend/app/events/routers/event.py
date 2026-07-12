@@ -16,7 +16,7 @@ router = APIRouter(prefix="/events", tags=["Events"])
 async def create_event(
     payload: EventCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Schedule a new college career or collaboration event."""
     service = EventService(db)
@@ -26,9 +26,7 @@ async def create_event(
 
 @router.get("", response_model=APIResponse[List[EventResponse]])
 async def read_events(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve scheduled events list with pagination."""
     service = EventService(db)

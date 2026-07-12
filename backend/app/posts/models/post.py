@@ -14,5 +14,7 @@ class Post(Base):
     image_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    comments = relationship(
+        "Comment", back_populates="post", cascade="all, delete-orphan"
+    )
     likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")

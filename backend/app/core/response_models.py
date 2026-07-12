@@ -8,6 +8,7 @@ class APIResponse(BaseModel, Generic[T]):
     """
     Standard envelope format for all successful API responses.
     """
+
     success: bool = True
     message: Optional[str] = None
     data: Optional[T] = None
@@ -24,6 +25,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     """
     Standard response format for paginated queries.
     """
+
     success: bool = True
     message: Optional[str] = None
     data: list[T]

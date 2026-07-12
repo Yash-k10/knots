@@ -7,12 +7,16 @@ class ConnectionService:
     def __init__(self, db: AsyncSession):
         self.repository = ConnectionRepository(db)
 
-    async def request_connection(self, requester_id: int, addressee_id: int) -> Connection:
-        return await self.repository.create({
-            "requester_id": requester_id,
-            "addressee_id": addressee_id,
-            "status": "PENDING"
-        })
+    async def request_connection(
+        self, requester_id: int, addressee_id: int
+    ) -> Connection:
+        return await self.repository.create(
+            {
+                "requester_id": requester_id,
+                "addressee_id": addressee_id,
+                "status": "PENDING",
+            }
+        )
 
     async def update_status(self, connection_id: int, status: str) -> Connection:
         conn = await self.repository.get(connection_id)

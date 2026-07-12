@@ -15,7 +15,7 @@ router = APIRouter(prefix="/profiles", tags=["Profiles"])
 async def update_profile(
     payload: ProfileUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update profile details for the currently logged in user."""
     service = ProfileService(db)

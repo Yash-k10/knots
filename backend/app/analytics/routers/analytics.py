@@ -10,9 +10,7 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
 @router.get("/stats", response_model=APIResponse[SystemStats])
-async def read_system_stats(
-    db: AsyncSession = Depends(get_db)
-):
+async def read_system_stats(db: AsyncSession = Depends(get_db)):
     """Retrieve system analytics metrics (user count, active jobs, etc.)."""
     service = AnalyticsService(db)
     stats = await service.get_system_stats()

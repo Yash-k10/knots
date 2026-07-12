@@ -14,6 +14,4 @@ class ClubMember(Base):
 
     club = relationship("Club", back_populates="members")
 
-    __table_args__ = (
-        UniqueConstraint("club_id", "user_id", name="uq_club_member"),
-    )
+    __table_args__ = (UniqueConstraint("club_id", "user_id", name="uq_club_member"),)

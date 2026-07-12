@@ -9,6 +9,8 @@ class Role(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False, index=True)
-    permissions = Column(JSON, nullable=True)  # List of string permissions e.g., ["read_posts", "create_job"]
+    permissions = Column(
+        JSON, nullable=True
+    )  # List of string permissions e.g., ["read_posts", "create_job"]
 
     users = relationship("User", back_populates="role")

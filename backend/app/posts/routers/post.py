@@ -16,7 +16,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 async def create_post(
     payload: PostCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a new post in the feeds section."""
     service = PostService(db)
@@ -26,9 +26,7 @@ async def create_post(
 
 @router.get("", response_model=APIResponse[List[PostResponse]])
 async def read_posts(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve posts with pagination."""
     service = PostService(db)

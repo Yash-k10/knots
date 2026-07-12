@@ -17,4 +17,6 @@ class Profile(Base):
     skills = Column(JSON, nullable=True)  # List of strings e.g. ["Python", "React"]
 
     user = relationship("User", back_populates="profile")
-    employment_history = relationship("EmploymentHistory", back_populates="profile", cascade="all, delete-orphan")
+    employment_history = relationship(
+        "EmploymentHistory", back_populates="profile", cascade="all, delete-orphan"
+    )

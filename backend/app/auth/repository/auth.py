@@ -13,6 +13,10 @@ class AuthRepository(BaseRepository[User]):
 
     async def get_by_email(self, email: str) -> Optional[User]:
         """Fetch user by email with role relationship loaded."""
-        stmt = select(self.model).filter(self.model.email == email).options(selectinload(self.model.role))
+        stmt = (
+            select(self.model)
+            .filter(self.model.email == email)
+            .options(selectinload(self.model.role))
+        )
         result = await self.db.execute(stmt)
         return result.scalars().first()

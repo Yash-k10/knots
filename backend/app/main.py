@@ -11,7 +11,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 # Register Custom Middlewares (CORS, Audit logs, Profiling)
@@ -30,5 +30,5 @@ async def root():
     return {
         "status": "healthy",
         "app": settings.PROJECT_NAME,
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
     }

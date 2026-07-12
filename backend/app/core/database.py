@@ -11,7 +11,7 @@ engine = create_async_engine(
     echo=True if settings.ENVIRONMENT == "development" else False,
     future=True,
     pool_size=20,
-    max_overflow=10
+    max_overflow=10,
 )
 
 # Create session factory
@@ -20,7 +20,7 @@ SessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autocommit=False,
-    autoflush=False
+    autoflush=False,
 )
 
 # Declarative base model

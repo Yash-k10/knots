@@ -1,5 +1,5 @@
 from typing import Any, Generic, List, Optional, Type, TypeVar
-from sqlalchemy import select, update, delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 ModelType = TypeVar("ModelType")
@@ -9,6 +9,7 @@ class BaseRepository(Generic[ModelType]):
     """
     Generic Base Repository pattern for database entities.
     """
+
     def __init__(self, model: Type[ModelType], db: AsyncSession):
         self.model = model
         self.db = db

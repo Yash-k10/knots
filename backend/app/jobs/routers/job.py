@@ -16,7 +16,7 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 async def create_job(
     payload: JobCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Post a new job or internship opportunity."""
     service = JobService(db)
@@ -26,9 +26,7 @@ async def create_job(
 
 @router.get("", response_model=APIResponse[List[JobResponse]])
 async def read_jobs(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve list of job opportunities with pagination."""
     service = JobService(db)

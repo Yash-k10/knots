@@ -12,10 +12,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.post("", response_model=APIResponse[UserResponse])
-async def create_user(
-    payload: UserCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user in the platform."""
     service = UserService(db)
     user = await service.create_user(payload)
@@ -23,8 +20,6 @@ async def create_user(
 
 
 @router.get("/me", response_model=APIResponse[UserResponse])
-async def read_user_me(
-    current_user: User = Depends(get_current_user)
-):
+async def read_user_me(current_user: User = Depends(get_current_user)):
     """Retrieve details of the currently authenticated user."""
     return APIResponse(data=current_user)

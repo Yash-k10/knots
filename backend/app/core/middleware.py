@@ -14,17 +14,18 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     Middleware that records endpoint execution time and logs
     all requests for audit and profiling.
     """
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Log request receipt
         logger.info(f"Started {request.method} {request.url.path}")
-        
+
         try:
             response = await call_next(request)
             process_time = time.time() - start_time
             response.headers["X-Process-Time"] = str(process_time)
-            
+
             logger.info(
                 f"Finished {request.method} {request.url.path} "
                 f"Status: {response.status_code} "
@@ -36,7 +37,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             logger.error(
                 f"Failed {request.method} {request.url.path} "
                 f"Duration: {process_time:.4f}s - Error: {str(e)}",
-                exc_info=True
+                exc_info=True,
             )
             raise
 
@@ -51,6 +52,6 @@ def register_middlewares(app: FastAPI):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Audit & Process time logging middleware
     app.add_middleware(RequestLoggingMiddleware)

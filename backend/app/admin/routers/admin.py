@@ -12,15 +12,13 @@ from app.core.response_models import APIResponse
 router = APIRouter(
     prefix="/admin",
     tags=["Admin Only"],
-    dependencies=[Depends(RoleRequired(["Admin"]))]
+    dependencies=[Depends(RoleRequired(["Admin"]))],
 )
 
 
 @router.get("/audit-logs", response_model=APIResponse[List[AuditLogResponse]])
 async def read_audit_logs(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve system audit logs for administrative audit tracking."""
     service = AdminService(db)

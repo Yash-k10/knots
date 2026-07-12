@@ -15,6 +15,4 @@ class Like(Base):
 
     post = relationship("Post", back_populates="likes")
 
-    __table_args__ = (
-        UniqueConstraint("post_id", "user_id", name="uq_post_user_like"),
-    )
+    __table_args__ = (UniqueConstraint("post_id", "user_id", name="uq_post_user_like"),)

@@ -16,7 +16,7 @@ router = APIRouter(prefix="/clubs", tags=["Clubs"])
 async def create_club(
     payload: ClubCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a new college club."""
     service = ClubService(db)
@@ -26,9 +26,7 @@ async def create_club(
 
 @router.get("", response_model=APIResponse[List[ClubResponse]])
 async def read_clubs(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
     """Retrieve college clubs list with pagination."""
     service = ClubService(db)
