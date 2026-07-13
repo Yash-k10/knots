@@ -21,7 +21,6 @@ async def get_current_user(
         raise AuthenticationError("Invalid token subject credentials")
 
     repo = AuthRepository(db)
-    user = await repo.get_by_email(email=None)  # Repo extends get which queries by ID
     user = await repo.get(int(user_id))
     if not user:
         raise AuthenticationError("User not found")

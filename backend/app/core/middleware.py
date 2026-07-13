@@ -1,4 +1,5 @@
 import time
+import uuid
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -9,6 +10,23 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware that assigns a unique Request ID (UUID4) to every incoming
+    request and attaches it as an ``X-Request-ID`` response header.
+    This enables distributed tracing and log correlation across services.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())
+        # Store on request state so other middleware / handlers can access it
+        request.state.request_id = request_id
+
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware that records endpoint execution time and logs
@@ -17,9 +35,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
+        request_id = getattr(request.state, "request_id", "N/A")
 
         # Log request receipt
-        logger.info(f"Started {request.method} {request.url.path}")
+        logger.info(
+            f"[{request_id}] Started {request.method} {request.url.path}"
+        )
 
         try:
             response = await call_next(request)
@@ -27,7 +48,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Process-Time"] = str(process_time)
 
             logger.info(
-                f"Finished {request.method} {request.url.path} "
+                f"[{request_id}] Finished {request.method} {request.url.path} "
                 f"Status: {response.status_code} "
                 f"Duration: {process_time:.4f}s"
             )
@@ -35,7 +56,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             process_time = time.time() - start_time
             logger.error(
-                f"Failed {request.method} {request.url.path} "
+                f"[{request_id}] Failed {request.method} {request.url.path} "
                 f"Duration: {process_time:.4f}s - Error: {str(e)}",
                 exc_info=True,
             )
@@ -43,7 +64,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 def register_middlewares(app: FastAPI):
-    """Register all middlewares on the FastAPI application."""
+    """Register all middlewares on the FastAPI application.
+
+    Middleware execution order is bottom-to-top (last added runs first),
+    so RequestIDMiddleware is added last to run first and assign the ID
+    before the logging middleware reads it.
+    """
     # CORS Middleware
     app.add_middleware(
         CORSMiddleware,
@@ -55,3 +81,7 @@ def register_middlewares(app: FastAPI):
 
     # Audit & Process time logging middleware
     app.add_middleware(RequestLoggingMiddleware)
+
+    # Request ID middleware (runs first due to LIFO ordering)
+    app.add_middleware(RequestIDMiddleware)
+

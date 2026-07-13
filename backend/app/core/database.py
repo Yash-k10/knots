@@ -29,6 +29,11 @@ Base = declarative_base()
 
 # Dependency to get db session
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Provide a transactional database session per-request.
+
+    The async context manager handles session lifecycle (open/close).
+    On success the transaction is committed; on any exception it is rolled back.
+    """
     async with SessionLocal() as session:
         try:
             yield session
@@ -36,5 +41,3 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()

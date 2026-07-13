@@ -55,6 +55,15 @@ class ValidationError(KNOTSException):
         super().__init__(message, "VALIDATION_ERROR", 422, details)
 
 
+class ConflictError(KNOTSException):
+    """Raised when an operation conflicts with existing data (e.g., duplicate email)."""
+
+    def __init__(
+        self, message: str = "Resource already exists", details: Optional[Any] = None
+    ):
+        super().__init__(message, "CONFLICT", 409, details)
+
+
 def register_exception_handlers(app: FastAPI):
     """
     Register all exception handlers for the FastAPI app.
