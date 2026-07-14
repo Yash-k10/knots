@@ -21,18 +21,14 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(select(self.model).filter(self.model.id == id))
         return result.scalars().first()
 
-    async def get_by_field(
-        self, field_name: str, value: Any
-    ) -> Optional[ModelType]:
+    async def get_by_field(self, field_name: str, value: Any) -> Optional[ModelType]:
         """Fetch a single record by any column name.
 
         Example: ``await repo.get_by_field("email", "user@example.com")``
         """
         column = getattr(self.model, field_name, None)
         if column is None:
-            raise ValueError(
-                f"Model {self.model.__name__} has no field '{field_name}'"
-            )
+            raise ValueError(f"Model {self.model.__name__} has no field '{field_name}'")
         result = await self.db.execute(select(self.model).filter(column == value))
         return result.scalars().first()
 
@@ -76,4 +72,3 @@ class BaseRepository(Generic[ModelType]):
         """Return the total number of records for this model."""
         result = await self.db.execute(select(func.count()).select_from(self.model))
         return result.scalar_one()
-

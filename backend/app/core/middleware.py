@@ -38,9 +38,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request_id = getattr(request.state, "request_id", "N/A")
 
         # Log request receipt
-        logger.info(
-            f"[{request_id}] Started {request.method} {request.url.path}"
-        )
+        logger.info(f"[{request_id}] Started {request.method} {request.url.path}")
 
         try:
             response = await call_next(request)
@@ -84,4 +82,3 @@ def register_middlewares(app: FastAPI):
 
     # Request ID middleware (runs first due to LIFO ordering)
     app.add_middleware(RequestIDMiddleware)
-
