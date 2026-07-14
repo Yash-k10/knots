@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from datetime import datetime
 
@@ -22,6 +22,15 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     role_id: int
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        if not v.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are allowed to register"
+            )
+        return v
 
 
 class UserRegisterResponse(BaseModel):
