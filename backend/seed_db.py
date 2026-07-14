@@ -2,6 +2,7 @@ import asyncio
 from sqlalchemy import select
 from app.core.database import SessionLocal
 from app.users.models.role import Role
+import app.core.base
 
 # Pre-defined roles and their permissions
 ROLES_DATA = {
