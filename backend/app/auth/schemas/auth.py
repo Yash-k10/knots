@@ -1,4 +1,6 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
+from datetime import datetime
 
 
 class UserLogin(BaseModel):
@@ -14,3 +16,26 @@ class TokenResponse(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
+
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    role_id: int
+
+
+class UserRegisterResponse(BaseModel):
+    id: int
+    email: EmailStr
+    role_id: Optional[int]
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RegistrationResponse(BaseModel):
+    user: UserRegisterResponse
+    verification_token: str
