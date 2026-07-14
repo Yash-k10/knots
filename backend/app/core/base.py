@@ -4,6 +4,7 @@ from app.users.models.role import Role  # noqa
 from app.users.models.user import User  # noqa
 from app.profiles.models.profile import Profile  # noqa
 from app.profiles.models.employment_history import EmploymentHistory  # noqa
+from app.profiles.models.education import Education  # noqa
 from app.posts.models.post import Post  # noqa
 from app.posts.models.comment import Comment  # noqa
 from app.posts.models.like import Like  # noqa

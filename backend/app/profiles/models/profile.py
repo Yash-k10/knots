@@ -15,8 +15,12 @@ class Profile(Base):
     graduation_year = Column(Integer, nullable=True)
     department = Column(String(100), nullable=True)
     skills = Column(JSON, nullable=True)  # List of strings e.g. ["Python", "React"]
+    profile_picture = Column(String(255), nullable=True)
 
     user = relationship("User", back_populates="profile")
     employment_history = relationship(
         "EmploymentHistory", back_populates="profile", cascade="all, delete-orphan"
+    )
+    education = relationship(
+        "Education", back_populates="profile", cascade="all, delete-orphan"
     )
