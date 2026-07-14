@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql+asyncpg://postgres:postgres_password@localhost:5432/knots"
     )
+    SYNC_DATABASE_URL: str = (
+        "postgresql://postgres:postgres_password@localhost:5432/knots"
+    )
 
     # Redis Settings
     REDIS_URL: str = "redis://localhost:6379/0"
