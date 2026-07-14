@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
 
 from app.core.database import Base
@@ -18,7 +18,9 @@ class Connection(Base):
     id = Column(Integer, primary_key=True, index=True)
     requester_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     addressee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    status = Column(SQLEnum(ConnectionStatus), default=ConnectionStatus.PENDING, nullable=False)
+    status = Column(
+        SQLEnum(ConnectionStatus), default=ConnectionStatus.PENDING, nullable=False
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
