@@ -56,6 +56,22 @@ def create_refresh_token(
     return encoded_jwt
 
 
+def create_verification_token(
+    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+) -> str:
+    """Create a long-lived verification token for email verification."""
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(hours=24)
+
+    to_encode = {"exp": expire, "sub": str(subject), "type": "verification"}
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
+    return encoded_jwt
+
+
 def decode_token(token: str, expected_type: str = "access") -> Dict[str, Any]:
     """
     Decode and validate a JWT.

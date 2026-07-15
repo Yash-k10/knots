@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
+from typing import Optional
+from datetime import datetime
 
 
 class UserLogin(BaseModel):
@@ -14,3 +16,35 @@ class TokenResponse(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
+
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    role_id: int
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        if not v.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are allowed to register"
+            )
+        return v
+
+
+class UserRegisterResponse(BaseModel):
+    id: int
+    email: EmailStr
+    role_id: Optional[int]
+    is_active: bool
+    is_verified: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RegistrationResponse(BaseModel):
+    user: UserRegisterResponse
+    verification_token: str
