@@ -1,8 +1,51 @@
+from typing import List
+from sqlalchemy import select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.repository import BaseRepository
-from app.connections.models.connection import Connection
+from app.connections.models.connection import Connection, ConnectionStatus
 
 
 class ConnectionRepository(BaseRepository[Connection]):
     def __init__(self, db: AsyncSession):
         super().__init__(Connection, db)
+
+    async def get_user_connections(self, user_id: int) -> List[Connection]:
+        stmt = select(self.model).where(
+            and_(
+                or_(
+                    self.model.requester_id == user_id,
+                    self.model.addressee_id == user_id,
+                ),
+                self.model.status == ConnectionStatus.ACCEPTED,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_pending_requests(self, user_id: int) -> List[Connection]:
+        stmt = select(self.model).where(
+            and_(
+                self.model.addressee_id == user_id,
+                self.model.status == ConnectionStatus.PENDING,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_connection_between_users(
+        self, user1_id: int, user2_id: int
+    ) -> Connection | None:
+        stmt = select(self.model).where(
+            or_(
+                and_(
+                    self.model.requester_id == user1_id,
+                    self.model.addressee_id == user2_id,
+                ),
+                and_(
+                    self.model.requester_id == user2_id,
+                    self.model.addressee_id == user1_id,
+                ),
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
