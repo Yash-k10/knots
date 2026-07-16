@@ -1,6 +1,7 @@
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.connections.repository.connection import ConnectionRepository
-from app.connections.models.connection import Connection
+from app.connections.models.connection import Connection, ConnectionStatus
 
 
 class ConnectionService:
@@ -10,16 +11,47 @@ class ConnectionService:
     async def request_connection(
         self, requester_id: int, addressee_id: int
     ) -> Connection:
+        if requester_id == addressee_id:
+            raise ValueError("Cannot connect with yourself")
+
+        existing = await self.repository.get_connection_between_users(
+            requester_id, addressee_id
+        )
+        if existing:
+            raise ValueError("Connection or request already exists")
+
         return await self.repository.create(
             {
                 "requester_id": requester_id,
                 "addressee_id": addressee_id,
-                "status": "PENDING",
+                "status": ConnectionStatus.PENDING,
             }
         )
 
-    async def update_status(self, connection_id: int, status: str) -> Connection:
+    async def accept_connection(self, connection_id: int, user_id: int) -> Connection:
         conn = await self.repository.get(connection_id)
-        if conn:
-            return await self.repository.update(conn, {"status": status})
-        return None
+        if not conn:
+            raise ValueError("Connection not found")
+        if conn.addressee_id != user_id:
+            raise ValueError("Not authorized to accept this connection")
+        if conn.status != ConnectionStatus.PENDING:
+            raise ValueError("Connection is not in a pending state")
+
+        return await self.repository.update(conn, {"status": ConnectionStatus.ACCEPTED})
+
+    async def reject_connection(self, connection_id: int, user_id: int) -> Connection:
+        conn = await self.repository.get(connection_id)
+        if not conn:
+            raise ValueError("Connection not found")
+        if conn.addressee_id != user_id:
+            raise ValueError("Not authorized to reject this connection")
+        if conn.status != ConnectionStatus.PENDING:
+            raise ValueError("Connection is not in a pending state")
+
+        return await self.repository.update(conn, {"status": ConnectionStatus.REJECTED})
+
+    async def list_my_connections(self, user_id: int) -> List[Connection]:
+        return await self.repository.get_user_connections(user_id)
+
+    async def list_my_pending_requests(self, user_id: int) -> List[Connection]:
+        return await self.repository.get_pending_requests(user_id)
