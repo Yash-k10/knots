@@ -13,5 +13,6 @@ class ClubMember(Base):
     role = Column(String(50), default="MEMBER")  # MEMBER, OFFICER, LEADER
 
     club = relationship("Club", back_populates="members")
+    user = relationship("User", foreign_keys=[user_id])
 
     __table_args__ = (UniqueConstraint("club_id", "user_id", name="uq_club_member"),)

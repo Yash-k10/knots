@@ -2,6 +2,7 @@ import asyncio
 from sqlalchemy import select
 from app.core.database import SessionLocal
 from app.users.models.role import Role
+from app.events.models.event_category import EventCategory
 import app.core.base  # noqa: F401
 
 # Pre-defined roles and their permissions
@@ -39,6 +40,19 @@ ROLES_DATA = {
     ],
 }
 
+# Pre-defined event categories
+CATEGORIES_DATA = {
+    "ACADEMIC": "Seminars, lectures, and academic discussions",
+    "CULTURAL": "Arts, music, drama, and cultural festivals",
+    "SPORTS": "Inter and intra-college sports matches and tournaments",
+    "TECHNICAL": "Hackathons, coding contests, and technical presentations",
+    "WORKSHOP": "Hands-on practical learning sessions and bootcamps",
+    "SEMINAR": "Informational presentations and research talks",
+    "SOCIAL": "Networking events, club gather-ups, and meetups",
+    "CAREER": "Job fairs, recruitment drives, and resume review sessions",
+    "OTHER": "Miscellaneous events",
+}
+
 
 async def seed_roles():
     print("Seeding database roles...")
@@ -58,8 +72,34 @@ async def seed_roles():
                 existing_role.permissions = permissions
 
         await db.commit()
-    print("Database seeding completed successfully.")
+    print("Database seeding roles completed.")
+
+
+async def seed_categories():
+    print("Seeding database event categories...")
+    async with SessionLocal() as db:
+        for name, desc in CATEGORIES_DATA.items():
+            stmt = select(EventCategory).filter(EventCategory.name == name)
+            result = await db.execute(stmt)
+            existing = result.scalars().first()
+
+            if not existing:
+                print(f"Creating category: {name}...")
+                new_cat = EventCategory(name=name, description=desc)
+                db.add(new_cat)
+            else:
+                print(f"Category {name} already exists. Updating description...")
+                existing.description = desc
+
+        await db.commit()
+    print("Database seeding categories completed.")
+
+
+async def main():
+    await seed_roles()
+    await seed_categories()
+    print("All database seeding tasks completed successfully.")
 
 
 if __name__ == "__main__":
-    asyncio.run(seed_roles())
+    asyncio.run(main())
