@@ -1,4 +1,6 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.middleware import register_middlewares
@@ -19,6 +21,10 @@ register_middlewares(app)
 
 # Register Exception Handlers (Standardizing all error responses)
 register_exception_handlers(app)
+
+# Mount static files directory to serve uploads (like profile pictures)
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Mount versioned API routes under /api/v1
 app.include_router(v1_router, prefix="/api/v1")
