@@ -12,6 +12,7 @@ from app.core.security import (
     verify_password,
     create_access_token,
     create_refresh_token,
+    create_verification_token,
     decode_token,
 )
 from app.core.repository import BaseRepository
@@ -33,6 +34,7 @@ __all__ = [
     "verify_password",
     "create_access_token",
     "create_refresh_token",
+    "create_verification_token",
     "decode_token",
     "BaseRepository",
     "APIResponse",
