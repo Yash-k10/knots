@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPlus, Check, X, Users, UserCheck } from 'lucide-react';
 import { apiRequest } from '../services/api';
 
