@@ -19,47 +19,71 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
   const [fieldOfStudy, setFieldOfStudy] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [gpa, setGpa] = useState('')
   const [description, setDescription] = useState('')
 
+  // Inline Form Validation Errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+
+  // Reset form to clear state
   const resetForm = () => {
     setInstitutionName('')
     setDegree('')
     setFieldOfStudy('')
     setStartDate('')
     setEndDate('')
+    setGpa('')
     setDescription('')
+    setFormErrors({})
     setIsAdding(false)
     setEditingId(null)
   }
 
   const startEdit = (edu: EducationResponse) => {
+    setFormErrors({})
     setEditingId(edu.id)
     setInstitutionName(edu.institution_name)
     setDegree(edu.degree)
     setFieldOfStudy(edu.field_of_study || '')
     setStartDate(edu.start_date)
     setEndDate(edu.end_date || '')
+    setGpa(edu.gpa !== null && edu.gpa !== undefined ? edu.gpa.toString() : '')
     setDescription(edu.description || '')
+  }
+
+  // Handle local validation
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+
+    if (!institutionName.trim()) {
+      errors.institutionName = 'Institution Name is required.'
+    }
+    if (!degree.trim()) {
+      errors.degree = 'Degree is required.'
+    }
+    if (!startDate) {
+      errors.startDate = 'Start Date is required.'
+    }
+
+    if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
+      errors.endDate = 'End Date cannot be earlier than Start Date.'
+    }
+
+    if (gpa.trim() !== '') {
+      const gpaVal = parseFloat(gpa)
+      if (isNaN(gpaVal) || gpaVal < 0 || gpaVal > 4.0) {
+        errors.gpa = 'GPA must be a valid number between 0.0 and 4.0.'
+      }
+    }
+
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validation
-    if (!institutionName.trim()) {
-      onError('Institution Name is required.')
-      return
-    }
-    if (!degree.trim()) {
-      onError('Degree is required.')
-      return
-    }
-    if (!startDate) {
-      onError('Start Date is required.')
-      return
-    }
-    if (endDate && new Date(endDate) < new Date(startDate)) {
-      onError('End Date cannot be earlier than Start Date.')
+    if (!validateForm()) {
       return
     }
 
@@ -69,6 +93,7 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
       field_of_study: fieldOfStudy.trim() || null,
       start_date: startDate,
       end_date: endDate || null,
+      gpa: gpa.trim() !== '' ? parseFloat(gpa) : null,
       description: description.trim() || null,
     }
 
@@ -81,7 +106,7 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
         // Create
         await profileService.addEducation(payload)
       }
-      
+
       // Fetch latest profile to update state
       const updatedProfile = await profileService.getOwnProfile()
       onUpdate(updatedProfile)
@@ -133,7 +158,7 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
 
       {/* Add / Edit Form */}
       {(isAdding || editingId !== null) && (
-        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-4">
+        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-4 animate-in fade-in duration-200">
           <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
             {editingId !== null ? 'Edit Education Entry' : 'Add New Education'}
           </h4>
@@ -151,7 +176,11 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
                 placeholder="e.g. Stanford University"
                 required
               />
+              {formErrors.institutionName && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.institutionName}</p>
+              )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Degree <span className="text-red-500">*</span>
@@ -164,7 +193,11 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
                 placeholder="e.g. Bachelor of Science"
                 required
               />
+              {formErrors.degree && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.degree}</p>
+              )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Field of Study
@@ -177,30 +210,52 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
                 placeholder="e.g. Computer Science"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Start Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  End Date (or Expected)
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
-                />
-              </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                GPA (Optional, Out of 4.0)
+              </label>
+              <input
+                type="text"
+                value={gpa}
+                onChange={(e) => setGpa(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                placeholder="e.g. 3.85"
+              />
+              {formErrors.gpa && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.gpa}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Start Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
+                required
+              />
+              {formErrors.startDate && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.startDate}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                End Date (or Expected)
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
+              />
+              {formErrors.endDate && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.endDate}</p>
+              )}
             </div>
           </div>
 
@@ -247,7 +302,7 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
             .map((edu) => (
               <div
                 key={edu.id}
-                className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition"
+                className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition animate-in fade-in duration-300"
               >
                 <div className="mt-1 bg-slate-900 border border-slate-800 p-2 rounded-lg text-indigo-400">
                   <GraduationCap className="h-5 w-5" />
@@ -264,7 +319,7 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
                       </p>
                     </div>
 
-                    {/* Action buttons (only show when not editing something else) */}
+                    {/* Action buttons */}
                     {!isAdding && editingId === null && (
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                         <button
@@ -285,11 +340,21 @@ export default function EducationSection({ profile, onUpdate, onError }: Educati
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{formatDate(edu.start_date)}</span>
-                    <span>–</span>
-                    <span>{edu.end_date ? formatDate(edu.end_date) : 'Present'}</span>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{formatDate(edu.start_date)}</span>
+                      <span>–</span>
+                      <span>{edu.end_date ? formatDate(edu.end_date) : 'Present'}</span>
+                    </div>
+                    {edu.gpa !== null && edu.gpa !== undefined && (
+                      <>
+                        <span className="text-slate-700">•</span>
+                        <span className="bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded border border-indigo-900/50">
+                          GPA: {edu.gpa.toFixed(2)} / 4.00
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {edu.description && (

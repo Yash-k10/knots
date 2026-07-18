@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Date, Float
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -14,6 +14,7 @@ class Education(Base):
     field_of_study = Column(String(100), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)  # Null if currently studying
+    gpa = Column(Float, nullable=True)  # GPA field
     description = Column(Text, nullable=True)
 
     profile = relationship("Profile", back_populates="education")

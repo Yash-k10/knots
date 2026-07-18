@@ -1,6 +1,6 @@
 from datetime import date
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Union
 
 
 # --- Education Schemas ---
@@ -10,6 +10,7 @@ class EducationBase(BaseModel):
     field_of_study: Optional[str] = None
     start_date: date
     end_date: Optional[date] = None
+    gpa: Optional[float] = None
     description: Optional[str] = None
 
 
@@ -23,6 +24,7 @@ class EducationUpdate(BaseModel):
     field_of_study: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+    gpa: Optional[float] = None
     description: Optional[str] = None
 
 
@@ -72,8 +74,10 @@ class ProfileBase(BaseModel):
     bio: Optional[str] = None
     graduation_year: Optional[int] = None
     department: Optional[str] = None
-    skills: Optional[List[str]] = None
+    skills: Optional[Union[List[str], Dict[str, List[str]]]] = None
     profile_picture: Optional[str] = None
+    certifications: Optional[List[Dict[str, Any]]] = None
+    projects: Optional[List[Dict[str, Any]]] = None
 
 
 class ProfileUpdate(ProfileBase):

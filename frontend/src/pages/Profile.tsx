@@ -5,6 +5,8 @@ import ProfileHeader from '../components/profile/ProfileHeader'
 import SkillsSection from '../components/profile/SkillsSection'
 import EducationSection from '../components/profile/EducationSection'
 import ExperienceSection from '../components/profile/ExperienceSection'
+import CertificationsSection from '../components/profile/CertificationsSection'
+import ProjectsSection from '../components/profile/ProjectsSection'
 
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
@@ -67,8 +69,10 @@ export default function Profile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 h-48" />
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 h-48" />
           </div>
           <div className="lg:col-span-2 space-y-6">
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 h-64" />
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 h-64" />
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 h-64" />
           </div>
@@ -140,16 +144,21 @@ export default function Profile() {
 
       {/* Main Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Side: Skills */}
+        {/* Left Side: Skills & Certifications */}
         <div className="lg:col-span-1 space-y-6">
           <SkillsSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
           />
+          <CertificationsSection
+            profile={profile}
+            onUpdate={handleUpdate}
+            onError={handleError}
+          />
         </div>
 
-        {/* Right Side: Education & Experience */}
+        {/* Right Side: Education, Experience, & Projects */}
         <div className="lg:col-span-2 space-y-6">
           <EducationSection
             profile={profile}
@@ -157,6 +166,11 @@ export default function Profile() {
             onError={handleError}
           />
           <ExperienceSection
+            profile={profile}
+            onUpdate={handleUpdate}
+            onError={handleError}
+          />
+          <ProjectsSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}

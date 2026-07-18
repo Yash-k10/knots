@@ -8,6 +8,7 @@ export interface EducationResponse {
   field_of_study: string | null
   start_date: string // YYYY-MM-DD
   end_date: string | null // YYYY-MM-DD
+  gpa: number | null
   description: string | null
 }
 
@@ -17,6 +18,7 @@ export interface EducationCreate {
   field_of_study?: string | null
   start_date: string // YYYY-MM-DD
   end_date?: string | null // YYYY-MM-DD
+  gpa?: number | null
   description?: string | null
 }
 
@@ -26,6 +28,7 @@ export interface EducationUpdate {
   field_of_study?: string | null
   start_date?: string // YYYY-MM-DD
   end_date?: string | null // YYYY-MM-DD
+  gpa?: number | null
   description?: string | null
 }
 
@@ -58,6 +61,17 @@ export interface EmploymentHistoryUpdate {
   description?: string | null
 }
 
+export interface Certification {
+  name: string
+  issuer: string
+}
+
+export interface Project {
+  title: string
+  highlights: string[]
+  tech_stack?: string[]
+}
+
 export interface ProfileResponse {
   id: number
   user_id: number
@@ -66,8 +80,10 @@ export interface ProfileResponse {
   bio: string | null
   graduation_year: number | null
   department: string | null
-  skills: string[] | null
+  skills: Record<string, string[]> | null
   profile_picture: string | null
+  certifications?: Certification[] | null
+  projects?: Project[] | null
   education: EducationResponse[]
   employment_history: EmploymentHistoryResponse[]
 }
@@ -78,8 +94,10 @@ export interface ProfileUpdate {
   bio?: string | null
   graduation_year?: number | null
   department?: string | null
-  skills?: string[] | null
+  skills?: Record<string, string[]> | null
   profile_picture?: string | null
+  certifications?: Certification[] | null
+  projects?: Project[] | null
 }
 
 export const profileService = {
