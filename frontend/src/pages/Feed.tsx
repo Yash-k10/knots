@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Heart, MessageSquare, Send, Loader2, AlertCircle, Sparkles, Globe, Users as UsersIcon, Lock } from 'lucide-react'
+import { Heart, MessageSquare, Send, Loader2, AlertCircle, Sparkles, Globe, Users as UsersIcon, Lock, Image, X } from 'lucide-react'
 import { apiRequest } from '../services/api'
 
 export interface PostAuthor {
@@ -42,6 +42,18 @@ export default function Feed() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
+  // Current user state
+  const [currentUser, setCurrentUser] = useState<{ id: number; email: string } | null>(null)
+
+  // Create post states
+  const [newPostContent, setNewPostContent] = useState('')
+  const [newPostVisibility, setNewPostVisibility] = useState('PUBLIC')
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [submittingPost, setSubmittingPost] = useState(false)
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   // Pagination state
   const [skip, setSkip] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -90,9 +102,85 @@ export default function Feed() {
     }
   }
 
+  // Fetch current user
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await apiRequest<{ id: number; email: string }>('/users/me')
+      setCurrentUser(response)
+    } catch (err) {
+      console.error('Failed to retrieve current user info:', err)
+    }
+  }
+
   useEffect(() => {
     fetchFeed(true)
+    fetchCurrentUser()
   }, [])
+
+  // Create post action handlers
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit.')
+        return
+      }
+      setSelectedImage(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null)
+    setImagePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newPostContent.trim()) return
+
+    setSubmittingPost(true)
+    try {
+      let imageUrl: string | null = null
+
+      if (selectedImage) {
+        const formData = new FormData()
+        formData.append('file', selectedImage)
+        imageUrl = await apiRequest<string>('/posts/upload-image', {
+          method: 'POST',
+          body: formData,
+        })
+      }
+
+      const newPost = await apiRequest<PostResponse>('/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          content: newPostContent,
+          image_url: imageUrl,
+          visibility: newPostVisibility,
+        }),
+      })
+
+      // Add new post to start of state
+      setPosts((prev) => [newPost, ...prev])
+      
+      // Reset form states
+      setNewPostContent('')
+      setNewPostVisibility('PUBLIC')
+      handleRemoveImage()
+    } catch (err: any) {
+      alert(err.message || 'Failed to share the post.')
+    } finally {
+      setSubmittingPost(false)
+    }
+  }
 
   // Infinite Scroll logic using Intersection Observer
   useEffect(() => {
@@ -275,6 +363,133 @@ export default function Feed() {
           </p>
         </div>
       </div>
+
+      {/* Create Post Form Card */}
+      <form 
+        onSubmit={handleCreatePost} 
+        className="bg-slate-950/70 backdrop-blur border border-slate-800 rounded-2xl p-5 md:p-6 space-y-4 hover:border-slate-700/80 transition-all duration-300 shadow-xl"
+      >
+        <div className="flex gap-4 items-start">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center font-bold text-white text-sm shadow-md shadow-indigo-500/10 shrink-0">
+            {getInitials(currentUser?.email)}
+          </div>
+          <div className="flex-1 space-y-3">
+            <textarea
+              placeholder={currentUser ? `What's on your mind, ${getEmailPrefix(currentUser.email)}?` : "What's on your mind?"}
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              rows={3}
+              className="w-full bg-transparent border-0 resize-none text-white text-sm placeholder-slate-500 focus:ring-0 focus:outline-none min-h-[60px]"
+            />
+
+            {/* Selected Image Preview */}
+            {imagePreview && (
+              <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 aspect-video max-h-[300px]">
+                <img
+                  src={imagePreview}
+                  alt="Attachment preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-2 right-2 p-1.5 bg-slate-950/80 hover:bg-slate-900 rounded-full text-slate-400 hover:text-white transition-all shadow-md"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Divider and Actions Panel */}
+        <div className="border-t border-slate-900 pt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 relative">
+            {/* Image Upload Input & Button */}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 text-slate-400 hover:text-indigo-400 font-semibold text-xs py-2 px-3 rounded-xl hover:bg-slate-900 transition-all cursor-pointer"
+            >
+              <Image className="w-4 h-4 text-indigo-400" />
+              <span>Photo</span>
+            </button>
+
+            {/* Visibility Selector */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowVisibilityDropdown(!showVisibilityDropdown)}
+                className="flex items-center gap-2 text-slate-400 hover:text-white font-semibold text-xs py-2 px-3 rounded-xl hover:bg-slate-900 transition-all cursor-pointer"
+              >
+                {newPostVisibility === 'PUBLIC' && <Globe className="w-4 h-4 text-indigo-400" />}
+                {newPostVisibility === 'CONNECTIONS' && <UsersIcon className="w-4 h-4 text-indigo-400" />}
+                {newPostVisibility === 'PRIVATE' && <Lock className="w-4 h-4 text-indigo-400" />}
+                <span className="capitalize">{newPostVisibility.toLowerCase()}</span>
+              </button>
+
+              {showVisibilityDropdown && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowVisibilityDropdown(false)} 
+                  />
+                  <div className="absolute left-0 mt-2 w-48 bg-slate-950 border border-slate-800 rounded-xl shadow-xl z-20 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <button
+                      type="button"
+                      onClick={() => { setNewPostVisibility('PUBLIC'); setShowVisibilityDropdown(false); }}
+                      className="flex items-center gap-2.5 w-full text-left px-4 py-2 hover:bg-slate-900 text-xs text-slate-300 hover:text-white font-semibold transition-all"
+                    >
+                      <Globe className="w-4 h-4 text-indigo-400" />
+                      <span>Public (Everyone)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setNewPostVisibility('CONNECTIONS'); setShowVisibilityDropdown(false); }}
+                      className="flex items-center gap-2.5 w-full text-left px-4 py-2 hover:bg-slate-900 text-xs text-slate-300 hover:text-white font-semibold transition-all"
+                    >
+                      <UsersIcon className="w-4 h-4 text-indigo-400" />
+                      <span>Connections Only</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setNewPostVisibility('PRIVATE'); setShowVisibilityDropdown(false); }}
+                      className="flex items-center gap-2.5 w-full text-left px-4 py-2 hover:bg-slate-900 text-xs text-slate-300 hover:text-white font-semibold transition-all"
+                    >
+                      <Lock className="w-4 h-4 text-indigo-400" />
+                      <span>Private (Me only)</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={submittingPost || !newPostContent.trim()}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-600 text-white font-semibold text-xs py-2 px-5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20 cursor-pointer"
+          >
+            {submittingPost ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Sharing...</span>
+              </>
+            ) : (
+              <span>Share</span>
+            )}
+          </button>
+        </div>
+      </form>
 
       {/* Main feed list */}
       {loading ? (
