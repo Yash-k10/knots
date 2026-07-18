@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Check, X, Users, UserCheck } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { apiRequest } from '../services/api';
+import ConnectionCard from '../components/connections/ConnectionCard';
 
 interface User {
   id: number;
@@ -22,6 +23,7 @@ export default function Connections() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch data
   const fetchData = async () => {
@@ -45,6 +47,11 @@ export default function Connections() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleTabChange = (tab: 'requests' | 'connections' | 'discover') => {
+    setActiveTab(tab);
+    setSearchQuery('');
+  };
 
   const handleAccept = async (id: number) => {
     try {
@@ -77,6 +84,25 @@ export default function Connections() {
     }
   };
 
+  const handleSendMessage = (userId: number) => {
+    // Currently just a placeholder function or alert until Week 2 real-time chat
+    alert(`Opening conversation with User #${userId}`);
+  };
+
+  // Filter lists based on search query
+  const filteredRequests = requests.filter((req) =>
+    req.requester_id.toString().includes(searchQuery.trim())
+  );
+
+  const filteredConnections = connections.filter((conn) =>
+    conn.requester_id.toString().includes(searchQuery.trim()) ||
+    conn.id.toString().includes(searchQuery.trim())
+  );
+
+  const filteredUsers = users.filter((user) =>
+    user.email.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
+
   if (loading) {
     return <div className="text-slate-400 p-6 flex items-center justify-center min-h-[50vh]">Loading network data...</div>;
   }
@@ -84,33 +110,63 @@ export default function Connections() {
   return (
     <div className="space-y-6">
       <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-          <Users className="w-6 h-6 text-indigo-400" />
-          My Network
-        </h2>
-        <p className="text-slate-400 text-sm">Build relationships with alumni and campus colleagues.</p>
-        
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <Users className="w-6 h-6 text-indigo-400" />
+              My Network
+            </h2>
+            <p className="text-slate-400 text-sm">Build relationships with alumni and campus colleagues.</p>
+          </div>
+
+          {/* Search bar */}
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder={
+                activeTab === 'discover'
+                  ? 'Search people by email...'
+                  : activeTab === 'requests'
+                  ? 'Search requests by User ID...'
+                  : 'Search connections by User/Connection ID...'
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-12 py-2.5 bg-slate-900/50 border border-slate-800 focus:border-indigo-500/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all duration-300"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-xs font-semibold"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+
         {error && (
-          <div className="mt-4 p-3 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm">
+          <div className="mb-6 p-3 bg-red-900/50 border border-red-500/50 rounded-lg text-red-200 text-sm">
             {error}
           </div>
         )}
 
-        <div className="flex gap-6 mt-6 border-b border-slate-800 pb-2">
+        <div className="flex gap-6 border-b border-slate-800 pb-2">
           <button 
-            onClick={() => setActiveTab('requests')}
+            onClick={() => handleTabChange('requests')}
             className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'requests' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
           >
             Pending Requests ({requests.length})
           </button>
           <button 
-            onClick={() => setActiveTab('connections')}
+            onClick={() => handleTabChange('connections')}
             className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'connections' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
           >
             My Connections ({connections.length})
           </button>
           <button 
-            onClick={() => setActiveTab('discover')}
+            onClick={() => handleTabChange('discover')}
             className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'discover' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
           >
             Discover People
@@ -118,84 +174,75 @@ export default function Connections() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         
         {/* PENDING REQUESTS TAB */}
-        {activeTab === 'requests' && requests.length === 0 && (
-          <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">No pending requests.</div>
+        {activeTab === 'requests' && (
+          <>
+            {filteredRequests.length === 0 ? (
+              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                {searchQuery ? 'No pending requests match your search.' : 'No pending requests.'}
+              </div>
+            ) : (
+              filteredRequests.map((req) => (
+                <ConnectionCard
+                  key={req.id}
+                  type="request"
+                  id={req.id}
+                  targetId={req.requester_id}
+                  subtitle="Wants to connect"
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                />
+              ))
+            )}
+          </>
         )}
-        {activeTab === 'requests' && requests.map((req) => (
-          <div key={req.id} className="bg-slate-950 border border-slate-800 rounded-xl p-6 text-center space-y-4 shadow-lg">
-            <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 mx-auto text-xl ring-4 ring-slate-900">
-              U
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white">User #{req.requester_id}</h4>
-              <p className="text-xs text-indigo-400 mt-1">Wants to connect</p>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <button 
-                onClick={() => handleAccept(req.id)}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow-md shadow-indigo-900/20"
-              >
-                <Check className="w-3.5 h-3.5" /> Accept
-              </button>
-              <button 
-                onClick={() => handleReject(req.id)}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-xs font-semibold text-white transition-all"
-              >
-                <X className="w-3.5 h-3.5" /> Reject
-              </button>
-            </div>
-          </div>
-        ))}
 
         {/* MY CONNECTIONS TAB */}
-        {activeTab === 'connections' && connections.length === 0 && (
-          <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">You don't have any connections yet.</div>
+        {activeTab === 'connections' && (
+          <>
+            {filteredConnections.length === 0 ? (
+              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                {searchQuery ? 'No connections match your search.' : "You don't have any connections yet."}
+              </div>
+            ) : (
+              filteredConnections.map((conn) => (
+                <ConnectionCard
+                  key={conn.id}
+                  type="connection"
+                  id={conn.id}
+                  targetId={conn.requester_id}
+                  subtitle="Connected"
+                  onMessage={handleSendMessage}
+                />
+              ))
+            )}
+          </>
         )}
-        {activeTab === 'connections' && connections.map((conn) => (
-          <div key={conn.id} className="bg-slate-950 border border-slate-800 rounded-xl p-6 text-center space-y-4 shadow-lg">
-            <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center font-bold text-indigo-400 mx-auto text-xl ring-4 ring-slate-900">
-              <UserCheck className="w-7 h-7" />
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white">
-                Connection #{conn.requester_id}
-              </h4>
-              <p className="text-xs text-emerald-400 mt-1">Connected</p>
-            </div>
-            <div className="pt-2">
-              <button className="w-full bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-xs font-semibold text-white transition-all">
-                Send Message
-              </button>
-            </div>
-          </div>
-        ))}
 
         {/* DISCOVER TAB */}
-        {activeTab === 'discover' && users.length === 0 && (
-          <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">No users found.</div>
+        {activeTab === 'discover' && (
+          <>
+            {filteredUsers.length === 0 ? (
+              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                {searchQuery ? 'No users match your search.' : 'No users found.'}
+              </div>
+            ) : (
+              filteredUsers.map((user) => (
+                <ConnectionCard
+                  key={user.id}
+                  type="discover"
+                  id={user.id}
+                  targetId={user.id}
+                  email={user.email}
+                  subtitle="Platform Member"
+                  onConnect={handleConnect}
+                />
+              ))
+            )}
+          </>
         )}
-        {activeTab === 'discover' && users.map((user) => (
-          <div key={user.id} className="bg-slate-950 border border-slate-800 rounded-xl p-6 text-center space-y-4 shadow-lg hover:border-slate-700 transition-colors">
-            <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 mx-auto text-xl ring-4 ring-slate-900">
-              {user.email.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-white truncate px-2" title={user.email}>{user.email}</h4>
-              <p className="text-xs text-slate-500 mt-1">Platform Member</p>
-            </div>
-            <div className="pt-2">
-              <button 
-                onClick={() => handleConnect(user.id)}
-                className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow-md shadow-indigo-900/20"
-              >
-                <UserPlus className="w-3.5 h-3.5" /> Connect
-              </button>
-            </div>
-          </div>
-        ))}
 
       </div>
     </div>
