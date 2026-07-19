@@ -31,54 +31,119 @@ def upgrade() -> None:
     )
     post_visibility_enum.create(op.get_bind(), checkfirst=True)
 
-    op.add_column(
-        "comments",
-        sa.Column(
-            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-        ),
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    # 1. comments table
+    columns_comments = [c["name"] for c in inspector.get_columns("comments")]
+    if "updated_at" not in columns_comments:
+        op.add_column(
+            "comments",
+            sa.Column(
+                "updated_at",
+                sa.DateTime(),
+                nullable=False,
+                server_default=sa.func.now(),
+            ),
+        )
+    for c in inspector.get_columns("comments"):
+        if c["name"] == "created_at" and c["nullable"]:
+            op.alter_column(
+                "comments",
+                "created_at",
+                existing_type=postgresql.TIMESTAMP(),
+                nullable=False,
+            )
+
+    indexes_comments = [idx["name"] for idx in inspector.get_indexes("comments")]
+    if "ix_comments_author_id" not in indexes_comments:
+        op.create_index(
+            op.f("ix_comments_author_id"), "comments", ["author_id"], unique=False
+        )
+    if "ix_comments_post_id" not in indexes_comments:
+        op.create_index(
+            op.f("ix_comments_post_id"), "comments", ["post_id"], unique=False
+        )
+
+    # 2. connections table
+    columns_connections = inspector.get_columns("connections")
+    status_column = next(
+        (c for c in columns_connections if c["name"] == "status"), None
     )
-    op.alter_column(
-        "comments", "created_at", existing_type=postgresql.TIMESTAMP(), nullable=False
-    )
-    op.create_index(
-        op.f("ix_comments_author_id"), "comments", ["author_id"], unique=False
-    )
-    op.create_index(op.f("ix_comments_post_id"), "comments", ["post_id"], unique=False)
-    op.alter_column(
-        "connections",
-        "status",
-        existing_type=sa.VARCHAR(length=50),
-        type_=sa.Enum("PENDING", "ACCEPTED", "REJECTED", name="connectionstatus"),
-        nullable=False,
-        postgresql_using="status::connectionstatus",
-    )
-    op.add_column("education", sa.Column("gpa", sa.Float(), nullable=True))
-    op.alter_column(
-        "likes", "created_at", existing_type=postgresql.TIMESTAMP(), nullable=False
-    )
-    op.create_index(op.f("ix_likes_post_id"), "likes", ["post_id"], unique=False)
-    op.create_index(op.f("ix_likes_user_id"), "likes", ["user_id"], unique=False)
-    op.add_column(
-        "posts",
-        sa.Column(
-            "visibility",
-            sa.Enum("PUBLIC", "CONNECTIONS", "PRIVATE", name="postvisibility"),
+    if status_column and isinstance(status_column["type"], sa.VARCHAR):
+        op.alter_column(
+            "connections",
+            "status",
+            existing_type=sa.VARCHAR(length=50),
+            type_=sa.Enum("PENDING", "ACCEPTED", "REJECTED", name="connectionstatus"),
             nullable=False,
-            server_default="PUBLIC",
-        ),
-    )
-    op.add_column(
-        "posts",
-        sa.Column(
-            "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-        ),
-    )
-    op.alter_column(
-        "posts", "created_at", existing_type=postgresql.TIMESTAMP(), nullable=False
-    )
-    op.create_index(op.f("ix_posts_author_id"), "posts", ["author_id"], unique=False)
-    op.add_column("profiles", sa.Column("certifications", sa.JSON(), nullable=True))
-    op.add_column("profiles", sa.Column("projects", sa.JSON(), nullable=True))
+            postgresql_using="status::connectionstatus",
+        )
+
+    # 3. education table
+    columns_education = [c["name"] for c in inspector.get_columns("education")]
+    if "gpa" not in columns_education:
+        op.add_column("education", sa.Column("gpa", sa.Float(), nullable=True))
+
+    # 4. likes table
+    for c in inspector.get_columns("likes"):
+        if c["name"] == "created_at" and c["nullable"]:
+            op.alter_column(
+                "likes",
+                "created_at",
+                existing_type=postgresql.TIMESTAMP(),
+                nullable=False,
+            )
+
+    indexes_likes = [idx["name"] for idx in inspector.get_indexes("likes")]
+    if "ix_likes_post_id" not in indexes_likes:
+        op.create_index(op.f("ix_likes_post_id"), "likes", ["post_id"], unique=False)
+    if "ix_likes_user_id" not in indexes_likes:
+        op.create_index(op.f("ix_likes_user_id"), "likes", ["user_id"], unique=False)
+
+    # 5. posts table
+    columns_posts = [c["name"] for c in inspector.get_columns("posts")]
+    if "visibility" not in columns_posts:
+        op.add_column(
+            "posts",
+            sa.Column(
+                "visibility",
+                sa.Enum("PUBLIC", "CONNECTIONS", "PRIVATE", name="postvisibility"),
+                nullable=False,
+                server_default="PUBLIC",
+            ),
+        )
+    if "updated_at" not in columns_posts:
+        op.add_column(
+            "posts",
+            sa.Column(
+                "updated_at",
+                sa.DateTime(),
+                nullable=False,
+                server_default=sa.func.now(),
+            ),
+        )
+    for c in inspector.get_columns("posts"):
+        if c["name"] == "created_at" and c["nullable"]:
+            op.alter_column(
+                "posts",
+                "created_at",
+                existing_type=postgresql.TIMESTAMP(),
+                nullable=False,
+            )
+
+    indexes_posts = [idx["name"] for idx in inspector.get_indexes("posts")]
+    if "ix_posts_author_id" not in indexes_posts:
+        op.create_index(
+            op.f("ix_posts_author_id"), "posts", ["author_id"], unique=False
+        )
+
+    # 6. profiles table
+    columns_profiles = [c["name"] for c in inspector.get_columns("profiles")]
+    if "certifications" not in columns_profiles:
+        op.add_column("profiles", sa.Column("certifications", sa.JSON(), nullable=True))
+    if "projects" not in columns_profiles:
+        op.add_column("profiles", sa.Column("projects", sa.JSON(), nullable=True))
     # ### end Alembic commands ###
 
 
