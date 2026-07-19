@@ -1,10 +1,15 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+import os
+import shutil
+import uuid
+
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
+from app.core.exceptions import ValidationError
 from app.core.response_models import APIResponse
 from app.posts.schemas.post import (
     CommentCreate,
@@ -65,6 +70,30 @@ async def create_post(
     service = PostService(db)
     post = await service.create_post(current_user.id, payload)
     return APIResponse(message="Post created successfully", data=post)
+
+
+@router.post("/upload-image", response_model=APIResponse[str])
+async def upload_post_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload an image for a post and return the relative static URL."""
+    upload_dir = "static/posts"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise ValidationError("Invalid file type. Only image files are allowed.")
+
+    filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(upload_dir, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    picture_url = f"/static/posts/{filename}"
+    return APIResponse(message="Image uploaded successfully", data=picture_url)
 
 
 @router.get("/{post_id}", response_model=APIResponse[PostDetailResponse])

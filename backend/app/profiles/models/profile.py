@@ -14,8 +14,12 @@ class Profile(Base):
     bio = Column(Text, nullable=True)
     graduation_year = Column(Integer, nullable=True)
     department = Column(String(100), nullable=True)
-    skills = Column(JSON, nullable=True)  # List of strings e.g. ["Python", "React"]
+    skills = Column(
+        JSON, nullable=True
+    )  # Grouped/categorized skills or list of strings
     profile_picture = Column(String(255), nullable=True)
+    certifications = Column(JSON, nullable=True)  # List of certifications
+    projects = Column(JSON, nullable=True)  # List of projects
 
     user = relationship("User", back_populates="profile")
     employment_history = relationship(
