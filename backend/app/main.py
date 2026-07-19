@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.middleware import register_middlewares
 from app.api_router import v1_router
+import app.core.base  # noqa: F401
 
 # Initialize FastAPI Application
 app = FastAPI(
