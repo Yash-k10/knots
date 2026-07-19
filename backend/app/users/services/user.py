@@ -3,11 +3,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import security
-from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthenticationError,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+)
 from app.users.models.role import Role
 from app.users.models.user import User
 from app.users.repository.user import UserRepository
-from app.users.schemas.user import UserCreate, UserUpdate
+from app.users.schemas.user import UserCreate, UserUpdate, ChangePassword
 
 
 class UserService:
@@ -88,3 +93,18 @@ class UserService:
             raise ValidationError(message="Role not found")
 
         return await self.repository.update(user, {"role_id": role_id})
+
+    async def change_password(self, user_id: int, payload: ChangePassword) -> User:
+        """Change user password after verifying the current password."""
+        user = await self.get_user(user_id)
+
+        if not security.verify_password(payload.current_password, user.hashed_password):
+            raise AuthenticationError(message="Current password is incorrect")
+
+        if payload.current_password == payload.new_password:
+            raise ValidationError(
+                message="New password must be different from the current password"
+            )
+
+        new_hashed = security.hash_password(payload.new_password)
+        return await self.repository.update(user, {"hashed_password": new_hashed})

@@ -19,6 +19,17 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+    @classmethod
+    def validate_new_password_length(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("New password must be at least 6 characters long")
+        return v
+
+
 class UserResponse(UserBase):
     id: int
     role_id: Optional[int] = None

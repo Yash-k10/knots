@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.exceptions import AuthorizationError
 from app.core.response_models import APIResponse
 from app.users.models.user import User
-from app.users.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.users.schemas.user import UserCreate, UserResponse, UserUpdate, ChangePassword
 from app.users.schemas.role import RoleResponse, UserRoleUpdate
 from app.users.services.user import UserService
 
@@ -26,6 +26,18 @@ async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db)):
 async def read_user_me(current_user: User = Depends(get_current_user)):
     """Retrieve details of the currently authenticated user."""
     return APIResponse(data=current_user)
+
+
+@router.post("/me/change-password", response_model=APIResponse[UserResponse])
+async def change_password(
+    payload: ChangePassword,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change the current user's password after verifying the current one."""
+    service = UserService(db)
+    user = await service.change_password(current_user.id, payload)
+    return APIResponse(message="Password changed successfully", data=user)
 
 
 @router.get("/roles", response_model=APIResponse[List[RoleResponse]])
