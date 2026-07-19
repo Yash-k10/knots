@@ -13,7 +13,6 @@ import {
   Clock,
   Eye,
   EyeOff,
-  LogOut,
 } from 'lucide-react'
 import { apiRequest, ApiError } from '../services/api'
 
@@ -85,17 +84,15 @@ export default function Settings() {
 
   // Auto-clear success messages after 4 seconds
   useEffect(() => {
-    if (emailSuccess) {
-      const timer = setTimeout(() => setEmailSuccess(null), 4000)
-      return () => clearTimeout(timer)
-    }
+    if (!emailSuccess) return
+    const timer = setTimeout(() => setEmailSuccess(null), 4000)
+    return () => clearTimeout(timer)
   }, [emailSuccess])
 
   useEffect(() => {
-    if (passwordSuccess) {
-      const timer = setTimeout(() => setPasswordSuccess(null), 4000)
-      return () => clearTimeout(timer)
-    }
+    if (!passwordSuccess) return
+    const timer = setTimeout(() => setPasswordSuccess(null), 4000)
+    return () => clearTimeout(timer)
   }, [passwordSuccess])
 
   // Handle email update
