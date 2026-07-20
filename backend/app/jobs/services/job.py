@@ -1,17 +1,76 @@
+from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.jobs.repository.job import JobRepository
-from app.jobs.schemas.job import JobCreate
-from app.jobs.models.job import Job
+from app.jobs.repository.job import JobPostingRepository
+from app.jobs.repository.company import CompanyRepository
+from app.jobs.schemas.job_posting import JobPostingCreate, JobPostingUpdate
+from app.jobs.models.job_posting import JobPosting
+from app.jobs.models.enums import JobTypeEnum, WorkplaceTypeEnum, JobStatusEnum
+from app.core.exceptions import NotFoundError, AuthorizationError
 
 
 class JobService:
     def __init__(self, db: AsyncSession):
-        self.repository = JobRepository(db)
+        self.repository = JobPostingRepository(db)
+        self.company_repository = CompanyRepository(db)
 
-    async def create_job(self, creator_id: int, job_in: JobCreate) -> Job:
-        data = job_in.dict()
-        data["creator_id"] = creator_id
+    async def create_job(
+        self, posted_by_id: int, job_in: JobPostingCreate
+    ) -> JobPosting:
+        company = await self.company_repository.get(job_in.company_id)
+        if not company:
+            raise NotFoundError(
+                message=f"Company with ID {job_in.company_id} not found."
+            )
+
+        data = job_in.model_dump()
+        data["posted_by_id"] = posted_by_id
         return await self.repository.create(data)
 
-    async def list_jobs(self, skip: int = 0, limit: int = 100) -> list[Job]:
-        return await self.repository.get_multi(skip=skip, limit=limit)
+    async def list_jobs(
+        self,
+        search: Optional[str] = None,
+        job_type: Optional[JobTypeEnum] = None,
+        workplace_type: Optional[WorkplaceTypeEnum] = None,
+        company_id: Optional[int] = None,
+        status: Optional[JobStatusEnum] = JobStatusEnum.OPEN,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> List[JobPosting]:
+        return await self.repository.filter_jobs(
+            search=search,
+            job_type=job_type,
+            workplace_type=workplace_type,
+            company_id=company_id,
+            status=status,
+            skip=skip,
+            limit=limit,
+        )
+
+    async def get_job(self, job_id: int) -> JobPosting:
+        job = await self.repository.get_with_details(job_id)
+        if not job:
+            raise NotFoundError(message=f"Job posting with ID {job_id} not found.")
+        return job
+
+    async def update_job(
+        self,
+        job_id: int,
+        user_id: int,
+        job_in: JobPostingUpdate,
+        is_admin: bool = False,
+    ) -> JobPosting:
+        job = await self.get_job(job_id)
+        if job.posted_by_id != user_id and not is_admin:
+            raise AuthorizationError(message="Not authorized to edit this job posting.")
+        update_data = job_in.model_dump(exclude_unset=True)
+        return await self.repository.update(job, update_data)
+
+    async def delete_job(
+        self, job_id: int, user_id: int, is_admin: bool = False
+    ) -> JobPosting:
+        job = await self.get_job(job_id)
+        if job.posted_by_id != user_id and not is_admin:
+            raise AuthorizationError(
+                message="Not authorized to delete this job posting."
+            )
+        return await self.repository.remove(job_id)

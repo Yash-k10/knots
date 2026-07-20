@@ -10,9 +10,7 @@ from app.posts.models.comment import Comment  # noqa
 from app.posts.models.like import Like  # noqa
 from app.connections.models.connection import Connection  # noqa
 from app.messaging.models.message import Message  # noqa
-from app.jobs.models.company import Company  # noqa
-from app.jobs.models.job import Job  # noqa
-from app.jobs.models.referral import ReferralRequest  # noqa
+from app.jobs.models import Company, JobPosting, Application, Referral  # noqa
 from app.events.models.event_category import EventCategory  # noqa
 from app.events.models.event import Event  # noqa
 from app.events.models.rsvp import RSVP  # noqa
