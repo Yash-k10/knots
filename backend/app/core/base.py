@@ -10,6 +10,9 @@ from app.posts.models.comment import Comment  # noqa
 from app.posts.models.like import Like  # noqa
 from app.connections.models.connection import Connection  # noqa
 from app.messaging.models.message import Message  # noqa
+from app.messaging.models.conversation import Conversation  # noqa: F401
+from app.messaging.models.conversation import ConversationParticipant  # noqa: F401
+from app.messaging.models.read_receipt import ReadReceipt  # noqa
 from app.jobs.models.company import Company  # noqa
 from app.jobs.models.job import Job  # noqa
 from app.jobs.models.referral import ReferralRequest  # noqa
