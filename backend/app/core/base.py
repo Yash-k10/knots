@@ -10,7 +10,9 @@ from app.posts.models.comment import Comment  # noqa
 from app.posts.models.like import Like  # noqa
 from app.connections.models.connection import Connection  # noqa
 from app.messaging.models.message import Message  # noqa
-from app.jobs.models import Company, JobPosting, Application, Referral  # noqa
+from app.messaging.models.conversation import Conversation  # noqa: F401
+from app.messaging.models.conversation import ConversationParticipant  # noqa: F401
+from app.messaging.models.read_receipt import ReadReceipt  # noqa
 from app.events.models.event_category import EventCategory  # noqa
 from app.events.models.event import Event  # noqa
 from app.events.models.rsvp import RSVP  # noqa
@@ -18,4 +20,5 @@ from app.clubs.models.club import Club  # noqa
 from app.clubs.models.club_member import ClubMember  # noqa
 from app.notifications.models.notification import Notification  # noqa
 from app.admin.models.audit import AuditLog  # noqa
+from app.admin.models.flagged_post import FlaggedPost  # noqa
 from app.ai.models.ai_log import AILog  # noqa
