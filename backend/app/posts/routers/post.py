@@ -22,6 +22,8 @@ from app.posts.schemas.post import (
 )
 from app.posts.services.post import PostService
 from app.users.models.user import User
+from app.admin.schemas.admin import FlaggedPostCreate, FlaggedPostResponse
+from app.admin.services.admin import AdminService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -202,3 +204,18 @@ async def delete_comment(
     service = PostService(db)
     await service.delete_comment(post_id, comment_id, current_user.id)
     return APIResponse(message="Comment deleted")
+
+
+@router.post("/{post_id}/flag", response_model=APIResponse[FlaggedPostResponse])
+async def flag_post(
+    post_id: int,
+    payload: FlaggedPostCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Flag a post (any authenticated user)."""
+    service = AdminService(db)
+    flagged = await service.flag_post(
+        post_id=post_id, flagger_id=current_user.id, reason=payload.reason
+    )
+    return APIResponse(message="Post flagged successfully", data=flagged)

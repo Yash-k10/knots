@@ -20,4 +20,5 @@ from app.clubs.models.club import Club  # noqa
 from app.clubs.models.club_member import ClubMember  # noqa
 from app.notifications.models.notification import Notification  # noqa
 from app.admin.models.audit import AuditLog  # noqa
+from app.admin.models.flagged_post import FlaggedPost  # noqa
 from app.ai.models.ai_log import AILog  # noqa

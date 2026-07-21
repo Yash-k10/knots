@@ -5,7 +5,11 @@ from typing import List
 from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.users.models.user import User
 from app.users.schemas.user import UserResponse
-from app.admin.schemas.admin import AuditLogResponse
+from app.admin.schemas.admin import (
+    AuditLogResponse,
+    FlaggedPostResponse,
+    FlaggedPostResolve,
+)
 from app.admin.services.admin import AdminService
 from app.core.database import get_db
 from app.core.response_models import APIResponse
@@ -84,3 +88,46 @@ async def delete_user(
         user_id=user_id, actor_id=current_user.id, ip_address=client_ip
     )
     return APIResponse(message="User deleted successfully", data=user)
+
+
+@router.get("/posts/flagged", response_model=APIResponse[List[FlaggedPostResponse]])
+async def list_flagged_posts(
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+):
+    """Retrieve a list of flagged posts (Admin only)."""
+    service = AdminService(db)
+    flagged = await service.list_flagged_posts(skip=skip, limit=limit)
+    return APIResponse(data=flagged)
+
+
+@router.post(
+    "/posts/{flag_id}/resolve", response_model=APIResponse[FlaggedPostResponse]
+)
+async def resolve_flagged_post(
+    flag_id: int,
+    payload: FlaggedPostResolve,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resolve or dismiss a flag on a post (Admin only)."""
+    service = AdminService(db)
+    resolved = await service.resolve_flag(
+        flag_id=flag_id, action=payload.action, actor_id=current_user.id
+    )
+    return APIResponse(message=f"Post flag marked as {payload.action}", data=resolved)
+
+
+@router.delete("/posts/{post_id}", response_model=APIResponse)
+async def delete_post_as_admin(
+    post_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a post and create an audit log (Admin only)."""
+    service = AdminService(db)
+    client_ip = request.client.host if request.client else None
+    await service.remove_post(
+        post_id=post_id, actor_id=current_user.id, ip_address=client_ip
+    )
+    return APIResponse(message="Post removed successfully by Administrator")
