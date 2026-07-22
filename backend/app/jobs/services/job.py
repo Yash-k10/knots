@@ -24,7 +24,8 @@ class JobService:
 
         data = job_in.model_dump()
         data["posted_by_id"] = posted_by_id
-        return await self.repository.create(data)
+        job = await self.repository.create(data)
+        return await self.get_job(job.id)
 
     async def list_jobs(
         self,
@@ -63,7 +64,8 @@ class JobService:
         if job.posted_by_id != user_id and not is_admin:
             raise AuthorizationError(message="Not authorized to edit this job posting.")
         update_data = job_in.model_dump(exclude_unset=True)
-        return await self.repository.update(job, update_data)
+        updated_job = await self.repository.update(job, update_data)
+        return await self.get_job(updated_job.id)
 
     async def delete_job(
         self, job_id: int, user_id: int, is_admin: bool = False
