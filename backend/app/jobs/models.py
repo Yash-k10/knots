@@ -1,13 +1,15 @@
-from app.jobs.models.enums import (
+from app.jobs.models import (
     JobTypeEnum,
     WorkplaceTypeEnum,
     JobStatusEnum,
     ApplicationStatusEnum,
+    Company,
+    JobPosting,
+    Job,
+    Application,
+    Referral,
+    ReferralRequest,
 )
-from app.jobs.models.company import Company
-from app.jobs.models.job_posting import JobPosting, Job
-from app.jobs.models.application import Application
-from app.jobs.models.referral import Referral, ReferralRequest
 
 __all__ = [
     "JobTypeEnum",

@@ -1,10 +1,8 @@
-from app.jobs.schemas.company import (
+from app.jobs.schemas import (
     CompanyBase,
     CompanyCreate,
     CompanyUpdate,
     CompanyResponse,
-)
-from app.jobs.schemas.job_posting import (
     JobPostingBase,
     JobPostingCreate,
     JobPostingUpdate,
@@ -12,14 +10,10 @@ from app.jobs.schemas.job_posting import (
     JobCreate,
     JobResponse,
     JobUpdate,
-)
-from app.jobs.schemas.application import (
     ApplicationBase,
     ApplicationCreate,
     ApplicationUpdate,
     ApplicationResponse,
-)
-from app.jobs.schemas.referral import (
     ReferralBase,
     ReferralCreate,
     ReferralUpdate,

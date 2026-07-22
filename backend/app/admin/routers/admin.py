@@ -9,6 +9,7 @@ from app.admin.schemas.admin import (
     AuditLogResponse,
     FlaggedPostResponse,
     FlaggedPostResolve,
+    DashboardStatsResponse,
 )
 from app.admin.services.admin import AdminService
 from app.core.database import get_db
@@ -20,6 +21,15 @@ router = APIRouter(
     tags=["Admin Only"],
     dependencies=[Depends(RoleRequired(["Admin"]))],
 )
+
+
+@router.get("/stats", response_model=APIResponse[DashboardStatsResponse])
+@router.get("/dashboard/stats", response_model=APIResponse[DashboardStatsResponse])
+async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
+    """Retrieve dashboard statistics (total users, posts, daily activity) for Admin."""
+    service = AdminService(db)
+    stats = await service.get_dashboard_stats()
+    return APIResponse(data=stats)
 
 
 @router.get("/audit-logs", response_model=APIResponse[List[AuditLogResponse]])

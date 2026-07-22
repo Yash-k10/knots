@@ -1,10 +1,29 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Union
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
-from app.core.config import settings
-from app.core.exceptions import AuthenticationError
+# Fix compatibility between passlib and bcrypt >= 4.0.0
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type(
+        "about", (), {"__version__": getattr(bcrypt, "__version__", "4.0.0")}
+    )
+
+_orig_hashpw = bcrypt.hashpw
+
+
+def _safe_hashpw(password: bytes, salt: bytes) -> bytes:
+    if isinstance(password, bytes) and len(password) > 72:
+        password = password[:72]
+    return _orig_hashpw(password, salt)
+
+
+bcrypt.hashpw = _safe_hashpw
+
+from jose import JWTError, jwt  # noqa: E402
+from passlib.context import CryptContext  # noqa: E402
+
+from app.core.config import settings  # noqa: E402
+from app.core.exceptions import AuthenticationError  # noqa: E402
 
 # Setup password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -12,12 +31,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """Hash a cleartext password."""
-    return pwd_context.hash(password)
+    return pwd_context.hash(password[:72])
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a cleartext password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(plain_password[:72], hashed_password)
 
 
 def create_access_token(
