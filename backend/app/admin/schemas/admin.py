@@ -36,3 +36,16 @@ class FlaggedPostResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DailyActivity(BaseModel):
+    posts_today: int = 0
+    users_today: int = 0
+    actions_today: int = 0
+
+
+class DashboardStatsResponse(BaseModel):
+    total_users: int = 0
+    total_posts: int = 0
+    active_users: int = 0
+    daily_activity: DailyActivity

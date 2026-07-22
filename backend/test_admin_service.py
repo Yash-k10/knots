@@ -293,6 +293,29 @@ class TestAdminService(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotFoundError):
             await service.remove_post(post_id=999, actor_id=99)
 
+    @patch("app.admin.services.admin.AdminRepository")
+    async def test_get_dashboard_stats_success(self, mock_admin_repo_class):
+        mock_admin_repo = AsyncMock()
+        mock_admin_repo_class.return_value = mock_admin_repo
+
+        service = AdminService(self.db)
+        expected_stats = {
+            "total_users": 10,
+            "total_posts": 25,
+            "active_users": 8,
+            "daily_activity": {
+                "posts_today": 3,
+                "users_today": 1,
+                "actions_today": 5,
+            },
+        }
+        mock_admin_repo.get_dashboard_stats.return_value = expected_stats
+
+        result = await service.get_dashboard_stats()
+
+        self.assertEqual(result, expected_stats)
+        mock_admin_repo.get_dashboard_stats.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

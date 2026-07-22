@@ -14,7 +14,11 @@ class AdminService:
         self.db = db
         self.repository = AdminRepository(db)
 
+    async def get_dashboard_stats(self) -> dict:
+        return await self.repository.get_dashboard_stats()
+
     async def get_audit_logs(self, skip: int = 0, limit: int = 100) -> list[AuditLog]:
+
         return await self.repository.get_multi(skip=skip, limit=limit)
 
     async def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
