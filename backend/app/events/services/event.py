@@ -349,12 +349,15 @@ class EventService:
         existing_rsvp = await self.rsvp_repo.get_by_event_and_user(event_id, user_id)
         if existing_rsvp:
             update_data = payload.model_dump(exclude_unset=True)
-            return await self.rsvp_repo.update(existing_rsvp, update_data)
+            rsvp = await self.rsvp_repo.update(existing_rsvp, update_data)
+        else:
+            rsvp_data = payload.model_dump()
+            rsvp_data["event_id"] = event_id
+            rsvp_data["user_id"] = user_id
+            rsvp = await self.rsvp_repo.create(rsvp_data)
 
-        rsvp_data = payload.model_dump()
-        rsvp_data["event_id"] = event_id
-        rsvp_data["user_id"] = user_id
-        return await self.rsvp_repo.create(rsvp_data)
+        # Eagerly load the user relationship to prevent greenlet/lazy-load errors during serialization
+        return await self.rsvp_repo.get_with_user(rsvp.id)
 
     async def cancel_rsvp(self, event_id: int, user_id: int) -> None:
         """Cancel/delete an RSVP record."""

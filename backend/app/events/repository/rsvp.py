@@ -14,6 +14,13 @@ class RSVPRepository(BaseRepository[RSVP]):
     def __init__(self, db: AsyncSession):
         super().__init__(RSVP, db)
 
+    async def get_with_user(self, rsvp_id: int) -> Optional[RSVP]:
+        """Fetch RSVP with user relationship eagerly loaded."""
+        result = await self.db.execute(
+            select(RSVP).options(selectinload(RSVP.user)).filter(RSVP.id == rsvp_id)
+        )
+        return result.scalars().first()
+
     async def get_by_event_and_user(
         self, event_id: int, user_id: int
     ) -> Optional[RSVP]:
