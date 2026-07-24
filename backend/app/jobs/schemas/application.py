@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.jobs.models.enums import ApplicationStatusEnum
+from app.jobs.schemas.job_posting import JobPostingResponse
 
 
 class ApplicationBase(BaseModel):
@@ -35,5 +36,6 @@ class ApplicationResponse(ApplicationBase):
     status: ApplicationStatusEnum
     applied_at: datetime
     updated_at: datetime
+    job_posting: Optional[JobPostingResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
