@@ -259,4 +259,5 @@ class ClubService:
             )
 
         # 3. Perform update
-        return await self.member_repo.update(target_membership, {"role": new_role})
+        updated = await self.member_repo.update(target_membership, {"role": new_role})
+        return await self.member_repo.get_with_user(updated.id)

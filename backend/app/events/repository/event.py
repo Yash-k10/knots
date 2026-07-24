@@ -109,6 +109,8 @@ class EventRepository(BaseRepository[Event]):
         category_id: Optional[int] = None,
         organizer_id: Optional[int] = None,
         search: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         skip: int = 0,
         limit: int = 20,
     ) -> List[Event]:
@@ -129,6 +131,10 @@ class EventRepository(BaseRepository[Event]):
                 (Event.title.ilike(f"%{search}%"))
                 | (Event.description.ilike(f"%{search}%"))
             )
+        if start_date:
+            query = query.filter(Event.start_datetime >= start_date)
+        if end_date:
+            query = query.filter(Event.start_datetime <= end_date)
 
         query = query.order_by(Event.start_datetime.asc()).offset(skip).limit(limit)
         result = await self.db.execute(query)
@@ -140,6 +146,8 @@ class EventRepository(BaseRepository[Event]):
         category_id: Optional[int] = None,
         organizer_id: Optional[int] = None,
         search: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> int:
         """Count events under the specified filters."""
         query = select(func.count()).select_from(Event)
@@ -154,5 +162,9 @@ class EventRepository(BaseRepository[Event]):
                 (Event.title.ilike(f"%{search}%"))
                 | (Event.description.ilike(f"%{search}%"))
             )
+        if start_date:
+            query = query.filter(Event.start_datetime >= start_date)
+        if end_date:
+            query = query.filter(Event.start_datetime <= end_date)
         result = await self.db.execute(query)
         return result.scalar_one()
