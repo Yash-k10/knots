@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, Path
@@ -30,6 +31,8 @@ async def list_events(
     category_id: Optional[int] = Query(None),
     organizer_id: Optional[int] = Query(None),
     search: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user),
@@ -43,6 +46,8 @@ async def list_events(
         category_id=category_id,
         organizer_id=organizer_id,
         search=search,
+        start_date=start_date,
+        end_date=end_date,
         skip=skip,
         limit=limit,
         current_user_id=user_id,

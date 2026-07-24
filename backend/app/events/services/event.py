@@ -139,16 +139,25 @@ class EventService:
         category_id: Optional[int] = None,
         organizer_id: Optional[int] = None,
         search: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         skip: int = 0,
         limit: int = 20,
         current_user_id: Optional[int] = None,
     ) -> List[EventResponse]:
         """Fetch filtered list of events."""
+        if start_date and start_date.tzinfo:
+            start_date = start_date.astimezone(timezone.utc).replace(tzinfo=None)
+        if end_date and end_date.tzinfo:
+            end_date = end_date.astimezone(timezone.utc).replace(tzinfo=None)
+
         events = await self.event_repo.get_events_filtered(
             status=status,
             category_id=category_id,
             organizer_id=organizer_id,
             search=search,
+            start_date=start_date,
+            end_date=end_date,
             skip=skip,
             limit=limit,
         )
