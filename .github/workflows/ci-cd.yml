@@ -36,11 +36,15 @@ jobs:
           black --check .
 
       - name: Run Compilation / Import Check
+        env:
+          PYTHONPATH: .
         run: |
           cd backend
           python -c "import app.main; print('Backend loaded successfully')"
 
       - name: Run Backend Unit Tests
+        env:
+          PYTHONPATH: .
         run: |
           cd backend
           python -m unittest test_messaging_router.py test_messaging_service.py test_websocket_messaging.py
