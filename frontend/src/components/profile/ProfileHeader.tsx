@@ -7,9 +7,10 @@ interface ProfileHeaderProps {
   profile: ProfileResponse
   onUpdate: (updatedProfile: ProfileResponse) => void
   onError: (errorMessage: string) => void
+  isOwnProfile: boolean
 }
 
-export default function ProfileHeader({ profile, onUpdate, onError }: ProfileHeaderProps) {
+export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -80,6 +81,7 @@ export default function ProfileHeader({ profile, onUpdate, onError }: ProfileHea
               initials={initials}
               onUploadSuccess={onUpdate}
               onUploadError={onError}
+              isOwnProfile={isOwnProfile}
             />
             <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -181,6 +183,7 @@ export default function ProfileHeader({ profile, onUpdate, onError }: ProfileHea
               initials={initials}
               onUploadSuccess={onUpdate}
               onUploadError={onError}
+              isOwnProfile={isOwnProfile}
             />
             <div className="space-y-3">
               <h2 className="text-3xl font-extrabold text-white">
@@ -202,6 +205,11 @@ export default function ProfileHeader({ profile, onUpdate, onError }: ProfileHea
                     Class of {profile.graduation_year}
                   </span>
                 )}
+                {profile.connection_count !== undefined && (
+                  <span className="flex items-center gap-1.5 font-medium bg-slate-900 border border-slate-800 text-indigo-300 text-xs px-2.5 py-1 rounded-full">
+                    {profile.connection_count} Connections
+                  </span>
+                )}
                 {!profile.department && !profile.graduation_year && (
                   <span className="text-slate-500 italic">No department or grad year specified</span>
                 )}
@@ -215,13 +223,15 @@ export default function ProfileHeader({ profile, onUpdate, onError }: ProfileHea
             </div>
           </div>
 
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition text-sm font-medium self-center md:self-start mt-4 md:mt-0"
-          >
-            <Edit2 className="h-4 w-4" />
-            Edit Info
-          </button>
+          {isOwnProfile && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition text-sm font-medium self-center md:self-start mt-4 md:mt-0"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit Info
+            </button>
+          )}
         </div>
       )}
     </div>

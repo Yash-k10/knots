@@ -21,6 +21,66 @@ class ProfileService:
         self.education_repo = EducationRepository(db)
         self.employment_repo = EmploymentHistoryRepository(db)
 
+    async def _enrich_profile(self, profile: Profile) -> Profile:
+        if not profile:
+            return profile
+
+        # 1. Fetch skill endorsements
+        from app.profiles.models.skill_endorsement import SkillEndorsement
+        from sqlalchemy import select
+
+        stmt = (
+            select(
+                SkillEndorsement.id,
+                SkillEndorsement.profile_id,
+                SkillEndorsement.skill_name,
+                SkillEndorsement.endorser_id,
+                Profile.first_name,
+                Profile.last_name,
+            )
+            .join(
+                Profile, Profile.user_id == SkillEndorsement.endorser_id, isouter=True
+            )
+            .where(SkillEndorsement.profile_id == profile.id)
+        )
+        res = await self.profile_repo.db.execute(stmt)
+        rows = res.all()
+
+        endorsements = []
+        for id_, prof_id, skill, endorser_id, first_name, last_name in rows:
+            name = (
+                f"{first_name or ''} {last_name or ''}".strip() or f"User {endorser_id}"
+            )
+            endorsements.append(
+                {
+                    "id": id_,
+                    "profile_id": prof_id,
+                    "skill_name": skill,
+                    "endorser_id": endorser_id,
+                    "endorser_name": name,
+                }
+            )
+
+        profile.endorsements = endorsements
+
+        # 2. Fetch connection count
+        from app.connections.models.connection import Connection, ConnectionStatus
+        from sqlalchemy import func, or_, and_
+
+        conn_stmt = select(func.count(Connection.id)).where(
+            and_(
+                or_(
+                    Connection.requester_id == profile.user_id,
+                    Connection.addressee_id == profile.user_id,
+                ),
+                Connection.status == ConnectionStatus.ACCEPTED,
+            )
+        )
+        conn_res = await self.profile_repo.db.execute(conn_stmt)
+        profile.connection_count = conn_res.scalar() or 0
+
+        return profile
+
     async def get_profile_by_user_id(self, user_id: int) -> Profile:
         """Retrieve user's profile, creating a blank one if it doesn't exist yet."""
         profile = await self.profile_repo.get_by_user_id(user_id)
@@ -29,7 +89,7 @@ class ProfileService:
             profile = await self.profile_repo.create({"user_id": user_id})
             # Reload with empty relationship lists
             profile = await self.profile_repo.get_by_user_id(user_id)
-        return profile
+        return await self._enrich_profile(profile)
 
     async def update_profile(self, user_id: int, profile_in: ProfileUpdate) -> Profile:
         """Create or update a profile for a given user."""
@@ -38,10 +98,10 @@ class ProfileService:
             data = profile_in.dict(exclude_unset=True)
             data["user_id"] = user_id
             await self.profile_repo.create(data)
-            return await self.profile_repo.get_by_user_id(user_id)
+            return await self.get_profile_by_user_id(user_id)
 
         await self.profile_repo.update(profile, profile_in.dict(exclude_unset=True))
-        return await self.profile_repo.get_by_user_id(user_id)
+        return await self.get_profile_by_user_id(user_id)
 
     # --- Education CRUD ---
     async def add_education(

@@ -55,6 +55,7 @@ export default function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="feed" element={<Feed />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="profile/:userId" element={<Profile />} />
         <Route path="connections" element={<Connections />} />
         <Route path="jobs" element={<Jobs />} />
         <Route path="events" element={<Events />} />

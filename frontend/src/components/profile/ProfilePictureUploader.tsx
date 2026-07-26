@@ -7,6 +7,7 @@ interface ProfilePictureUploaderProps {
   initials: string
   onUploadSuccess: (updatedProfile: ProfileResponse) => void
   onUploadError: (errorMessage: string) => void
+  isOwnProfile: boolean
 }
 
 export default function ProfilePictureUploader({
@@ -14,12 +15,13 @@ export default function ProfilePictureUploader({
   initials,
   onUploadSuccess,
   onUploadError,
+  isOwnProfile,
 }: ProfilePictureUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
 
   const handleContainerClick = () => {
-    if (!isUploading) {
+    if (isOwnProfile && !isUploading) {
       fileInputRef.current?.click()
     }
   }
@@ -66,37 +68,39 @@ export default function ProfilePictureUploader({
     : null
 
   return (
-    <div className="relative group cursor-pointer" onClick={handleContainerClick}>
+    <div className={`relative group ${isOwnProfile ? 'cursor-pointer' : 'cursor-default'}`} onClick={handleContainerClick}>
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
         accept="image/*"
-        disabled={isUploading}
+        disabled={isUploading || !isOwnProfile}
       />
 
-      <div className="h-28 w-28 rounded-full overflow-hidden border-4 border-slate-800 bg-slate-900 flex items-center justify-center shadow-xl transition-all group-hover:border-indigo-500 relative">
+      <div className={`h-28 w-28 rounded-full overflow-hidden border-4 border-slate-800 bg-slate-900 flex items-center justify-center shadow-xl transition-all ${isOwnProfile ? 'group-hover:border-indigo-500' : ''} relative`}>
         {imageUrl ? (
           <img
             src={imageUrl}
             alt="Profile Avatar"
-            className={`h-full w-full object-cover transition-all ${isUploading ? 'opacity-30' : 'group-hover:opacity-60'}`}
+            className={`h-full w-full object-cover transition-all ${isUploading ? 'opacity-30' : isOwnProfile ? 'group-hover:opacity-60' : ''}`}
           />
         ) : (
-          <div className={`text-4xl font-extrabold text-white transition-all ${isUploading ? 'opacity-30' : 'group-hover:opacity-60'}`}>
+          <div className={`text-4xl font-extrabold text-white transition-all ${isUploading ? 'opacity-30' : isOwnProfile ? 'group-hover:opacity-60' : ''}`}>
             {initials}
           </div>
         )}
 
         {/* Hover/Upload Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-          {isUploading ? (
-            <Loader2 className="h-8 w-8 text-white animate-spin" />
-          ) : (
-            <Camera className="h-8 w-8 text-white" />
-          )}
-        </div>
+        {isOwnProfile && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isUploading ? (
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            ) : (
+              <Camera className="h-8 w-8 text-white" />
+            )}
+          </div>
+        )}
       </div>
 
       {isUploading && (

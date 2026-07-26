@@ -22,3 +22,10 @@ from app.notifications.models.notification import Notification  # noqa
 from app.admin.models.audit import AuditLog  # noqa
 from app.admin.models.flagged_post import FlaggedPost  # noqa
 from app.ai.models.ai_log import AILog  # noqa
+from app.jobs.models.company import Company  # noqa
+from app.jobs.models.job_posting import JobPosting  # noqa
+from app.jobs.models.application import Application  # noqa
+from app.jobs.models.referral import Referral  # noqa
+from app.analytics.models.profile_view import ProfileView  # noqa
+from app.analytics.models.post_engagement import PostEngagement  # noqa
+from app.profiles.models.skill_endorsement import SkillEndorsement  # noqa

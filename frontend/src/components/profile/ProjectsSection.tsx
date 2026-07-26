@@ -6,9 +6,10 @@ interface ProjectsSectionProps {
   profile: ProfileResponse
   onUpdate: (updatedProfile: ProfileResponse) => void
   onError: (errorMessage: string) => void
+  isOwnProfile?: boolean
 }
 
-export default function ProjectsSection({ profile, onUpdate, onError }: ProjectsSectionProps) {
+export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfile = true }: ProjectsSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -219,7 +220,7 @@ export default function ProjectsSection({ profile, onUpdate, onError }: Projects
           <FolderGit className="h-5 w-5 text-indigo-400" />
           Projects
         </h3>
-        {!isEditing && (
+        {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
