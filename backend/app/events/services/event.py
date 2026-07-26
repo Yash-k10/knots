@@ -139,16 +139,25 @@ class EventService:
         category_id: Optional[int] = None,
         organizer_id: Optional[int] = None,
         search: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         skip: int = 0,
         limit: int = 20,
         current_user_id: Optional[int] = None,
     ) -> List[EventResponse]:
         """Fetch filtered list of events."""
+        if start_date and start_date.tzinfo:
+            start_date = start_date.astimezone(timezone.utc).replace(tzinfo=None)
+        if end_date and end_date.tzinfo:
+            end_date = end_date.astimezone(timezone.utc).replace(tzinfo=None)
+
         events = await self.event_repo.get_events_filtered(
             status=status,
             category_id=category_id,
             organizer_id=organizer_id,
             search=search,
+            start_date=start_date,
+            end_date=end_date,
             skip=skip,
             limit=limit,
         )
@@ -340,12 +349,15 @@ class EventService:
         existing_rsvp = await self.rsvp_repo.get_by_event_and_user(event_id, user_id)
         if existing_rsvp:
             update_data = payload.model_dump(exclude_unset=True)
-            return await self.rsvp_repo.update(existing_rsvp, update_data)
+            rsvp = await self.rsvp_repo.update(existing_rsvp, update_data)
+        else:
+            rsvp_data = payload.model_dump()
+            rsvp_data["event_id"] = event_id
+            rsvp_data["user_id"] = user_id
+            rsvp = await self.rsvp_repo.create(rsvp_data)
 
-        rsvp_data = payload.model_dump()
-        rsvp_data["event_id"] = event_id
-        rsvp_data["user_id"] = user_id
-        return await self.rsvp_repo.create(rsvp_data)
+        # Eagerly load the user relationship to prevent greenlet/lazy-load errors during serialization
+        return await self.rsvp_repo.get_with_user(rsvp.id)
 
     async def cancel_rsvp(self, event_id: int, user_id: int) -> None:
         """Cancel/delete an RSVP record."""

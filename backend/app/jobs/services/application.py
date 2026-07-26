@@ -32,7 +32,8 @@ class ApplicationService:
         data = application_in.model_dump()
         data["applicant_id"] = applicant_id
         data["job_posting_id"] = job_posting_id
-        return await self.repository.create(data)
+        app_obj = await self.repository.create(data)
+        return await self.repository.get(app_obj.id)
 
     async def get_user_applications(
         self, applicant_id: int, skip: int = 0, limit: int = 50
@@ -85,4 +86,5 @@ class ApplicationService:
             )
 
         update_data = application_in.model_dump(exclude_unset=True)
-        return await self.repository.update(app_obj, update_data)
+        updated_app = await self.repository.update(app_obj, update_data)
+        return await self.repository.get(updated_app.id)

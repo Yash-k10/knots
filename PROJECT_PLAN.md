@@ -295,16 +295,16 @@ Week 4 (Sun) → Yash merges develop → main (PRODUCTION RELEASE 🎉)
 ## 🎯 Weekly Milestones Checklist
 
 ### ✅ Week 1 Complete When:
-- [ ] User can register and login
-- [ ] User can view and edit their profile  
-- [ ] User can create and view posts in feed
-- [ ] User can send and accept connection requests
+- [x] User can register and login
+- [x] User can view and edit their profile  
+- [x] User can create and view posts in feed
+- [x] User can send and accept connection requests
 
 ### ✅ Week 2 Complete When:
-- [ ] Admin can manage users and moderate content
-- [ ] Users can browse and apply for jobs
-- [ ] Users can create and RSVP to events, join clubs
-- [ ] Users can chat with connections in real-time
+- [x] Admin can manage users and moderate content
+- [x] Users can browse and apply for jobs
+- [x] Users can create and RSVP to events, join clubs
+- [x] Users can chat with connections in real-time
 
 ### ✅ Week 3 Complete When:
 - [ ] Dashboard shows AI-powered recommendations

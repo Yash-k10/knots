@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,12 +11,29 @@ class ApplicationRepository(BaseRepository[Application]):
     def __init__(self, db: AsyncSession):
         super().__init__(Application, db)
 
+    async def get(self, id: Any) -> Optional[Application]:
+        stmt = (
+            select(Application)
+            .options(
+                selectinload(Application.job_posting).selectinload(JobPosting.company)
+            )
+            .filter(Application.id == id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def get_by_user_and_job(
         self, applicant_id: int, job_posting_id: int
     ) -> Optional[Application]:
-        stmt = select(Application).filter(
-            Application.applicant_id == applicant_id,
-            Application.job_posting_id == job_posting_id,
+        stmt = (
+            select(Application)
+            .options(
+                selectinload(Application.job_posting).selectinload(JobPosting.company)
+            )
+            .filter(
+                Application.applicant_id == applicant_id,
+                Application.job_posting_id == job_posting_id,
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
@@ -42,7 +59,10 @@ class ApplicationRepository(BaseRepository[Application]):
     ) -> List[Application]:
         stmt = (
             select(Application)
-            .options(selectinload(Application.applicant))
+            .options(
+                selectinload(Application.applicant),
+                selectinload(Application.job_posting).selectinload(JobPosting.company),
+            )
             .filter(Application.job_posting_id == job_posting_id)
             .order_by(Application.applied_at.desc())
             .offset(skip)
