@@ -40,6 +40,7 @@ async def get_own_profile(
 @router.get("/{user_id}", response_model=APIResponse[ProfileResponse])
 async def get_profile_by_user_id(
     user_id: int,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve profile details for any user by user ID."""
@@ -49,6 +50,14 @@ async def get_profile_by_user_id(
         raise NotFoundError("User not found.")
     service = ProfileService(db)
     profile = await service.get_profile_by_user_id(user_id)
+
+    # Record profile view if viewing someone else's profile
+    if current_user.id != user_id:
+        from app.analytics.services.analytics import AnalyticsService
+
+        analytics_service = AnalyticsService(db)
+        await analytics_service.record_profile_view(profile.id, current_user.id)
+
     return APIResponse(message="Profile retrieved successfully", data=profile)
 
 
@@ -196,3 +205,83 @@ async def delete_experience_route(
     service = ProfileService(db)
     experience = await service.delete_employment_history(current_user.id, employment_id)
     return APIResponse(message="Experience entry deleted successfully", data=experience)
+
+
+@router.post(
+    "/{user_id}/skills/{skill_name}/endorse",
+    response_model=APIResponse[ProfileResponse],
+)
+async def endorse_skill(
+    user_id: int,
+    skill_name: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endorse a skill on a user's profile."""
+    if user_id == current_user.id:
+        raise ValidationError("You cannot endorse your own skills.")
+
+    service = ProfileService(db)
+    profile = await service.get_profile_by_user_id(user_id)
+    if not profile:
+        raise NotFoundError("Profile not found.")
+
+    from app.profiles.models.skill_endorsement import SkillEndorsement
+    from sqlalchemy import select
+
+    # Check if already endorsed
+    stmt = select(SkillEndorsement).where(
+        SkillEndorsement.profile_id == profile.id,
+        SkillEndorsement.skill_name == skill_name,
+        SkillEndorsement.endorser_id == current_user.id,
+    )
+    existing = (await db.execute(stmt)).scalars().first()
+    if existing:
+        raise ValidationError("You have already endorsed this skill.")
+
+    endorsement = SkillEndorsement(
+        profile_id=profile.id,
+        skill_name=skill_name,
+        endorser_id=current_user.id,
+    )
+    db.add(endorsement)
+    await db.flush()
+
+    # Return enriched profile
+    profile = await service.get_profile_by_user_id(user_id)
+    return APIResponse(message="Skill endorsed successfully", data=profile)
+
+
+@router.delete(
+    "/{user_id}/skills/{skill_name}/endorse",
+    response_model=APIResponse[ProfileResponse],
+)
+async def unendorse_skill(
+    user_id: int,
+    skill_name: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove your endorsement from a user's skill."""
+    service = ProfileService(db)
+    profile = await service.get_profile_by_user_id(user_id)
+    if not profile:
+        raise NotFoundError("Profile not found.")
+
+    from app.profiles.models.skill_endorsement import SkillEndorsement
+    from sqlalchemy import select
+
+    stmt = select(SkillEndorsement).where(
+        SkillEndorsement.profile_id == profile.id,
+        SkillEndorsement.skill_name == skill_name,
+        SkillEndorsement.endorser_id == current_user.id,
+    )
+    existing = (await db.execute(stmt)).scalars().first()
+    if not existing:
+        raise ValidationError("Endorsement not found.")
+
+    await db.delete(existing)
+    await db.flush()
+
+    profile = await service.get_profile_by_user_id(user_id)
+    return APIResponse(message="Endorsement removed successfully", data=profile)

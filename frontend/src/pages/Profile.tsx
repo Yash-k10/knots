@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw, MessageSquare, Heart, Calendar } from 'lucide-react'
 import { profileService, ProfileResponse } from '../services/profile'
+import { apiRequest } from '../services/api'
 import ProfileHeader from '../components/profile/ProfileHeader'
 import SkillsSection from '../components/profile/SkillsSection'
 import EducationSection from '../components/profile/EducationSection'
@@ -9,17 +11,43 @@ import CertificationsSection from '../components/profile/CertificationsSection'
 import ProjectsSection from '../components/profile/ProjectsSection'
 
 export default function Profile() {
+  const { userId } = useParams<{ userId?: string }>()
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
+  const [ownProfile, setOwnProfile] = useState<ProfileResponse | null>(null)
+  const [userPosts, setUserPosts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const fetchProfile = async () => {
+  const fetchProfileAndActivity = async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const data = await profileService.getOwnProfile()
-      setProfile(data)
+      // 1. Fetch logged-in user profile first
+      const ownData = await profileService.getOwnProfile()
+      setOwnProfile(ownData)
+
+      // 2. Determine target profile
+      let targetProfile = ownData
+      if (userId) {
+        const parsedId = parseInt(userId, 10)
+        if (!isNaN(parsedId) && parsedId !== ownData.user_id) {
+          targetProfile = await profileService.getProfileByUserId(parsedId)
+        }
+      }
+      setProfile(targetProfile)
+
+      // 3. Fetch activity posts for the target profile user
+      setIsLoadingPosts(true)
+      try {
+        const posts = await apiRequest<any[]>(`/posts/user/${targetProfile.user_id}`)
+        setUserPosts(posts || [])
+      } catch (err) {
+        console.error('Failed to load user posts activity', err)
+      } finally {
+        setIsLoadingPosts(false)
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load profile. Please try again.')
     } finally {
@@ -28,8 +56,8 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfileAndActivity()
+  }, [userId])
 
   const handleUpdate = (updatedProfile: ProfileResponse) => {
     setProfile(updatedProfile)
@@ -38,7 +66,6 @@ export default function Profile() {
 
   const handleError = (message: string) => {
     setError(message)
-    // Auto-dismiss errors after 6 seconds
     setTimeout(() => {
       setError((prev) => (prev === message ? null : prev))
     }, 6000)
@@ -46,7 +73,6 @@ export default function Profile() {
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message)
-    // Auto-dismiss success alerts after 4 seconds
     setTimeout(() => {
       setSuccessMessage((prev) => (prev === message ? null : prev))
     }, 4000)
@@ -88,7 +114,7 @@ export default function Profile() {
         <h3 className="text-xl font-bold text-white mb-2">Failed to Load Profile</h3>
         <p className="text-slate-400 text-sm mb-6">{error}</p>
         <button
-          onClick={fetchProfile}
+          onClick={fetchProfileAndActivity}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition"
         >
           <RefreshCw className="h-4 w-4" />
@@ -98,7 +124,7 @@ export default function Profile() {
     )
   }
 
-  if (!profile) {
+  if (!profile || !ownProfile) {
     return (
       <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center max-w-xl mx-auto my-8 shadow-2xl">
         <Loader2 className="h-10 w-10 text-indigo-400 animate-spin mx-auto mb-4" />
@@ -106,6 +132,8 @@ export default function Profile() {
       </div>
     )
   }
+
+  const isOwnProfile = profile.user_id === ownProfile.user_id
 
   return (
     <div className="space-y-6 relative">
@@ -140,6 +168,7 @@ export default function Profile() {
         profile={profile}
         onUpdate={handleUpdate}
         onError={handleError}
+        isOwnProfile={isOwnProfile}
       />
 
       {/* Main Columns */}
@@ -150,31 +179,93 @@ export default function Profile() {
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
+            isOwnProfile={isOwnProfile}
+            currentUserId={ownProfile.user_id}
           />
           <CertificationsSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
+            isOwnProfile={isOwnProfile}
           />
         </div>
 
-        {/* Right Side: Education, Experience, & Projects */}
+        {/* Right Side: Education, Experience, Projects, and Activity Feed */}
         <div className="lg:col-span-2 space-y-6">
           <EducationSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
+            isOwnProfile={isOwnProfile}
           />
           <ExperienceSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
+            isOwnProfile={isOwnProfile}
           />
           <ProjectsSection
             profile={profile}
             onUpdate={handleUpdate}
             onError={handleError}
+            isOwnProfile={isOwnProfile}
           />
+
+          {/* Recent Activity Feed */}
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-4">
+              Recent Activity
+            </h3>
+            {isLoadingPosts ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-6 w-6 text-indigo-400 animate-spin" />
+              </div>
+            ) : userPosts.length > 0 ? (
+              <div className="space-y-4">
+                {userPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="bg-slate-900/30 border border-slate-900 hover:border-slate-800 rounded-xl p-4 transition duration-300"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Posted on {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-350 leading-relaxed whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+                    {post.image_url && (
+                      <div className="mt-3 rounded-lg overflow-hidden border border-slate-800 max-h-60 bg-slate-950 flex items-center justify-center">
+                        <img
+                          src={
+                            post.image_url.startsWith('http')
+                              ? post.image_url
+                              : `http://localhost:8000${post.image_url}`
+                          }
+                          alt="Post attachment"
+                          className="max-h-60 object-contain w-full"
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-4 mt-4 pt-3 border-t border-slate-900/60 text-xs text-slate-500 font-bold uppercase tracking-wider">
+                      <span className="flex items-center gap-1">
+                        <Heart className="h-4 w-4" /> {post.likes_count} Likes
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4" /> {post.comments_count} Comments
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-slate-500 text-sm italic">No recent posts or discussions from this user.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

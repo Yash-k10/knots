@@ -72,6 +72,14 @@ export interface Project {
   tech_stack?: string[]
 }
 
+export interface SkillEndorsement {
+  id: number
+  profile_id: number
+  skill_name: string
+  endorser_id: number
+  endorser_name: string
+}
+
 export interface ProfileResponse {
   id: number
   user_id: number
@@ -86,6 +94,8 @@ export interface ProfileResponse {
   projects?: Project[] | null
   education: EducationResponse[]
   employment_history: EmploymentHistoryResponse[]
+  endorsements: SkillEndorsement[]
+  connection_count: number
 }
 
 export interface ProfileUpdate {
@@ -167,6 +177,18 @@ export const profileService = {
 
   deleteExperience: async (employmentId: number): Promise<EmploymentHistoryResponse> => {
     return apiRequest<EmploymentHistoryResponse>(`/profiles/me/experience/${employmentId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  endorseSkill: async (userId: number, skillName: string): Promise<ProfileResponse> => {
+    return apiRequest<ProfileResponse>(`/profiles/${userId}/skills/${encodeURIComponent(skillName)}/endorse`, {
+      method: 'POST',
+    })
+  },
+
+  unendorseSkill: async (userId: number, skillName: string): Promise<ProfileResponse> => {
+    return apiRequest<ProfileResponse>(`/profiles/${userId}/skills/${encodeURIComponent(skillName)}/endorse`, {
       method: 'DELETE',
     })
   },

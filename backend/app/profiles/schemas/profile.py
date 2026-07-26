@@ -84,11 +84,24 @@ class ProfileUpdate(ProfileBase):
     pass
 
 
+class SkillEndorsementInfo(BaseModel):
+    id: int
+    profile_id: int
+    skill_name: str
+    endorser_id: int
+    endorser_name: str
+
+    class Config:
+        from_attributes = True
+
+
 class ProfileResponse(ProfileBase):
     id: int
     user_id: int
     education: List[EducationResponse] = []
     employment_history: List[EmploymentHistoryResponse] = []
+    endorsements: List[SkillEndorsementInfo] = []
+    connection_count: int = 0
 
     class Config:
         from_attributes = True
