@@ -7,6 +7,7 @@ from app.profiles.routers.profile import router as profiles_router
 from app.posts.routers.post import router as posts_router
 from app.connections.routers.connection import router as connections_router
 from app.messaging.routers.message import router as messaging_router
+from app.messaging.routers.conversation import router as conversations_router
 from app.messaging.routers.websocket import router as websocket_router
 from app.jobs.routers.job import router as jobs_router
 from app.events.routers.event import router as events_router
@@ -25,6 +26,7 @@ v1_router.include_router(profiles_router)
 v1_router.include_router(posts_router)
 v1_router.include_router(connections_router)
 v1_router.include_router(messaging_router)
+v1_router.include_router(conversations_router)
 v1_router.include_router(websocket_router)
 v1_router.include_router(jobs_router)
 v1_router.include_router(events_router)
