@@ -6,9 +6,11 @@ interface SkillsSectionProps {
   profile: ProfileResponse
   onUpdate: (updatedProfile: ProfileResponse) => void
   onError: (errorMessage: string) => void
+  isOwnProfile: boolean
+  currentUserId?: number
 }
 
-export default function SkillsSection({ profile, onUpdate, onError }: SkillsSectionProps) {
+export default function SkillsSection({ profile, onUpdate, onError, isOwnProfile, currentUserId }: SkillsSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -159,6 +161,23 @@ export default function SkillsSection({ profile, onUpdate, onError }: SkillsSect
     }
   }
 
+  const handleToggleEndorsement = async (skillName: string) => {
+    const skillEndorsements = profile.endorsements?.filter((e) => e.skill_name === skillName) || []
+    const hasEndorsed = skillEndorsements.some((e) => e.endorser_id === currentUserId)
+
+    try {
+      let updated
+      if (hasEndorsed) {
+        updated = await profileService.unendorseSkill(profile.user_id, skillName)
+      } else {
+        updated = await profileService.endorseSkill(profile.user_id, skillName)
+      }
+      onUpdate(updated)
+    } catch (err: any) {
+      onError(err.message || 'Failed to toggle skill endorsement.')
+    }
+  }
+
   const categoryEntries = Object.entries(skills)
 
   return (
@@ -168,7 +187,7 @@ export default function SkillsSection({ profile, onUpdate, onError }: SkillsSect
           <Hash className="h-5 w-5 text-indigo-400" />
           Skills
         </h3>
-        {!isEditing && (
+        {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
@@ -311,14 +330,48 @@ export default function SkillsSection({ profile, onUpdate, onError }: SkillsSect
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{category}</span>
                 <div className="flex flex-wrap gap-2">
                   {items.length > 0 ? (
-                    items.map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-3.5 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs font-medium text-slate-300"
-                      >
-                        {skill}
-                      </span>
-                    ))
+                    items.map((skill) => {
+                      const skillEndorsements = profile.endorsements?.filter((e) => e.skill_name === skill) || []
+                      const endorsedCount = skillEndorsements.length
+                      const hasEndorsed = skillEndorsements.some((e) => e.endorser_id === currentUserId)
+
+                      return (
+                        <div
+                          key={skill}
+                          className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs font-medium text-slate-300 hover:border-slate-700 transition"
+                        >
+                          <span>{skill}</span>
+                          {/* Endorsement badge/button */}
+                          {isOwnProfile ? (
+                            endorsedCount > 0 && (
+                              <span
+                                className="bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-[10px] px-1.5 py-0.5 rounded-full"
+                                title={`Endorsed by: ${skillEndorsements.map((e) => e.endorser_name).join(', ')}`}
+                              >
+                                {endorsedCount}
+                              </span>
+                            )
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleEndorsement(skill)}
+                              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition ${
+                                hasEndorsed
+                                  ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400 font-bold'
+                                  : 'bg-slate-950/40 border-slate-800/40 text-slate-400 hover:text-slate-200'
+                              }`}
+                              title={
+                                endorsedCount > 0
+                                  ? `Endorsed by: ${skillEndorsements.map((e) => e.endorser_name).join(', ')}`
+                                  : 'Endorse this skill'
+                              }
+                            >
+                              👍 {endorsedCount}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })
                   ) : (
                     <span className="text-slate-600 text-xs italic">No skills added.</span>
                   )}

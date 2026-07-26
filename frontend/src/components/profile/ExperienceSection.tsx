@@ -6,9 +6,10 @@ interface ExperienceSectionProps {
   profile: ProfileResponse
   onUpdate: (updatedProfile: ProfileResponse) => void
   onError: (errorMessage: string) => void
+  isOwnProfile?: boolean
 }
 
-export default function ExperienceSection({ profile, onUpdate, onError }: ExperienceSectionProps) {
+export default function ExperienceSection({ profile, onUpdate, onError, isOwnProfile = true }: ExperienceSectionProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -228,7 +229,7 @@ export default function ExperienceSection({ profile, onUpdate, onError }: Experi
           <Briefcase className="h-5 w-5 text-indigo-400" />
           Experience & Internships
         </h3>
-        {!isAdding && editingId === null && (
+        {!isAdding && editingId === null && isOwnProfile && (
           <button
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
@@ -476,7 +477,7 @@ export default function ExperienceSection({ profile, onUpdate, onError }: Experi
                     </div>
 
                     {/* Action buttons */}
-                    {!isAdding && editingId === null && (
+                    {!isAdding && editingId === null && isOwnProfile && (
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                         <button
                           onClick={() => startEdit(exp)}
