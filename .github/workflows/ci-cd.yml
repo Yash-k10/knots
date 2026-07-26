@@ -17,13 +17,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install Dependencies
         run: |
           cd backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt
           pip install ruff pytest black
 
       - name: Run Ruff Linter
@@ -40,6 +39,11 @@ jobs:
         run: |
           cd backend
           python -c "import app.main; print('Backend loaded successfully')"
+
+      - name: Run Backend Unit Tests
+        run: |
+          cd backend
+          python -m unittest test_messaging_router.py test_messaging_service.py test_websocket_messaging.py
 
   frontend-lint-build:
     runs-on: ubuntu-latest
