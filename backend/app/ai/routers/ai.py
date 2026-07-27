@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import List
 
 from app.ai.services.ai import AIResumeService, CareerRoadmapService
 from app.core.response_models import APIResponse
@@ -14,7 +13,7 @@ class ResumeRequest(BaseModel):
 
 class RoadmapRequest(BaseModel):
     target_role: str
-    current_skills: List[str]
+    current_skills: list[str]
 
 
 @router.post("/analyze-resume", response_model=APIResponse[dict])

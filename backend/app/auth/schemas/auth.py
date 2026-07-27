@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class UserLogin(BaseModel):
@@ -36,7 +36,7 @@ class UserRegister(BaseModel):
 class UserRegisterResponse(BaseModel):
     id: int
     email: EmailStr
-    role_id: Optional[int]
+    role_id: int | None
     is_active: bool
     is_verified: bool
     created_at: datetime

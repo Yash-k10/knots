@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -16,7 +14,7 @@ class CommentRepository(BaseRepository[Comment]):
 
     async def get_by_post(
         self, post_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Comment]:
+    ) -> list[Comment]:
         """Fetch comments for a post, oldest first, with author info."""
         result = await self.db.execute(
             select(Comment)

@@ -1,20 +1,21 @@
 import unittest
 from datetime import datetime
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from app.messaging.models.conversation import Conversation
+from app.messaging.models.message import Message
 from app.messaging.routers.conversation import (
-    get_my_conversations,
     create_group_conversation,
     get_conversation_messages,
+    get_my_conversations,
     mark_conversation_read,
 )
 from app.messaging.routers.message import (
-    send_message,
     get_unread_count,
+    send_message,
 )
-from app.messaging.schemas.message import MessageCreate
 from app.messaging.schemas.conversation import ConversationCreate
-from app.messaging.models.message import Message
-from app.messaging.models.conversation import Conversation
+from app.messaging.schemas.message import MessageCreate
 from app.users.models.user import User
 
 

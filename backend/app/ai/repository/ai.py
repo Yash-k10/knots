@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.repository import BaseRepository
+
 from app.ai.models.ai_log import AILog
+from app.core.repository import BaseRepository
 
 
 class AIRepository(BaseRepository[AILog]):

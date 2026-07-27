@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import select, and_, or_, func
+
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.repository import BaseRepository
-from app.messaging.models.message import Message
 from app.messaging.models.conversation import Conversation, ConversationParticipant
+from app.messaging.models.message import Message
 from app.messaging.models.read_receipt import ReadReceipt
 
 
@@ -17,8 +17,8 @@ class MessageRepository(BaseRepository[Message]):
         self,
         sender_id: int,
         content: str,
-        conversation_id: Optional[int] = None,
-        receiver_id: Optional[int] = None,
+        conversation_id: int | None = None,
+        receiver_id: int | None = None,
     ) -> Message:
         message = Message(
             conversation_id=conversation_id,
@@ -42,7 +42,7 @@ class MessageRepository(BaseRepository[Message]):
 
     async def get_conversation_messages(
         self, conversation_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Message]:
+    ) -> list[Message]:
         stmt = (
             select(self.model)
             .where(self.model.conversation_id == conversation_id)
@@ -55,7 +55,7 @@ class MessageRepository(BaseRepository[Message]):
 
     async def get_direct_messages(
         self, user1_id: int, user2_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Message]:
+    ) -> list[Message]:
         stmt = (
             select(self.model)
             .where(
@@ -79,7 +79,7 @@ class MessageRepository(BaseRepository[Message]):
 
     async def get_latest_message_for_conversation(
         self, conversation_id: int
-    ) -> Optional[Message]:
+    ) -> Message | None:
         stmt = (
             select(self.model)
             .where(self.model.conversation_id == conversation_id)
@@ -97,7 +97,7 @@ class MessageRepository(BaseRepository[Message]):
             and_(
                 self.model.conversation_id == conversation_id,
                 self.model.sender_id != user_id,
-                self.model.is_read == False,  # noqa: E712
+                self.model.is_read == False,
             )
         )
         result = await self.db.execute(stmt)
@@ -135,11 +135,11 @@ class MessageRepository(BaseRepository[Message]):
         return count
 
     async def get_unread_count(
-        self, user_id: int, conversation_id: Optional[int] = None
+        self, user_id: int, conversation_id: int | None = None
     ) -> int:
         conditions = [
             self.model.sender_id != user_id,
-            self.model.is_read == False,  # noqa: E712
+            self.model.is_read == False,
         ]
 
         if conversation_id:

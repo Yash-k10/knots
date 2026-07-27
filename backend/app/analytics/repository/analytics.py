@@ -1,16 +1,18 @@
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.repository import BaseRepository
-from app.users.models.user import User
-from app.connections.models.connection import Connection, ConnectionStatus
-from app.jobs.models.job_posting import JobPosting, JobStatusEnum
-from app.posts.models.post import Post
-from app.posts.models.like import Like
-from app.posts.models.comment import Comment
-from app.analytics.models.profile_view import ProfileView
+
 from app.analytics.models.post_engagement import PostEngagement
+from app.analytics.models.profile_view import ProfileView
+from app.connections.models.connection import Connection, ConnectionStatus
+from app.core.repository import BaseRepository
+from app.jobs.models.job_posting import JobPosting, JobStatusEnum
+from app.posts.models.comment import Comment
+from app.posts.models.like import Like
+from app.posts.models.post import Post
 from app.profiles.models.profile import Profile
+from app.users.models.user import User
 
 
 class AnalyticsRepository(BaseRepository[User]):

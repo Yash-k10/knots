@@ -1,5 +1,5 @@
-from typing import Dict, List, Optional
 import logging
+
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ class ConnectionManager:
 
     def __init__(self) -> None:
         # Maps user_id -> list of active WebSocket connections
-        self.active_connections: Dict[int, List[WebSocket]] = {}
+        self.active_connections: dict[int, list[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, user_id: int) -> None:
         """Accept a WebSocket connection and register it under the given user_id."""
@@ -54,8 +54,8 @@ class ConnectionManager:
     async def broadcast_to_conversation(
         self,
         message: dict,
-        participant_ids: List[int],
-        exclude_user_id: Optional[int] = None,
+        participant_ids: list[int],
+        exclude_user_id: int | None = None,
     ) -> None:
         """
         Broadcast a real-time JSON event to online participants in a conversation.
@@ -73,7 +73,7 @@ class ConnectionManager:
             and len(self.active_connections[user_id]) > 0
         )
 
-    def get_online_users(self) -> List[int]:
+    def get_online_users(self) -> list[int]:
         """Get list of user IDs currently online with active WebSockets."""
         return list(self.active_connections.keys())
 

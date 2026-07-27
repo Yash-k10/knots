@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
     email: EmailStr
-    is_active: Optional[bool] = True
+    is_active: bool | None = True
 
 
 class UserCreate(UserBase):
@@ -14,9 +14,9 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    is_active: Optional[bool] = None
+    email: EmailStr | None = None
+    password: str | None = None
+    is_active: bool | None = None
 
 
 class ChangePassword(BaseModel):
@@ -32,7 +32,7 @@ class ChangePassword(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    role_id: Optional[int] = None
+    role_id: int | None = None
     created_at: datetime
     updated_at: datetime
 

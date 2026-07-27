@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 
 
 class SystemStats(BaseModel):
@@ -16,7 +15,7 @@ class ProfileViewItem(BaseModel):
 
 class ProfileViewsResponse(BaseModel):
     total_views: int
-    history: List[ProfileViewItem]
+    history: list[ProfileViewItem]
 
 
 class PostEngagementItem(BaseModel):
@@ -32,7 +31,7 @@ class PostEngagementResponse(BaseModel):
     total_likes: int
     total_comments: int
     total_views: int
-    posts: List[PostEngagementItem]
+    posts: list[PostEngagementItem]
 
 
 class TrendingPostResponse(BaseModel):

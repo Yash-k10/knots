@@ -1,15 +1,16 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
-from app.posts.schemas.post import PostResponse, PostAuthor
+
+from pydantic import BaseModel
+
+from app.posts.schemas.post import PostAuthor, PostResponse
 
 
 class AuditLogResponse(BaseModel):
     id: int
-    actor_id: Optional[int] = None
+    actor_id: int | None = None
     action: str
-    target: Optional[str] = None
-    ip_address: Optional[str] = None
+    target: str | None = None
+    ip_address: str | None = None
     created_at: datetime
 
     class Config:
@@ -17,7 +18,7 @@ class AuditLogResponse(BaseModel):
 
 
 class FlaggedPostCreate(BaseModel):
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class FlaggedPostResolve(BaseModel):
@@ -28,11 +29,11 @@ class FlaggedPostResponse(BaseModel):
     id: int
     post_id: int
     flagger_id: int
-    reason: Optional[str] = None
+    reason: str | None = None
     status: str
     created_at: datetime
-    post: Optional[PostResponse] = None
-    flagger: Optional[PostAuthor] = None
+    post: PostResponse | None = None
+    flagger: PostAuthor | None = None
 
     class Config:
         from_attributes = True

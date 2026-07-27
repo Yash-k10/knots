@@ -1,15 +1,15 @@
-from typing import List
-from sqlalchemy import select, or_, and_
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.repository import BaseRepository
+
 from app.connections.models.connection import Connection, ConnectionStatus
+from app.core.repository import BaseRepository
 
 
 class ConnectionRepository(BaseRepository[Connection]):
     def __init__(self, db: AsyncSession):
         super().__init__(Connection, db)
 
-    async def get_user_connections(self, user_id: int) -> List[Connection]:
+    async def get_user_connections(self, user_id: int) -> list[Connection]:
         stmt = select(self.model).where(
             and_(
                 or_(
@@ -22,7 +22,7 @@ class ConnectionRepository(BaseRepository[Connection]):
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_pending_requests(self, user_id: int) -> List[Connection]:
+    async def get_pending_requests(self, user_id: int) -> list[Connection]:
         stmt = select(self.model).where(
             and_(
                 self.model.addressee_id == user_id,

@@ -1,15 +1,16 @@
 import unittest
 from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from app.core.database import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 import app.core.base  # noqa: F401
-from app.users.models.user import User
+from app.analytics.services.analytics import AnalyticsService
+from app.core.database import Base
+from app.posts.models.post import Post
 from app.profiles.models.profile import Profile
 from app.profiles.models.skill_endorsement import SkillEndorsement
-from app.posts.models.post import Post
-from app.analytics.services.analytics import AnalyticsService
 from app.profiles.services.profile import ProfileService
+from app.users.models.user import User
 
 
 class TestAnalyticsAndEndorsements(unittest.IsolatedAsyncioTestCase):

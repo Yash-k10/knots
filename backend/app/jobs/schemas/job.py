@@ -1,9 +1,9 @@
 from app.jobs.schemas.job_posting import (  # noqa: F401
+    JobCreate,
     JobPostingBase,
     JobPostingCreate,
-    JobPostingUpdate,
     JobPostingResponse,
-    JobCreate,
+    JobPostingUpdate,
     JobResponse,
     JobUpdate,
 )

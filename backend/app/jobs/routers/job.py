@@ -1,13 +1,15 @@
-from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
-from app.users.models.user import User
-
-from app.jobs.models.enums import JobTypeEnum, WorkplaceTypeEnum, JobStatusEnum
+from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
+from app.jobs.schemas.application import (
+    ApplicationCreate,
+    ApplicationResponse,
+    ApplicationUpdate,
+)
 from app.jobs.schemas.company import (
     CompanyCreate,
     CompanyResponse,
@@ -17,19 +19,15 @@ from app.jobs.schemas.job_posting import (
     JobPostingResponse,
     JobPostingUpdate,
 )
-from app.jobs.schemas.application import (
-    ApplicationCreate,
-    ApplicationResponse,
-    ApplicationUpdate,
-)
 from app.jobs.schemas.referral import (
     ReferralCreate,
     ReferralResponse,
 )
+from app.jobs.services.application import ApplicationService
 from app.jobs.services.company import CompanyService
 from app.jobs.services.job import JobService
-from app.jobs.services.application import ApplicationService
 from app.jobs.services.referral import ReferralService
+from app.users.models.user import User
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
@@ -53,9 +51,9 @@ async def create_company(
     return APIResponse(message="Company created successfully", data=company)
 
 
-@router.get("/companies", response_model=APIResponse[List[CompanyResponse]])
+@router.get("/companies", response_model=APIResponse[list[CompanyResponse]])
 async def list_companies(
-    search: Optional[str] = Query(None, description="Search company by name"),
+    search: str | None = Query(None, description="Search company by name"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -80,7 +78,7 @@ async def get_company(
 # --- Applications & Referrals Listing Endpoints ---
 
 
-@router.get("/applications/me", response_model=APIResponse[List[ApplicationResponse]])
+@router.get("/applications/me", response_model=APIResponse[list[ApplicationResponse]])
 async def read_my_applications(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
@@ -95,7 +93,7 @@ async def read_my_applications(
     return APIResponse(data=applications)
 
 
-@router.get("/referrals", response_model=APIResponse[List[ReferralResponse]])
+@router.get("/referrals", response_model=APIResponse[list[ReferralResponse]])
 async def read_my_referrals(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
@@ -147,17 +145,17 @@ async def create_job(
     return APIResponse(message="Job posting created successfully", data=job)
 
 
-@router.get("", response_model=APIResponse[List[JobPostingResponse]])
+@router.get("", response_model=APIResponse[list[JobPostingResponse]])
 async def read_jobs(
-    search: Optional[str] = Query(
+    search: str | None = Query(
         None, description="Search keyword in title, description or location"
     ),
-    job_type: Optional[JobTypeEnum] = Query(None, description="Filter by job type"),
-    workplace_type: Optional[WorkplaceTypeEnum] = Query(
+    job_type: JobTypeEnum | None = Query(None, description="Filter by job type"),
+    workplace_type: WorkplaceTypeEnum | None = Query(
         None, description="Filter by workplace type"
     ),
-    company_id: Optional[int] = Query(None, description="Filter by company ID"),
-    status: Optional[JobStatusEnum] = Query(
+    company_id: int | None = Query(None, description="Filter by company ID"),
+    status: JobStatusEnum | None = Query(
         JobStatusEnum.OPEN, description="Filter by job status"
     ),
     skip: int = Query(0, ge=0),
@@ -238,7 +236,7 @@ async def apply_for_job(
 
 
 @router.get(
-    "/{job_id}/applications", response_model=APIResponse[List[ApplicationResponse]]
+    "/{job_id}/applications", response_model=APIResponse[list[ApplicationResponse]]
 )
 async def read_job_applications(
     job_id: int,

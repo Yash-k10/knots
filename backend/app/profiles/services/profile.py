@@ -1,18 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.profiles.repository.profile import ProfileRepository
+
+from app.core.exceptions import NotFoundError
+from app.profiles.models.education import Education
+from app.profiles.models.employment_history import EmploymentHistory
+from app.profiles.models.profile import Profile
 from app.profiles.repository.education import EducationRepository
 from app.profiles.repository.employment_history import EmploymentHistoryRepository
+from app.profiles.repository.profile import ProfileRepository
 from app.profiles.schemas.profile import (
-    ProfileUpdate,
     EducationCreate,
     EducationUpdate,
     EmploymentHistoryCreate,
     EmploymentHistoryUpdate,
+    ProfileUpdate,
 )
-from app.profiles.models.profile import Profile
-from app.profiles.models.education import Education
-from app.profiles.models.employment_history import EmploymentHistory
-from app.core.exceptions import NotFoundError
 
 
 class ProfileService:
@@ -26,8 +27,9 @@ class ProfileService:
             return profile
 
         # 1. Fetch skill endorsements
-        from app.profiles.models.skill_endorsement import SkillEndorsement
         from sqlalchemy import select
+
+        from app.profiles.models.skill_endorsement import SkillEndorsement
 
         stmt = (
             select(
@@ -64,8 +66,9 @@ class ProfileService:
         profile.endorsements = endorsements
 
         # 2. Fetch connection count
+        from sqlalchemy import and_, func, or_
+
         from app.connections.models.connection import Connection, ConnectionStatus
-        from sqlalchemy import func, or_, and_
 
         conn_stmt = select(func.count(Connection.id)).where(
             and_(

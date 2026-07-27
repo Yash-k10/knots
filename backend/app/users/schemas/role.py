@@ -1,10 +1,9 @@
 from pydantic import BaseModel
-from typing import List, Optional
 
 
 class RoleBase(BaseModel):
     name: str
-    permissions: Optional[List[str]] = None
+    permissions: list[str] | None = None
 
 
 class RoleResponse(RoleBase):

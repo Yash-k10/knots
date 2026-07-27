@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,8 +8,8 @@ from app.core.database import get_db
 from app.core.response_models import APIResponse
 from app.messaging.schemas.conversation import (
     ConversationCreate,
-    ConversationResponse,
     ConversationParticipantResponse,
+    ConversationResponse,
 )
 from app.messaging.schemas.message import MessageResponse
 from app.messaging.services.message import MessagingService
@@ -18,7 +18,7 @@ from app.users.models.user import User
 router = APIRouter(prefix="/conversations", tags=["Messaging Conversations"])
 
 
-@router.get("", response_model=APIResponse[List[ConversationResponse]])
+@router.get("", response_model=APIResponse[list[ConversationResponse]])
 async def get_my_conversations(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
@@ -72,7 +72,7 @@ async def create_group_conversation(
 
 
 @router.get(
-    "/{conversation_id}/messages", response_model=APIResponse[List[MessageResponse]]
+    "/{conversation_id}/messages", response_model=APIResponse[list[MessageResponse]]
 )
 async def get_conversation_messages(
     conversation_id: int,

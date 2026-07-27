@@ -1,18 +1,20 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, AuthorizationError, ValidationError
-from app.messaging.models.message import Message
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.messaging.models.conversation import Conversation
-from app.messaging.repository.message import MessageRepository
+from app.messaging.models.message import Message
 from app.messaging.repository.conversation import ConversationRepository
-from app.messaging.schemas.message import MessageCreate, DirectMessageCreate
+from app.messaging.repository.message import MessageRepository
 from app.messaging.schemas.conversation import (
-    ConversationResponse,
     ConversationParticipantResponse,
+    ConversationResponse,
     UnreadCountResponse,
 )
-from app.messaging.schemas.message import MessageResponse
+from app.messaging.schemas.message import (
+    DirectMessageCreate,
+    MessageCreate,
+    MessageResponse,
+)
 
 
 class MessagingService:
@@ -66,7 +68,7 @@ class MessagingService:
         return await self.send_message(sender_id, msg_in)
 
     async def create_group_conversation(
-        self, creator_id: int, name: str, participant_ids: List[int]
+        self, creator_id: int, name: str, participant_ids: list[int]
     ) -> Conversation:
         """Create a new group conversation."""
         if not name or not name.strip():
@@ -82,7 +84,7 @@ class MessagingService:
 
     async def get_user_conversations(
         self, user_id: int, skip: int = 0, limit: int = 50
-    ) -> List[ConversationResponse]:
+    ) -> list[ConversationResponse]:
         """Get all conversations for a user with last message & unread count."""
         conversations = await self.conversation_repo.get_user_conversations(
             user_id, skip=skip, limit=limit
@@ -119,7 +121,7 @@ class MessagingService:
 
     async def get_conversation_messages(
         self, user_id: int, conversation_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Message]:
+    ) -> list[Message]:
         """Get messages for a conversation after checking user authorization."""
         conv = await self.conversation_repo.get(conversation_id)
         if not conv:

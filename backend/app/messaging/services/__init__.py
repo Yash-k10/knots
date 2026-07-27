@@ -1,3 +1,3 @@
-from app.messaging.services.message import MessagingService, MessageService
+from app.messaging.services.message import MessageService, MessagingService
 
-__all__ = ["MessagingService", "MessageService"]
+__all__ = ["MessageService", "MessagingService"]

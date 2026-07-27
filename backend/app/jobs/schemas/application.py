@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.jobs.models.enums import ApplicationStatusEnum
@@ -7,13 +7,13 @@ from app.jobs.schemas.job_posting import JobPostingResponse
 
 
 class ApplicationBase(BaseModel):
-    resume_url: Optional[str] = Field(
+    resume_url: str | None = Field(
         None, max_length=500, description="URL to resume document"
     )
-    resume_text: Optional[str] = Field(
+    resume_text: str | None = Field(
         None, description="Plain text representation of resume"
     )
-    cover_letter: Optional[str] = Field(None, description="Optional cover letter text")
+    cover_letter: str | None = Field(None, description="Optional cover letter text")
 
 
 class ApplicationCreate(ApplicationBase):
@@ -23,10 +23,10 @@ class ApplicationCreate(ApplicationBase):
 
 
 class ApplicationUpdate(BaseModel):
-    resume_url: Optional[str] = Field(None, max_length=500)
-    resume_text: Optional[str] = None
-    cover_letter: Optional[str] = None
-    status: Optional[ApplicationStatusEnum] = None
+    resume_url: str | None = Field(None, max_length=500)
+    resume_text: str | None = None
+    cover_letter: str | None = None
+    status: ApplicationStatusEnum | None = None
 
 
 class ApplicationResponse(ApplicationBase):
@@ -36,6 +36,6 @@ class ApplicationResponse(ApplicationBase):
     status: ApplicationStatusEnum
     applied_at: datetime
     updated_at: datetime
-    job_posting: Optional[JobPostingResponse] = None
+    job_posting: JobPostingResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

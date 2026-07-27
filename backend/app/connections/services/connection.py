@@ -1,7 +1,7 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.connections.repository.connection import ConnectionRepository
+
 from app.connections.models.connection import Connection, ConnectionStatus
+from app.connections.repository.connection import ConnectionRepository
 
 
 class ConnectionService:
@@ -50,8 +50,8 @@ class ConnectionService:
 
         return await self.repository.update(conn, {"status": ConnectionStatus.REJECTED})
 
-    async def list_my_connections(self, user_id: int) -> List[Connection]:
+    async def list_my_connections(self, user_id: int) -> list[Connection]:
         return await self.repository.get_user_connections(user_id)
 
-    async def list_my_pending_requests(self, user_id: int) -> List[Connection]:
+    async def list_my_pending_requests(self, user_id: int) -> list[Connection]:
         return await self.repository.get_pending_requests(user_id)

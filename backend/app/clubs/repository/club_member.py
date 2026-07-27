@@ -1,11 +1,9 @@
-from typing import List, Optional
-
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.repository import BaseRepository
 from app.clubs.models.club_member import ClubMember
+from app.core.repository import BaseRepository
 
 
 class ClubMemberRepository(BaseRepository[ClubMember]):
@@ -14,7 +12,7 @@ class ClubMemberRepository(BaseRepository[ClubMember]):
     def __init__(self, db: AsyncSession):
         super().__init__(ClubMember, db)
 
-    async def get_with_user(self, member_id: int) -> Optional[ClubMember]:
+    async def get_with_user(self, member_id: int) -> ClubMember | None:
         """Fetch ClubMember with user relationship eagerly loaded."""
         result = await self.db.execute(
             select(ClubMember)
@@ -25,7 +23,7 @@ class ClubMemberRepository(BaseRepository[ClubMember]):
 
     async def get_by_club_and_user(
         self, club_id: int, user_id: int
-    ) -> Optional[ClubMember]:
+    ) -> ClubMember | None:
         """Find membership of a user in a club."""
         result = await self.db.execute(
             select(ClubMember).filter(
@@ -36,7 +34,7 @@ class ClubMemberRepository(BaseRepository[ClubMember]):
 
     async def get_by_club(
         self, club_id: int, skip: int = 0, limit: int = 100
-    ) -> List[ClubMember]:
+    ) -> list[ClubMember]:
         """List all members of a club, including user details."""
         result = await self.db.execute(
             select(ClubMember)

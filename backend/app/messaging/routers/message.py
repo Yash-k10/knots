@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
-from app.messaging.schemas.message import (
-    MessageCreate,
-    DirectMessageCreate,
-    MessageResponse,
-)
-from app.messaging.schemas.conversation import UnreadCountResponse
-from app.messaging.services.message import MessageService
-from app.messaging.repository.conversation import ConversationRepository
-from app.messaging.websocket_manager import manager
 from app.core.database import get_db
 from app.core.response_models import APIResponse
+from app.messaging.repository.conversation import ConversationRepository
+from app.messaging.schemas.conversation import UnreadCountResponse
+from app.messaging.schemas.message import (
+    DirectMessageCreate,
+    MessageCreate,
+    MessageResponse,
+)
+from app.messaging.services.message import MessageService
+from app.messaging.websocket_manager import manager
 from app.users.models.user import User
 
 router = APIRouter(prefix="/messages", tags=["Messaging"])

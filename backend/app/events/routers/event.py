@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
@@ -25,17 +24,17 @@ router = APIRouter(prefix="/events", tags=["Events"])
 # ── Event Listing & Categories ────────────────────────────────────────────────
 
 
-@router.get("", response_model=APIResponse[List[EventResponse]])
+@router.get("", response_model=APIResponse[list[EventResponse]])
 async def list_events(
-    status: Optional[EventStatus] = Query(None),
-    category_id: Optional[int] = Query(None),
-    organizer_id: Optional[int] = Query(None),
-    search: Optional[str] = Query(None),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    status: EventStatus | None = Query(None),
+    category_id: int | None = Query(None),
+    organizer_id: int | None = Query(None),
+    search: str | None = Query(None),
+    start_date: datetime | None = Query(None),
+    end_date: datetime | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve all scheduled events list with filtering and pagination."""
@@ -55,11 +54,11 @@ async def list_events(
     return APIResponse(data=events)
 
 
-@router.get("/upcoming", response_model=APIResponse[List[EventResponse]])
+@router.get("/upcoming", response_model=APIResponse[list[EventResponse]])
 async def get_upcoming_events(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve all upcoming published events."""
@@ -71,7 +70,7 @@ async def get_upcoming_events(
     return APIResponse(data=events)
 
 
-@router.get("/categories", response_model=APIResponse[List[EventCategoryResponse]])
+@router.get("/categories", response_model=APIResponse[list[EventCategoryResponse]])
 async def list_event_categories(
     db: AsyncSession = Depends(get_db),
 ):
@@ -101,7 +100,7 @@ async def create_event(
 @router.get("/{event_id}", response_model=APIResponse[EventResponse])
 async def get_event_detail(
     event_id: int = Path(..., ge=1),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve a single event with full details."""
@@ -165,7 +164,7 @@ async def cancel_rsvp(
     return APIResponse(message="RSVP cancelled successfully")
 
 
-@router.get("/{event_id}/rsvps", response_model=APIResponse[List[RSVPResponse]])
+@router.get("/{event_id}/rsvps", response_model=APIResponse[list[RSVPResponse]])
 async def list_event_rsvps(
     event_id: int = Path(..., ge=1),
     skip: int = Query(0, ge=0),

@@ -1,14 +1,13 @@
-from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies.auth import get_current_user, RoleRequired
+from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.exceptions import AuthorizationError
 from app.core.response_models import APIResponse
 from app.users.models.user import User
-from app.users.schemas.user import UserCreate, UserResponse, UserUpdate, ChangePassword
 from app.users.schemas.role import RoleResponse, UserRoleUpdate
+from app.users.schemas.user import ChangePassword, UserCreate, UserResponse, UserUpdate
 from app.users.services.user import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -40,7 +39,7 @@ async def change_password(
     return APIResponse(message="Password changed successfully", data=user)
 
 
-@router.get("/roles", response_model=APIResponse[List[RoleResponse]])
+@router.get("/roles", response_model=APIResponse[list[RoleResponse]])
 async def list_roles(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -51,7 +50,7 @@ async def list_roles(
     return APIResponse(data=roles)
 
 
-@router.get("", response_model=APIResponse[List[UserResponse]])
+@router.get("", response_model=APIResponse[list[UserResponse]])
 async def list_users(
     skip: int = 0,
     limit: int = 100,

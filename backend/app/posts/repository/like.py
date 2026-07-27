@@ -1,6 +1,4 @@
-from typing import Optional
-
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.repository import BaseRepository
@@ -13,7 +11,7 @@ class LikeRepository(BaseRepository[Like]):
     def __init__(self, db: AsyncSession):
         super().__init__(Like, db)
 
-    async def get_by_post_and_user(self, post_id: int, user_id: int) -> Optional[Like]:
+    async def get_by_post_and_user(self, post_id: int, user_id: int) -> Like | None:
         """Find an existing like by a specific user on a specific post."""
         result = await self.db.execute(
             select(Like).filter(and_(Like.post_id == post_id, Like.user_id == user_id))

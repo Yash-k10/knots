@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Union
+from typing import Any
+
 import bcrypt
 
 # Fix compatibility between passlib and bcrypt >= 4.0.0
@@ -19,11 +20,11 @@ def _safe_hashpw(password: bytes, salt: bytes) -> bytes:
 
 bcrypt.hashpw = _safe_hashpw
 
-from jose import JWTError, jwt  # noqa: E402
-from passlib.context import CryptContext  # noqa: E402
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
-from app.core.config import settings  # noqa: E402
-from app.core.exceptions import AuthenticationError  # noqa: E402
+from app.core.config import settings
+from app.core.exceptions import AuthenticationError
 
 # Setup password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -40,7 +41,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     """Create a short-lived access token."""
     if expires_delta:
@@ -58,7 +59,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     """Create a long-lived refresh token."""
     if expires_delta:
@@ -76,7 +77,7 @@ def create_refresh_token(
 
 
 def create_verification_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     """Create a long-lived verification token for email verification."""
     if expires_delta:
@@ -91,7 +92,7 @@ def create_verification_token(
     return encoded_jwt
 
 
-def decode_token(token: str, expected_type: str = "access") -> Dict[str, Any]:
+def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     """
     Decode and validate a JWT.
     Raises AuthenticationError if validation fails.

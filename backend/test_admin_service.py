@@ -1,11 +1,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import app.core.base  # noqa: F401
+from app.admin.models.flagged_post import FlaggedPost
 from app.admin.services.admin import AdminService
 from app.core.exceptions import NotFoundError
-from app.users.models.user import User
-from app.admin.models.flagged_post import FlaggedPost
 from app.posts.models.post import Post
+from app.users.models.user import User
 
 
 class TestAdminService(unittest.IsolatedAsyncioTestCase):

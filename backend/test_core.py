@@ -2,13 +2,13 @@ import unittest
 from datetime import timedelta
 
 from app.core import (
-    hash_password,
-    verify_password,
+    AuthenticationError,
     create_access_token,
     create_refresh_token,
     create_verification_token,
     decode_token,
-    AuthenticationError,
+    hash_password,
+    verify_password,
 )
 
 
