@@ -66,4 +66,10 @@ export const analyticsService = {
       method: 'POST',
     })
   },
+
+  recordProfileView: async (profileId: number): Promise<void> => {
+    return apiRequest<void>(`/analytics/profile/${profileId}/view`, {
+      method: 'POST',
+    })
+  },
 }

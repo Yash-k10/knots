@@ -69,3 +69,14 @@ async def record_post_view(
     service = AnalyticsService(db)
     await service.record_post_view(post_id, user_id=None)
     return APIResponse(message="Post view recorded successfully")
+
+
+@router.post("/profile/{profile_id}/view", response_model=APIResponse)
+async def record_profile_view(
+    profile_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Record a view on a profile to track engagement metrics."""
+    service = AnalyticsService(db)
+    await service.record_profile_view(profile_id, viewer_id=None)
+    return APIResponse(message="Profile view recorded successfully")
