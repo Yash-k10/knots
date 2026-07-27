@@ -1,8 +1,19 @@
 import { Message } from './messaging'
 
+export interface NotificationData {
+  id: number
+  user_id: number
+  title: string
+  content: string
+  is_read: boolean
+  type?: string
+  created_at: string
+}
+
 export type MessageHandler = (message: Message) => void
 export type TypingHandler = (data: { conversation_id: number; user_id: number; is_typing: boolean }) => void
 export type ReadHandler = (data: { conversation_id: number; reader_id: number; count: number }) => void
+export type NotificationHandler = (data: { notification?: NotificationData; unread_count?: number }) => void
 export type ConnectionHandler = (status: boolean) => void
 
 export class MessagingWebSocket {
@@ -15,7 +26,9 @@ export class MessagingWebSocket {
   private messageCallbacks: Set<MessageHandler> = new Set()
   private typingCallbacks: Set<TypingHandler> = new Set()
   private readCallbacks: Set<ReadHandler> = new Set()
+  private notificationCallbacks: Set<NotificationHandler> = new Set()
   private connectionCallbacks: Set<ConnectionHandler> = new Set()
+
 
   constructor() {
     this.token = localStorage.getItem('knots_token')
@@ -95,6 +108,15 @@ export class MessagingWebSocket {
           })
         )
         break
+      case 'new_notification':
+      case 'notification':
+        this.notificationCallbacks.forEach((cb) =>
+          cb({
+            notification: data.notification,
+            unread_count: data.unread_count,
+          })
+        )
+        break
       case 'pong':
         break
       default:
@@ -150,6 +172,12 @@ export class MessagingWebSocket {
     this.readCallbacks.add(cb)
     return () => this.readCallbacks.delete(cb)
   }
+
+  public onNotification(cb: NotificationHandler) {
+    this.notificationCallbacks.add(cb)
+    return () => this.notificationCallbacks.delete(cb)
+  }
+
 
   public onConnection(cb: ConnectionHandler) {
     this.connectionCallbacks.add(cb)

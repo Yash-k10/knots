@@ -3,6 +3,13 @@ from datetime import datetime
 from typing import Optional
 
 
+class NotificationCreate(BaseModel):
+    user_id: int
+    title: str
+    content: str
+    type: Optional[str] = "general"
+
+
 class NotificationResponse(BaseModel):
     id: int
     user_id: int
@@ -14,3 +21,7 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
