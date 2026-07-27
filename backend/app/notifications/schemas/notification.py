@@ -1,6 +1,14 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
+
+
+class NotificationCreate(BaseModel):
+    user_id: int
+    title: str
+    content: str
+    type: Optional[str] = "general"
 
 
 class NotificationResponse(BaseModel):
@@ -14,3 +22,7 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
