@@ -10,12 +10,9 @@ import {
   MessageCircle,
   Activity,
   Award,
-  Sparkles,
-  UserCheck,
 } from 'lucide-react'
 import { analyticsService, SystemStats, ProfileViewsResponse, PostEngagementResponse, TrendingPost } from '../services/analytics'
 import { profileService, ProfileResponse } from '../services/profile'
-import { aiService, AIRecommendationsResponse } from '../services/ai'
 
 export default function Dashboard() {
   const [stats, setStats] = useState<SystemStats | null>(null)
@@ -23,19 +20,17 @@ export default function Dashboard() {
   const [engagement, setEngagement] = useState<PostEngagementResponse | null>(null)
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([])
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
-  const [aiRecs, setAiRecs] = useState<AIRecommendationsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [sysStats, viewsData, engData, trending, userProfile, recsData] = await Promise.all([
+        const [sysStats, viewsData, engData, trending, userProfile] = await Promise.all([
           analyticsService.getSystemStats(),
           analyticsService.getProfileViews(7),
           analyticsService.getPostEngagement(),
           analyticsService.getTrendingPosts(5),
           profileService.getOwnProfile().catch(() => null),
-          aiService.getRecommendations().catch(() => null),
         ])
 
         setStats(sysStats)
@@ -43,7 +38,6 @@ export default function Dashboard() {
         setEngagement(engData)
         setTrendingPosts(trending)
         setProfile(userProfile)
-        setAiRecs(recsData)
       } catch (error) {
         console.error('Failed to load dashboard metrics', error)
       } finally {
@@ -355,134 +349,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* AI Campus Assistant & Recommendations */}
-      {aiRecs && (
-        <div className="bg-gradient-to-br from-indigo-950/40 via-slate-950/60 to-purple-950/30 border border-indigo-500/20 rounded-2xl p-6 shadow-2xl backdrop-blur-md relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                <Sparkles className="h-5 w-5 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  AI-Powered Recommendations
-                  <span className="text-[10px] uppercase font-extrabold tracking-wider bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
-                    Smart Match
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Personalized connection suggestions & career opportunities tailored to your skills & department
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* AI Connection Suggestions */}
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <UserCheck className="h-4 w-4 text-indigo-400" /> Suggested Peers & Alumni
-                </span>
-                <span className="text-[10px] text-slate-500">{aiRecs.connections.length} matches</span>
-              </div>
-              <div className="space-y-3">
-                {aiRecs.connections.length > 0 ? (
-                  aiRecs.connections.map((conn) => (
-                    <div
-                      key={conn.user_id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800/60 hover:border-indigo-500/40 transition duration-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-indigo-500/20 text-indigo-300 font-bold flex items-center justify-center text-sm border border-indigo-500/30">
-                          {conn.first_name ? conn.first_name.charAt(0) : 'U'}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-white">
-                              {conn.first_name || 'Campus'} {conn.last_name || 'Member'}
-                            </span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              {conn.match_score}% Match
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400">
-                            {conn.department || 'Student'} {conn.graduation_year ? `• Class of ${conn.graduation_year}` : ''}
-                          </p>
-                          {conn.shared_skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {conn.shared_skills.slice(0, 3).map((sk, idx) => (
-                                <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300">
-                                  {sk}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <button className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition">
-                        Connect
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500 italic py-4 text-center">
-                    No connection suggestions available right now.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* AI Job Matches */}
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Briefcase className="h-4 w-4 text-emerald-400" /> Tailored Job Matches
-                </span>
-                <span className="text-[10px] text-slate-500">{aiRecs.jobs.length} matches</span>
-              </div>
-              <div className="space-y-3">
-                {aiRecs.jobs.length > 0 ? (
-                  aiRecs.jobs.map((job) => (
-                    <div
-                      key={job.job_id}
-                      className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/60 hover:border-emerald-500/40 transition duration-200"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold text-white">{job.title}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          {job.match_score}% Match
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-2">
-                        {job.company_name} {job.location ? `• ${job.location}` : ''}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-1">
-                          {job.matching_skills.slice(0, 3).map((sk, idx) => (
-                            <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-800/40">
-                              {sk}
-                            </span>
-                          ))}
-                        </div>
-                        <button className="px-3 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-semibold border border-emerald-500/30 transition">
-                          View Job
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-500 italic py-4 text-center">
-                    No job matches found right now.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Trending Posts & System Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
