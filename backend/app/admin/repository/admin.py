@@ -62,6 +62,20 @@ class FlaggedPostRepository(BaseRepository[FlaggedPost]):
     def __init__(self, db: AsyncSession):
         super().__init__(FlaggedPost, db)
 
+    async def get_with_details(self, id: int) -> FlaggedPost | None:
+        """Fetch a single flagged post by ID with related flagger and post details."""
+        result = await self.db.execute(
+            select(FlaggedPost)
+            .options(
+                selectinload(FlaggedPost.flagger),
+                selectinload(FlaggedPost.post).selectinload(Post.author),
+                selectinload(FlaggedPost.post).selectinload(Post.comments),
+                selectinload(FlaggedPost.post).selectinload(Post.likes),
+            )
+            .filter(FlaggedPost.id == id)
+        )
+        return result.scalars().first()
+
     async def get_flagged_posts_with_details(
         self, skip: int = 0, limit: int = 100
     ) -> list[FlaggedPost]:

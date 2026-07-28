@@ -130,7 +130,7 @@ class AdminService:
             raise ValueError("Invalid resolution action")
 
         flagged_repo = FlaggedPostRepository(self.db)
-        flag = await flagged_repo.get(flag_id)
+        flag = await flagged_repo.get_with_details(flag_id)
         if not flag:
             raise NotFoundError(message="Flagged post record not found")
 
