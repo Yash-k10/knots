@@ -3,8 +3,12 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.schemas.connection_suggestion import ConnectionSuggestionResponse
+from app.ai.schemas.content_recommendation import ContentRecommendationResponse
+from app.ai.schemas.job_recommendation import JobRecommendationResponse
 from app.ai.services.ai import (
     AIConnectionSuggestionService,
+    AIContentRecommendationService,
+    AIJobRecommendationService,
     AIResumeService,
     CareerRoadmapService,
 )
@@ -57,4 +61,43 @@ async def get_connection_suggestions(
     )
     return APIResponse(
         message="AI connection suggestions retrieved successfully", data=suggestions
+    )
+
+
+@router.get(
+    "/job-recommendations",
+    response_model=APIResponse[list[JobRecommendationResponse]],
+)
+async def get_job_recommendations(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get AI-powered job recommendations based on user skills, department, and application status."""
+    service = AIJobRecommendationService()
+    recommendations = await service.get_job_recommendations(
+        db=db, current_user_id=current_user.id, limit=limit
+    )
+    return APIResponse(
+        message="AI job recommendations retrieved successfully", data=recommendations
+    )
+
+
+@router.get(
+    "/content-recommendations",
+    response_model=APIResponse[list[ContentRecommendationResponse]],
+)
+async def get_content_recommendations(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get AI-powered content recommendations for feed based on topics and engagement."""
+    service = AIContentRecommendationService()
+    recommendations = await service.get_content_recommendations(
+        db=db, current_user_id=current_user.id, limit=limit
+    )
+    return APIResponse(
+        message="AI content recommendations retrieved successfully",
+        data=recommendations,
     )
