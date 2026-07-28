@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.repository.analytics import AnalyticsRepository
 from app.analytics.schemas.analytics import (
+    PlatformEngagementSummary,
     PostEngagementResponse,
     ProfileViewsResponse,
     SystemStats,
@@ -19,6 +20,23 @@ class AnalyticsService:
         """Get platform-wide stats."""
         stats = await self.repository.get_system_stats()
         return SystemStats(**stats)
+
+    async def get_platform_engagement_summary(self) -> PlatformEngagementSummary:
+        """Get aggregate platform engagement summary."""
+        stats = await self.repository.get_system_stats()
+        total_actions = (
+            stats["total_likes"]
+            + stats["total_comments"]
+            + stats["total_post_views"]
+            + stats["total_profile_views"]
+        )
+        return PlatformEngagementSummary(
+            total_likes=stats["total_likes"],
+            total_comments=stats["total_comments"],
+            total_post_views=stats["total_post_views"],
+            total_profile_views=stats["total_profile_views"],
+            total_engagement_actions=total_actions,
+        )
 
     async def get_profile_views(
         self, user_id: int, days: int = 7
@@ -50,7 +68,9 @@ class AnalyticsService:
         metrics = await self.repository.get_user_posts_engagement(user_id)
         return PostEngagementResponse(**metrics)
 
-    async def get_trending_posts(self, limit: int = 5) -> list[TrendingPostResponse]:
+    async def get_trending_posts(
+        self, limit: int = 5, days: int = 7
+    ) -> list[TrendingPostResponse]:
         """Get platform trending posts."""
-        posts = await self.repository.get_trending_posts(limit)
+        posts = await self.repository.get_trending_posts(limit=limit, days=days)
         return [TrendingPostResponse(**p) for p in posts]

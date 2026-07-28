@@ -122,3 +122,38 @@ class TestAnalyticsAndEndorsements(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats.total_posts, 0)
         self.assertEqual(stats.total_connections, 0)
         self.assertEqual(stats.total_jobs, 0)
+        self.assertEqual(stats.total_events, 0)
+        self.assertEqual(stats.total_clubs, 0)
+        self.assertEqual(stats.total_likes, 0)
+        self.assertEqual(stats.total_comments, 0)
+        self.assertEqual(stats.total_post_views, 0)
+        self.assertEqual(stats.total_profile_views, 0)
+
+    async def test_platform_engagement_summary(self):
+        analytics_service = AnalyticsService(self.db)
+
+        # Record some engagement
+        await analytics_service.record_profile_view(self.profile1.id, self.user2.id)
+
+        summary = await analytics_service.get_platform_engagement_summary()
+        self.assertEqual(summary.total_profile_views, 1)
+        self.assertEqual(summary.total_engagement_actions, 1)
+
+    async def test_trending_posts_time_window_and_fallback(self):
+        analytics_service = AnalyticsService(self.db)
+
+        # Create post by Alice
+        post = Post(content="Trending test post", author_id=self.user1.id)
+        self.db.add(post)
+        await self.db.flush()
+
+        await analytics_service.record_post_view(post.id, self.user2.id)
+
+        # Test with days=7
+        trending_recent = await analytics_service.get_trending_posts(limit=5, days=7)
+        self.assertEqual(len(trending_recent), 1)
+        self.assertEqual(trending_recent[0].post_id, post.id)
+
+        # Test with days=1 (should still match today's post)
+        trending_today = await analytics_service.get_trending_posts(limit=5, days=1)
+        self.assertEqual(len(trending_today), 1)

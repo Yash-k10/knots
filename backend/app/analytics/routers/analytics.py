@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.schemas.analytics import (
+    PlatformEngagementSummary,
     PostEngagementResponse,
     ProfileViewsResponse,
     SystemStats,
@@ -22,6 +23,17 @@ async def read_system_stats(db: AsyncSession = Depends(get_db)):
     service = AnalyticsService(db)
     stats = await service.get_system_stats()
     return APIResponse(data=stats)
+
+
+@router.get(
+    "/platform/engagement-summary",
+    response_model=APIResponse[PlatformEngagementSummary],
+)
+async def read_platform_engagement_summary(db: AsyncSession = Depends(get_db)):
+    """Retrieve aggregate engagement summary metrics across the entire platform."""
+    service = AnalyticsService(db)
+    summary = await service.get_platform_engagement_summary()
+    return APIResponse(data=summary)
 
 
 @router.get("/profile/views", response_model=APIResponse[ProfileViewsResponse])
@@ -50,11 +62,12 @@ async def read_posts_engagement(
 @router.get("/trending-posts", response_model=APIResponse[list[TrendingPostResponse]])
 async def read_trending_posts(
     limit: int = Query(5, ge=1, le=20),
+    days: int = Query(7, ge=1, le=365),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve top trending posts across the platform based on weighted engagement."""
     service = AnalyticsService(db)
-    trending = await service.get_trending_posts(limit)
+    trending = await service.get_trending_posts(limit=limit, days=days)
     return APIResponse(data=trending)
 
 

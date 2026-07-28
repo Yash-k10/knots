@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.models.post_engagement import PostEngagement
 from app.analytics.models.profile_view import ProfileView
+from app.clubs.models.club import Club
 from app.connections.models.connection import Connection, ConnectionStatus
 from app.core.repository import BaseRepository
+from app.events.models.event import Event
 from app.jobs.models.job_posting import JobPosting, JobStatusEnum
 from app.posts.models.comment import Comment
 from app.posts.models.like import Like
@@ -20,7 +22,7 @@ class AnalyticsRepository(BaseRepository[User]):
         super().__init__(User, db)
 
     async def get_system_stats(self) -> dict:
-        """Fetch actual database counts for users, connections, jobs, and posts."""
+        """Fetch actual database counts for users, connections, jobs, posts, events, clubs, likes, comments, and views."""
         # 1. Total users
         users_result = await self.db.execute(select(func.count(User.id)))
         total_users = users_result.scalar() or 0
@@ -45,11 +47,45 @@ class AnalyticsRepository(BaseRepository[User]):
         posts_result = await self.db.execute(select(func.count(Post.id)))
         total_posts = posts_result.scalar() or 0
 
+        # 5. Total events
+        events_result = await self.db.execute(select(func.count(Event.id)))
+        total_events = events_result.scalar() or 0
+
+        # 6. Total clubs
+        clubs_result = await self.db.execute(select(func.count(Club.id)))
+        total_clubs = clubs_result.scalar() or 0
+
+        # 7. Total likes
+        likes_result = await self.db.execute(select(func.count(Like.id)))
+        total_likes = likes_result.scalar() or 0
+
+        # 8. Total comments
+        comments_result = await self.db.execute(select(func.count(Comment.id)))
+        total_comments = comments_result.scalar() or 0
+
+        # 9. Total post views
+        post_views_result = await self.db.execute(
+            select(func.count(PostEngagement.id)).where(
+                PostEngagement.engagement_type == "view"
+            )
+        )
+        total_post_views = post_views_result.scalar() or 0
+
+        # 10. Total profile views
+        profile_views_result = await self.db.execute(select(func.count(ProfileView.id)))
+        total_profile_views = profile_views_result.scalar() or 0
+
         return {
             "total_users": total_users,
             "total_connections": total_connections,
             "total_jobs": total_jobs,
             "total_posts": total_posts,
+            "total_events": total_events,
+            "total_clubs": total_clubs,
+            "total_likes": total_likes,
+            "total_comments": total_comments,
+            "total_post_views": total_post_views,
+            "total_profile_views": total_profile_views,
         }
 
     async def get_profile_views_history(self, profile_id: int, days: int = 7) -> list:
@@ -166,17 +202,25 @@ class AnalyticsRepository(BaseRepository[User]):
             "posts": individual_metrics,
         }
 
-    async def get_trending_posts(self, limit: int = 5) -> list:
-        """Get top posts across the platform based on weighted engagement in the last 7 days.
+    async def get_trending_posts(self, limit: int = 5, days: int = 7) -> list:
+        """Get top posts across the platform based on weighted engagement in the last N days.
 
         Weighted engagement score: likes * 2 + comments * 5 + views * 1
         """
-        since_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
+        since_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+            days=days
+        )
 
-        # Get posts created in the last 7 days
+        # Get posts created in the last N days
         posts_query = select(Post).where(Post.created_at >= since_date)
         posts_result = await self.db.execute(posts_query)
         recent_posts = posts_result.scalars().all()
+
+        if not recent_posts:
+            # Fallback to all posts if no recent posts found in the timeframe
+            posts_query = select(Post)
+            posts_result = await self.db.execute(posts_query)
+            recent_posts = posts_result.scalars().all()
 
         trending = []
         for post in recent_posts:

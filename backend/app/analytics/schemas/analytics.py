@@ -6,6 +6,20 @@ class SystemStats(BaseModel):
     total_connections: int
     total_jobs: int
     total_posts: int
+    total_events: int = 0
+    total_clubs: int = 0
+    total_likes: int = 0
+    total_comments: int = 0
+    total_post_views: int = 0
+    total_profile_views: int = 0
+
+
+class PlatformEngagementSummary(BaseModel):
+    total_likes: int
+    total_comments: int
+    total_post_views: int
+    total_profile_views: int
+    total_engagement_actions: int
 
 
 class ProfileViewItem(BaseModel):
