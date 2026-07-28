@@ -37,9 +37,20 @@ class RoleRequired:
         self.allowed_roles = allowed_roles
 
     def __call__(self, current_user: User = Depends(get_current_user)) -> User:
-        if not current_user.role:
+        role_name = current_user.role.name if current_user.role else ""
+        role_id = current_user.role_id
+
+        if not role_name and role_id is None:
             raise AuthorizationError("User role not initialized")
-        if current_user.role.name not in self.allowed_roles:
+
+        allowed_lower = [r.lower() for r in self.allowed_roles]
+
+        # Check if Admin is in allowed roles and user has role_id == 1 or role name 'Admin'
+        is_admin_check = "admin" in allowed_lower and (
+            role_id == 1 or role_name.lower() == "admin"
+        )
+
+        if not is_admin_check and role_name.lower() not in allowed_lower:
             raise AuthorizationError(
                 f"Role not authorized. Required one of: {self.allowed_roles}"
             )

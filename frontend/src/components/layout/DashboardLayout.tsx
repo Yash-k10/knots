@@ -22,6 +22,7 @@ interface SidebarItem {
   name: string
   path: string
   icon: React.ComponentType<any>
+  adminOnly?: boolean
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -33,18 +34,42 @@ const sidebarItems: SidebarItem[] = [
   { name: 'Events', path: '/events', icon: Calendar },
   { name: 'Messages', path: '/messaging', icon: MessageSquare },
   { name: 'Notifications', path: '/notifications', icon: Bell },
-  { name: 'Admin Console', path: '/admin', icon: ShieldAlert },
+  { name: 'Admin Console', path: '/admin', icon: ShieldAlert, adminOnly: true },
   { name: 'Settings', path: '/settings', icon: Settings },
 ]
+
+interface UserRole {
+  id: number
+  name: string
+}
+
+interface CurrentUser {
+  id: number
+  email: string
+  role_id?: number
+  role?: UserRole
+}
 
 export default function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0)
+  const [user, setUser] = useState<CurrentUser | null>(null)
 
   useEffect(() => {
     // Initialize WebSocket connection for real-time notifications
     wsClient.connect()
+
+    // Fetch current logged in user details & role
+    const fetchCurrentUser = async () => {
+      try {
+        const userData = await apiRequest<CurrentUser>('/users/me')
+        setUser(userData)
+      } catch (err) {
+        // Fallback user fetch error
+      }
+    }
+    fetchCurrentUser()
 
     // Fetch initial unread count from API
     const fetchUnreadCount = async () => {
@@ -77,6 +102,12 @@ export default function DashboardLayout() {
     navigate('/login')
   }
 
+  const isAdmin = user?.role_id === 1 || user?.role?.name?.toLowerCase() === 'admin'
+  const visibleSidebarItems = sidebarItems.filter((item) => !item.adminOnly || isAdmin)
+
+  const roleBadgeLabel = user?.role?.name || (isAdmin ? 'Admin' : 'User')
+  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U'
+
   return (
     <div className="flex h-screen bg-slate-900 text-slate-100 overflow-hidden">
       {/* Sidebar */}
@@ -90,7 +121,7 @@ export default function DashboardLayout() {
 
           {/* Nav Links */}
           <nav className="p-4 space-y-1">
-            {sidebarItems.map((item) => {
+            {visibleSidebarItems.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.path
               const isNotifications = item.path === '/notifications'
@@ -160,9 +191,11 @@ export default function DashboardLayout() {
               )}
             </Link>
             <div className="flex items-center gap-3">
-              <span className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 font-mono">Student</span>
-              <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm text-white">
-                JD
+              <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
+                {roleBadgeLabel}
+              </span>
+              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shadow-md shadow-indigo-500/20">
+                {userInitial}
               </div>
             </div>
           </div>
