@@ -5,6 +5,20 @@ export interface SystemStats {
   total_connections: number
   total_jobs: number
   total_posts: number
+  total_events?: number
+  total_clubs?: number
+  total_likes?: number
+  total_comments?: number
+  total_post_views?: number
+  total_profile_views?: number
+}
+
+export interface PlatformEngagementSummary {
+  total_likes: number
+  total_comments: number
+  total_post_views: number
+  total_profile_views: number
+  total_engagement_actions: number
 }
 
 export interface ProfileViewItem {
@@ -49,6 +63,10 @@ export const analyticsService = {
     return apiRequest<SystemStats>('/analytics/stats')
   },
 
+  getPlatformEngagementSummary: async (): Promise<PlatformEngagementSummary> => {
+    return apiRequest<PlatformEngagementSummary>('/analytics/platform/engagement-summary')
+  },
+
   getProfileViews: async (days: number = 7): Promise<ProfileViewsResponse> => {
     return apiRequest<ProfileViewsResponse>(`/analytics/profile/views?days=${days}`)
   },
@@ -57,8 +75,8 @@ export const analyticsService = {
     return apiRequest<PostEngagementResponse>('/analytics/posts/engagement')
   },
 
-  getTrendingPosts: async (limit: number = 5): Promise<TrendingPost[]> => {
-    return apiRequest<TrendingPost[]>(`/analytics/trending-posts?limit=${limit}`)
+  getTrendingPosts: async (limit: number = 5, days: number = 7): Promise<TrendingPost[]> => {
+    return apiRequest<TrendingPost[]>(`/analytics/trending-posts?limit=${limit}&days=${days}`)
   },
 
   recordPostView: async (postId: number): Promise<void> => {
