@@ -1,8 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.services.ai import AIResumeService, CareerRoadmapService
+from app.ai.schemas.connection_suggestion import ConnectionSuggestionResponse
+from app.ai.services.ai import (
+    AIConnectionSuggestionService,
+    AIResumeService,
+    CareerRoadmapService,
+)
+from app.auth.dependencies.auth import get_current_user
+from app.core.database import get_db
 from app.core.response_models import APIResponse
+from app.users.models.user import User
 
 router = APIRouter(prefix="/ai", tags=["AI Integration"])
 
@@ -30,3 +39,22 @@ async def generate_roadmap(payload: RoadmapRequest):
     service = CareerRoadmapService()
     result = await service.generate_roadmap(payload.target_role, payload.current_skills)
     return APIResponse(message="Roadmap generated successfully (sandbox)", data=result)
+
+
+@router.get(
+    "/connection-suggestions",
+    response_model=APIResponse[list[ConnectionSuggestionResponse]],
+)
+async def get_connection_suggestions(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get AI-powered connection suggestions based on skills, department, and graduation year."""
+    service = AIConnectionSuggestionService()
+    suggestions = await service.get_connection_suggestions(
+        db=db, current_user_id=current_user.id, limit=limit
+    )
+    return APIResponse(
+        message="AI connection suggestions retrieved successfully", data=suggestions
+    )
