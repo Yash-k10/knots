@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { wsClient } from '../../services/websocket'
 import { apiRequest } from '../../services/api'
+import GlobalSearchBar from './GlobalSearchBar'
 
 interface SidebarItem {
   name: string
@@ -174,6 +175,11 @@ export default function DashboardLayout() {
             <h1 className="text-lg font-semibold text-white">
               {sidebarItems.find((item) => item.path === location.pathname)?.name || 'KNOTS'}
             </h1>
+          </div>
+
+          {/* Global Search Bar */}
+          <div className="hidden sm:flex flex-1 max-w-md mx-6">
+            <GlobalSearchBar />
           </div>
 
           {/* User & Notification Header badge */}

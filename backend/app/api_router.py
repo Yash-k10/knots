@@ -16,6 +16,7 @@ from app.messaging.routers.websocket import router as websocket_router
 from app.notifications.routers.notification import router as notifications_router
 from app.posts.routers.post import router as posts_router
 from app.profiles.routers.profile import router as profiles_router
+from app.search.routers.search import router as search_router
 from app.users.routers.user import router as users_router
 
 # Aggregated v1 API Router
@@ -36,3 +37,4 @@ v1_router.include_router(notifications_router)
 v1_router.include_router(admin_router)
 v1_router.include_router(ai_router)
 v1_router.include_router(analytics_router)
+v1_router.include_router(search_router)
