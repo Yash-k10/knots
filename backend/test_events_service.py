@@ -1,14 +1,15 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from app.core.database import Base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 import app.core.base  # noqa: F401
-from app.users.models.user import User
-from app.users.models.role import Role
+from app.core.database import Base
 from app.events.models.event_category import EventCategory, EventCategoryType
 from app.events.schemas.event import EventCreate
 from app.events.services.event import EventService
+from app.users.models.role import Role
+from app.users.models.user import User
 
 
 class TestEventsService(unittest.IsolatedAsyncioTestCase):

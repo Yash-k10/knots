@@ -1,11 +1,7 @@
-from typing import List, Optional
-
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
-from app.core.database import get_db
-from app.core.response_models import APIResponse
 from app.clubs.schemas.club import (
     ClubCreate,
     ClubDetailResponse,
@@ -16,6 +12,8 @@ from app.clubs.schemas.club import (
     ClubUpdate,
 )
 from app.clubs.services.club import ClubService
+from app.core.database import get_db
+from app.core.response_models import APIResponse
 from app.users.models.user import User
 
 router = APIRouter(prefix="/clubs", tags=["Clubs"])
@@ -36,10 +34,10 @@ async def create_club(
     return APIResponse(message="Club created successfully", data=club)
 
 
-@router.get("", response_model=APIResponse[List[ClubResponse]])
+@router.get("", response_model=APIResponse[list[ClubResponse]])
 async def read_clubs(
-    category: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    search: str | None = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -55,7 +53,7 @@ async def read_clubs(
 @router.get("/{club_id}", response_model=APIResponse[ClubDetailResponse])
 async def get_club_detail(
     club_id: int = Path(..., ge=1),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve a single club with details and its member roster."""
@@ -127,7 +125,7 @@ async def leave_club(
     return APIResponse(message="You have left the club")
 
 
-@router.get("/{club_id}/members", response_model=APIResponse[List[ClubMemberResponse]])
+@router.get("/{club_id}/members", response_model=APIResponse[list[ClubMemberResponse]])
 async def get_club_members(
     club_id: int = Path(..., ge=1),
     skip: int = Query(0, ge=0),

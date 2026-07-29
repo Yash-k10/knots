@@ -1,11 +1,11 @@
-from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.jobs.repository.job import JobPostingRepository
-from app.jobs.repository.company import CompanyRepository
-from app.jobs.schemas.job_posting import JobPostingCreate, JobPostingUpdate
+
+from app.core.exceptions import AuthorizationError, NotFoundError
+from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.models.job_posting import JobPosting
-from app.jobs.models.enums import JobTypeEnum, WorkplaceTypeEnum, JobStatusEnum
-from app.core.exceptions import NotFoundError, AuthorizationError
+from app.jobs.repository.company import CompanyRepository
+from app.jobs.repository.job import JobPostingRepository
+from app.jobs.schemas.job_posting import JobPostingCreate, JobPostingUpdate
 
 
 class JobService:
@@ -29,14 +29,14 @@ class JobService:
 
     async def list_jobs(
         self,
-        search: Optional[str] = None,
-        job_type: Optional[JobTypeEnum] = None,
-        workplace_type: Optional[WorkplaceTypeEnum] = None,
-        company_id: Optional[int] = None,
-        status: Optional[JobStatusEnum] = JobStatusEnum.OPEN,
+        search: str | None = None,
+        job_type: JobTypeEnum | None = None,
+        workplace_type: WorkplaceTypeEnum | None = None,
+        company_id: int | None = None,
+        status: JobStatusEnum | None = JobStatusEnum.OPEN,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         return await self.repository.filter_jobs(
             search=search,
             job_type=job_type,

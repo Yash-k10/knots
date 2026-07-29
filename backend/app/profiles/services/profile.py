@@ -1,18 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.profiles.repository.profile import ProfileRepository
+
+from app.core.exceptions import NotFoundError
+from app.profiles.models.education import Education
+from app.profiles.models.employment_history import EmploymentHistory
+from app.profiles.models.profile import Profile
 from app.profiles.repository.education import EducationRepository
 from app.profiles.repository.employment_history import EmploymentHistoryRepository
+from app.profiles.repository.profile import ProfileRepository
 from app.profiles.schemas.profile import (
-    ProfileUpdate,
     EducationCreate,
     EducationUpdate,
     EmploymentHistoryCreate,
     EmploymentHistoryUpdate,
+    ProfileUpdate,
 )
-from app.profiles.models.profile import Profile
-from app.profiles.models.education import Education
-from app.profiles.models.employment_history import EmploymentHistory
-from app.core.exceptions import NotFoundError
 
 
 class ProfileService:

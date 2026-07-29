@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.notifications.repository.notification import NotificationRepository
+
 from app.notifications.models.notification import Notification
+from app.notifications.repository.notification import NotificationRepository
 
 
 class NotificationService:

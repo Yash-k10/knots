@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.auth.schemas.auth import (
-    UserLogin,
-    TokenResponse,
-    TokenRefreshRequest,
-    UserRegister,
     RegistrationResponse,
+    TokenRefreshRequest,
+    TokenResponse,
+    UserLogin,
+    UserRegister,
     UserRegisterResponse,
 )
 from app.auth.services.auth import AuthService

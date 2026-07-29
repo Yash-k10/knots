@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
 
-from app.auth.dependencies.auth import RoleRequired, get_current_user
-from app.users.models.user import User
-from app.users.schemas.user import UserResponse
 from app.admin.schemas.admin import (
     AuditLogResponse,
-    FlaggedPostResponse,
-    FlaggedPostResolve,
     DashboardStatsResponse,
+    FlaggedPostResolve,
+    FlaggedPostResponse,
 )
 from app.admin.services.admin import AdminService
+from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
+from app.users.models.user import User
+from app.users.schemas.user import UserResponse
 
 # Protect all routes under this admin router
 router = APIRouter(
@@ -32,7 +31,7 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     return APIResponse(data=stats)
 
 
-@router.get("/audit-logs", response_model=APIResponse[List[AuditLogResponse]])
+@router.get("/audit-logs", response_model=APIResponse[list[AuditLogResponse]])
 async def read_audit_logs(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
@@ -42,7 +41,7 @@ async def read_audit_logs(
     return APIResponse(data=logs)
 
 
-@router.get("/users", response_model=APIResponse[List[UserResponse]])
+@router.get("/users", response_model=APIResponse[list[UserResponse]])
 async def list_users(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):
@@ -100,7 +99,7 @@ async def delete_user(
     return APIResponse(message="User deleted successfully", data=user)
 
 
-@router.get("/posts/flagged", response_model=APIResponse[List[FlaggedPostResponse]])
+@router.get("/posts/flagged", response_model=APIResponse[list[FlaggedPostResponse]])
 async def list_flagged_posts(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
 ):

@@ -1,7 +1,6 @@
-from typing import List, Optional
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.repository import BaseRepository
 from app.messaging.models.conversation import Conversation, ConversationParticipant
@@ -13,7 +12,7 @@ class ConversationRepository(BaseRepository[Conversation]):
 
     async def get_conversation_with_participants(
         self, conversation_id: int
-    ) -> Optional[Conversation]:
+    ) -> Conversation | None:
         stmt = (
             select(self.model)
             .options(selectinload(self.model.participants))
@@ -48,7 +47,7 @@ class ConversationRepository(BaseRepository[Conversation]):
             .options(selectinload(self.model.participants))
             .where(
                 and_(
-                    self.model.is_group == False,  # noqa: E712
+                    self.model.is_group == False,
                     self.model.id.in_(p1),
                     self.model.id.in_(p2),
                 )
@@ -73,7 +72,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         return await self.get_conversation_with_participants(new_conv.id)
 
     async def create_group_conversation(
-        self, name: str, creator_id: int, participant_ids: List[int]
+        self, name: str, creator_id: int, participant_ids: list[int]
     ) -> Conversation:
         all_ids = set(participant_ids)
         all_ids.add(creator_id)
@@ -93,7 +92,7 @@ class ConversationRepository(BaseRepository[Conversation]):
 
     async def get_user_conversations(
         self, user_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Conversation]:
+    ) -> list[Conversation]:
         subq = select(ConversationParticipant.conversation_id).where(
             ConversationParticipant.user_id == user_id
         )

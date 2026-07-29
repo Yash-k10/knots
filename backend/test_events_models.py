@@ -1,16 +1,17 @@
 import unittest
 from datetime import datetime, timezone
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError
 
-from app.core.base import Base
-from app.users.models.user import User
-from app.users.models.role import Role
+from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+
 from app.clubs.models.club import Club
-from app.events.models.event_category import EventCategory, EventCategoryType
+from app.core.base import Base
 from app.events.models.event import Event, EventStatus
+from app.events.models.event_category import EventCategory, EventCategoryType
 from app.events.models.rsvp import RSVP, RSVPStatus
+from app.users.models.role import Role
+from app.users.models.user import User
 
 
 class TestEventsModels(unittest.TestCase):

@@ -1,15 +1,15 @@
 import unittest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import selectinload
 
-from app.core.database import Base
-from app.main import app
-from app.core.database import get_db
 from app.auth.dependencies.auth import get_current_user
-from app.users.models.user import User
+from app.core.database import Base, get_db
+from app.main import app
 from app.users.models.role import Role
+from app.users.models.user import User
 
 
 class TestJobsRouter(unittest.IsolatedAsyncioTestCase):

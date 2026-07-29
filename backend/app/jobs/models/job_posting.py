@@ -1,18 +1,21 @@
 from datetime import datetime
+
 from sqlalchemy import (
+    JSON,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
-    ForeignKey,
-    DateTime,
+)
+from sqlalchemy import (
     Enum as SQLEnum,
-    JSON,
 )
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-from app.jobs.models.enums import JobTypeEnum, WorkplaceTypeEnum, JobStatusEnum
+from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 
 
 class JobPosting(Base):

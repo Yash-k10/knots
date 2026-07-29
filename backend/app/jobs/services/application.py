@@ -1,10 +1,10 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from app.jobs.models.application import Application
 from app.jobs.repository.application import ApplicationRepository
 from app.jobs.repository.job import JobPostingRepository
 from app.jobs.schemas.application import ApplicationCreate, ApplicationUpdate
-from app.jobs.models.application import Application
-from app.core.exceptions import NotFoundError, ConflictError, AuthorizationError
 
 
 class ApplicationService:
@@ -36,7 +36,7 @@ class ApplicationService:
 
     async def get_user_applications(
         self, applicant_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Application]:
+    ) -> list[Application]:
         return await self.repository.get_user_applications(
             applicant_id=applicant_id, skip=skip, limit=limit
         )
@@ -48,7 +48,7 @@ class ApplicationService:
         is_admin: bool = False,
         skip: int = 0,
         limit: int = 50,
-    ) -> List[Application]:
+    ) -> list[Application]:
         job = await self.job_repository.get(job_posting_id)
         if not job:
             raise NotFoundError(

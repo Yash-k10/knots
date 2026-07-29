@@ -1,16 +1,14 @@
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReferralBase(BaseModel):
     job_posting_id: int = Field(..., description="ID of the target job posting")
-    referred_user_id: Optional[int] = Field(
+    referred_user_id: int | None = Field(
         None, description="Optional ID of the referred user"
     )
-    message: Optional[str] = Field(
-        None, description="Optional referral message or note"
-    )
+    message: str | None = Field(None, description="Optional referral message or note")
 
 
 class ReferralCreate(ReferralBase):
@@ -18,8 +16,8 @@ class ReferralCreate(ReferralBase):
 
 
 class ReferralUpdate(BaseModel):
-    referred_user_id: Optional[int] = None
-    message: Optional[str] = None
+    referred_user_id: int | None = None
+    message: str | None = None
 
 
 class ReferralResponse(ReferralBase):

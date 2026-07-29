@@ -1,12 +1,12 @@
-from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.admin.repository.admin import AdminRepository, FlaggedPostRepository
+
 from app.admin.models.audit import AuditLog
 from app.admin.models.flagged_post import FlaggedPost
+from app.admin.repository.admin import AdminRepository, FlaggedPostRepository
+from app.core.exceptions import NotFoundError
+from app.posts.repository.post import PostRepository
 from app.users.models.user import User
 from app.users.repository.user import UserRepository
-from app.posts.repository.post import PostRepository
-from app.core.exceptions import NotFoundError
 
 
 class AdminService:
@@ -26,7 +26,7 @@ class AdminService:
         return await user_repo.get_multi(skip=skip, limit=limit)
 
     async def ban_user(
-        self, user_id: int, actor_id: int, ip_address: Optional[str] = None
+        self, user_id: int, actor_id: int, ip_address: str | None = None
     ) -> User:
         user_repo = UserRepository(self.db)
         user = await user_repo.get(user_id)
@@ -47,7 +47,7 @@ class AdminService:
         return user
 
     async def unban_user(
-        self, user_id: int, actor_id: int, ip_address: Optional[str] = None
+        self, user_id: int, actor_id: int, ip_address: str | None = None
     ) -> User:
         user_repo = UserRepository(self.db)
         user = await user_repo.get(user_id)
@@ -68,7 +68,7 @@ class AdminService:
         return user
 
     async def delete_user(
-        self, user_id: int, actor_id: int, ip_address: Optional[str] = None
+        self, user_id: int, actor_id: int, ip_address: str | None = None
     ) -> User:
         user_repo = UserRepository(self.db)
         user = await user_repo.get(user_id)
@@ -90,7 +90,7 @@ class AdminService:
         return user
 
     async def flag_post(
-        self, post_id: int, flagger_id: int, reason: Optional[str] = None
+        self, post_id: int, flagger_id: int, reason: str | None = None
     ) -> FlaggedPost:
         post_repo = PostRepository(self.db)
         post = await post_repo.get(post_id)
@@ -147,7 +147,7 @@ class AdminService:
         return flag
 
     async def remove_post(
-        self, post_id: int, actor_id: int, ip_address: Optional[str] = None
+        self, post_id: int, actor_id: int, ip_address: str | None = None
     ) -> None:
         post_repo = PostRepository(self.db)
         post = await post_repo.get(post_id)

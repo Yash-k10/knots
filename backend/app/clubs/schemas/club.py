@@ -1,21 +1,20 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 class ClubCreate(BaseModel):
     """Payload to create a new club."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=2000)
-    category: Optional[str] = Field(None, max_length=50)
+    description: str | None = Field(None, max_length=2000)
+    category: str | None = Field(None, max_length=50)
 
 
 class ClubUpdate(BaseModel):
     """Payload to update an existing club (all fields optional)."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=2000)
-    category: Optional[str] = Field(None, max_length=50)
+    name: str | None = Field(None, min_length=1, max_length=100)
+    description: str | None = Field(None, max_length=2000)
+    category: str | None = Field(None, max_length=50)
 
 
 class ClubMemberUser(BaseModel):
@@ -35,7 +34,7 @@ class ClubMemberResponse(BaseModel):
     club_id: int
     user_id: int
     role: str
-    user: Optional[ClubMemberUser] = None
+    user: ClubMemberUser | None = None
 
     class Config:
         from_attributes = True
@@ -52,8 +51,8 @@ class ClubResponse(BaseModel):
 
     id: int
     name: str
-    description: Optional[str] = None
-    category: Optional[str] = None
+    description: str | None = None
+    category: str | None = None
     creator_id: int
 
     class Config:
@@ -65,14 +64,14 @@ class ClubDetailResponse(BaseModel):
 
     id: int
     name: str
-    description: Optional[str] = None
-    category: Optional[str] = None
+    description: str | None = None
+    category: str | None = None
     creator_id: int
     members_count: int = 0
-    user_role: Optional[str] = (
+    user_role: str | None = (
         None  # None if not a member, otherwise MEMBER/OFFICER/LEADER
     )
-    members: List[ClubMemberResponse] = []
+    members: list[ClubMemberResponse] = []
 
     class Config:
         from_attributes = True

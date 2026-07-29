@@ -1,24 +1,25 @@
+import os
+import shutil
+import uuid
+
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-import os
-import uuid
-import shutil
 
 from app.auth.dependencies.auth import get_current_user
+from app.core.database import get_db
+from app.core.exceptions import NotFoundError, ValidationError
+from app.core.response_models import APIResponse
 from app.profiles.schemas.profile import (
-    ProfileUpdate,
-    ProfileResponse,
     EducationCreate,
-    EducationUpdate,
     EducationResponse,
+    EducationUpdate,
     EmploymentHistoryCreate,
-    EmploymentHistoryUpdate,
     EmploymentHistoryResponse,
+    EmploymentHistoryUpdate,
+    ProfileResponse,
+    ProfileUpdate,
 )
 from app.profiles.services.profile import ProfileService
-from app.core.database import get_db
-from app.core.response_models import APIResponse
-from app.core.exceptions import NotFoundError, ValidationError
 from app.users.models.user import User
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])

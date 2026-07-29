@@ -1,9 +1,11 @@
 import asyncio
+
 from sqlalchemy import select
-from app.core.database import SessionLocal
-from app.users.models.role import Role
-from app.events.models.event_category import EventCategory
+
 import app.core.base  # noqa: F401
+from app.core.database import SessionLocal
+from app.events.models.event_category import EventCategory
+from app.users.models.role import Role
 
 # Pre-defined roles and their permissions
 ROLES_DATA = {

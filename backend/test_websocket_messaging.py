@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, patch
+
 import app.core.base  # noqa: F401
-from app.messaging.websocket_manager import ConnectionManager
 from app.messaging.routers.websocket import authenticate_websocket
+from app.messaging.websocket_manager import ConnectionManager
 
 
 class TestWebSocketConnectionManager(unittest.IsolatedAsyncioTestCase):

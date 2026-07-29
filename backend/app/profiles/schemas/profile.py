@@ -1,17 +1,18 @@
 from datetime import date
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any, Union
 
 
 # --- Education Schemas ---
 class EducationBase(BaseModel):
     institution_name: str
     degree: str
-    field_of_study: Optional[str] = None
+    field_of_study: str | None = None
     start_date: date
-    end_date: Optional[date] = None
-    gpa: Optional[float] = None
-    description: Optional[str] = None
+    end_date: date | None = None
+    gpa: float | None = None
+    description: str | None = None
 
 
 class EducationCreate(EducationBase):
@@ -19,13 +20,13 @@ class EducationCreate(EducationBase):
 
 
 class EducationUpdate(BaseModel):
-    institution_name: Optional[str] = None
-    degree: Optional[str] = None
-    field_of_study: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    gpa: Optional[float] = None
-    description: Optional[str] = None
+    institution_name: str | None = None
+    degree: str | None = None
+    field_of_study: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    gpa: float | None = None
+    description: str | None = None
 
 
 class EducationResponse(EducationBase):
@@ -40,10 +41,10 @@ class EducationResponse(EducationBase):
 class EmploymentHistoryBase(BaseModel):
     company_name: str
     title: str
-    location: Optional[str] = None
+    location: str | None = None
     start_date: date
-    end_date: Optional[date] = None
-    description: Optional[str] = None
+    end_date: date | None = None
+    description: str | None = None
 
 
 class EmploymentHistoryCreate(EmploymentHistoryBase):
@@ -51,12 +52,12 @@ class EmploymentHistoryCreate(EmploymentHistoryBase):
 
 
 class EmploymentHistoryUpdate(BaseModel):
-    company_name: Optional[str] = None
-    title: Optional[str] = None
-    location: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
-    description: Optional[str] = None
+    company_name: str | None = None
+    title: str | None = None
+    location: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    description: str | None = None
 
 
 class EmploymentHistoryResponse(EmploymentHistoryBase):
@@ -69,15 +70,15 @@ class EmploymentHistoryResponse(EmploymentHistoryBase):
 
 # --- Profile Schemas ---
 class ProfileBase(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    bio: Optional[str] = None
-    graduation_year: Optional[int] = None
-    department: Optional[str] = None
-    skills: Optional[Union[List[str], Dict[str, List[str]]]] = None
-    profile_picture: Optional[str] = None
-    certifications: Optional[List[Dict[str, Any]]] = None
-    projects: Optional[List[Dict[str, Any]]] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    bio: str | None = None
+    graduation_year: int | None = None
+    department: str | None = None
+    skills: list[str] | dict[str, list[str]] | None = None
+    profile_picture: str | None = None
+    certifications: list[dict[str, Any]] | None = None
+    projects: list[dict[str, Any]] | None = None
 
 
 class ProfileUpdate(ProfileBase):
@@ -87,8 +88,8 @@ class ProfileUpdate(ProfileBase):
 class ProfileResponse(ProfileBase):
     id: int
     user_id: int
-    education: List[EducationResponse] = []
-    employment_history: List[EmploymentHistoryResponse] = []
+    education: list[EducationResponse] = []
+    employment_history: list[EmploymentHistoryResponse] = []
 
     class Config:
         from_attributes = True

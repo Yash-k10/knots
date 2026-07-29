@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,14 +11,14 @@ class EventCategoryRepository(BaseRepository[EventCategory]):
     def __init__(self, db: AsyncSession):
         super().__init__(EventCategory, db)
 
-    async def get_by_name(self, name: str) -> Optional[EventCategory]:
+    async def get_by_name(self, name: str) -> EventCategory | None:
         """Fetch event category by its name."""
         result = await self.db.execute(
             select(EventCategory).filter(EventCategory.name == name)
         )
         return result.scalars().first()
 
-    async def get_all_categories(self) -> List[EventCategory]:
+    async def get_all_categories(self) -> list[EventCategory]:
         """Fetch all event categories sorted by name."""
         result = await self.db.execute(
             select(EventCategory).order_by(EventCategory.name.asc())

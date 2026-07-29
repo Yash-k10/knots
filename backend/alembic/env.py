@@ -3,10 +3,10 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from app.core.base import Base
 
 # Import our custom settings and Base metadata
 from app.core.config import settings
-from app.core.base import Base
 
 # Alembic config object
 config = context.config

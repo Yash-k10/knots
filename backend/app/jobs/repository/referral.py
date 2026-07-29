@@ -1,7 +1,7 @@
-from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.core.repository import BaseRepository
 from app.jobs.models.referral import Referral
 
@@ -12,7 +12,7 @@ class ReferralRepository(BaseRepository[Referral]):
 
     async def get_user_referrals(
         self, user_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Referral]:
+    ) -> list[Referral]:
         stmt = (
             select(Referral)
             .options(

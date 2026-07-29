@@ -1,13 +1,16 @@
 from datetime import datetime
+
 from sqlalchemy import (
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
     Text,
-    ForeignKey,
-    DateTime,
-    Enum as SQLEnum,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
 

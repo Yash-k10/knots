@@ -1,10 +1,10 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.jobs.repository.referral import ReferralRepository
-from app.jobs.repository.job import JobPostingRepository
-from app.jobs.schemas.referral import ReferralCreate
-from app.jobs.models.referral import Referral
+
 from app.core.exceptions import NotFoundError
+from app.jobs.models.referral import Referral
+from app.jobs.repository.job import JobPostingRepository
+from app.jobs.repository.referral import ReferralRepository
+from app.jobs.schemas.referral import ReferralCreate
 
 
 class ReferralService:
@@ -27,7 +27,7 @@ class ReferralService:
 
     async def get_user_referrals(
         self, user_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Referral]:
+    ) -> list[Referral]:
         return await self.repository.get_user_referrals(
             user_id=user_id, skip=skip, limit=limit
         )

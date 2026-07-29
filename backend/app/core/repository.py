@@ -1,5 +1,6 @@
-from typing import Any, Generic, List, Optional, Type, TypeVar
-from sqlalchemy import select, func
+from typing import Any, Generic, TypeVar
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 ModelType = TypeVar("ModelType")
@@ -12,16 +13,16 @@ class BaseRepository(Generic[ModelType]):
     module-specific repositories inherit.
     """
 
-    def __init__(self, model: Type[ModelType], db: AsyncSession):
+    def __init__(self, model: type[ModelType], db: AsyncSession):
         self.model = model
         self.db = db
 
-    async def get(self, id: Any) -> Optional[ModelType]:
+    async def get(self, id: Any) -> ModelType | None:
         """Fetch model by primary key."""
         result = await self.db.execute(select(self.model).filter(self.model.id == id))
         return result.scalars().first()
 
-    async def get_by_field(self, field_name: str, value: Any) -> Optional[ModelType]:
+    async def get_by_field(self, field_name: str, value: Any) -> ModelType | None:
         """Fetch a single record by any column name.
 
         Example: ``await repo.get_by_field("email", "user@example.com")``
@@ -32,7 +33,7 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(select(self.model).filter(column == value))
         return result.scalars().first()
 
-    async def get_multi(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
+    async def get_multi(self, skip: int = 0, limit: int = 100) -> list[ModelType]:
         """Fetch multiple models with pagination support."""
         result = await self.db.execute(select(self.model).offset(skip).limit(limit))
         return list(result.scalars().all())
@@ -53,7 +54,7 @@ class BaseRepository(Generic[ModelType]):
         await self.db.flush()
         return db_obj
 
-    async def remove(self, id: Any) -> Optional[ModelType]:
+    async def remove(self, id: Any) -> ModelType | None:
         """Remove a record by ID."""
         obj = await self.get(id)
         if obj:

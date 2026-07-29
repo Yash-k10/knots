@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -12,16 +11,16 @@ class PostCreate(BaseModel):
     """Payload to create a new post."""
 
     content: str = Field(..., min_length=1, max_length=5000)
-    image_url: Optional[str] = None
+    image_url: str | None = None
     visibility: PostVisibility = PostVisibility.PUBLIC
 
 
 class PostUpdate(BaseModel):
     """Payload to update an existing post (all fields optional)."""
 
-    content: Optional[str] = Field(None, min_length=1, max_length=5000)
-    image_url: Optional[str] = None
-    visibility: Optional[PostVisibility] = None
+    content: str | None = Field(None, min_length=1, max_length=5000)
+    image_url: str | None = None
+    visibility: PostVisibility | None = None
 
 
 # ── Comment Schemas ──────────────────────────────────────────────────────────
@@ -49,7 +48,7 @@ class CommentResponse(BaseModel):
     id: int
     post_id: int
     author_id: int
-    author: Optional[CommentAuthor] = None
+    author: CommentAuthor | None = None
     content: str
     created_at: datetime
     updated_at: datetime
@@ -91,9 +90,9 @@ class PostResponse(BaseModel):
 
     id: int
     author_id: int
-    author: Optional[PostAuthor] = None
+    author: PostAuthor | None = None
     content: str
-    image_url: Optional[str] = None
+    image_url: str | None = None
     visibility: PostVisibility
     created_at: datetime
     updated_at: datetime
@@ -110,16 +109,16 @@ class PostDetailResponse(BaseModel):
 
     id: int
     author_id: int
-    author: Optional[PostAuthor] = None
+    author: PostAuthor | None = None
     content: str
-    image_url: Optional[str] = None
+    image_url: str | None = None
     visibility: PostVisibility
     created_at: datetime
     updated_at: datetime
     likes_count: int = 0
     comments_count: int = 0
     is_liked: bool = False
-    comments: List[CommentResponse] = []
+    comments: list[CommentResponse] = []
 
     class Config:
         from_attributes = True

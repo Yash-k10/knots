@@ -1,5 +1,3 @@
-from typing import List
-
 import os
 import shutil
 import uuid
@@ -7,6 +5,8 @@ import uuid
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.admin.schemas.admin import FlaggedPostCreate, FlaggedPostResponse
+from app.admin.services.admin import AdminService
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
 from app.core.exceptions import ValidationError
@@ -22,8 +22,6 @@ from app.posts.schemas.post import (
 )
 from app.posts.services.post import PostService
 from app.users.models.user import User
-from app.admin.schemas.admin import FlaggedPostCreate, FlaggedPostResponse
-from app.admin.services.admin import AdminService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -31,7 +29,7 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 # ── Feed ─────────────────────────────────────────────────────────────────────
 
 
-@router.get("/feed", response_model=APIResponse[List[PostResponse]])
+@router.get("/feed", response_model=APIResponse[list[PostResponse]])
 async def get_feed(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -46,7 +44,7 @@ async def get_feed(
     return APIResponse(data=posts)
 
 
-@router.get("/user/{user_id}", response_model=APIResponse[List[PostResponse]])
+@router.get("/user/{user_id}", response_model=APIResponse[list[PostResponse]])
 async def get_user_posts(
     user_id: int,
     skip: int = Query(0, ge=0),
@@ -167,7 +165,7 @@ async def unlike_post(
 # ── Comments ─────────────────────────────────────────────────────────────────
 
 
-@router.get("/{post_id}/comments", response_model=APIResponse[List[CommentResponse]])
+@router.get("/{post_id}/comments", response_model=APIResponse[list[CommentResponse]])
 async def get_comments(
     post_id: int,
     skip: int = Query(0, ge=0),

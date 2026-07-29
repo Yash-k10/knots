@@ -3,20 +3,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.repository.auth import AuthRepository
 from app.auth.schemas.auth import (
-    UserLogin,
-    TokenResponse,
-    UserRegister,
     RegistrationResponse,
+    TokenResponse,
+    UserLogin,
+    UserRegister,
 )
 from app.core import security
 from app.core.exceptions import (
     AuthenticationError,
     ConflictError,
-    ValidationError,
     NotFoundError,
+    ValidationError,
 )
-from app.users.models.user import User
 from app.users.models.role import Role
+from app.users.models.user import User
 
 
 class AuthService:
@@ -106,4 +106,3 @@ class AuthService:
 
     async def logout_user(self, user_id: int) -> None:
         """Stateless logout (placeholder for token blacklisting)."""
-        pass

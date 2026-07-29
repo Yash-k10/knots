@@ -1,8 +1,6 @@
-from typing import List, Optional
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError, AuthorizationError
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.posts.models.comment import Comment
 from app.posts.models.like import Like
 from app.posts.models.post import Post
@@ -43,7 +41,7 @@ class PostService:
         return post
 
     async def get_post_detail(
-        self, post_id: int, current_user_id: Optional[int] = None
+        self, post_id: int, current_user_id: int | None = None
     ) -> PostDetailResponse:
         """Fetch a post with full details (comments, likes, author)."""
         post = await self.post_repo.get_with_details(post_id)
@@ -76,11 +74,11 @@ class PostService:
         self,
         skip: int = 0,
         limit: int = 20,
-        current_user_id: Optional[int] = None,
-    ) -> List[PostResponse]:
+        current_user_id: int | None = None,
+    ) -> list[PostResponse]:
         """Fetch the public post feed (newest first)."""
         posts = await self.post_repo.get_feed(skip=skip, limit=limit)
-        results: List[PostResponse] = []
+        results: list[PostResponse] = []
         for post in posts:
             is_liked = False
             if current_user_id:
@@ -108,7 +106,7 @@ class PostService:
 
     async def get_posts_by_author(
         self, author_id: int, skip: int = 0, limit: int = 20
-    ) -> List[PostResponse]:
+    ) -> list[PostResponse]:
         """Fetch all posts by a specific author."""
         posts = await self.post_repo.get_by_author(author_id, skip=skip, limit=limit)
         return [
@@ -187,7 +185,7 @@ class PostService:
 
     async def get_comments(
         self, post_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Comment]:
+    ) -> list[Comment]:
         """Fetch comments for a post, oldest first."""
         await self.get_post(post_id)  # ensure post exists
         return await self.comment_repo.get_by_post(post_id, skip=skip, limit=limit)

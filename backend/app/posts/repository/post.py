@@ -1,6 +1,4 @@
-from typing import List, Optional
-
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -15,7 +13,7 @@ class PostRepository(BaseRepository[Post]):
     def __init__(self, db: AsyncSession):
         super().__init__(Post, db)
 
-    async def get_with_details(self, post_id: int) -> Optional[Post]:
+    async def get_with_details(self, post_id: int) -> Post | None:
         """Fetch a single post with its author, comments (+ their authors), and likes."""
         result = await self.db.execute(
             select(Post)
@@ -28,7 +26,7 @@ class PostRepository(BaseRepository[Post]):
         )
         return result.scalars().first()
 
-    async def get_feed(self, skip: int = 0, limit: int = 20) -> List[Post]:
+    async def get_feed(self, skip: int = 0, limit: int = 20) -> list[Post]:
         """
         Fetch posts for the public feed, ordered by newest first.
         Eager-loads author, comments, and likes to avoid N+1 queries.
@@ -48,7 +46,7 @@ class PostRepository(BaseRepository[Post]):
 
     async def get_by_author(
         self, author_id: int, skip: int = 0, limit: int = 20
-    ) -> List[Post]:
+    ) -> list[Post]:
         """Fetch posts by a specific author, newest first."""
         result = await self.db.execute(
             select(Post)

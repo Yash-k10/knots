@@ -1,4 +1,3 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,7 +59,7 @@ async def reject_connection(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/me", response_model=APIResponse[List[ConnectionResponse]])
+@router.get("/me", response_model=APIResponse[list[ConnectionResponse]])
 async def list_my_connections(
     current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
@@ -70,7 +69,7 @@ async def list_my_connections(
     return APIResponse(message="Connections fetched", data=conns)
 
 
-@router.get("/me/requests", response_model=APIResponse[List[ConnectionResponse]])
+@router.get("/me/requests", response_model=APIResponse[list[ConnectionResponse]])
 async def list_my_pending_requests(
     current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):

@@ -24,8 +24,9 @@ Usage:
   python test_auth_e2e.py
 """
 
-import unittest
 import time
+import unittest
+
 import httpx
 
 BASE_URL = "http://localhost:8000/api/v1"

@@ -1,7 +1,7 @@
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.core.repository import BaseRepository
 from app.users.models.user import User
 
@@ -10,7 +10,7 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, db: AsyncSession):
         super().__init__(User, db)
 
-    async def get(self, id: int) -> Optional[User]:
+    async def get(self, id: int) -> User | None:
         """Fetch user by ID with role relationship loaded."""
         stmt = (
             select(self.model)

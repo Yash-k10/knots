@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.analytics.repository.analytics import AnalyticsRepository
 from app.analytics.schemas.analytics import SystemStats
 

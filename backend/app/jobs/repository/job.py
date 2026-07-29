@@ -1,17 +1,17 @@
-from typing import List, Optional
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.core.repository import BaseRepository
+from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.models.job_posting import JobPosting
-from app.jobs.models.enums import JobTypeEnum, WorkplaceTypeEnum, JobStatusEnum
 
 
 class JobPostingRepository(BaseRepository[JobPosting]):
     def __init__(self, db: AsyncSession):
         super().__init__(JobPosting, db)
 
-    async def get_with_details(self, job_id: int) -> Optional[JobPosting]:
+    async def get_with_details(self, job_id: int) -> JobPosting | None:
         stmt = (
             select(JobPosting)
             .options(
@@ -27,14 +27,14 @@ class JobPostingRepository(BaseRepository[JobPosting]):
 
     async def filter_jobs(
         self,
-        search: Optional[str] = None,
-        job_type: Optional[JobTypeEnum] = None,
-        workplace_type: Optional[WorkplaceTypeEnum] = None,
-        company_id: Optional[int] = None,
-        status: Optional[JobStatusEnum] = JobStatusEnum.OPEN,
+        search: str | None = None,
+        job_type: JobTypeEnum | None = None,
+        workplace_type: WorkplaceTypeEnum | None = None,
+        company_id: int | None = None,
+        status: JobStatusEnum | None = JobStatusEnum.OPEN,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[JobPosting]:
+    ) -> list[JobPosting]:
         stmt = select(JobPosting).options(
             selectinload(JobPosting.company),
             selectinload(JobPosting.posted_by),

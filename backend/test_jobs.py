@@ -1,22 +1,24 @@
 import unittest
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from app.core.database import Base
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 import app.core.base  # noqa: F401
+from app.core.database import Base
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.jobs.models import (
+    ApplicationStatusEnum,
+    JobStatusEnum,
     JobTypeEnum,
     WorkplaceTypeEnum,
-    JobStatusEnum,
-    ApplicationStatusEnum,
 )
+from app.jobs.schemas.application import ApplicationCreate, ApplicationUpdate
 from app.jobs.schemas.company import CompanyCreate
 from app.jobs.schemas.job_posting import JobPostingCreate, JobPostingUpdate
-from app.jobs.schemas.application import ApplicationCreate, ApplicationUpdate
 from app.jobs.schemas.referral import ReferralCreate
+from app.jobs.services.application import ApplicationService
 from app.jobs.services.company import CompanyService
 from app.jobs.services.job import JobService
-from app.jobs.services.application import ApplicationService
 from app.jobs.services.referral import ReferralService
-from app.core.exceptions import ConflictError, NotFoundError, AuthorizationError
 
 
 class TestJobsModule(unittest.IsolatedAsyncioTestCase):

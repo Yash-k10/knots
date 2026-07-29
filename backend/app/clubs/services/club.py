@@ -1,15 +1,7 @@
-from typing import List, Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import (
-    ConflictError,
-    NotFoundError,
-    AuthorizationError,
-    ValidationError,
-)
 from app.clubs.models.club import Club
 from app.clubs.models.club_member import ClubMember
 from app.clubs.repository.club import ClubRepository
@@ -22,6 +14,12 @@ from app.clubs.schemas.club import (
     ClubMemberUser,
     ClubResponse,
     ClubUpdate,
+)
+from app.core.exceptions import (
+    AuthorizationError,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
 )
 
 
@@ -63,7 +61,7 @@ class ClubService:
         return club
 
     async def get_club_detail(
-        self, club_id: int, current_user_id: Optional[int] = None
+        self, club_id: int, current_user_id: int | None = None
     ) -> ClubDetailResponse:
         """Fetch club with details, members, and requester's membership role."""
         club = await self.club_repo.get_with_details(club_id)
@@ -80,7 +78,7 @@ class ClubService:
             if membership:
                 user_role = membership.role
 
-        mapped_members: List[ClubMemberResponse] = []
+        mapped_members: list[ClubMemberResponse] = []
         for m in club.members:
             user_info = None
             if m.user:
@@ -150,11 +148,11 @@ class ClubService:
 
     async def list_clubs(
         self,
-        category: Optional[str] = None,
-        search: Optional[str] = None,
+        category: str | None = None,
+        search: str | None = None,
         skip: int = 0,
         limit: int = 20,
-    ) -> List[ClubResponse]:
+    ) -> list[ClubResponse]:
         """Fetch list of clubs (summary view)."""
         clubs = await self.club_repo.get_clubs_filtered(
             category=category, search=search, skip=skip, limit=limit
@@ -210,7 +208,7 @@ class ClubService:
 
     async def get_club_members(
         self, club_id: int, skip: int = 0, limit: int = 100
-    ) -> List[ClubMember]:
+    ) -> list[ClubMember]:
         """List all club members with user profiles eager loaded."""
         await self.get_club(club_id)
 

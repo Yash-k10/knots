@@ -1,4 +1,3 @@
-from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,7 +6,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # CORS Origins (comma-separated string or list)
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost",
         "http://localhost:5173",
         "http://localhost:3000",

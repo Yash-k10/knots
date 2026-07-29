@@ -1,23 +1,21 @@
 import logging
-from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, Query
+
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 
 from app.core import security
 from app.core.database import SessionLocal
 from app.core.exceptions import AuthenticationError
-from app.messaging.websocket_manager import manager
-from app.messaging.services.message import MessagingService
 from app.messaging.repository.conversation import ConversationRepository
 from app.messaging.schemas.message import MessageCreate
+from app.messaging.services.message import MessagingService
+from app.messaging.websocket_manager import manager
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ws", tags=["Real-Time Messaging WebSocket"])
 
 
-async def authenticate_websocket(
-    websocket: WebSocket, token: Optional[str]
-) -> Optional[int]:
+async def authenticate_websocket(websocket: WebSocket, token: str | None) -> int | None:
     """
     Authenticate WebSocket connection using JWT token passed in query string or header.
     Returns user_id if valid, None otherwise.
@@ -58,7 +56,7 @@ async def authenticate_websocket(
 @router.websocket("/chat")
 @router.websocket("")
 async def websocket_chat_endpoint(
-    websocket: WebSocket, token: Optional[str] = Query(None)
+    websocket: WebSocket, token: str | None = Query(None)
 ):
     """
     WebSocket endpoint for real-time messaging, typing indicators, and presence updates.

@@ -1,1 +1,1 @@
-from app.jobs.models.job_posting import JobPosting, Job  # noqa: F401
+from app.jobs.models.job_posting import Job, JobPosting  # noqa: F401

@@ -1,12 +1,11 @@
 from datetime import datetime, timezone
-from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
+    AuthorizationError,
     ConflictError,
     NotFoundError,
-    AuthorizationError,
     ValidationError,
 )
 from app.events.models.event import Event, EventStatus
@@ -78,7 +77,7 @@ class EventService:
         return event
 
     async def get_event_detail(
-        self, event_id: int, current_user_id: Optional[int] = None
+        self, event_id: int, current_user_id: int | None = None
     ) -> EventResponse:
         """Fetch an event with full details including RSVP metadata."""
         event = await self.event_repo.get_with_details(event_id)
@@ -135,16 +134,16 @@ class EventService:
 
     async def get_events(
         self,
-        status: Optional[EventStatus] = None,
-        category_id: Optional[int] = None,
-        organizer_id: Optional[int] = None,
-        search: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        status: EventStatus | None = None,
+        category_id: int | None = None,
+        organizer_id: int | None = None,
+        search: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         skip: int = 0,
         limit: int = 20,
-        current_user_id: Optional[int] = None,
-    ) -> List[EventResponse]:
+        current_user_id: int | None = None,
+    ) -> list[EventResponse]:
         """Fetch filtered list of events."""
         if start_date and start_date.tzinfo:
             start_date = start_date.astimezone(timezone.utc).replace(tzinfo=None)
@@ -162,7 +161,7 @@ class EventService:
             limit=limit,
         )
 
-        results: List[EventResponse] = []
+        results: list[EventResponse] = []
         for event in events:
             rsvp_count = await self.rsvp_repo.count_by_event(
                 event.id, status=RSVPStatus.GOING
@@ -215,12 +214,12 @@ class EventService:
         return results
 
     async def get_upcoming_events(
-        self, skip: int = 0, limit: int = 20, current_user_id: Optional[int] = None
-    ) -> List[EventResponse]:
+        self, skip: int = 0, limit: int = 20, current_user_id: int | None = None
+    ) -> list[EventResponse]:
         """Fetch all upcoming published events."""
         events = await self.event_repo.get_upcoming(skip=skip, limit=limit)
 
-        results: List[EventResponse] = []
+        results: list[EventResponse] = []
         for event in events:
             rsvp_count = await self.rsvp_repo.count_by_event(
                 event.id, status=RSVPStatus.GOING
@@ -370,13 +369,13 @@ class EventService:
 
     async def get_event_rsvps(
         self, event_id: int, skip: int = 0, limit: int = 100
-    ) -> List[RSVP]:
+    ) -> list[RSVP]:
         """Get all RSVPs for an event (oldest first)."""
         await self.get_event(event_id)
         return await self.rsvp_repo.get_by_event(event_id, skip=skip, limit=limit)
 
     # ── Categories ────────────────────────────────────────────────────────────
 
-    async def list_categories(self) -> List[EventCategory]:
+    async def list_categories(self) -> list[EventCategory]:
         """List all event categories."""
         return await self.category_repo.get_all_categories()

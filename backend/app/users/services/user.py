@@ -1,4 +1,3 @@
-from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +11,7 @@ from app.core.exceptions import (
 from app.users.models.role import Role
 from app.users.models.user import User
 from app.users.repository.user import UserRepository
-from app.users.schemas.user import UserCreate, UserUpdate, ChangePassword
+from app.users.schemas.user import ChangePassword, UserCreate, UserUpdate
 
 
 class UserService:
@@ -44,7 +43,7 @@ class UserService:
             raise NotFoundError(message="User not found")
         return user
 
-    async def list_users(self, skip: int = 0, limit: int = 100) -> List[User]:
+    async def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
         """List multiple users with pagination support."""
         return await self.repository.get_multi(skip=skip, limit=limit)
 
@@ -54,14 +53,14 @@ class UserService:
 
         update_data = user_in.model_dump(exclude_unset=True)
 
-        if "email" in update_data and update_data["email"]:
+        if update_data.get("email"):
             existing_user = await self.repository.get_by_field(
                 "email", update_data["email"]
             )
             if existing_user and existing_user.id != user_id:
                 raise ConflictError(message="Email already in use by another account")
 
-        if "password" in update_data and update_data["password"]:
+        if update_data.get("password"):
             update_data["hashed_password"] = security.hash_password(
                 update_data["password"]
             )
@@ -76,7 +75,7 @@ class UserService:
         user = await self.get_user(user_id)
         return await self.repository.remove(user.id)
 
-    async def get_all_roles(self) -> List[Role]:
+    async def get_all_roles(self) -> list[Role]:
         """Fetch all available database roles."""
         result = await self.repository.db.execute(select(Role))
         return list(result.scalars().all())

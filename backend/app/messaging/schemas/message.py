@@ -1,11 +1,11 @@
-from typing import Optional
-from pydantic import BaseModel, Field
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class MessageCreate(BaseModel):
-    conversation_id: Optional[int] = None
-    receiver_id: Optional[int] = None
+    conversation_id: int | None = None
+    receiver_id: int | None = None
     content: str = Field(..., min_length=1)
 
 
@@ -16,12 +16,12 @@ class DirectMessageCreate(BaseModel):
 
 class MessageResponse(BaseModel):
     id: int
-    conversation_id: Optional[int] = None
+    conversation_id: int | None = None
     sender_id: int
-    receiver_id: Optional[int] = None
+    receiver_id: int | None = None
     content: str
     is_read: bool
-    read_at: Optional[datetime] = None
+    read_at: datetime | None = None
     created_at: datetime
 
     class Config:

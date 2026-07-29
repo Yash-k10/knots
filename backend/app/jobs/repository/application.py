@@ -1,7 +1,7 @@
-from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.core.repository import BaseRepository
 from app.jobs.models.application import Application
 from app.jobs.models.job_posting import JobPosting
@@ -13,7 +13,7 @@ class ApplicationRepository(BaseRepository[Application]):
 
     async def get_by_user_and_job(
         self, applicant_id: int, job_posting_id: int
-    ) -> Optional[Application]:
+    ) -> Application | None:
         stmt = select(Application).filter(
             Application.applicant_id == applicant_id,
             Application.job_posting_id == job_posting_id,
@@ -23,7 +23,7 @@ class ApplicationRepository(BaseRepository[Application]):
 
     async def get_user_applications(
         self, applicant_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Application]:
+    ) -> list[Application]:
         stmt = (
             select(Application)
             .options(
@@ -39,7 +39,7 @@ class ApplicationRepository(BaseRepository[Application]):
 
     async def get_job_applications(
         self, job_posting_id: int, skip: int = 0, limit: int = 50
-    ) -> List[Application]:
+    ) -> list[Application]:
         stmt = (
             select(Application)
             .options(selectinload(Application.applicant))

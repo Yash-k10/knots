@@ -1,11 +1,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import app.core.base  # noqa: F401
-from app.messaging.services.message import MessagingService
-from app.messaging.schemas.message import MessageCreate, DirectMessageCreate
-from app.messaging.models.message import Message
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.messaging.models.conversation import Conversation
-from app.core.exceptions import NotFoundError, AuthorizationError, ValidationError
+from app.messaging.models.message import Message
+from app.messaging.schemas.message import DirectMessageCreate, MessageCreate
+from app.messaging.services.message import MessagingService
 
 
 class TestMessagingService(unittest.IsolatedAsyncioTestCase):

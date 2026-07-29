@@ -1,9 +1,9 @@
-from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictError, NotFoundError
+from app.jobs.models.company import Company
 from app.jobs.repository.company import CompanyRepository
 from app.jobs.schemas.company import CompanyCreate, CompanyUpdate
-from app.jobs.models.company import Company
-from app.core.exceptions import ConflictError, NotFoundError
 
 
 class CompanyService:
@@ -19,8 +19,8 @@ class CompanyService:
         return await self.repository.create(company_in.model_dump())
 
     async def list_companies(
-        self, search: Optional[str] = None, skip: int = 0, limit: int = 100
-    ) -> List[Company]:
+        self, search: str | None = None, skip: int = 0, limit: int = 100
+    ) -> list[Company]:
         if search:
             return await self.repository.search_companies(search, limit=limit)
         return await self.repository.get_multi(skip=skip, limit=limit)

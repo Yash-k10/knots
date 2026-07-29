@@ -1,5 +1,6 @@
 import time
 import uuid
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -55,7 +56,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             logger.error(
                 f"[{request_id}] Failed {request.method} {request.url.path} "
-                f"Duration: {process_time:.4f}s - Error: {str(e)}",
+                f"Duration: {process_time:.4f}s - Error: {e!s}",
                 exc_info=True,
             )
             raise

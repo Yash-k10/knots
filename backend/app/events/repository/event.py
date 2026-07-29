@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
-from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -15,7 +14,7 @@ class EventRepository(BaseRepository[Event]):
     def __init__(self, db: AsyncSession):
         super().__init__(Event, db)
 
-    async def get_with_details(self, event_id: int) -> Optional[Event]:
+    async def get_with_details(self, event_id: int) -> Event | None:
         """Fetch a single event with organizer, category, and RSVPs."""
         result = await self.db.execute(
             select(Event)
@@ -28,7 +27,7 @@ class EventRepository(BaseRepository[Event]):
         )
         return result.scalars().first()
 
-    async def get_upcoming(self, skip: int = 0, limit: int = 20) -> List[Event]:
+    async def get_upcoming(self, skip: int = 0, limit: int = 20) -> list[Event]:
         """Fetch upcoming published events (start_datetime in the future)."""
         now = datetime.now(timezone.utc)
         result = await self.db.execute(
@@ -50,7 +49,7 @@ class EventRepository(BaseRepository[Event]):
 
     async def get_by_status(
         self, status: EventStatus, skip: int = 0, limit: int = 20
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Fetch events filtered by status."""
         result = await self.db.execute(
             select(Event)
@@ -67,7 +66,7 @@ class EventRepository(BaseRepository[Event]):
 
     async def get_by_category(
         self, category_id: int, skip: int = 0, limit: int = 20
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Fetch events filtered by category."""
         result = await self.db.execute(
             select(Event)
@@ -88,7 +87,7 @@ class EventRepository(BaseRepository[Event]):
 
     async def get_by_organizer(
         self, organizer_id: int, skip: int = 0, limit: int = 20
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Fetch events created by a specific organizer."""
         result = await self.db.execute(
             select(Event)
@@ -105,15 +104,15 @@ class EventRepository(BaseRepository[Event]):
 
     async def get_events_filtered(
         self,
-        status: Optional[EventStatus] = None,
-        category_id: Optional[int] = None,
-        organizer_id: Optional[int] = None,
-        search: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        status: EventStatus | None = None,
+        category_id: int | None = None,
+        organizer_id: int | None = None,
+        search: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         skip: int = 0,
         limit: int = 20,
-    ) -> List[Event]:
+    ) -> list[Event]:
         """Fetch all events with details under the specified filters."""
         query = select(Event).options(
             selectinload(Event.organizer),
@@ -142,12 +141,12 @@ class EventRepository(BaseRepository[Event]):
 
     async def count_filtered(
         self,
-        status: Optional[EventStatus] = None,
-        category_id: Optional[int] = None,
-        organizer_id: Optional[int] = None,
-        search: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        status: EventStatus | None = None,
+        category_id: int | None = None,
+        organizer_id: int | None = None,
+        search: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> int:
         """Count events under the specified filters."""
         query = select(func.count()).select_from(Event)

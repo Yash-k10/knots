@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +13,7 @@ class EventCategoryResponse(BaseModel):
 
     id: int
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
     class Config:
         from_attributes = True
@@ -27,14 +26,14 @@ class RSVPCreate(BaseModel):
     """Payload to RSVP to an event."""
 
     status: RSVPStatus = RSVPStatus.GOING
-    note: Optional[str] = Field(None, max_length=300)
+    note: str | None = Field(None, max_length=300)
 
 
 class RSVPUpdate(BaseModel):
     """Payload to update an existing RSVP."""
 
-    status: Optional[RSVPStatus] = None
-    note: Optional[str] = Field(None, max_length=300)
+    status: RSVPStatus | None = None
+    note: str | None = Field(None, max_length=300)
 
 
 class RSVPUserInfo(BaseModel):
@@ -53,9 +52,9 @@ class RSVPResponse(BaseModel):
     id: int
     event_id: int
     user_id: int
-    user: Optional[RSVPUserInfo] = None
+    user: RSVPUserInfo | None = None
     status: RSVPStatus
-    note: Optional[str] = None
+    note: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -71,28 +70,28 @@ class EventCreate(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1)
-    location: Optional[str] = Field(None, max_length=300)
-    banner_image_url: Optional[str] = None
+    location: str | None = Field(None, max_length=300)
+    banner_image_url: str | None = None
     start_datetime: datetime
-    end_datetime: Optional[datetime] = None
-    max_capacity: Optional[int] = Field(None, ge=1)
+    end_datetime: datetime | None = None
+    max_capacity: int | None = Field(None, ge=1)
     is_rsvp_enabled: bool = True
-    category_id: Optional[int] = None
+    category_id: int | None = None
 
 
 class EventUpdate(BaseModel):
     """Payload to update an existing event (all fields optional)."""
 
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
-    location: Optional[str] = Field(None, max_length=300)
-    banner_image_url: Optional[str] = None
-    start_datetime: Optional[datetime] = None
-    end_datetime: Optional[datetime] = None
-    max_capacity: Optional[int] = Field(None, ge=1)
-    is_rsvp_enabled: Optional[bool] = None
-    status: Optional[EventStatus] = None
-    category_id: Optional[int] = None
+    title: str | None = Field(None, min_length=1, max_length=200)
+    description: str | None = None
+    location: str | None = Field(None, max_length=300)
+    banner_image_url: str | None = None
+    start_datetime: datetime | None = None
+    end_datetime: datetime | None = None
+    max_capacity: int | None = Field(None, ge=1)
+    is_rsvp_enabled: bool | None = None
+    status: EventStatus | None = None
+    category_id: int | None = None
 
 
 class EventOrganizerInfo(BaseModel):
@@ -111,19 +110,19 @@ class EventResponse(BaseModel):
     id: int
     title: str
     description: str
-    location: Optional[str] = None
-    banner_image_url: Optional[str] = None
+    location: str | None = None
+    banner_image_url: str | None = None
     start_datetime: datetime
-    end_datetime: Optional[datetime] = None
-    max_capacity: Optional[int] = None
+    end_datetime: datetime | None = None
+    max_capacity: int | None = None
     is_rsvp_enabled: bool
     status: EventStatus
     organizer_id: int
-    organizer: Optional[EventOrganizerInfo] = None
-    category_id: Optional[int] = None
-    category: Optional[EventCategoryResponse] = None
+    organizer: EventOrganizerInfo | None = None
+    category_id: int | None = None
+    category: EventCategoryResponse | None = None
     rsvp_count: int = 0
-    user_rsvp_status: Optional[RSVPStatus] = None
+    user_rsvp_status: RSVPStatus | None = None
     created_at: datetime
     updated_at: datetime
 

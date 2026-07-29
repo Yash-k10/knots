@@ -1,7 +1,8 @@
-from typing import Any, Optional
+from typing import Any
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
@@ -18,7 +19,7 @@ class KNOTSException(Exception):
         message: str,
         code: str = "INTERNAL_SERVER_ERROR",
         status_code: int = 500,
-        details: Optional[Any] = None,
+        details: Any | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -29,29 +30,23 @@ class KNOTSException(Exception):
 
 class AuthenticationError(KNOTSException):
     def __init__(
-        self, message: str = "Authentication failed", details: Optional[Any] = None
+        self, message: str = "Authentication failed", details: Any | None = None
     ):
         super().__init__(message, "UNAUTHORIZED", 401, details)
 
 
 class AuthorizationError(KNOTSException):
-    def __init__(
-        self, message: str = "Permission denied", details: Optional[Any] = None
-    ):
+    def __init__(self, message: str = "Permission denied", details: Any | None = None):
         super().__init__(message, "FORBIDDEN", 403, details)
 
 
 class NotFoundError(KNOTSException):
-    def __init__(
-        self, message: str = "Resource not found", details: Optional[Any] = None
-    ):
+    def __init__(self, message: str = "Resource not found", details: Any | None = None):
         super().__init__(message, "NOT_FOUND", 404, details)
 
 
 class ValidationError(KNOTSException):
-    def __init__(
-        self, message: str = "Validation failed", details: Optional[Any] = None
-    ):
+    def __init__(self, message: str = "Validation failed", details: Any | None = None):
         super().__init__(message, "VALIDATION_ERROR", 422, details)
 
 
@@ -59,7 +54,7 @@ class ConflictError(KNOTSException):
     """Raised when an operation conflicts with existing data (e.g., duplicate email)."""
 
     def __init__(
-        self, message: str = "Resource already exists", details: Optional[Any] = None
+        self, message: str = "Resource already exists", details: Any | None = None
     ):
         super().__init__(message, "CONFLICT", 409, details)
 
@@ -140,7 +135,7 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Unhandled Exception: {str(exc)}", exc_info=True)
+        logger.error(f"Unhandled Exception: {exc!s}", exc_info=True)
         return JSONResponse(
             status_code=500,
             content={
