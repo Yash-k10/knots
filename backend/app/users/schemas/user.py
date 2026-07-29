@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 
+from app.users.schemas.role import RoleResponse
+
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -33,6 +35,7 @@ class ChangePassword(BaseModel):
 class UserResponse(UserBase):
     id: int
     role_id: int | None = None
+    role: RoleResponse | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -220,13 +220,13 @@ class TestAdminService(unittest.IsolatedAsyncioTestCase):
         service = AdminService(self.db)
 
         mock_flag = FlaggedPost(id=1, post_id=10, status="pending")
-        mock_flagged_repo.get.return_value = mock_flag
+        mock_flagged_repo.get_with_details.return_value = mock_flag
         mock_flagged_repo.update.return_value = mock_flag
 
         result = await service.resolve_flag(flag_id=1, action="resolved", actor_id=99)
 
         self.assertEqual(result, mock_flag)
-        mock_flagged_repo.get.assert_called_once_with(1)
+        mock_flagged_repo.get_with_details.assert_called_once_with(1)
         mock_flagged_repo.update.assert_called_once_with(
             mock_flag, {"status": "resolved"}
         )
@@ -247,7 +247,7 @@ class TestAdminService(unittest.IsolatedAsyncioTestCase):
     async def test_resolve_flag_not_found(self, mock_flagged_repo_class):
         mock_flagged_repo = AsyncMock()
         mock_flagged_repo_class.return_value = mock_flagged_repo
-        mock_flagged_repo.get.return_value = None
+        mock_flagged_repo.get_with_details.return_value = None
 
         service = AdminService(self.db)
 
