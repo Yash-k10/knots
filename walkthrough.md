@@ -247,7 +247,61 @@ OK
 
 ## Git Flow Compliance
 
+- Formatted with `black`, linted with `ruff` ✅
+
+---
+
+## 🗓️ Wednesday (July 29): Notifications UI & Real-Time Badge
+
+**Assigned Task (PROJECT_PLAN.md — Week 3, Wednesday):**
+> Frontend — Notifications page (notification list, mark as read, real-time badge count)
+
+### Step 16: Created Notifications Page
+**File Created:** `frontend/src/pages/Notifications.tsx`
+
+Built the central Notifications center UI using Tailwind CSS. 
+- Integrates with the `GET /notifications` endpoint to fetch the user's notification list.
+- Renders notifications dynamically with conditional styling (dimming opacity if `is_read` is true).
+- Categorizes notification icons and colors based on `type` (e.g., `job_alert`, `connection_request`, `event_alert`).
+
+### Step 17: Implemented Mark As Read
+**File Modified:** `frontend/src/pages/Notifications.tsx`
+
+- Added `handleMarkAsRead` which triggers a `PATCH /notifications/:id/read` when a user clicks on an unread notification, immediately updating the local state.
+- Added a "Mark All as Read" button that triggers `PATCH /notifications/read-all`.
+
+### Step 18: Integrated Real-Time WebSocket Listener
+**File Modified:** `frontend/src/pages/Notifications.tsx`
+
+- Subscribed to `wsClient.onNotification` to listen for real-time WebSocket pushes.
+- Whenever a new notification arrives via WS, it is immediately prepended to the `notifications` state array without requiring a page refresh.
+
+### Step 19: Added Real-Time Badge Count to Layout
+**File Modified:** `frontend/src/components/layout/DashboardLayout.tsx`
+
+- Integrated `wsClient.connect()` upon component mount.
+- Fetched the initial unread count via `GET /notifications/unread-count`.
+- Subscribed to `wsClient.onNotification` to either receive a new unread count from the server or increment the local counter.
+- Rendered the red badge count with a pulsing animation over the `Bell` icon in the top header and sidebar navigation if the count > 0.
+
+### Step 20: Registered Route
+**File Modified:** `frontend/src/routes/AppRoutes.tsx`
+
+- Added the `<Route path="notifications" element={<Notifications />} />` inside the ProtectedRoute wrapper so users can navigate to the page via the sidebar.
+
+---
+
+## Summary of Changes (Wednesday)
+
+| File | Change Type | Summary |
+|---|---|---|
+| `frontend/src/pages/Notifications.tsx` | New | Notifications center with list, mark as read, and WS integration |
+| `frontend/src/components/layout/DashboardLayout.tsx` | Modified | Added real-time WS badge counter and initial count fetch |
+| `frontend/src/routes/AppRoutes.tsx` | Modified | Registered Notifications route |
+
+## Git Flow Compliance
+
 - Worked on `feature/notifications-ui` (Member 3's branch) ✅
 - Did not touch `main` branch ✅
-- Did not push to `develop` (Sunday merge day) ✅
-- Formatted with `black`, linted with `ruff` ✅
+- Verified WebSocket connects successfully and badge updates ✅
+
