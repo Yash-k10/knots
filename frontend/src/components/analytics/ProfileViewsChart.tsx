@@ -182,7 +182,7 @@ export default function ProfileViewsChart({ initialData }: ProfileViewsChartProp
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload }) => {
+                content={({ active, payload }: any) => {
                   if (active && payload && payload.length) {
                     const dataPoint = payload[0].payload
                     return (
