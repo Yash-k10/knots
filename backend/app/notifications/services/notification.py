@@ -19,7 +19,15 @@ class NotificationService:
 
     async def create_notification(
         self, user_id: int, title: str, content: str, type: Optional[str] = "general"
-    ) -> Notification:
+    ) -> Optional[Notification]:
+        from app.notifications.services.notification_preference import (
+            NotificationPreferenceService,
+        )
+
+        pref_service = NotificationPreferenceService(self.repository.db)
+        if not await pref_service.is_enabled(user_id, type):
+            return None
+
         notification = await self.repository.create(
             obj_in={
                 "user_id": user_id,
