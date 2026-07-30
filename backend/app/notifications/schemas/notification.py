@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,7 +7,7 @@ class NotificationCreate(BaseModel):
     user_id: int
     title: str
     content: str
-    type: Optional[str] = "general"
+    type: str | None = "general"
 
 
 class NotificationResponse(BaseModel):

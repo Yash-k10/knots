@@ -131,7 +131,7 @@ export default function PostEngagementChart({ engagement }: PostEngagementChartP
                 allowDecimals={false}
               />
               <Tooltip
-                content={({ active, payload, label }) => {
+                content={({ active, payload, label }: any) => {
                   if (active && payload && payload.length) {
                     const postInfo = payload[0].payload
                     return (
@@ -141,7 +141,7 @@ export default function PostEngagementChart({ engagement }: PostEngagementChartP
                           {postInfo.snippet}
                         </p>
                         <div className="space-y-1 text-xs">
-                          {payload.map((item) => (
+                          {payload.map((item: any) => (
                             <div
                               key={item.name}
                               className="flex items-center justify-between gap-4"

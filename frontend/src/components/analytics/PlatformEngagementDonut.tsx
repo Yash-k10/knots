@@ -78,7 +78,7 @@ export default function PlatformEngagementDonut({ summary }: PlatformEngagementD
                 ))}
               </Pie>
               <Tooltip
-                content={({ active, payload }) => {
+                content={({ active, payload }: any) => {
                   if (active && payload && payload.length) {
                     const item = payload[0]
                     const pct = total > 0 ? ((Number(item.value) / total) * 100).toFixed(1) : 0
