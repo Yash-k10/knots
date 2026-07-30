@@ -138,7 +138,7 @@ export default function Notifications() {
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Notifications Center</h2>
           <p className="text-slate-400 text-sm">
-            Real-time delivery of job alerts, networking actions, and system updates.
+            Stay updated with real-time job alerts, networking connections, and campus events.
           </p>
         </div>
         <button
