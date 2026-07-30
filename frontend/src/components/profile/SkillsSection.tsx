@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Edit2, Plus, X, Save, Settings, Hash, Trash2 } from 'lucide-react'
+import { Edit2, Plus, X, Save, Settings, Hash, Trash2, ThumbsUp } from 'lucide-react'
 import { profileService, ProfileResponse } from '../../services/profile'
 
 interface SkillsSectionProps {
@@ -345,9 +345,10 @@ export default function SkillsSection({ profile, onUpdate, onError, isOwnProfile
                           {isOwnProfile ? (
                             endorsedCount > 0 && (
                               <span
-                                className="bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-[10px] px-1.5 py-0.5 rounded-full"
+                                className="flex items-center gap-1 bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full font-semibold"
                                 title={`Endorsed by: ${skillEndorsements.map((e) => e.endorser_name).join(', ')}`}
                               >
+                                <ThumbsUp className="h-2.5 w-2.5" />
                                 {endorsedCount}
                               </span>
                             )
@@ -355,10 +356,10 @@ export default function SkillsSection({ profile, onUpdate, onError, isOwnProfile
                             <button
                               type="button"
                               onClick={() => handleToggleEndorsement(skill)}
-                              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition ${
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border transition ${
                                 hasEndorsed
-                                  ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400 font-bold'
-                                  : 'bg-slate-950/40 border-slate-800/40 text-slate-400 hover:text-slate-200'
+                                  ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-400 font-bold shadow-sm'
+                                  : 'bg-slate-950/40 border-slate-800/40 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                               }`}
                               title={
                                 endorsedCount > 0
@@ -366,7 +367,8 @@ export default function SkillsSection({ profile, onUpdate, onError, isOwnProfile
                                   : 'Endorse this skill'
                               }
                             >
-                              👍 {endorsedCount}
+                              <ThumbsUp className="h-2.5 w-2.5" />
+                              {endorsedCount}
                             </button>
                           )}
                         </div>

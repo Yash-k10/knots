@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw, MessageSquare, Heart, Calendar } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw, MessageSquare, Heart, Calendar, Activity } from 'lucide-react'
 import { profileService, ProfileResponse } from '../services/profile'
 import { apiRequest } from '../services/api'
 import ProfileHeader from '../components/profile/ProfileHeader'
@@ -213,9 +213,17 @@ export default function Profile() {
 
           {/* Recent Activity Feed */}
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-4">
-              Recent Activity
-            </h3>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Activity className="h-5 w-5 text-indigo-400" />
+                Recent Activity
+              </h3>
+              {userPosts.length > 0 && (
+                <span className="text-xs bg-slate-900 border border-slate-800 text-indigo-300 font-semibold px-2.5 py-1 rounded-full">
+                  {userPosts.length} {userPosts.length === 1 ? 'Post' : 'Posts'}
+                </span>
+              )}
+            </div>
             {isLoadingPosts ? (
               <div className="flex justify-center py-6">
                 <Loader2 className="h-6 w-6 text-indigo-400 animate-spin" />
@@ -233,7 +241,7 @@ export default function Profile() {
                         Posted on {new Date(post.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-350 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
                       {post.content}
                     </p>
                     {post.image_url && (
@@ -251,18 +259,20 @@ export default function Profile() {
                     )}
                     <div className="flex gap-4 mt-4 pt-3 border-t border-slate-900/60 text-xs text-slate-500 font-bold uppercase tracking-wider">
                       <span className="flex items-center gap-1">
-                        <Heart className="h-4 w-4" /> {post.likes_count} Likes
+                        <Heart className="h-4 w-4 text-rose-400" /> {post.likes_count} Likes
                       </span>
                       <span className="flex items-center gap-1">
-                        <MessageSquare className="h-4 w-4" /> {post.comments_count} Comments
+                        <MessageSquare className="h-4 w-4 text-indigo-400" /> {post.comments_count} Comments
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <p className="text-slate-500 text-sm italic">No recent posts or discussions from this user.</p>
+              <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl bg-slate-900/10">
+                <MessageSquare className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-400 text-sm font-medium">No recent activity yet</p>
+                <p className="text-slate-600 text-xs mt-1">Posts and discussions shared by this user will appear here.</p>
               </div>
             )}
           </div>

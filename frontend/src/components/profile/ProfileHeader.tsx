@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Edit2, Save, X, GraduationCap, Building2 } from 'lucide-react'
+import { Edit2, Save, X, GraduationCap, Building2, Users } from 'lucide-react'
 import { profileService, ProfileResponse } from '../../services/profile'
 import ProfilePictureUploader from './ProfilePictureUploader'
 
@@ -207,7 +207,8 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
                 )}
                 {profile.connection_count !== undefined && (
                   <span className="flex items-center gap-1.5 font-medium bg-slate-900 border border-slate-800 text-indigo-300 text-xs px-2.5 py-1 rounded-full">
-                    {profile.connection_count} Connections
+                    <Users className="h-3.5 w-3.5 text-indigo-400" />
+                    {profile.connection_count} {profile.connection_count === 1 ? 'Connection' : 'Connections'}
                   </span>
                 )}
                 {!profile.department && !profile.graduation_year && (
