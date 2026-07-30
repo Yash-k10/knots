@@ -9,6 +9,8 @@ export interface Message {
   is_read: boolean
   read_at?: string
   created_at: string
+  status?: 'sending' | 'delivered' | 'read'
+  reactions?: Record<string, number>
 }
 
 export interface ConversationParticipant {
