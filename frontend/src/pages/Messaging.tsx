@@ -10,6 +10,79 @@ import {
 } from '../services/messaging'
 import { wsClient } from '../services/websocket'
 
+// Helper functions for date & timestamp formatting
+const formatDateDivider = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today'
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday'
+    } else {
+      return date.toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    }
+  } catch {
+    return dateStr
+  }
+}
+
+const formatMessageTime = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return dateStr
+  }
+}
+
+const formatFullTooltip = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return dateStr
+  }
+}
+
+// Categorized Emojis for Popover Picker
+const EMOJI_CATEGORIES = [
+  {
+    name: 'Smileys',
+    emojis: ['😊', '😂', '🥰', '😎', '🤩', '😜', '🥳', '😇', '🤖', '🤯', '😍', '🤔'],
+  },
+  {
+    name: 'Gestures',
+    emojis: ['👍', '👎', '🙌', '👏', '🤝', '✌️', '🙏', '💡', '🔥', '❤️', '💪', '👌'],
+  },
+  {
+    name: 'Hearts & Fun',
+    emojis: ['❤️', '💖', '💙', '💜', '🖤', '💯', '✨', '🎉', '🌟', '💥', '🎈', '🏆'],
+  },
+  {
+    name: 'Tech & Work',
+    emojis: ['🚀', '💻', '🎯', '📌', '📝', '⚡', '☕', '📱', '🔒', '📊', '🌐', '💻'],
+  },
+]
+
+// Quick Reactions for Message Hover Bar
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '🔥', '🎉', '💡']
+
 export default function Messaging() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
@@ -21,6 +94,12 @@ export default function Messaging() {
   const [isWsConnected, setIsWsConnected] = useState(false)
   const [typingUsers, setTypingUsers] = useState<Record<number, boolean>>({})
 
+  // Emoji Picker & Reaction State
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState('Smileys')
+  const [messageReactions, setMessageReactions] = useState<Record<number, Record<string, number>>>({})
+  const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null)
+
   // Modal State for New Group Chat
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [groupName, setGroupName] = useState('')
@@ -28,6 +107,19 @@ export default function Messaging() {
 
   const chatEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<any>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   // 1. Fetch initial conversations & connect WS
   useEffect(() => {
@@ -39,9 +131,13 @@ export default function Messaging() {
     })
 
     const unsubMessage = wsClient.onMessage((newMsg) => {
+      const incoming: Message = {
+        ...newMsg,
+        status: 'delivered',
+      }
       setMessages((prevMsgs) => {
-        if (newMsg.conversation_id === activeConvId && !prevMsgs.some((m) => m.id === newMsg.id)) {
-          return [...prevMsgs, newMsg]
+        if (incoming.conversation_id === activeConvId && !prevMsgs.some((m) => m.id === incoming.id)) {
+          return [...prevMsgs, incoming]
         }
         return prevMsgs
       })
@@ -49,11 +145,11 @@ export default function Messaging() {
       // Update sidebar conversation list
       setConversations((prevConvs) =>
         prevConvs.map((conv) => {
-          if (conv.id === newMsg.conversation_id) {
+          if (conv.id === incoming.conversation_id) {
             return {
               ...conv,
-              last_message: newMsg,
-              updated_at: newMsg.created_at,
+              last_message: incoming,
+              updated_at: incoming.created_at,
               unread_count: conv.id === activeConvId ? conv.unread_count : conv.unread_count + 1,
             }
           }
@@ -100,7 +196,12 @@ export default function Messaging() {
     setIsLoadingMsgs(true)
     try {
       const msgs = await fetchConversationMessages(convId)
-      setMessages(msgs)
+      // Enrich with status
+      const enriched = msgs.map((m) => ({
+        ...m,
+        status: m.is_read ? ('read' as const) : ('delivered' as const),
+      }))
+      setMessages(enriched)
       await markConversationAsRead(convId)
       wsClient.markRead(convId)
 
@@ -120,6 +221,21 @@ export default function Messaging() {
 
     const text = inputContent.trim()
     setInputContent('')
+    setShowEmojiPicker(false)
+
+    // Optimistic local message
+    const tempId = Date.now()
+    const optimisticMsg: Message = {
+      id: tempId,
+      conversation_id: activeConvId,
+      sender_id: 1, // Active user mock id
+      content: text,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      status: 'sending',
+    }
+
+    setMessages((prev) => [...prev, optimisticMsg])
 
     // Broadcast stop typing
     wsClient.sendTyping(activeConvId, false)
@@ -129,10 +245,21 @@ export default function Messaging() {
     if (!sentWs) {
       try {
         const restMsg = await sendRestMessage(text, activeConvId)
-        setMessages((prev) => [...prev, restMsg])
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...restMsg, status: restMsg.is_read ? 'read' : 'delivered' } : m
+          )
+        )
       } catch (err) {
         console.error('Failed to send message via REST fallback:', err)
       }
+    } else {
+      // Transition optimistic status to delivered after slight delay
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, status: 'delivered' } : m))
+        )
+      }, 400)
     }
   }
 
@@ -145,6 +272,25 @@ export default function Messaging() {
         wsClient.sendTyping(activeConvId, false)
       }, 2000)
     }
+  }
+
+  const handleInsertEmoji = (emoji: string) => {
+    setInputContent((prev) => prev + emoji)
+    inputRef.current?.focus()
+  }
+
+  const handleToggleReaction = (msgId: number, emoji: string) => {
+    setMessageReactions((prev) => {
+      const currentMap = prev[msgId] || {}
+      const currentCount = currentMap[emoji] || 0
+      return {
+        ...prev,
+        [msgId]: {
+          ...currentMap,
+          [emoji]: currentCount > 0 ? currentCount - 1 : currentCount + 1,
+        },
+      }
+    })
   }
 
   const handleCreateGroup = async (e: React.FormEvent) => {
@@ -175,8 +321,34 @@ export default function Messaging() {
     return nameStr.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
+  // Delivery status badge renderer
+  const renderDeliveryStatus = (msg: Message) => {
+    if (msg.status === 'sending') {
+      return (
+        <span title="Sending message..." className="text-slate-400 text-[10px] animate-pulse">
+          ⏳
+        </span>
+      )
+    }
+    if (msg.status === 'read' || msg.is_read) {
+      return (
+        <span
+          title={msg.read_at ? `Read at ${formatMessageTime(msg.read_at)}` : 'Read'}
+          className="text-indigo-300 font-bold text-[10px]"
+        >
+          ✓✓
+        </span>
+      )
+    }
+    return (
+      <span title="Delivered" className="text-slate-400 text-[10px]">
+        ✓✓
+      </span>
+    )
+  }
+
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex h-[650px] shadow-2xl">
+    <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex h-[680px] shadow-2xl">
       {/* Sidebar List */}
       <div className="w-80 border-r border-slate-800 bg-slate-950 flex flex-col">
         <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
@@ -191,7 +363,7 @@ export default function Messaging() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all shadow-sm"
           >
             + New Chat
           </button>
@@ -232,10 +404,7 @@ export default function Messaging() {
                       <h4 className="text-xs font-semibold text-white truncate">{title}</h4>
                       {chat.last_message && (
                         <span className="text-[10px] text-slate-500">
-                          {new Date(chat.last_message.created_at).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {formatMessageTime(chat.last_message.created_at)}
                         </span>
                       )}
                     </div>
@@ -258,7 +427,7 @@ export default function Messaging() {
       </div>
 
       {/* Main Conversation Thread */}
-      <div className="flex-1 flex flex-col bg-slate-950">
+      <div className="flex-1 flex flex-col bg-slate-950 relative">
         {activeConv ? (
           <>
             <div className="h-14 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-950">
@@ -271,12 +440,12 @@ export default function Messaging() {
                 </p>
               </div>
               <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span> Active
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> Active
               </span>
             </div>
 
             {/* Message History Window */}
-            <div className="flex-1 p-6 space-y-3.5 overflow-y-auto bg-slate-900/30">
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto bg-slate-900/30">
               {isLoadingMsgs ? (
                 <div className="p-6 text-center text-xs text-slate-500">Loading messages...</div>
               ) : messages.length === 0 ? (
@@ -284,41 +453,103 @@ export default function Messaging() {
                   No messages yet. Send a message to start chatting!
                 </div>
               ) : (
-                messages.map((msg) => {
-                  const isSentByMe = msg.sender_id === 1 // Current active user mock/context id
+                messages.map((msg, idx) => {
+                  const isSentByMe = msg.sender_id === 1 // Current active user mock id
+                  const prevMsg = messages[idx - 1]
+                  const currentDateDivider = formatDateDivider(msg.created_at)
+                  const prevDateDivider = prevMsg ? formatDateDivider(prevMsg.created_at) : null
+                  const showDateSeparator = currentDateDivider !== prevDateDivider
+
+                  const reactionsObj = messageReactions[msg.id] || {}
+                  const activeReactions = Object.entries(reactionsObj).filter(([, count]) => count > 0)
+
                   return (
-                    <div
-                      key={msg.id}
-                      className={`flex gap-2.5 ${isSentByMe ? 'justify-end' : 'justify-start'}`}
-                    >
-                      {!isSentByMe && (
-                        <div className="h-7 w-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-300">
-                          U{msg.sender_id}
+                    <React.Fragment key={msg.id}>
+                      {/* Date separator divider */}
+                      {showDateSeparator && (
+                        <div className="flex justify-center my-3">
+                          <span className="bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-medium px-3 py-1 rounded-full shadow-sm">
+                            {currentDateDivider}
+                          </span>
                         </div>
                       )}
+
                       <div
-                        className={`max-w-md p-3 rounded-2xl text-xs ${
-                          isSentByMe
-                            ? 'bg-indigo-600 text-white rounded-tr-none shadow-md'
-                            : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
-                        }`}
+                        className={`group relative flex gap-2.5 ${isSentByMe ? 'justify-end' : 'justify-start'}`}
+                        onMouseEnter={() => setHoveredMessageId(msg.id)}
+                        onMouseLeave={() => setHoveredMessageId(null)}
                       >
-                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        <div
-                          className={`mt-1 text-[9px] flex justify-end gap-1 ${
-                            isSentByMe ? 'text-indigo-200' : 'text-slate-500'
-                          }`}
-                        >
-                          <span>
-                            {new Date(msg.created_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          {isSentByMe && <span>{msg.is_read ? '✓✓' : '✓'}</span>}
+                        {!isSentByMe && (
+                          <div className="h-7 w-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-300 self-end mb-1">
+                            U{msg.sender_id}
+                          </div>
+                        )}
+
+                        <div className="relative max-w-md">
+                          {/* Quick Emoji Reaction Overlay Bar */}
+                          {hoveredMessageId === msg.id && (
+                            <div
+                              className={`absolute -top-7 ${
+                                isSentByMe ? 'right-0' : 'left-0'
+                              } bg-slate-900/90 backdrop-blur border border-slate-800 rounded-full px-2 py-0.5 flex gap-1 z-10 shadow-lg animate-in fade-in duration-150`}
+                            >
+                              {QUICK_REACTIONS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => handleToggleReaction(msg.id, emoji)}
+                                  className="hover:scale-125 transition-transform text-xs p-0.5"
+                                  title={`React with ${emoji}`}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div
+                            className={`p-3 rounded-2xl text-xs ${
+                              isSentByMe
+                                ? 'bg-indigo-600 text-white rounded-tr-none shadow-md'
+                                : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+                            }`}
+                          >
+                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                            <div
+                              className={`mt-1 text-[9px] flex justify-end items-center gap-1.5 ${
+                                isSentByMe ? 'text-indigo-200' : 'text-slate-500'
+                              }`}
+                            >
+                              <span title={formatFullTooltip(msg.created_at)}>
+                                {formatMessageTime(msg.created_at)}
+                              </span>
+                              {isSentByMe && renderDeliveryStatus(msg)}
+                            </div>
+                          </div>
+
+                          {/* Reaction count badges below message bubble */}
+                          {activeReactions.length > 0 && (
+                            <div
+                              className={`flex flex-wrap gap-1 mt-1 ${
+                                isSentByMe ? 'justify-end' : 'justify-start'
+                              }`}
+                            >
+                              {activeReactions.map(([emoji, count]) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => handleToggleReaction(msg.id, emoji)}
+                                  className="bg-slate-900/90 border border-slate-800 text-[10px] px-1.5 py-0.5 rounded-full text-slate-300 flex items-center gap-1 hover:border-indigo-500 transition-all"
+                                >
+                                  <span>{emoji}</span>
+                                  <span className="font-semibold text-indigo-400">{count}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    </React.Fragment>
                   )
                 })
               )}
@@ -333,15 +564,69 @@ export default function Messaging() {
               <div ref={chatEndRef} />
             </div>
 
+            {/* Floating Emoji Picker Popover */}
+            {showEmojiPicker && (
+              <div
+                ref={emojiPickerRef}
+                className="absolute bottom-16 right-6 w-72 bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-2xl z-30 animate-in fade-in zoom-in-95 duration-150"
+              >
+                <div className="flex border-b border-slate-800 pb-2 mb-2 gap-1 overflow-x-auto">
+                  {EMOJI_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.name}
+                      type="button"
+                      onClick={() => setActiveEmojiCategory(cat.name)}
+                      className={`text-[10px] font-semibold px-2 py-1 rounded-md transition-all ${
+                        activeEmojiCategory === cat.name
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-400 hover:bg-slate-800'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-6 gap-1.5 max-h-36 overflow-y-auto p-1">
+                  {EMOJI_CATEGORIES.find((c) => c.name === activeEmojiCategory)?.emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => handleInsertEmoji(emoji)}
+                      className="h-8 w-8 text-base flex items-center justify-center rounded hover:bg-slate-800 hover:scale-110 transition-transform"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Message Input Box */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 flex gap-3 items-center bg-slate-950">
+            <form
+              onSubmit={handleSendMessage}
+              className="p-4 border-t border-slate-800 flex gap-2.5 items-center bg-slate-950 relative"
+            >
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className={`p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-all ${
+                  showEmojiPicker ? 'bg-slate-900 text-indigo-400' : ''
+                }`}
+                title="Toggle Emoji Picker"
+              >
+                😊
+              </button>
+
               <input
+                ref={inputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={inputContent}
                 onChange={(e) => handleInputChange(e.target.value)}
                 className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
+
               <button
                 type="submit"
                 disabled={!inputContent.trim()}
