@@ -1,6 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
-import AppRoutes from './routes/AppRoutes'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./routes/AppRoutes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,7 +9,7 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-})
+});
 
 function App() {
   return (
@@ -18,7 +18,7 @@ function App() {
         <AppRoutes />
       </BrowserRouter>
     </QueryClientProvider>
-  )
+  );
 }
 
-export default App
+export default App;

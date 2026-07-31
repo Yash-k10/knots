@@ -1,78 +1,86 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { GraduationCap, ArrowRight, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
-import { apiRequest, ApiError } from '../services/api'
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  GraduationCap,
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { apiRequest, ApiError } from "../services/api";
 
 export default function Register() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [roleId, setRoleId] = useState<number>(2) // Default to Student (2)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [roleId, setRoleId] = useState<number>(2); // Default to Student (2)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    const trimmedEmail = email.trim()
+    const trimmedEmail = email.trim();
 
     // Frontend Validations
     if (!trimmedEmail) {
-      setError('Email address is required.')
-      return
+      setError("Email address is required.");
+      return;
     }
-    if (!trimmedEmail.includes('@')) {
-      setError('Please enter a valid email address.')
-      return
+    if (!trimmedEmail.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
     }
-    if (!trimmedEmail.endsWith('@sbjit.edu.in')) {
-      setError('Only college email addresses (@sbjit.edu.in) are allowed to register.')
-      return
+    if (!trimmedEmail.endsWith("@sbjit.edu.in")) {
+      setError(
+        "Only college email addresses (@sbjit.edu.in) are allowed to register.",
+      );
+      return;
     }
     if (!password) {
-      setError('Password is required.')
-      return
+      setError("Password is required.");
+      return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.')
-      return
+      setError("Password must be at least 6 characters long.");
+      return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
+      setError("Passwords do not match.");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      await apiRequest('/auth/register', {
-        method: 'POST',
+      await apiRequest("/auth/register", {
+        method: "POST",
         body: JSON.stringify({
           email: trimmedEmail,
           password: password,
           role_id: roleId,
         }),
-      })
+      });
 
-      setSuccess(true)
+      setSuccess(true);
       // Auto-navigate to login page after 3.5 seconds
       setTimeout(() => {
-        navigate('/login')
-      }, 3500)
+        navigate("/login");
+      }, 3500);
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setError(err.message);
       } else if (err instanceof Error) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError('An unexpected network error occurred. Please try again.')
+        setError("An unexpected network error occurred. Please try again.");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (success) {
     return (
@@ -84,23 +92,26 @@ export default function Register() {
             </div>
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-white">Registration Successful!</h2>
+            <h2 className="text-2xl font-bold text-white">
+              Registration Successful!
+            </h2>
             <p className="text-slate-400 text-sm">
-              Your account has been created. A verification link has been generated.
+              Your account has been created. A verification link has been
+              generated.
             </p>
             <p className="text-slate-500 text-xs mt-2">
               Redirecting you to the login page in a few seconds...
             </p>
           </div>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate("/login")}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-3 font-semibold text-sm transition-all flex items-center justify-center gap-2 mt-4"
           >
             Go to Login <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -111,7 +122,9 @@ export default function Register() {
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-white">Join KNOTS</h2>
-          <p className="text-slate-400 text-sm mt-1">Connect with your campus community</p>
+          <p className="text-slate-400 text-sm mt-1">
+            Connect with your campus community
+          </p>
         </div>
 
         {error && (
@@ -202,12 +215,12 @@ export default function Register() {
         </form>
 
         <p className="text-center text-slate-500 text-xs mt-6">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link to="/login" className="text-indigo-400 hover:underline">
             Sign In
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }

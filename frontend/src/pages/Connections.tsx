@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Users, Search } from 'lucide-react';
-import { apiRequest } from '../services/api';
-import ConnectionCard from '../components/connections/ConnectionCard';
+import { useState, useEffect } from "react";
+import { Users, Search } from "lucide-react";
+import { apiRequest } from "../services/api";
+import ConnectionCard from "../components/connections/ConnectionCard";
 
 interface User {
   id: number;
@@ -17,28 +17,30 @@ interface Connection {
 }
 
 export default function Connections() {
-  const [activeTab, setActiveTab] = useState<'requests' | 'connections' | 'discover'>('requests');
+  const [activeTab, setActiveTab] = useState<
+    "requests" | "connections" | "discover"
+  >("requests");
   const [requests, setRequests] = useState<Connection[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch data
   const fetchData = async () => {
     try {
       setLoading(true);
       const [reqsData, connsData, usersData] = await Promise.all([
-        apiRequest<Connection[]>('/connections/me/requests'),
-        apiRequest<Connection[]>('/connections/me'),
-        apiRequest<User[]>('/users')
+        apiRequest<Connection[]>("/connections/me/requests"),
+        apiRequest<Connection[]>("/connections/me"),
+        apiRequest<User[]>("/users"),
       ]);
       setRequests(reqsData);
       setConnections(connsData);
       setUsers(usersData);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch data');
+      setError(err.message || "Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -48,14 +50,14 @@ export default function Connections() {
     fetchData();
   }, []);
 
-  const handleTabChange = (tab: 'requests' | 'connections' | 'discover') => {
+  const handleTabChange = (tab: "requests" | "connections" | "discover") => {
     setActiveTab(tab);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleAccept = async (id: number) => {
     try {
-      await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
+      await apiRequest(`/connections/${id}/accept`, { method: "PATCH" });
       fetchData(); // Refresh lists
     } catch (err: any) {
       alert(err.message);
@@ -64,7 +66,7 @@ export default function Connections() {
 
   const handleReject = async (id: number) => {
     try {
-      await apiRequest(`/connections/${id}/reject`, { method: 'PATCH' });
+      await apiRequest(`/connections/${id}/reject`, { method: "PATCH" });
       fetchData();
     } catch (err: any) {
       alert(err.message);
@@ -73,11 +75,11 @@ export default function Connections() {
 
   const handleConnect = async (userId: number) => {
     try {
-      await apiRequest('/connections', {
-        method: 'POST',
+      await apiRequest("/connections", {
+        method: "POST",
         body: JSON.stringify({ addressee_id: userId }),
       });
-      alert('Request sent!');
+      alert("Request sent!");
       fetchData();
     } catch (err: any) {
       alert(err.message);
@@ -91,20 +93,25 @@ export default function Connections() {
 
   // Filter lists based on search query
   const filteredRequests = requests.filter((req) =>
-    req.requester_id.toString().includes(searchQuery.trim())
+    req.requester_id.toString().includes(searchQuery.trim()),
   );
 
-  const filteredConnections = connections.filter((conn) =>
-    conn.requester_id.toString().includes(searchQuery.trim()) ||
-    conn.id.toString().includes(searchQuery.trim())
+  const filteredConnections = connections.filter(
+    (conn) =>
+      conn.requester_id.toString().includes(searchQuery.trim()) ||
+      conn.id.toString().includes(searchQuery.trim()),
   );
 
   const filteredUsers = users.filter((user) =>
-    user.email.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    user.email.toLowerCase().includes(searchQuery.toLowerCase().trim()),
   );
 
   if (loading) {
-    return <div className="text-slate-400 p-6 flex items-center justify-center min-h-[50vh]">Loading network data...</div>;
+    return (
+      <div className="text-slate-400 p-6 flex items-center justify-center min-h-[50vh]">
+        Loading network data...
+      </div>
+    );
   }
 
   return (
@@ -116,7 +123,9 @@ export default function Connections() {
               <Users className="w-6 h-6 text-indigo-400" />
               My Network
             </h2>
-            <p className="text-slate-400 text-sm">Build relationships with alumni and campus colleagues.</p>
+            <p className="text-slate-400 text-sm">
+              Build relationships with alumni and campus colleagues.
+            </p>
           </div>
 
           {/* Search bar */}
@@ -125,11 +134,11 @@ export default function Connections() {
             <input
               type="text"
               placeholder={
-                activeTab === 'discover'
-                  ? 'Search people by email...'
-                  : activeTab === 'requests'
-                  ? 'Search requests by User ID...'
-                  : 'Search connections by User/Connection ID...'
+                activeTab === "discover"
+                  ? "Search people by email..."
+                  : activeTab === "requests"
+                    ? "Search requests by User ID..."
+                    : "Search connections by User/Connection ID..."
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -137,7 +146,7 @@ export default function Connections() {
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-xs font-semibold"
               >
                 Clear
@@ -153,21 +162,21 @@ export default function Connections() {
         )}
 
         <div className="flex gap-6 border-b border-slate-800 pb-2">
-          <button 
-            onClick={() => handleTabChange('requests')}
-            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'requests' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+          <button
+            onClick={() => handleTabChange("requests")}
+            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === "requests" ? "text-indigo-400 border-indigo-400" : "text-slate-400 border-transparent hover:text-slate-200"}`}
           >
             Pending Requests ({requests.length})
           </button>
-          <button 
-            onClick={() => handleTabChange('connections')}
-            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'connections' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+          <button
+            onClick={() => handleTabChange("connections")}
+            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === "connections" ? "text-indigo-400 border-indigo-400" : "text-slate-400 border-transparent hover:text-slate-200"}`}
           >
             My Connections ({connections.length})
           </button>
-          <button 
-            onClick={() => handleTabChange('discover')}
-            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'discover' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+          <button
+            onClick={() => handleTabChange("discover")}
+            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === "discover" ? "text-indigo-400 border-indigo-400" : "text-slate-400 border-transparent hover:text-slate-200"}`}
           >
             Discover People
           </button>
@@ -175,13 +184,14 @@ export default function Connections() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        
         {/* PENDING REQUESTS TAB */}
-        {activeTab === 'requests' && (
+        {activeTab === "requests" && (
           <>
             {filteredRequests.length === 0 ? (
               <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                {searchQuery ? 'No pending requests match your search.' : 'No pending requests.'}
+                {searchQuery
+                  ? "No pending requests match your search."
+                  : "No pending requests."}
               </div>
             ) : (
               filteredRequests.map((req) => (
@@ -200,11 +210,13 @@ export default function Connections() {
         )}
 
         {/* MY CONNECTIONS TAB */}
-        {activeTab === 'connections' && (
+        {activeTab === "connections" && (
           <>
             {filteredConnections.length === 0 ? (
               <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                {searchQuery ? 'No connections match your search.' : "You don't have any connections yet."}
+                {searchQuery
+                  ? "No connections match your search."
+                  : "You don't have any connections yet."}
               </div>
             ) : (
               filteredConnections.map((conn) => (
@@ -222,11 +234,13 @@ export default function Connections() {
         )}
 
         {/* DISCOVER TAB */}
-        {activeTab === 'discover' && (
+        {activeTab === "discover" && (
           <>
             {filteredUsers.length === 0 ? (
               <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                {searchQuery ? 'No users match your search.' : 'No users found.'}
+                {searchQuery
+                  ? "No users match your search."
+                  : "No users found."}
               </div>
             ) : (
               filteredUsers.map((user) => (
@@ -243,7 +257,6 @@ export default function Connections() {
             )}
           </>
         )}
-
       </div>
     </div>
   );

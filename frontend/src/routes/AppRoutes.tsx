@@ -1,74 +1,78 @@
-import React, { useEffect, useState } from 'react'
-import { Routes, Route, Navigate, Link } from 'react-router-dom'
-import { ShieldAlert, ArrowLeft } from 'lucide-react'
-import { apiRequest } from '../services/api'
+import React, { useEffect, useState } from "react";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { ShieldAlert, ArrowLeft } from "lucide-react";
+import { apiRequest } from "../services/api";
 
 // Layouts
-import DashboardLayout from '../components/layout/DashboardLayout'
+import DashboardLayout from "../components/layout/DashboardLayout";
 
 // Public Pages
-import Login from '../pages/Login'
-import Register from '../pages/Register'
+import Login from "../pages/Login";
+import Register from "../pages/Register";
 
 // Protected Pages
-import Dashboard from '../pages/Dashboard'
-import Feed from '../pages/Feed'
-import Profile from '../pages/Profile'
-import Connections from '../pages/Connections'
-import Jobs from '../pages/Jobs'
-import Events from '../pages/Events'
-import Messaging from '../pages/Messaging'
-import Notifications from '../pages/Notifications'
-import Admin from '../pages/Admin'
-import Settings from '../pages/Settings'
+import Dashboard from "../pages/Dashboard";
+import Feed from "../pages/Feed";
+import Profile from "../pages/Profile";
+import Connections from "../pages/Connections";
+import Jobs from "../pages/Jobs";
+import Events from "../pages/Events";
+import Messaging from "../pages/Messaging";
+import Notifications from "../pages/Notifications";
+import Admin from "../pages/Admin";
+import Settings from "../pages/Settings";
 
 // Protected Route Wrapper Component
 interface ProtectedRouteProps {
-  children: React.ReactElement
+  children: React.ReactElement;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const token = localStorage.getItem('knots_token')
-  
+  const token = localStorage.getItem("knots_token");
+
   if (!token) {
     // Redirect to login if token is missing
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  return children
-}
+  return children;
+};
 
 // Admin Route Wrapper Component for Role-Based Access Control
 const AdminRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const checkAdminRole = async () => {
       try {
-        const user = await apiRequest<{ role_id?: number; role?: { name: string } }>('/users/me')
+        const user = await apiRequest<{
+          role_id?: number;
+          role?: { name: string };
+        }>("/users/me");
         if (isMounted) {
-          const hasAdminRole = user.role_id === 1 || user.role?.name?.toLowerCase() === 'admin'
-          setIsAdmin(hasAdminRole)
+          const hasAdminRole =
+            user.role_id === 1 || user.role?.name?.toLowerCase() === "admin";
+          setIsAdmin(hasAdminRole);
         }
       } catch (err) {
         if (isMounted) {
-          setIsAdmin(false)
+          setIsAdmin(false);
         }
       }
-    }
-    checkAdminRole()
+    };
+    checkAdminRole();
     return () => {
-      isMounted = false
-    }
-  }, [])
+      isMounted = false;
+    };
+  }, []);
 
   if (isAdmin === null) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
       </div>
-    )
+    );
   }
 
   if (!isAdmin) {
@@ -78,9 +82,12 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
           <ShieldAlert className="h-8 w-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            Access Denied
+          </h2>
           <p className="text-slate-400 text-sm">
-            Administrative authorization is required to access the Admin Console. Your account does not have administrator privileges.
+            Administrative authorization is required to access the Admin
+            Console. Your account does not have administrator privileges.
           </p>
         </div>
         <div>
@@ -93,11 +100,11 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  return children
-}
+  return children;
+};
 
 export default function AppRoutes() {
   return (
@@ -138,5 +145,5 @@ export default function AppRoutes() {
       {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  );
 }

@@ -1,217 +1,247 @@
-import React, { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit2, Code, X, Save, ArrowUp, ArrowDown, FolderGit } from 'lucide-react'
-import { profileService, Project, ProfileResponse } from '../../services/profile'
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Code,
+  X,
+  Save,
+  ArrowUp,
+  ArrowDown,
+  FolderGit,
+} from "lucide-react";
+import {
+  profileService,
+  Project,
+  ProfileResponse,
+} from "../../services/profile";
 
 interface ProjectsSectionProps {
-  profile: ProfileResponse
-  onUpdate: (updatedProfile: ProfileResponse) => void
-  onError: (errorMessage: string) => void
-  isOwnProfile?: boolean
+  profile: ProfileResponse;
+  onUpdate: (updatedProfile: ProfileResponse) => void;
+  onError: (errorMessage: string) => void;
+  isOwnProfile?: boolean;
 }
 
-export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfile = true }: ProjectsSectionProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+export default function ProjectsSection({
+  profile,
+  onUpdate,
+  onError,
+  isOwnProfile = true,
+}: ProjectsSectionProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Local State representing the projects array
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<Project[]>([]);
 
   // Single Entry Form State
-  const [title, setTitle] = useState('')
-  const [highlights, setHighlights] = useState<string[]>([])
-  const [techStack, setTechStack] = useState<string[]>([])
+  const [title, setTitle] = useState("");
+  const [highlights, setHighlights] = useState<string[]>([]);
+  const [techStack, setTechStack] = useState<string[]>([]);
 
   // Temp inputs for list items
-  const [newHighlightText, setNewHighlightText] = useState('')
-  const [editingHighlightIndex, setEditingHighlightIndex] = useState<number | null>(null)
-  const [editingHighlightText, setEditingHighlightText] = useState('')
+  const [newHighlightText, setNewHighlightText] = useState("");
+  const [editingHighlightIndex, setEditingHighlightIndex] = useState<
+    number | null
+  >(null);
+  const [editingHighlightText, setEditingHighlightText] = useState("");
 
-  const [newTechTagText, setNewTechTagText] = useState('')
+  const [newTechTagText, setNewTechTagText] = useState("");
 
   // Form index for editing an existing item in the array
-  const [editIndex, setEditIndex] = useState<number | null>(null)
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   // Validation Errors
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Initialize from profile
   useEffect(() => {
-    setProjects(profile.projects || [])
-    resetForm()
-  }, [profile, isEditing])
+    setProjects(profile.projects || []);
+    resetForm();
+  }, [profile, isEditing]);
 
   const handleEditToggle = () => {
-    setIsEditing(!isEditing)
-  }
+    setIsEditing(!isEditing);
+  };
 
   const resetForm = () => {
-    setTitle('')
-    setHighlights([])
-    setTechStack([])
-    setNewHighlightText('')
-    setEditingHighlightIndex(null)
-    setEditingHighlightText('')
-    setNewTechTagText('')
-    setEditIndex(null)
-    setFormErrors({})
-  }
+    setTitle("");
+    setHighlights([]);
+    setTechStack([]);
+    setNewHighlightText("");
+    setEditingHighlightIndex(null);
+    setEditingHighlightText("");
+    setNewTechTagText("");
+    setEditIndex(null);
+    setFormErrors({});
+  };
 
   const startEditEntry = (index: number) => {
-    setFormErrors({})
-    const proj = projects[index]
-    setTitle(proj.title)
-    setHighlights(proj.highlights || [])
-    setTechStack(proj.tech_stack || [])
-    setEditIndex(index)
-  }
+    setFormErrors({});
+    const proj = projects[index];
+    setTitle(proj.title);
+    setHighlights(proj.highlights || []);
+    setTechStack(proj.tech_stack || []);
+    setEditIndex(index);
+  };
 
   // Highlight bullet actions
   const handleAddHighlight = (e: React.MouseEvent) => {
-    e.preventDefault()
-    const text = newHighlightText.trim()
-    if (!text) return
+    e.preventDefault();
+    const text = newHighlightText.trim();
+    if (!text) return;
 
     if (text.length > 200) {
-      setFormErrors((prev) => ({ ...prev, highlights: 'Project highlight cannot exceed 200 characters.' }))
-      return
+      setFormErrors((prev) => ({
+        ...prev,
+        highlights: "Project highlight cannot exceed 200 characters.",
+      }));
+      return;
     }
 
-    setHighlights([...highlights, text])
-    setNewHighlightText('')
+    setHighlights([...highlights, text]);
+    setNewHighlightText("");
     setFormErrors((prev) => {
-      const copy = { ...prev }
-      delete copy.highlights
-      return copy
-    })
-  }
+      const copy = { ...prev };
+      delete copy.highlights;
+      return copy;
+    });
+  };
 
   const handleRemoveHighlight = (index: number) => {
-    setHighlights(highlights.filter((_, i) => i !== index))
-  }
+    setHighlights(highlights.filter((_, i) => i !== index));
+  };
 
   const handleStartEditHighlight = (index: number, text: string) => {
-    setEditingHighlightIndex(index)
-    setEditingHighlightText(text)
-  }
+    setEditingHighlightIndex(index);
+    setEditingHighlightText(text);
+  };
 
   const handleSaveHighlightEdit = (index: number) => {
-    const text = editingHighlightText.trim()
+    const text = editingHighlightText.trim();
     if (!text) {
-      handleRemoveHighlight(index)
-      setEditingHighlightIndex(null)
-      return
+      handleRemoveHighlight(index);
+      setEditingHighlightIndex(null);
+      return;
     }
 
     if (text.length > 200) {
-      setFormErrors((prev) => ({ ...prev, highlights: 'Project highlight cannot exceed 200 characters.' }))
-      return
+      setFormErrors((prev) => ({
+        ...prev,
+        highlights: "Project highlight cannot exceed 200 characters.",
+      }));
+      return;
     }
 
-    const updated = [...highlights]
-    updated[index] = text
-    setHighlights(updated)
-    setEditingHighlightIndex(null)
-    setEditingHighlightText('')
+    const updated = [...highlights];
+    updated[index] = text;
+    setHighlights(updated);
+    setEditingHighlightIndex(null);
+    setEditingHighlightText("");
     setFormErrors((prev) => {
-      const copy = { ...prev }
-      delete copy.highlights
-      return copy
-    })
-  }
+      const copy = { ...prev };
+      delete copy.highlights;
+      return copy;
+    });
+  };
 
-  const handleMoveHighlight = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return
-    if (direction === 'down' && index === highlights.length - 1) return
+  const handleMoveHighlight = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === highlights.length - 1) return;
 
-    const newIndex = direction === 'up' ? index - 1 : index + 1
-    const updated = [...highlights]
-    const temp = updated[index]
-    updated[index] = updated[newIndex]
-    updated[newIndex] = temp
-    setHighlights(updated)
-  }
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    const updated = [...highlights];
+    const temp = updated[index];
+    updated[index] = updated[newIndex];
+    updated[newIndex] = temp;
+    setHighlights(updated);
+  };
 
   // Tech tags actions
   const handleAddTechTag = (e: React.FormEvent) => {
-    e.preventDefault()
-    const tag = newTechTagText.trim()
-    if (!tag) return
+    e.preventDefault();
+    const tag = newTechTagText.trim();
+    if (!tag) return;
 
     if (techStack.some((t) => t.toLowerCase() === tag.toLowerCase())) {
-      setFormErrors((prev) => ({ ...prev, tech: `Tech tag "${tag}" already added.` }))
-      return
+      setFormErrors((prev) => ({
+        ...prev,
+        tech: `Tech tag "${tag}" already added.`,
+      }));
+      return;
     }
 
-    setTechStack([...techStack, tag])
-    setNewTechTagText('')
+    setTechStack([...techStack, tag]);
+    setNewTechTagText("");
     setFormErrors((prev) => {
-      const copy = { ...prev }
-      delete copy.tech
-      return copy
-    })
-  }
+      const copy = { ...prev };
+      delete copy.tech;
+      return copy;
+    });
+  };
 
   const handleRemoveTechTag = (tagToRemove: string) => {
-    setTechStack(techStack.filter((t) => t !== tagToRemove))
-  }
+    setTechStack(techStack.filter((t) => t !== tagToRemove));
+  };
 
   // Validate form
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
     if (!title.trim()) {
-      errors.title = 'Project Title is required.'
+      errors.title = "Project Title is required.";
     }
     if (highlights.length === 0) {
-      errors.highlights = 'At least one project highlight bullet is required.'
+      errors.highlights = "At least one project highlight bullet is required.";
     }
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   // Add/Update in local array
   const handleAddOrUpdateEntry = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm()) return
+    e.preventDefault();
+    if (!validateForm()) return;
 
     const newEntry: Project = {
       title: title.trim(),
       highlights: highlights,
       tech_stack: techStack.length > 0 ? techStack : undefined,
-    }
+    };
 
     if (editIndex !== null) {
-      const updated = [...projects]
-      updated[editIndex] = newEntry
-      setProjects(updated)
+      const updated = [...projects];
+      updated[editIndex] = newEntry;
+      setProjects(updated);
     } else {
-      setProjects([...projects, newEntry])
+      setProjects([...projects, newEntry]);
     }
-    resetForm()
-  }
+    resetForm();
+  };
 
   // Remove entry from local list
   const handleRemoveEntry = (index: number) => {
-    setProjects(projects.filter((_, idx) => idx !== index))
+    setProjects(projects.filter((_, idx) => idx !== index));
     if (editIndex === index) {
-      resetForm()
+      resetForm();
     }
-  }
+  };
 
   // Save array to backend
   const handleSave = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const updated = await profileService.updateProfile({
         projects: projects,
-      })
-      onUpdate(updated)
-      setIsEditing(false)
+      });
+      onUpdate(updated);
+      setIsEditing(false);
     } catch (err: any) {
-      onError(err.message || 'Failed to save projects.')
+      onError(err.message || "Failed to save projects.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   return (
     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
@@ -234,9 +264,12 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
       {isEditing ? (
         <div className="space-y-5 animate-in fade-in duration-200">
           {/* Add / Edit Project Form */}
-          <form onSubmit={handleAddOrUpdateEntry} className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 space-y-4">
+          <form
+            onSubmit={handleAddOrUpdateEntry}
+            className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 space-y-4"
+          >
             <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-              {editIndex !== null ? 'Edit Project details' : 'Add New Project'}
+              {editIndex !== null ? "Edit Project details" : "Add New Project"}
             </h4>
 
             <div>
@@ -252,34 +285,47 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                 required
               />
               {formErrors.title && (
-                <p className="text-red-500 text-[10px] mt-1">{formErrors.title}</p>
+                <p className="text-red-500 text-[10px] mt-1">
+                  {formErrors.title}
+                </p>
               )}
             </div>
 
             {/* Bullet points editor for project highlights */}
             <div className="space-y-2 border-t border-slate-900 pt-3">
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                Project Highlights / Accomplishments <span className="text-red-500">*</span>
+                Project Highlights / Accomplishments{" "}
+                <span className="text-red-500">*</span>
               </label>
-              
+
               <div className="space-y-2">
                 {highlights.map((highlight, idx) => (
-                  <div key={idx} className="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                  <div
+                    key={idx}
+                    className="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80"
+                  >
                     <div className="flex-1 text-xs text-slate-300">
                       {editingHighlightIndex === idx ? (
                         <input
                           type="text"
                           value={editingHighlightText}
-                          onChange={(e) => setEditingHighlightText(e.target.value)}
+                          onChange={(e) =>
+                            setEditingHighlightText(e.target.value)
+                          }
                           onBlur={() => handleSaveHighlightEdit(idx)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveHighlightEdit(idx)
+                            if (e.key === "Enter") handleSaveHighlightEdit(idx);
                           }}
                           autoFocus
                           className="w-full bg-slate-900 border border-slate-800 px-2 py-1 text-xs text-white rounded focus:outline-none focus:border-indigo-500"
                         />
                       ) : (
-                        <span className="cursor-pointer" onClick={() => handleStartEditHighlight(idx, highlight)}>
+                        <span
+                          className="cursor-pointer"
+                          onClick={() =>
+                            handleStartEditHighlight(idx, highlight)
+                          }
+                        >
                           • {highlight}
                         </span>
                       )}
@@ -288,7 +334,7 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                     <div className="flex gap-1 shrink-0">
                       <button
                         type="button"
-                        onClick={() => handleMoveHighlight(idx, 'up')}
+                        onClick={() => handleMoveHighlight(idx, "up")}
                         disabled={idx === 0}
                         className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
                       >
@@ -296,7 +342,7 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleMoveHighlight(idx, 'down')}
+                        onClick={() => handleMoveHighlight(idx, "down")}
                         disabled={idx === highlights.length - 1}
                         className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
                       >
@@ -332,7 +378,9 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                 </button>
               </div>
               {formErrors.highlights && (
-                <p className="text-red-500 text-[10px]">{formErrors.highlights}</p>
+                <p className="text-red-500 text-[10px]">
+                  {formErrors.highlights}
+                </p>
               )}
             </div>
 
@@ -367,9 +415,9 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                   value={newTechTagText}
                   onChange={(e) => setNewTechTagText(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddTechTag(e)
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTechTag(e);
                     }
                   }}
                   placeholder="Add tech (e.g. React, FastApi, PostgreSQL) and press Enter..."
@@ -403,7 +451,7 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                 className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-200 text-xs font-semibold transition"
               >
                 <Plus className="h-3.5 w-3.5" />
-                {editIndex !== null ? 'Update Project' : 'Add to Projects List'}
+                {editIndex !== null ? "Update Project" : "Add to Projects List"}
               </button>
             </div>
           </form>
@@ -412,9 +460,14 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
           <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
             {projects.length > 0 ? (
               projects.map((proj, idx) => (
-                <div key={idx} className="bg-slate-900/20 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+                <div
+                  key={idx}
+                  className="bg-slate-900/20 border border-slate-800 rounded-xl p-4 text-xs space-y-3"
+                >
                   <div className="flex items-start justify-between">
-                    <h5 className="font-bold text-white text-sm leading-snug">{proj.title}</h5>
+                    <h5 className="font-bold text-white text-sm leading-snug">
+                      {proj.title}
+                    </h5>
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -442,7 +495,10 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                   {proj.tech_stack && proj.tech_stack.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {proj.tech_stack.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 bg-slate-950 border border-slate-900 rounded text-[9px] font-bold text-indigo-400">
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-slate-950 border border-slate-900 rounded text-[9px] font-bold text-indigo-400"
+                        >
                           {tag}
                         </span>
                       ))}
@@ -451,7 +507,9 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                 </div>
               ))
             ) : (
-              <p className="text-slate-650 text-xs italic text-center py-6">No projects added yet. Create one above!</p>
+              <p className="text-slate-650 text-xs italic text-center py-6">
+                No projects added yet. Create one above!
+              </p>
             )}
           </div>
 
@@ -471,7 +529,7 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
               disabled={isSaving}
             >
               <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Projects'}
+              {isSaving ? "Saving..." : "Save Projects"}
             </button>
           </div>
         </div>
@@ -480,16 +538,24 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
         <div className="space-y-6">
           {projects.length > 0 ? (
             projects.map((proj, idx) => (
-              <div key={idx} className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition animate-in fade-in duration-200">
+              <div
+                key={idx}
+                className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition animate-in fade-in duration-200"
+              >
                 <div className="mt-1 bg-slate-900 border border-slate-800 p-2 rounded-lg text-indigo-400">
                   <Code className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <h4 className="font-semibold text-white text-base leading-tight">{proj.title}</h4>
+                  <h4 className="font-semibold text-white text-base leading-tight">
+                    {proj.title}
+                  </h4>
 
                   <ul className="list-disc pl-4 space-y-1">
                     {proj.highlights.map((bullet, bIdx) => (
-                      <li key={bIdx} className="text-slate-300 text-xs leading-relaxed">
+                      <li
+                        key={bIdx}
+                        className="text-slate-300 text-xs leading-relaxed"
+                      >
                         {bullet}
                       </li>
                     ))}
@@ -498,7 +564,10 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
                   {proj.tech_stack && proj.tech_stack.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {proj.tech_stack.map((tag) => (
-                        <span key={tag} className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-indigo-300">
+                        <span
+                          key={tag}
+                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-indigo-300"
+                        >
                           {tag}
                         </span>
                       ))}
@@ -516,5 +585,5 @@ export default function ProjectsSection({ profile, onUpdate, onError, isOwnProfi
         </div>
       )}
     </div>
-  )
+  );
 }

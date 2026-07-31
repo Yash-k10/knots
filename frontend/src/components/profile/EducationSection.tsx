@@ -1,91 +1,108 @@
-import React, { useState } from 'react'
-import { Plus, Trash2, Edit2, Calendar, GraduationCap, X, Save } from 'lucide-react'
-import { profileService, EducationResponse, ProfileResponse } from '../../services/profile'
+import React, { useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Calendar,
+  GraduationCap,
+  X,
+  Save,
+} from "lucide-react";
+import {
+  profileService,
+  EducationResponse,
+  ProfileResponse,
+} from "../../services/profile";
 
 interface EducationSectionProps {
-  profile: ProfileResponse
-  onUpdate: (updatedProfile: ProfileResponse) => void
-  onError: (errorMessage: string) => void
-  isOwnProfile?: boolean
+  profile: ProfileResponse;
+  onUpdate: (updatedProfile: ProfileResponse) => void;
+  onError: (errorMessage: string) => void;
+  isOwnProfile?: boolean;
 }
 
-export default function EducationSection({ profile, onUpdate, onError, isOwnProfile = true }: EducationSectionProps) {
-  const [isAdding, setIsAdding] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export default function EducationSection({
+  profile,
+  onUpdate,
+  onError,
+  isOwnProfile = true,
+}: EducationSectionProps) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
-  const [institutionName, setInstitutionName] = useState('')
-  const [degree, setDegree] = useState('')
-  const [fieldOfStudy, setFieldOfStudy] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [gpa, setGpa] = useState('')
-  const [description, setDescription] = useState('')
+  const [institutionName, setInstitutionName] = useState("");
+  const [degree, setDegree] = useState("");
+  const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [gpa, setGpa] = useState("");
+  const [description, setDescription] = useState("");
 
   // Inline Form Validation Errors
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Reset form to clear state
   const resetForm = () => {
-    setInstitutionName('')
-    setDegree('')
-    setFieldOfStudy('')
-    setStartDate('')
-    setEndDate('')
-    setGpa('')
-    setDescription('')
-    setFormErrors({})
-    setIsAdding(false)
-    setEditingId(null)
-  }
+    setInstitutionName("");
+    setDegree("");
+    setFieldOfStudy("");
+    setStartDate("");
+    setEndDate("");
+    setGpa("");
+    setDescription("");
+    setFormErrors({});
+    setIsAdding(false);
+    setEditingId(null);
+  };
 
   const startEdit = (edu: EducationResponse) => {
-    setFormErrors({})
-    setEditingId(edu.id)
-    setInstitutionName(edu.institution_name)
-    setDegree(edu.degree)
-    setFieldOfStudy(edu.field_of_study || '')
-    setStartDate(edu.start_date)
-    setEndDate(edu.end_date || '')
-    setGpa(edu.gpa !== null && edu.gpa !== undefined ? edu.gpa.toString() : '')
-    setDescription(edu.description || '')
-  }
+    setFormErrors({});
+    setEditingId(edu.id);
+    setInstitutionName(edu.institution_name);
+    setDegree(edu.degree);
+    setFieldOfStudy(edu.field_of_study || "");
+    setStartDate(edu.start_date);
+    setEndDate(edu.end_date || "");
+    setGpa(edu.gpa !== null && edu.gpa !== undefined ? edu.gpa.toString() : "");
+    setDescription(edu.description || "");
+  };
 
   // Handle local validation
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!institutionName.trim()) {
-      errors.institutionName = 'Institution Name is required.'
+      errors.institutionName = "Institution Name is required.";
     }
     if (!degree.trim()) {
-      errors.degree = 'Degree is required.'
+      errors.degree = "Degree is required.";
     }
     if (!startDate) {
-      errors.startDate = 'Start Date is required.'
+      errors.startDate = "Start Date is required.";
     }
 
     if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
-      errors.endDate = 'End Date cannot be earlier than Start Date.'
+      errors.endDate = "End Date cannot be earlier than Start Date.";
     }
 
-    if (gpa.trim() !== '') {
-      const gpaVal = parseFloat(gpa)
+    if (gpa.trim() !== "") {
+      const gpaVal = parseFloat(gpa);
       if (isNaN(gpaVal) || gpaVal < 0 || gpaVal > 4.0) {
-        errors.gpa = 'GPA must be a valid number between 0.0 and 4.0.'
+        errors.gpa = "GPA must be a valid number between 0.0 and 4.0.";
       }
     }
 
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
     const payload = {
@@ -94,50 +111,56 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
       field_of_study: fieldOfStudy.trim() || null,
       start_date: startDate,
       end_date: endDate || null,
-      gpa: gpa.trim() !== '' ? parseFloat(gpa) : null,
+      gpa: gpa.trim() !== "" ? parseFloat(gpa) : null,
       description: description.trim() || null,
-    }
+    };
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       if (editingId !== null) {
         // Update
-        await profileService.updateEducation(editingId, payload)
+        await profileService.updateEducation(editingId, payload);
       } else {
         // Create
-        await profileService.addEducation(payload)
+        await profileService.addEducation(payload);
       }
 
       // Fetch latest profile to update state
-      const updatedProfile = await profileService.getOwnProfile()
-      onUpdate(updatedProfile)
-      resetForm()
+      const updatedProfile = await profileService.getOwnProfile();
+      onUpdate(updatedProfile);
+      resetForm();
     } catch (err: any) {
-      onError(err.message || 'Failed to save education entry.')
+      onError(err.message || "Failed to save education entry.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async (eduId: number) => {
-    if (!window.confirm('Are you sure you want to delete this education entry?')) {
-      return
+    if (
+      !window.confirm("Are you sure you want to delete this education entry?")
+    ) {
+      return;
     }
 
     try {
-      await profileService.deleteEducation(eduId)
-      const updatedProfile = await profileService.getOwnProfile()
-      onUpdate(updatedProfile)
+      await profileService.deleteEducation(eduId);
+      const updatedProfile = await profileService.getOwnProfile();
+      onUpdate(updatedProfile);
     } catch (err: any) {
-      onError(err.message || 'Failed to delete education entry.')
+      onError(err.message || "Failed to delete education entry.");
     }
-  }
+  };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' })
-  }
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      timeZone: "UTC",
+    });
+  };
 
   return (
     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
@@ -159,9 +182,12 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
 
       {/* Add / Edit Form */}
       {(isAdding || editingId !== null) && (
-        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-4 animate-in fade-in duration-200">
+        <form
+          onSubmit={handleSave}
+          className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-4 animate-in fade-in duration-200"
+        >
           <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-            {editingId !== null ? 'Edit Education Entry' : 'Add New Education'}
+            {editingId !== null ? "Edit Education Entry" : "Add New Education"}
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,7 +204,9 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
                 required
               />
               {formErrors.institutionName && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.institutionName}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.institutionName}
+                </p>
               )}
             </div>
 
@@ -240,7 +268,9 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
                 required
               />
               {formErrors.startDate && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.startDate}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.startDate}
+                </p>
               )}
             </div>
 
@@ -255,7 +285,9 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
                 className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
               />
               {formErrors.endDate && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.endDate}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.endDate}
+                </p>
               )}
             </div>
           </div>
@@ -289,7 +321,7 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
               disabled={isSubmitting}
             >
               <Save className="h-4 w-4" />
-              {isSubmitting ? 'Saving...' : 'Save Entry'}
+              {isSubmitting ? "Saving..." : "Save Entry"}
             </button>
           </div>
         </form>
@@ -299,7 +331,11 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
       <div className="space-y-6">
         {profile.education && profile.education.length > 0 ? (
           profile.education
-            .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.start_date).getTime() -
+                new Date(a.start_date).getTime(),
+            )
             .map((edu) => (
               <div
                 key={edu.id}
@@ -346,7 +382,9 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
                       <Calendar className="h-3.5 w-3.5" />
                       <span>{formatDate(edu.start_date)}</span>
                       <span>–</span>
-                      <span>{edu.end_date ? formatDate(edu.end_date) : 'Present'}</span>
+                      <span>
+                        {edu.end_date ? formatDate(edu.end_date) : "Present"}
+                      </span>
                     </div>
                     {edu.gpa !== null && edu.gpa !== undefined && (
                       <>
@@ -369,10 +407,12 @@ export default function EducationSection({ profile, onUpdate, onError, isOwnProf
         ) : (
           <div className="text-center py-6">
             <GraduationCap className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">No education entries added yet.</p>
+            <p className="text-slate-500 text-sm">
+              No education entries added yet.
+            </p>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

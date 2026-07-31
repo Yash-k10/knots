@@ -1,62 +1,65 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { GraduationCap, ArrowRight } from 'lucide-react'
-import { apiRequest, ApiError } from '../services/api'
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { GraduationCap, ArrowRight } from "lucide-react";
+import { apiRequest, ApiError } from "../services/api";
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Basic frontend validations
     if (!email.trim()) {
-      setError('Email address is required.')
-      return
+      setError("Email address is required.");
+      return;
     }
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address.')
-      return
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
     }
     if (!password) {
-      setError('Password is required.')
-      return
+      setError("Password is required.");
+      return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.')
-      return
+      setError("Password must be at least 6 characters long.");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await apiRequest<{ access_token: string; refresh_token: string }>('/auth/login', {
-        method: 'POST',
+      const data = await apiRequest<{
+        access_token: string;
+        refresh_token: string;
+      }>("/auth/login", {
+        method: "POST",
         body: JSON.stringify({
           email: email.trim(),
           password: password,
         }),
-      })
+      });
 
-      localStorage.setItem('knots_token', data.access_token)
-      localStorage.setItem('knots_refresh_token', data.refresh_token)
-      navigate('/')
+      localStorage.setItem("knots_token", data.access_token);
+      localStorage.setItem("knots_refresh_token", data.refresh_token);
+      navigate("/");
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setError(err.message);
       } else if (err instanceof Error) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError('An unexpected network error occurred. Please try again.')
+        setError("An unexpected network error occurred. Please try again.");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
@@ -65,8 +68,12 @@ export default function Login() {
           <div className="h-12 w-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-3">
             <GraduationCap className="h-7 w-7 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Welcome back to KNOTS</h2>
-          <p className="text-slate-400 text-sm mt-1">College Networking & Opportunity Platform</p>
+          <h2 className="text-2xl font-bold text-white">
+            Welcome back to KNOTS
+          </h2>
+          <p className="text-slate-400 text-sm mt-1">
+            College Networking & Opportunity Platform
+          </p>
         </div>
 
         {error && (
@@ -77,7 +84,9 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Email Address
+            </label>
             <input
               type="email"
               value={email}
@@ -90,7 +99,9 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -107,17 +118,18 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg py-3 font-semibold text-sm transition-all flex items-center justify-center gap-2 mt-6"
           >
-            {loading ? 'Signing In...' : 'Sign In'} <ArrowRight className="h-4 w-4" />
+            {loading ? "Signing In..." : "Sign In"}{" "}
+            <ArrowRight className="h-4 w-4" />
           </button>
         </form>
 
         <p className="text-center text-slate-500 text-xs mt-6">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link to="/register" className="text-indigo-400 hover:underline">
             Create an Account
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }

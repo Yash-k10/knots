@@ -1,7 +1,7 @@
-import { UserPlus, Check, X, UserCheck, MessageSquare } from 'lucide-react';
+import { UserPlus, Check, X, UserCheck, MessageSquare } from "lucide-react";
 
 interface ConnectionCardProps {
-  type: 'request' | 'connection' | 'discover';
+  type: "request" | "connection" | "discover";
   id: number; // The connection ID (or user ID if discover)
   targetId: number; // The user ID we are interacting with
   email?: string;
@@ -37,7 +37,7 @@ export default function ConnectionCard({
     };
   };
 
-  const displayName = email ? email.split('@')[0] : `User #${targetId}`;
+  const displayName = email ? email.split("@")[0] : `User #${targetId}`;
   const avatarLetter = email ? email.charAt(0).toUpperCase() : `U`;
 
   return (
@@ -47,7 +47,7 @@ export default function ConnectionCard({
 
       {/* Avatar Container */}
       <div className="relative mx-auto h-20 w-20 flex items-center justify-center">
-        {type === 'connection' ? (
+        {type === "connection" ? (
           <div
             style={getGradientStyle(targetId)}
             className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/10 ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
@@ -66,20 +66,28 @@ export default function ConnectionCard({
 
       {/* Text Info */}
       <div className="space-y-1">
-        <h4 className="text-base font-semibold text-white truncate px-2 transition-colors group-hover:text-indigo-200" title={email || displayName}>
+        <h4
+          className="text-base font-semibold text-white truncate px-2 transition-colors group-hover:text-indigo-200"
+          title={email || displayName}
+        >
           {displayName}
         </h4>
-        <p className={`text-xs font-medium tracking-wide ${
-          type === 'request' ? 'text-indigo-400' :
-          type === 'connection' ? 'text-emerald-400' : 'text-slate-400'
-        }`}>
+        <p
+          className={`text-xs font-medium tracking-wide ${
+            type === "request"
+              ? "text-indigo-400"
+              : type === "connection"
+                ? "text-emerald-400"
+                : "text-slate-400"
+          }`}
+        >
           {subtitle}
         </p>
       </div>
 
       {/* Action Buttons */}
       <div className="pt-2">
-        {type === 'request' && (
+        {type === "request" && (
           <div className="flex gap-2.5">
             <button
               onClick={() => onAccept && onAccept(id)}
@@ -96,7 +104,7 @@ export default function ConnectionCard({
           </div>
         )}
 
-        {type === 'connection' && (
+        {type === "connection" && (
           <button
             onClick={() => onMessage && onMessage(targetId)}
             className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 hover:border-indigo-500/40 active:scale-[0.98] py-2.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white transition-all border border-slate-800 shadow-inner group-hover:shadow-indigo-950/20"
@@ -105,7 +113,7 @@ export default function ConnectionCard({
           </button>
         )}
 
-        {type === 'discover' && (
+        {type === "discover" && (
           <button
             onClick={() => onConnect && onConnect(targetId)}
             className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] py-2.5 rounded-xl text-xs font-semibold text-white transition-all shadow-md shadow-indigo-900/20 hover:shadow-indigo-500/20"

@@ -1,177 +1,214 @@
-import React, { useState } from 'react'
-import { Plus, Trash2, Edit2, Calendar, Briefcase, MapPin, X, Save, ArrowUp, ArrowDown } from 'lucide-react'
-import { profileService, EmploymentHistoryResponse, ProfileResponse } from '../../services/profile'
+import React, { useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Calendar,
+  Briefcase,
+  MapPin,
+  X,
+  Save,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
+import {
+  profileService,
+  EmploymentHistoryResponse,
+  ProfileResponse,
+} from "../../services/profile";
 
 interface ExperienceSectionProps {
-  profile: ProfileResponse
-  onUpdate: (updatedProfile: ProfileResponse) => void
-  onError: (errorMessage: string) => void
-  isOwnProfile?: boolean
+  profile: ProfileResponse;
+  onUpdate: (updatedProfile: ProfileResponse) => void;
+  onError: (errorMessage: string) => void;
+  isOwnProfile?: boolean;
 }
 
-export default function ExperienceSection({ profile, onUpdate, onError, isOwnProfile = true }: ExperienceSectionProps) {
-  const [isAdding, setIsAdding] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export default function ExperienceSection({
+  profile,
+  onUpdate,
+  onError,
+  isOwnProfile = true,
+}: ExperienceSectionProps) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
-  const [companyName, setCompanyName] = useState('')
-  const [title, setTitle] = useState('')
-  const [location, setLocation] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [isCurrent, setIsCurrent] = useState(false)
+  const [companyName, setCompanyName] = useState("");
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isCurrent, setIsCurrent] = useState(false);
 
   // Bullet Point Editor State
-  const [bullets, setSkillsBullets] = useState<string[]>([])
-  const [newBulletText, setNewBulletText] = useState('')
-  const [editingBulletIndex, setEditingBulletIndex] = useState<number | null>(null)
-  const [editingBulletText, setEditingBulletText] = useState('')
+  const [bullets, setSkillsBullets] = useState<string[]>([]);
+  const [newBulletText, setNewBulletText] = useState("");
+  const [editingBulletIndex, setEditingBulletIndex] = useState<number | null>(
+    null,
+  );
+  const [editingBulletText, setEditingBulletText] = useState("");
 
   // Inline Validation Errors
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Safe bullet parsing helper
   const parseBullets = (descStr: string | null): string[] => {
-    if (!descStr) return []
+    if (!descStr) return [];
     try {
-      const parsed = JSON.parse(descStr)
+      const parsed = JSON.parse(descStr);
       if (Array.isArray(parsed)) {
-        return parsed
+        return parsed;
       }
     } catch (e) {
       // Not JSON: fall back to splitting by newline
-      return descStr.split('\n').map((b) => b.trim()).filter(Boolean)
+      return descStr
+        .split("\n")
+        .map((b) => b.trim())
+        .filter(Boolean);
     }
-    return [descStr]
-  }
+    return [descStr];
+  };
 
   // Reset form
   const resetForm = () => {
-    setCompanyName('')
-    setTitle('')
-    setLocation('')
-    setStartDate('')
-    setEndDate('')
-    setIsCurrent(false)
-    setSkillsBullets([])
-    setNewBulletText('')
-    setEditingBulletIndex(null)
-    setEditingBulletText('')
-    setFormErrors({})
-    setIsAdding(false)
-    setEditingId(null)
-  }
+    setCompanyName("");
+    setTitle("");
+    setLocation("");
+    setStartDate("");
+    setEndDate("");
+    setIsCurrent(false);
+    setSkillsBullets([]);
+    setNewBulletText("");
+    setEditingBulletIndex(null);
+    setEditingBulletText("");
+    setFormErrors({});
+    setIsAdding(false);
+    setEditingId(null);
+  };
 
   const startEdit = (exp: EmploymentHistoryResponse) => {
-    setFormErrors({})
-    setEditingId(exp.id)
-    setCompanyName(exp.company_name)
-    setTitle(exp.title)
-    setLocation(exp.location || '')
-    setStartDate(exp.start_date)
-    setIsCurrent(!exp.end_date)
-    setEndDate(exp.end_date || '')
-    setSkillsBullets(parseBullets(exp.description))
-  }
+    setFormErrors({});
+    setEditingId(exp.id);
+    setCompanyName(exp.company_name);
+    setTitle(exp.title);
+    setLocation(exp.location || "");
+    setStartDate(exp.start_date);
+    setIsCurrent(!exp.end_date);
+    setEndDate(exp.end_date || "");
+    setSkillsBullets(parseBullets(exp.description));
+  };
 
   // Bullet actions
   const handleAddBullet = (e: React.MouseEvent) => {
-    e.preventDefault()
-    const text = newBulletText.trim()
-    if (!text) return
+    e.preventDefault();
+    const text = newBulletText.trim();
+    if (!text) return;
 
     if (text.length > 200) {
-      setFormErrors((prev) => ({ ...prev, bullets: 'Achievement bullet cannot exceed 200 characters.' }))
-      return
+      setFormErrors((prev) => ({
+        ...prev,
+        bullets: "Achievement bullet cannot exceed 200 characters.",
+      }));
+      return;
     }
 
-    setSkillsBullets([...bullets, text])
-    setNewBulletText('')
+    setSkillsBullets([...bullets, text]);
+    setNewBulletText("");
     setFormErrors((prev) => {
-      const copy = { ...prev }
-      delete copy.bullets
-      return copy
-    })
-  }
+      const copy = { ...prev };
+      delete copy.bullets;
+      return copy;
+    });
+  };
 
   const handleRemoveBullet = (index: number) => {
-    setSkillsBullets(bullets.filter((_, i) => i !== index))
-  }
+    setSkillsBullets(bullets.filter((_, i) => i !== index));
+  };
 
   const handleStartEditBullet = (index: number, text: string) => {
-    setEditingBulletIndex(index)
-    setEditingBulletText(text)
-  }
+    setEditingBulletIndex(index);
+    setEditingBulletText(text);
+  };
 
   const handleSaveBulletEdit = (index: number) => {
-    const text = editingBulletText.trim()
+    const text = editingBulletText.trim();
     if (!text) {
-      handleRemoveBullet(index)
-      setEditingBulletIndex(null)
-      return
+      handleRemoveBullet(index);
+      setEditingBulletIndex(null);
+      return;
     }
 
     if (text.length > 200) {
-      setFormErrors((prev) => ({ ...prev, bullets: 'Achievement bullet cannot exceed 200 characters.' }))
-      return
+      setFormErrors((prev) => ({
+        ...prev,
+        bullets: "Achievement bullet cannot exceed 200 characters.",
+      }));
+      return;
     }
 
-    const updated = [...bullets]
-    updated[index] = text
-    setSkillsBullets(updated)
-    setEditingBulletIndex(null)
-    setEditingBulletText('')
+    const updated = [...bullets];
+    updated[index] = text;
+    setSkillsBullets(updated);
+    setEditingBulletIndex(null);
+    setEditingBulletText("");
     setFormErrors((prev) => {
-      const copy = { ...prev }
-      delete copy.bullets
-      return copy
-    })
-  }
+      const copy = { ...prev };
+      delete copy.bullets;
+      return copy;
+    });
+  };
 
-  const handleMoveBullet = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return
-    if (direction === 'down' && index === bullets.length - 1) return
+  const handleMoveBullet = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === bullets.length - 1) return;
 
-    const newIndex = direction === 'up' ? index - 1 : index + 1
-    const updated = [...bullets]
-    const temp = updated[index]
-    updated[index] = updated[newIndex]
-    updated[newIndex] = temp
-    setSkillsBullets(updated)
-  }
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    const updated = [...bullets];
+    const temp = updated[index];
+    updated[index] = updated[newIndex];
+    updated[newIndex] = temp;
+    setSkillsBullets(updated);
+  };
 
   // Local form validation
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!companyName.trim()) {
-      errors.companyName = 'Company Name is required.'
+      errors.companyName = "Company Name is required.";
     }
     if (!title.trim()) {
-      errors.title = 'Job Title is required.'
+      errors.title = "Job Title is required.";
     }
     if (!startDate) {
-      errors.startDate = 'Start Date is required.'
+      errors.startDate = "Start Date is required.";
     }
 
     if (!isCurrent && !endDate) {
-      errors.endDate = 'End Date is required unless you are currently working here.'
+      errors.endDate =
+        "End Date is required unless you are currently working here.";
     }
 
-    if (!isCurrent && endDate && startDate && new Date(endDate) < new Date(startDate)) {
-      errors.endDate = 'End Date cannot be earlier than Start Date.'
+    if (
+      !isCurrent &&
+      endDate &&
+      startDate &&
+      new Date(endDate) < new Date(startDate)
+    ) {
+      errors.endDate = "End Date cannot be earlier than Start Date.";
     }
 
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
     // Save description as serialized JSON list of bullets
@@ -182,45 +219,51 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
       start_date: startDate,
       end_date: isCurrent ? null : endDate,
       description: bullets.length > 0 ? JSON.stringify(bullets) : null,
-    }
+    };
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       if (editingId !== null) {
-        await profileService.updateExperience(editingId, payload)
+        await profileService.updateExperience(editingId, payload);
       } else {
-        await profileService.addExperience(payload)
+        await profileService.addExperience(payload);
       }
 
-      const updatedProfile = await profileService.getOwnProfile()
-      onUpdate(updatedProfile)
-      resetForm()
+      const updatedProfile = await profileService.getOwnProfile();
+      onUpdate(updatedProfile);
+      resetForm();
     } catch (err: any) {
-      onError(err.message || 'Failed to save experience entry.')
+      onError(err.message || "Failed to save experience entry.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async (expId: number) => {
-    if (!window.confirm('Are you sure you want to delete this experience entry?')) {
-      return
+    if (
+      !window.confirm("Are you sure you want to delete this experience entry?")
+    ) {
+      return;
     }
 
     try {
-      await profileService.deleteExperience(expId)
-      const updatedProfile = await profileService.getOwnProfile()
-      onUpdate(updatedProfile)
+      await profileService.deleteExperience(expId);
+      const updatedProfile = await profileService.getOwnProfile();
+      onUpdate(updatedProfile);
     } catch (err: any) {
-      onError(err.message || 'Failed to delete experience entry.')
+      onError(err.message || "Failed to delete experience entry.");
     }
-  }
+  };
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' })
-  }
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      timeZone: "UTC",
+    });
+  };
 
   return (
     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
@@ -242,9 +285,14 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
 
       {/* Add / Edit Form */}
       {(isAdding || editingId !== null) && (
-        <form onSubmit={handleSave} className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-5 animate-in fade-in duration-200">
+        <form
+          onSubmit={handleSave}
+          className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-5 animate-in fade-in duration-200"
+        >
           <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-            {editingId !== null ? 'Edit Experience Entry' : 'Add New Experience'}
+            {editingId !== null
+              ? "Edit Experience Entry"
+              : "Add New Experience"}
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,7 +309,9 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                 required
               />
               {formErrors.companyName && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.companyName}</p>
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.companyName}
+                </p>
               )}
             </div>
 
@@ -309,7 +359,9 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                     required
                   />
                   {formErrors.startDate && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.startDate}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {formErrors.startDate}
+                    </p>
                   )}
                 </div>
 
@@ -325,7 +377,9 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                     className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-white focus:outline-none transition text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                   />
                   {formErrors.endDate && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.endDate}</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      {formErrors.endDate}
+                    </p>
                   )}
                 </div>
               </div>
@@ -337,12 +391,15 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                   id="current-experience-toggle"
                   checked={isCurrent}
                   onChange={(e) => {
-                    setIsCurrent(e.target.checked)
-                    if (e.target.checked) setEndDate('')
+                    setIsCurrent(e.target.checked);
+                    if (e.target.checked) setEndDate("");
                   }}
                   className="rounded border-slate-800 text-indigo-600 focus:ring-indigo-500 bg-slate-950 h-4 w-4"
                 />
-                <label htmlFor="current-experience-toggle" className="text-xs text-slate-400 font-medium">
+                <label
+                  htmlFor="current-experience-toggle"
+                  className="text-xs text-slate-400 font-medium"
+                >
                   I currently work here
                 </label>
               </div>
@@ -358,7 +415,10 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
             {/* Existing bullets list */}
             <div className="space-y-2">
               {bullets.map((bullet, idx) => (
-                <div key={idx} className="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+                <div
+                  key={idx}
+                  className="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80"
+                >
                   <div className="flex-1 text-xs text-slate-300">
                     {editingBulletIndex === idx ? (
                       <input
@@ -367,13 +427,16 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                         onChange={(e) => setEditingBulletText(e.target.value)}
                         onBlur={() => handleSaveBulletEdit(idx)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveBulletEdit(idx)
+                          if (e.key === "Enter") handleSaveBulletEdit(idx);
                         }}
                         autoFocus
                         className="w-full bg-slate-900 border border-slate-800 px-2 py-1 text-xs text-white rounded focus:outline-none focus:border-indigo-500"
                       />
                     ) : (
-                      <span className="cursor-pointer" onClick={() => handleStartEditBullet(idx, bullet)}>
+                      <span
+                        className="cursor-pointer"
+                        onClick={() => handleStartEditBullet(idx, bullet)}
+                      >
                         • {bullet}
                       </span>
                     )}
@@ -382,7 +445,7 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                   <div className="flex gap-1 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleMoveBullet(idx, 'up')}
+                      onClick={() => handleMoveBullet(idx, "up")}
                       disabled={idx === 0}
                       className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
                     >
@@ -390,7 +453,7 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleMoveBullet(idx, 'down')}
+                      onClick={() => handleMoveBullet(idx, "down")}
                       disabled={idx === bullets.length - 1}
                       className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
                     >
@@ -446,7 +509,7 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
               disabled={isSubmitting}
             >
               <Save className="h-4 w-4" />
-              {isSubmitting ? 'Saving...' : 'Save Entry'}
+              {isSubmitting ? "Saving..." : "Save Entry"}
             </button>
           </div>
         </form>
@@ -456,7 +519,11 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
       <div className="space-y-6">
         {profile.employment_history && profile.employment_history.length > 0 ? (
           profile.employment_history
-            .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.start_date).getTime() -
+                new Date(a.start_date).getTime(),
+            )
             .map((exp) => (
               <div
                 key={exp.id}
@@ -500,7 +567,8 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      {formatDate(exp.start_date)} – {exp.end_date ? formatDate(exp.end_date) : 'Present'}
+                      {formatDate(exp.start_date)} –{" "}
+                      {exp.end_date ? formatDate(exp.end_date) : "Present"}
                     </span>
                     {exp.location && (
                       <span className="flex items-center gap-1">
@@ -514,7 +582,10 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
                     <div className="mt-3 bg-slate-900/20 p-3 border border-slate-800/40 rounded-lg max-w-2xl">
                       <ul className="list-disc pl-4 space-y-1">
                         {parseBullets(exp.description).map((bullet, index) => (
-                          <li key={index} className="text-slate-300 text-xs leading-relaxed">
+                          <li
+                            key={index}
+                            className="text-slate-300 text-xs leading-relaxed"
+                          >
                             {bullet}
                           </li>
                         ))}
@@ -527,10 +598,12 @@ export default function ExperienceSection({ profile, onUpdate, onError, isOwnPro
         ) : (
           <div className="text-center py-6">
             <Briefcase className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">No work or internship history added yet.</p>
+            <p className="text-slate-500 text-sm">
+              No work or internship history added yet.
+            </p>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

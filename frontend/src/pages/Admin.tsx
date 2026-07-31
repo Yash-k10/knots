@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   Users,
   FileText,
@@ -20,8 +20,8 @@ import {
   Clock,
   ShieldAlert,
   Terminal,
-  Filter
-} from 'lucide-react'
+  Filter,
+} from "lucide-react";
 import {
   getDashboardStats,
   getAdminUsers,
@@ -35,214 +35,286 @@ import {
   DashboardStats,
   AdminUser,
   AuditLog,
-  FlaggedPost
-} from '../services/admin'
+  FlaggedPost,
+} from "../services/admin";
 
-type ActiveTab = 'overview' | 'moderation' | 'audit'
+type ActiveTab = "overview" | "moderation" | "audit";
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
 
   // Global state
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
-  const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>([])
-  
-  const [loading, setLoading] = useState<boolean>(true)
-  const [refreshing, setRefreshing] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>([]);
+
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Search & Filter states
-  const [userSearchQuery, setUserSearchQuery] = useState<string>('')
-  const [auditSearchQuery, setAuditSearchQuery] = useState<string>('')
-  const [moderationFilterStatus, setModerationFilterStatus] = useState<string>('all')
+  const [userSearchQuery, setUserSearchQuery] = useState<string>("");
+  const [auditSearchQuery, setAuditSearchQuery] = useState<string>("");
+  const [moderationFilterStatus, setModerationFilterStatus] =
+    useState<string>("all");
 
   // Action loading states
-  const [actionLoadingId, setActionLoadingId] = useState<number | string | null>(null)
-  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [actionLoadingId, setActionLoadingId] = useState<
+    number | string | null
+  >(null);
+  const [toastMessage, setToastMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Confirmation modals
-  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null)
-  const [postToRemove, setPostToRemove] = useState<{ postId: number; flagId?: number } | null>(null)
-  const [deleting, setDeleting] = useState<boolean>(false)
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [postToRemove, setPostToRemove] = useState<{
+    postId: number;
+    flagId?: number;
+  } | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) {
-      setRefreshing(true)
+      setRefreshing(true);
     } else {
-      setLoading(true)
+      setLoading(true);
     }
-    setError(null)
+    setError(null);
 
     try {
       const [statsData, usersData, logsData, flaggedData] = await Promise.all([
         getDashboardStats().catch(() => null),
         getAdminUsers(0, 100).catch(() => []),
         getAuditLogs(0, 100).catch(() => []),
-        getFlaggedPosts(0, 100).catch(() => [])
-      ])
+        getFlaggedPosts(0, 100).catch(() => []),
+      ]);
 
-      setStats(statsData)
-      setUsers(usersData)
-      setAuditLogs(logsData)
-      setFlaggedPosts(flaggedData)
+      setStats(statsData);
+      setUsers(usersData);
+      setAuditLogs(logsData);
+      setFlaggedPosts(flaggedData);
     } catch (err: any) {
-      console.error('Failed to load admin dashboard data:', err)
-      setError(err?.message || 'Failed to fetch admin data. Please check your admin privileges.')
+      console.error("Failed to load admin dashboard data:", err);
+      setError(
+        err?.message ||
+          "Failed to fetch admin data. Please check your admin privileges.",
+      );
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  const showToast = (type: 'success' | 'error', text: string) => {
-    setToastMessage({ type, text })
+  const showToast = (type: "success" | "error", text: string) => {
+    setToastMessage({ type, text });
     setTimeout(() => {
-      setToastMessage(null)
-    }, 4000)
-  }
+      setToastMessage(null);
+    }, 4000);
+  };
 
   // User Actions
   const handleBanToggle = async (user: AdminUser) => {
-    setActionLoadingId(`user-ban-${user.id}`)
+    setActionLoadingId(`user-ban-${user.id}`);
     try {
       if (user.is_active) {
-        const updated = await banUser(user.id)
-        setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, is_active: false } : u)))
-        showToast('success', `User ${updated.email} has been banned successfully.`)
+        const updated = await banUser(user.id);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, is_active: false } : u)),
+        );
+        showToast(
+          "success",
+          `User ${updated.email} has been banned successfully.`,
+        );
       } else {
-        const updated = await unbanUser(user.id)
-        setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, is_active: true } : u)))
-        showToast('success', `User ${updated.email} has been unbanned successfully.`)
+        const updated = await unbanUser(user.id);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, is_active: true } : u)),
+        );
+        showToast(
+          "success",
+          `User ${updated.email} has been unbanned successfully.`,
+        );
       }
       // Refresh stats & audit logs
       const [newStats, newLogs] = await Promise.all([
         getDashboardStats().catch(() => null),
-        getAuditLogs(0, 100).catch(() => [])
-      ])
-      if (newStats) setStats(newStats)
-      if (newLogs) setAuditLogs(newLogs)
+        getAuditLogs(0, 100).catch(() => []),
+      ]);
+      if (newStats) setStats(newStats);
+      if (newLogs) setAuditLogs(newLogs);
     } catch (err: any) {
-      showToast('error', err?.message || `Failed to update status for ${user.email}`)
+      showToast(
+        "error",
+        err?.message || `Failed to update status for ${user.email}`,
+      );
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const handleDeleteUserConfirm = async () => {
-    if (!userToDelete) return
-    setDeleting(true)
+    if (!userToDelete) return;
+    setDeleting(true);
     try {
-      await deleteAdminUser(userToDelete.id)
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
-      showToast('success', `User ${userToDelete.email} was permanently deleted.`)
-      setUserToDelete(null)
+      await deleteAdminUser(userToDelete.id);
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      showToast(
+        "success",
+        `User ${userToDelete.email} was permanently deleted.`,
+      );
+      setUserToDelete(null);
       // Refresh stats & audit logs
       const [newStats, newLogs] = await Promise.all([
         getDashboardStats().catch(() => null),
-        getAuditLogs(0, 100).catch(() => [])
-      ])
-      if (newStats) setStats(newStats)
-      if (newLogs) setAuditLogs(newLogs)
+        getAuditLogs(0, 100).catch(() => []),
+      ]);
+      if (newStats) setStats(newStats);
+      if (newLogs) setAuditLogs(newLogs);
     } catch (err: any) {
-      showToast('error', err?.message || `Failed to delete user ${userToDelete.email}`)
+      showToast(
+        "error",
+        err?.message || `Failed to delete user ${userToDelete.email}`,
+      );
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   // Moderation Actions
-  const handleResolveFlag = async (flagId: number, action: 'resolved' | 'dismissed') => {
-    setActionLoadingId(`flag-${flagId}`)
+  const handleResolveFlag = async (
+    flagId: number,
+    action: "resolved" | "dismissed",
+  ) => {
+    setActionLoadingId(`flag-${flagId}`);
     try {
-      const updated = await resolveFlaggedPost(flagId, action)
-      setFlaggedPosts(prev => prev.map(f => (f.id === flagId ? { ...f, status: updated.status } : f)))
-      showToast('success', `Flag #${flagId} marked as ${action}.`)
+      const updated = await resolveFlaggedPost(flagId, action);
+      setFlaggedPosts((prev) =>
+        prev.map((f) =>
+          f.id === flagId ? { ...f, status: updated.status } : f,
+        ),
+      );
+      showToast("success", `Flag #${flagId} marked as ${action}.`);
       // Refresh audit logs
-      const newLogs = await getAuditLogs(0, 100).catch(() => [])
-      if (newLogs) setAuditLogs(newLogs)
+      const newLogs = await getAuditLogs(0, 100).catch(() => []);
+      if (newLogs) setAuditLogs(newLogs);
     } catch (err: any) {
-      showToast('error', err?.message || `Failed to resolve flag #${flagId}`)
+      showToast("error", err?.message || `Failed to resolve flag #${flagId}`);
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const handleRemovePostConfirm = async () => {
-    if (!postToRemove) return
-    setDeleting(true)
+    if (!postToRemove) return;
+    setDeleting(true);
     try {
-      await deletePostAsAdmin(postToRemove.postId)
+      await deletePostAsAdmin(postToRemove.postId);
       if (postToRemove.flagId) {
-        setFlaggedPosts(prev => prev.map(f => (f.id === postToRemove.flagId ? { ...f, status: 'resolved' } : f)))
+        setFlaggedPosts((prev) =>
+          prev.map((f) =>
+            f.id === postToRemove.flagId ? { ...f, status: "resolved" } : f,
+          ),
+        );
       } else {
-        setFlaggedPosts(prev => prev.filter(f => f.post_id !== postToRemove.postId))
+        setFlaggedPosts((prev) =>
+          prev.filter((f) => f.post_id !== postToRemove.postId),
+        );
       }
-      showToast('success', `Post #${postToRemove.postId} has been removed as admin.`)
-      setPostToRemove(null)
+      showToast(
+        "success",
+        `Post #${postToRemove.postId} has been removed as admin.`,
+      );
+      setPostToRemove(null);
       // Refresh stats & audit logs
       const [newStats, newLogs] = await Promise.all([
         getDashboardStats().catch(() => null),
-        getAuditLogs(0, 100).catch(() => [])
-      ])
-      if (newStats) setStats(newStats)
-      if (newLogs) setAuditLogs(newLogs)
+        getAuditLogs(0, 100).catch(() => []),
+      ]);
+      if (newStats) setStats(newStats);
+      if (newLogs) setAuditLogs(newLogs);
     } catch (err: any) {
-      showToast('error', err?.message || `Failed to remove post #${postToRemove.postId}`)
+      showToast(
+        "error",
+        err?.message || `Failed to remove post #${postToRemove.postId}`,
+      );
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   // Filter helpers
-  const filteredUsers = users.filter(user => {
-    const q = userSearchQuery.toLowerCase().trim()
-    if (!q) return true
+  const filteredUsers = users.filter((user) => {
+    const q = userSearchQuery.toLowerCase().trim();
+    if (!q) return true;
     return (
       user.email.toLowerCase().includes(q) ||
       user.id.toString().includes(q) ||
       (user.role_id !== null && user.role_id.toString().includes(q))
-    )
-  })
+    );
+  });
 
-  const filteredFlaggedPosts = flaggedPosts.filter(flag => {
-    if (moderationFilterStatus === 'pending') return flag.status.toLowerCase() === 'pending'
-    if (moderationFilterStatus === 'resolved') return flag.status.toLowerCase() === 'resolved'
-    if (moderationFilterStatus === 'dismissed') return flag.status.toLowerCase() === 'dismissed'
-    return true
-  })
+  const filteredFlaggedPosts = flaggedPosts.filter((flag) => {
+    if (moderationFilterStatus === "pending")
+      return flag.status.toLowerCase() === "pending";
+    if (moderationFilterStatus === "resolved")
+      return flag.status.toLowerCase() === "resolved";
+    if (moderationFilterStatus === "dismissed")
+      return flag.status.toLowerCase() === "dismissed";
+    return true;
+  });
 
-  const filteredAuditLogs = auditLogs.filter(log => {
-    const q = auditSearchQuery.toLowerCase().trim()
-    if (!q) return true
+  const filteredAuditLogs = auditLogs.filter((log) => {
+    const q = auditSearchQuery.toLowerCase().trim();
+    if (!q) return true;
     return (
       log.action.toLowerCase().includes(q) ||
       (log.actor_id !== null && log.actor_id.toString().includes(q)) ||
       (log.target && log.target.toLowerCase().includes(q)) ||
       (log.ip_address && log.ip_address.toLowerCase().includes(q))
-    )
-  })
+    );
+  });
 
   const getRoleLabel = (roleId: number | null) => {
-    if (roleId === 1) return { label: 'Admin', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' }
-    if (roleId === 2) return { label: 'Faculty', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' }
-    if (roleId === 3) return { label: 'Student', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' }
-    return { label: 'User', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' }
-  }
+    if (roleId === 1)
+      return {
+        label: "Admin",
+        color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+      };
+    if (roleId === 2)
+      return {
+        label: "Faculty",
+        color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      };
+    if (roleId === 3)
+      return {
+        label: "Student",
+        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      };
+    return {
+      label: "User",
+      color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+    };
+  };
 
   const getActionBadge = (action: string) => {
-    const act = action.toLowerCase()
-    if (act.includes('ban')) return 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-    if (act.includes('unban')) return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-    if (act.includes('delete') || act.includes('remove')) return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-    if (act.includes('resolve') || act.includes('dismiss')) return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-    return 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-  }
+    const act = action.toLowerCase();
+    if (act.includes("ban"))
+      return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+    if (act.includes("unban"))
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (act.includes("delete") || act.includes("remove"))
+      return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (act.includes("resolve") || act.includes("dismiss"))
+      return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+    return "bg-slate-500/10 text-slate-400 border-slate-500/20";
+  };
 
   return (
     <div className="space-y-8 pb-12">
@@ -250,12 +322,12 @@ export default function Admin() {
       {toastMessage && (
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 ${
-            toastMessage.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-800/80 text-emerald-200'
-              : 'bg-rose-950/90 border-rose-800/80 text-rose-200'
+            toastMessage.type === "success"
+              ? "bg-emerald-950/90 border-emerald-800/80 text-emerald-200"
+              : "bg-rose-950/90 border-rose-800/80 text-rose-200"
           }`}
         >
-          {toastMessage.type === 'success' ? (
+          {toastMessage.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           ) : (
             <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
@@ -278,14 +350,17 @@ export default function Admin() {
             <span className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
               <Shield className="w-6 h-6" />
             </span>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Admin Moderation Console</h2>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Admin Moderation Console
+            </h2>
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Live System Control
             </span>
           </div>
           <p className="text-slate-400 text-sm max-w-2xl">
-            Complete platform management: audit security events, process flagged content reports, and manage user roles & privileges.
+            Complete platform management: audit security events, process flagged
+            content reports, and manage user roles & privileges.
           </p>
         </div>
 
@@ -295,8 +370,10 @@ export default function Admin() {
             disabled={refreshing || loading}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-sm font-medium transition-all duration-200 disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-indigo-400' : ''}`} />
-            <span>{refreshing ? 'Refreshing...' : 'Refresh All'}</span>
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? "animate-spin text-indigo-400" : ""}`}
+            />
+            <span>{refreshing ? "Refreshing..." : "Refresh All"}</span>
           </button>
         </div>
       </div>
@@ -321,11 +398,11 @@ export default function Admin() {
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-1">
         <button
-          onClick={() => setActiveTab('overview')}
+          onClick={() => setActiveTab("overview")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'overview'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            activeTab === "overview"
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
           <Users className="w-4 h-4" />
@@ -333,28 +410,32 @@ export default function Admin() {
         </button>
 
         <button
-          onClick={() => setActiveTab('moderation')}
+          onClick={() => setActiveTab("moderation")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'moderation'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            activeTab === "moderation"
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
           <Flag className="w-4 h-4" />
           <span>Content Moderation</span>
-          {flaggedPosts.filter(f => f.status.toLowerCase() === 'pending').length > 0 && (
+          {flaggedPosts.filter((f) => f.status.toLowerCase() === "pending")
+            .length > 0 && (
             <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-500 text-white">
-              {flaggedPosts.filter(f => f.status.toLowerCase() === 'pending').length}
+              {
+                flaggedPosts.filter((f) => f.status.toLowerCase() === "pending")
+                  .length
+              }
             </span>
           )}
         </button>
 
         <button
-          onClick={() => setActiveTab('audit')}
+          onClick={() => setActiveTab("audit")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'audit'
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            activeTab === "audit"
+              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
           }`}
         >
           <Terminal className="w-4 h-4" />
@@ -363,13 +444,15 @@ export default function Admin() {
       </div>
 
       {/* TAB 1: OVERVIEW & USER GOVERNANCE */}
-      {activeTab === 'overview' && (
+      {activeTab === "overview" && (
         <div className="space-y-8 animate-fade-in">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Users</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Total Users
+                </span>
                 <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-300">
                   <Users className="w-5 h-5" />
                 </div>
@@ -382,7 +465,9 @@ export default function Admin() {
                     <span className="text-3xl font-extrabold text-white tracking-tight">
                       {stats?.total_users ?? users.length}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">registered</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      registered
+                    </span>
                   </div>
                 )}
               </div>
@@ -390,14 +475,17 @@ export default function Admin() {
                 <span>Active Accounts</span>
                 <span className="text-emerald-400 font-semibold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  {stats?.active_users ?? users.filter(u => u.is_active).length}
+                  {stats?.active_users ??
+                    users.filter((u) => u.is_active).length}
                 </span>
               </div>
             </div>
 
             <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Posts</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Total Posts
+                </span>
                 <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform duration-300">
                   <FileText className="w-5 h-5" />
                 </div>
@@ -410,7 +498,9 @@ export default function Admin() {
                     <span className="text-3xl font-extrabold text-white tracking-tight">
                       {stats?.total_posts ?? 0}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">publications</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      publications
+                    </span>
                   </div>
                 )}
               </div>
@@ -424,7 +514,9 @@ export default function Admin() {
 
             <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Users</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Active Users
+                </span>
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform duration-300">
                   <UserCheck className="w-5 h-5" />
                 </div>
@@ -435,9 +527,12 @@ export default function Admin() {
                 ) : (
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-extrabold text-white tracking-tight">
-                      {stats?.active_users ?? users.filter(u => u.is_active).length}
+                      {stats?.active_users ??
+                        users.filter((u) => u.is_active).length}
                     </span>
-                    <span className="text-xs text-emerald-500 font-medium">active</span>
+                    <span className="text-xs text-emerald-500 font-medium">
+                      active
+                    </span>
                   </div>
                 )}
               </div>
@@ -451,7 +546,9 @@ export default function Admin() {
 
             <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Daily Activity</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Daily Activity
+                </span>
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform duration-300">
                   <Activity className="w-5 h-5" />
                 </div>
@@ -464,7 +561,9 @@ export default function Admin() {
                     <span className="text-3xl font-extrabold text-white tracking-tight">
                       {stats?.daily_activity?.actions_today ?? 0}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">events</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      events
+                    </span>
                   </div>
                 )}
               </div>
@@ -482,8 +581,12 @@ export default function Admin() {
           <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-6 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">User Directory & Governance</h3>
-                <p className="text-slate-400 text-xs mt-0.5">Manage user status, roles, and ban account access.</p>
+                <h3 className="text-lg font-bold text-white tracking-tight">
+                  User Directory & Governance
+                </h3>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Manage user status, roles, and ban account access.
+                </p>
               </div>
 
               <div className="relative w-full sm:w-72">
@@ -492,7 +595,7 @@ export default function Admin() {
                   type="text"
                   placeholder="Search user by email or ID..."
                   value={userSearchQuery}
-                  onChange={e => setUserSearchQuery(e.target.value)}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
                   className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
@@ -514,39 +617,66 @@ export default function Admin() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <tr key={idx} className="animate-pulse">
-                        <td className="py-4 px-6"><div className="h-4 w-12 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-40 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-16 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-16 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-24 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6 text-right"><div className="h-4 w-20 bg-slate-900 rounded ml-auto" /></td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-12 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-40 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="h-4 w-20 bg-slate-900 rounded ml-auto" />
+                        </td>
                       </tr>
                     ))
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-500">
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center text-slate-500"
+                      >
                         <Users className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                        <p className="font-medium text-slate-400 text-sm">No users found</p>
+                        <p className="font-medium text-slate-400 text-sm">
+                          No users found
+                        </p>
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map(user => {
-                      const role = getRoleLabel(user.role_id)
-                      const isPendingAction = actionLoadingId === `user-ban-${user.id}`
+                    filteredUsers.map((user) => {
+                      const role = getRoleLabel(user.role_id);
+                      const isPendingAction =
+                        actionLoadingId === `user-ban-${user.id}`;
 
                       return (
-                        <tr key={user.id} className="hover:bg-slate-900/40 transition-colors">
-                          <td className="py-4 px-6 font-mono text-slate-400 font-medium">#{user.id}</td>
+                        <tr
+                          key={user.id}
+                          className="hover:bg-slate-900/40 transition-colors"
+                        >
+                          <td className="py-4 px-6 font-mono text-slate-400 font-medium">
+                            #{user.id}
+                          </td>
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs uppercase shrink-0">
                                 {user.email.charAt(0)}
                               </div>
-                              <span className="font-medium text-white">{user.email}</span>
+                              <span className="font-medium text-white">
+                                {user.email}
+                              </span>
                             </div>
                           </td>
                           <td className="py-4 px-6">
-                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border ${role.color}`}>
+                            <span
+                              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border ${role.color}`}
+                            >
                               {role.label}
                             </span>
                           </td>
@@ -564,7 +694,9 @@ export default function Admin() {
                             )}
                           </td>
                           <td className="py-4 px-6 text-slate-400 font-mono">
-                            {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                            {user.created_at
+                              ? new Date(user.created_at).toLocaleDateString()
+                              : "N/A"}
                           </td>
                           <td className="py-4 px-6 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -573,8 +705,8 @@ export default function Admin() {
                                 disabled={isPendingAction}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
                                   user.is_active
-                                    ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300'
-                                    : 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
+                                    ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
+                                    : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
                                 }`}
                               >
                                 {isPendingAction ? (
@@ -602,7 +734,7 @@ export default function Admin() {
                             </div>
                           </td>
                         </tr>
-                      )
+                      );
                     })
                   )}
                 </tbody>
@@ -613,7 +745,7 @@ export default function Admin() {
       )}
 
       {/* TAB 2: CONTENT MODERATION PANEL */}
-      {activeTab === 'moderation' && (
+      {activeTab === "moderation" && (
         <div className="space-y-6 animate-fade-in">
           {/* Moderation Controls Header */}
           <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -623,20 +755,21 @@ export default function Admin() {
                 Content Moderation Panel
               </h3>
               <p className="text-slate-400 text-xs mt-0.5">
-                Review flagged posts, take administrative action, or dismiss policy violation flags.
+                Review flagged posts, take administrative action, or dismiss
+                policy violation flags.
               </p>
             </div>
 
             <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
               <Filter className="w-3.5 h-3.5 text-slate-400 ml-2" />
-              {['all', 'pending', 'resolved', 'dismissed'].map(status => (
+              {["all", "pending", "resolved", "dismissed"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setModerationFilterStatus(status)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150 ${
                     moderationFilterStatus === status
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   {status}
@@ -649,7 +782,10 @@ export default function Admin() {
           <div className="space-y-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, idx) => (
-                <div key={idx} className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 animate-pulse space-y-3">
+                <div
+                  key={idx}
+                  className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 animate-pulse space-y-3"
+                >
                   <div className="h-4 w-48 bg-slate-900 rounded" />
                   <div className="h-16 w-full bg-slate-900 rounded" />
                   <div className="h-8 w-32 bg-slate-900 rounded ml-auto" />
@@ -658,17 +794,19 @@ export default function Admin() {
             ) : filteredFlaggedPosts.length === 0 ? (
               <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-500">
                 <CheckCircle2 className="w-10 h-10 text-emerald-400/80 mx-auto mb-3" />
-                <p className="font-semibold text-white text-base">No Flagged Posts Found</p>
+                <p className="font-semibold text-white text-base">
+                  No Flagged Posts Found
+                </p>
                 <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-                  {moderationFilterStatus === 'all'
-                    ? 'No community content reports or flagged posts are currently recorded.'
+                  {moderationFilterStatus === "all"
+                    ? "No community content reports or flagged posts are currently recorded."
                     : `No flagged content reports with status "${moderationFilterStatus}".`}
                 </p>
               </div>
             ) : (
-              filteredFlaggedPosts.map(flag => {
-                const isPendingAction = actionLoadingId === `flag-${flag.id}`
-                const isPending = flag.status.toLowerCase() === 'pending'
+              filteredFlaggedPosts.map((flag) => {
+                const isPendingAction = actionLoadingId === `flag-${flag.id}`;
+                const isPending = flag.status.toLowerCase() === "pending";
 
                 return (
                   <div
@@ -682,7 +820,10 @@ export default function Admin() {
                           Flag #{flag.id}
                         </span>
                         <span className="text-xs text-slate-400">
-                          Post ID: <strong className="text-white">#{flag.post_id}</strong>
+                          Post ID:{" "}
+                          <strong className="text-white">
+                            #{flag.post_id}
+                          </strong>
                         </span>
                         <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
                           <Clock className="w-3 h-3 text-slate-500" />
@@ -692,12 +833,12 @@ export default function Admin() {
 
                       {/* Status Badge */}
                       <div>
-                        {flag.status.toLowerCase() === 'pending' ? (
+                        {flag.status.toLowerCase() === "pending" ? (
                           <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
                             Pending Review
                           </span>
-                        ) : flag.status.toLowerCase() === 'resolved' ? (
+                        ) : flag.status.toLowerCase() === "resolved" ? (
                           <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
                             <Check className="w-3.5 h-3.5" />
                             Resolved
@@ -714,10 +855,16 @@ export default function Admin() {
                     <div className="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3 text-xs text-rose-200 flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold text-rose-300">Flag Reason:</span>{' '}
-                        {flag.reason || 'Flagged for community guideline check.'}
+                        <span className="font-semibold text-rose-300">
+                          Flag Reason:
+                        </span>{" "}
+                        {flag.reason ||
+                          "Flagged for community guideline check."}
                         <div className="text-[11px] text-slate-400 mt-1">
-                          Reported by: <span className="text-slate-300 font-medium">{flag.flagger?.email || `User #${flag.flagger_id}`}</span>
+                          Reported by:{" "}
+                          <span className="text-slate-300 font-medium">
+                            {flag.flagger?.email || `User #${flag.flagger_id}`}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -726,14 +873,25 @@ export default function Admin() {
                     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2">
                       <div className="text-xs text-slate-400 flex items-center justify-between">
                         <span>
-                          Post Author: <strong className="text-slate-200">{flag.post?.author?.email || `User #${flag.post?.author_id || 'Unknown'}`}</strong>
+                          Post Author:{" "}
+                          <strong className="text-slate-200">
+                            {flag.post?.author?.email ||
+                              `User #${flag.post?.author_id || "Unknown"}`}
+                          </strong>
                         </span>
                         {flag.post?.created_at && (
-                          <span className="text-[11px] font-mono">{new Date(flag.post.created_at).toLocaleDateString()}</span>
+                          <span className="text-[11px] font-mono">
+                            {new Date(
+                              flag.post.created_at,
+                            ).toLocaleDateString()}
+                          </span>
                         )}
                       </div>
                       <p className="text-sm text-slate-200 italic bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-                        "{flag.post?.content || 'Post content preview unavailable (or post removed).'}"
+                        "
+                        {flag.post?.content ||
+                          "Post content preview unavailable (or post removed)."}
+                        "
                       </p>
                       {flag.post?.image_url && (
                         <div className="mt-2">
@@ -751,27 +909,44 @@ export default function Admin() {
                       {isPending && (
                         <>
                           <button
-                            onClick={() => handleResolveFlag(flag.id, 'dismissed')}
+                            onClick={() =>
+                              handleResolveFlag(flag.id, "dismissed")
+                            }
                             disabled={isPendingAction}
                             className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
                           >
-                            {isPendingAction ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
+                            {isPendingAction ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Ban className="w-3.5 h-3.5" />
+                            )}
                             <span>Dismiss Flag</span>
                           </button>
 
                           <button
-                            onClick={() => handleResolveFlag(flag.id, 'resolved')}
+                            onClick={() =>
+                              handleResolveFlag(flag.id, "resolved")
+                            }
                             disabled={isPendingAction}
                             className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
                           >
-                            {isPendingAction ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                            {isPendingAction ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
                             <span>Mark Resolved</span>
                           </button>
                         </>
                       )}
 
                       <button
-                        onClick={() => setPostToRemove({ postId: flag.post_id, flagId: flag.id })}
+                        onClick={() =>
+                          setPostToRemove({
+                            postId: flag.post_id,
+                            flagId: flag.id,
+                          })
+                        }
                         disabled={isPendingAction}
                         className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 shadow-lg shadow-rose-600/20"
                       >
@@ -780,7 +955,7 @@ export default function Admin() {
                       </button>
                     </div>
                   </div>
-                )
+                );
               })
             )}
           </div>
@@ -788,7 +963,7 @@ export default function Admin() {
       )}
 
       {/* TAB 3: SECURITY AUDIT LOGS VIEW */}
-      {activeTab === 'audit' && (
+      {activeTab === "audit" && (
         <div className="space-y-6 animate-fade-in">
           <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
             {/* Header toolbar */}
@@ -799,7 +974,8 @@ export default function Admin() {
                   Security Audit Logs
                 </h3>
                 <p className="text-slate-400 text-xs mt-0.5">
-                  Immutable record of administrative actions, moderation events, and security events.
+                  Immutable record of administrative actions, moderation events,
+                  and security events.
                 </p>
               </div>
 
@@ -809,7 +985,7 @@ export default function Admin() {
                   type="text"
                   placeholder="Filter by action, actor, target, IP..."
                   value={auditSearchQuery}
-                  onChange={e => setAuditSearchQuery(e.target.value)}
+                  onChange={(e) => setAuditSearchQuery(e.target.value)}
                   className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
@@ -831,49 +1007,73 @@ export default function Admin() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <tr key={idx} className="animate-pulse">
-                        <td className="py-4 px-6"><div className="h-4 w-32 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-16 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-24 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-48 bg-slate-900 rounded" /></td>
-                        <td className="py-4 px-6"><div className="h-4 w-24 bg-slate-900 rounded" /></td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-32 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-48 bg-slate-900 rounded" />
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                        </td>
                       </tr>
                     ))
                   ) : filteredAuditLogs.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-500">
+                      <td
+                        colSpan={5}
+                        className="py-12 text-center text-slate-500"
+                      >
                         <Terminal className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                        <p className="font-medium text-slate-400 text-sm">No audit logs found</p>
+                        <p className="font-medium text-slate-400 text-sm">
+                          No audit logs found
+                        </p>
                       </td>
                     </tr>
                   ) : (
-                    filteredAuditLogs.map(log => {
-                      const badgeStyle = getActionBadge(log.action)
+                    filteredAuditLogs.map((log) => {
+                      const badgeStyle = getActionBadge(log.action);
 
                       return (
-                        <tr key={log.id} className="hover:bg-slate-900/40 transition-colors">
+                        <tr
+                          key={log.id}
+                          className="hover:bg-slate-900/40 transition-colors"
+                        >
                           <td className="py-3.5 px-6 font-mono text-slate-400">
                             {new Date(log.created_at).toLocaleString()}
                           </td>
                           <td className="py-3.5 px-6">
                             {log.actor_id ? (
-                              <span className="font-mono text-indigo-400 font-semibold">User #{log.actor_id}</span>
+                              <span className="font-mono text-indigo-400 font-semibold">
+                                User #{log.actor_id}
+                              </span>
                             ) : (
-                              <span className="text-slate-500 italic">System</span>
+                              <span className="text-slate-500 italic">
+                                System
+                              </span>
                             )}
                           </td>
                           <td className="py-3.5 px-6">
-                            <span className={`px-2.5 py-1 rounded font-mono text-[11px] font-bold border uppercase tracking-wider ${badgeStyle}`}>
+                            <span
+                              className={`px-2.5 py-1 rounded font-mono text-[11px] font-bold border uppercase tracking-wider ${badgeStyle}`}
+                            >
                               {log.action}
                             </span>
                           </td>
                           <td className="py-3.5 px-6 text-slate-300 font-medium">
-                            {log.target || '—'}
+                            {log.target || "—"}
                           </td>
                           <td className="py-3.5 px-6 font-mono text-slate-400">
-                            {log.ip_address || '127.0.0.1'}
+                            {log.ip_address || "127.0.0.1"}
                           </td>
                         </tr>
-                      )
+                      );
                     })
                   )}
                 </tbody>
@@ -896,12 +1096,16 @@ export default function Admin() {
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Delete User Account</h3>
+              <h3 className="text-lg font-bold text-white">
+                Delete User Account
+              </h3>
             </div>
 
             <p className="text-sm text-slate-300 leading-relaxed">
-              Are you sure you want to permanently delete user{' '}
-              <strong className="text-white">{userToDelete.email}</strong> (ID: #{userToDelete.id})? This action cannot be undone and will purge all associated profile data.
+              Are you sure you want to permanently delete user{" "}
+              <strong className="text-white">{userToDelete.email}</strong> (ID:
+              #{userToDelete.id})? This action cannot be undone and will purge
+              all associated profile data.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -918,7 +1122,7 @@ export default function Admin() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
               >
                 {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>{deleting ? 'Deleting...' : 'Delete User'}</span>
+                <span>{deleting ? "Deleting..." : "Delete User"}</span>
               </button>
             </div>
           </div>
@@ -933,11 +1137,16 @@ export default function Admin() {
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Remove Post as Admin</h3>
+              <h3 className="text-lg font-bold text-white">
+                Remove Post as Admin
+              </h3>
             </div>
 
             <p className="text-sm text-slate-300 leading-relaxed">
-              Are you sure you want to remove post <strong className="text-white">#{postToRemove.postId}</strong>? This action will permanently remove the publication from the feed and create a security audit log event.
+              Are you sure you want to remove post{" "}
+              <strong className="text-white">#{postToRemove.postId}</strong>?
+              This action will permanently remove the publication from the feed
+              and create a security audit log event.
             </p>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -954,12 +1163,12 @@ export default function Admin() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
               >
                 {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>{deleting ? 'Removing...' : 'Remove Post'}</span>
+                <span>{deleting ? "Removing..." : "Remove Post"}</span>
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
