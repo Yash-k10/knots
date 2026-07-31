@@ -247,9 +247,7 @@ export default function Messaging() {
     try {
       setIsLoadingConvs(true);
       const data = await fetchConversations();
-      setConversations(data);
-
-      if (data.length > 0 && activeConvId === null) {
+      if (data.length > 0) {
         let foundConvId = data[0].id;
         if (targetUserId) {
           const matching = data.find((c) =>

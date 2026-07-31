@@ -1,3 +1,4 @@
+// @ts-ignore
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { PieChart as PieIcon, Activity } from "lucide-react";
 import { PlatformEngagementSummary } from "../../services/analytics";
