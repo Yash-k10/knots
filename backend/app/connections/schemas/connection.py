@@ -20,3 +20,17 @@ class ConnectionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MutualConnectionsResponse(BaseModel):
+    target_user_id: int
+    mutual_count: int
+    mutual_user_ids: list[int]
+
+
+class ConnectionSuggestionResponse(BaseModel):
+    user_id: int
+    email: str
+    mutual_count: int
+    recommendation_reason: str
+    score: int
