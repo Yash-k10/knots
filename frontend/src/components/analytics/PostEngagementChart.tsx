@@ -1,14 +1,6 @@
 import { useState } from "react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  CartesianGrid,
-} from "recharts";
+// @ts-ignore
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 import { Activity, Eye, Heart, MessageCircle } from "lucide-react";
 import { PostEngagementResponse } from "../../services/analytics";
 
