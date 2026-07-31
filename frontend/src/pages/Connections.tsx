@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Users, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Search, Sparkles, Send } from 'lucide-react';
 import { apiRequest } from '../services/api';
 import ConnectionCard from '../components/connections/ConnectionCard';
 
@@ -16,29 +17,45 @@ interface Connection {
   created_at: string;
 }
 
+interface ConnectionSuggestion {
+  user_id: number;
+  email: string;
+  mutual_count: number;
+  recommendation_reason: string;
+  score: number;
+}
+
 export default function Connections() {
-  const [activeTab, setActiveTab] = useState<'requests' | 'connections' | 'discover'>('requests');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'requests' | 'sent' | 'connections' | 'discover'>('discover');
   const [requests, setRequests] = useState<Connection[]>([]);
+  const [sentRequests, setSentRequests] = useState<Connection[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [suggestions, setSuggestions] = useState<ConnectionSuggestion[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch data
+  // Fetch all network data
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [reqsData, connsData, usersData] = await Promise.all([
-        apiRequest<Connection[]>('/connections/me/requests'),
-        apiRequest<Connection[]>('/connections/me'),
-        apiRequest<User[]>('/users')
+      const [reqsData, sentData, connsData, suggData, usersData] = await Promise.all([
+        apiRequest<Connection[]>('/connections/me/requests').catch(() => []),
+        apiRequest<Connection[]>('/connections/me/sent-requests').catch(() => []),
+        apiRequest<Connection[]>('/connections/me').catch(() => []),
+        apiRequest<ConnectionSuggestion[]>('/connections/suggestions').catch(() => []),
+        apiRequest<User[]>('/users').catch(() => [])
       ]);
-      setRequests(reqsData);
-      setConnections(connsData);
-      setUsers(usersData);
+
+      setRequests(Array.isArray(reqsData) ? reqsData : []);
+      setSentRequests(Array.isArray(sentData) ? sentData : []);
+      setConnections(Array.isArray(connsData) ? connsData : []);
+      setSuggestions(Array.isArray(suggData) ? suggData : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch data');
+      setError(err.message || 'Failed to fetch network data');
     } finally {
       setLoading(false);
     }
@@ -48,7 +65,7 @@ export default function Connections() {
     fetchData();
   }, []);
 
-  const handleTabChange = (tab: 'requests' | 'connections' | 'discover') => {
+  const handleTabChange = (tab: 'requests' | 'sent' | 'connections' | 'discover') => {
     setActiveTab(tab);
     setSearchQuery('');
   };
@@ -56,18 +73,28 @@ export default function Connections() {
   const handleAccept = async (id: number) => {
     try {
       await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
-      fetchData(); // Refresh lists
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      fetchData();
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to accept connection request');
     }
   };
 
   const handleReject = async (id: number) => {
     try {
       await apiRequest(`/connections/${id}/reject`, { method: 'PATCH' });
-      fetchData();
+      setRequests((prev) => prev.filter((r) => r.id !== id));
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to reject connection request');
+    }
+  };
+
+  const handleWithdraw = async (id: number) => {
+    try {
+      await apiRequest(`/connections/${id}/withdraw`, { method: 'DELETE' });
+      setSentRequests((prev) => prev.filter((r) => r.id !== id));
+    } catch (err: any) {
+      alert(err.message || 'Failed to withdraw connection request');
     }
   };
 
@@ -77,30 +104,42 @@ export default function Connections() {
         method: 'POST',
         body: JSON.stringify({ addressee_id: userId }),
       });
-      alert('Request sent!');
+      setSuggestions((prev) => prev.filter((s) => s.user_id !== userId));
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
       fetchData();
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to send connection request');
     }
   };
 
   const handleSendMessage = (userId: number) => {
-    // Currently just a placeholder function or alert until Week 2 real-time chat
-    alert(`Opening conversation with User #${userId}`);
+    navigate('/messaging', { state: { targetUserId: userId } });
   };
 
-  // Filter lists based on search query
+  // Filter items based on search query
   const filteredRequests = requests.filter((req) =>
     req.requester_id.toString().includes(searchQuery.trim())
   );
 
+  const filteredSentRequests = sentRequests.filter((req) =>
+    req.addressee_id.toString().includes(searchQuery.trim())
+  );
+
   const filteredConnections = connections.filter((conn) =>
     conn.requester_id.toString().includes(searchQuery.trim()) ||
+    conn.addressee_id.toString().includes(searchQuery.trim()) ||
     conn.id.toString().includes(searchQuery.trim())
   );
 
-  const filteredUsers = users.filter((user) =>
-    user.email.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  const filteredSuggestions = suggestions.filter((sugg) =>
+    sugg.email.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+    sugg.recommendation_reason.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.email.toLowerCase().includes(searchQuery.toLowerCase().trim()) &&
+      !suggestions.some((s) => s.user_id === u.id)
   );
 
   if (loading) {
@@ -116,7 +155,7 @@ export default function Connections() {
               <Users className="w-6 h-6 text-indigo-400" />
               My Network
             </h2>
-            <p className="text-slate-400 text-sm">Build relationships with alumni and campus colleagues.</p>
+            <p className="text-slate-400 text-sm">Build relationships, connect with peers, and explore smart suggestions.</p>
           </div>
 
           {/* Search bar */}
@@ -126,10 +165,12 @@ export default function Connections() {
               type="text"
               placeholder={
                 activeTab === 'discover'
-                  ? 'Search people by email...'
+                  ? 'Search suggestions & people by email...'
                   : activeTab === 'requests'
-                  ? 'Search requests by User ID...'
-                  : 'Search connections by User/Connection ID...'
+                  ? 'Search pending requests...'
+                  : activeTab === 'sent'
+                  ? 'Search sent requests...'
+                  : 'Search connections...'
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -152,7 +193,14 @@ export default function Connections() {
           </div>
         )}
 
-        <div className="flex gap-6 border-b border-slate-800 pb-2">
+        <div className="flex flex-wrap gap-4 border-b border-slate-800 pb-2">
+          <button 
+            onClick={() => handleTabChange('discover')}
+            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 flex items-center gap-1.5 ${activeTab === 'discover' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            Suggestions & Discover ({suggestions.length})
+          </button>
           <button 
             onClick={() => handleTabChange('requests')}
             className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'requests' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
@@ -160,28 +208,67 @@ export default function Connections() {
             Pending Requests ({requests.length})
           </button>
           <button 
+            onClick={() => handleTabChange('sent')}
+            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 flex items-center gap-1.5 ${activeTab === 'sent' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            Sent Requests ({sentRequests.length})
+          </button>
+          <button 
             onClick={() => handleTabChange('connections')}
             className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'connections' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
           >
             My Connections ({connections.length})
-          </button>
-          <button 
-            onClick={() => handleTabChange('discover')}
-            className={`text-sm font-semibold transition-colors pb-2 -mb-[9px] border-b-2 ${activeTab === 'discover' ? 'text-indigo-400 border-indigo-400' : 'text-slate-400 border-transparent hover:text-slate-200'}`}
-          >
-            Discover People
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         
+        {/* SUGGESTIONS & DISCOVER TAB */}
+        {activeTab === 'discover' && (
+          <>
+            {filteredSuggestions.length === 0 && filteredUsers.length === 0 ? (
+              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                {searchQuery ? 'No suggestions match your search.' : 'No suggestions available right now.'}
+              </div>
+            ) : (
+              <>
+                {filteredSuggestions.map((sugg) => (
+                  <ConnectionCard
+                    key={sugg.user_id}
+                    type="discover"
+                    id={sugg.user_id}
+                    targetId={sugg.user_id}
+                    email={sugg.email}
+                    subtitle="Suggested for You"
+                    mutualCount={sugg.mutual_count}
+                    reason={sugg.recommendation_reason}
+                    onConnect={handleConnect}
+                  />
+                ))}
+                {filteredUsers.map((user) => (
+                  <ConnectionCard
+                    key={user.id}
+                    type="discover"
+                    id={user.id}
+                    targetId={user.id}
+                    email={user.email}
+                    subtitle="Platform Member"
+                    onConnect={handleConnect}
+                  />
+                ))}
+              </>
+            )}
+          </>
+        )}
+
         {/* PENDING REQUESTS TAB */}
         {activeTab === 'requests' && (
           <>
             {filteredRequests.length === 0 ? (
               <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                {searchQuery ? 'No pending requests match your search.' : 'No pending requests.'}
+                {searchQuery ? 'No pending requests match your search.' : 'No incoming pending requests.'}
               </div>
             ) : (
               filteredRequests.map((req) => (
@@ -193,6 +280,28 @@ export default function Connections() {
                   subtitle="Wants to connect"
                   onAccept={handleAccept}
                   onReject={handleReject}
+                />
+              ))
+            )}
+          </>
+        )}
+
+        {/* SENT REQUESTS TAB */}
+        {activeTab === 'sent' && (
+          <>
+            {filteredSentRequests.length === 0 ? (
+              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
+                {searchQuery ? 'No sent requests match your search.' : 'No outgoing sent requests.'}
+              </div>
+            ) : (
+              filteredSentRequests.map((req) => (
+                <ConnectionCard
+                  key={req.id}
+                  type="sent"
+                  id={req.id}
+                  targetId={req.addressee_id}
+                  subtitle="Pending Request Sent"
+                  onWithdraw={handleWithdraw}
                 />
               ))
             )}
@@ -221,30 +330,8 @@ export default function Connections() {
           </>
         )}
 
-        {/* DISCOVER TAB */}
-        {activeTab === 'discover' && (
-          <>
-            {filteredUsers.length === 0 ? (
-              <div className="col-span-3 text-slate-400 text-center py-10 bg-slate-950/50 rounded-xl border border-slate-800/50">
-                {searchQuery ? 'No users match your search.' : 'No users found.'}
-              </div>
-            ) : (
-              filteredUsers.map((user) => (
-                <ConnectionCard
-                  key={user.id}
-                  type="discover"
-                  id={user.id}
-                  targetId={user.id}
-                  email={user.email}
-                  subtitle="Platform Member"
-                  onConnect={handleConnect}
-                />
-              ))
-            )}
-          </>
-        )}
-
       </div>
     </div>
   );
 }
+

@@ -2,6 +2,8 @@ import unittest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import app.main  # noqa: F401
+from app.users.models.user import User
 from app.messaging.models.conversation import Conversation
 from app.messaging.models.message import Message
 from app.messaging.routers.conversation import (
@@ -16,7 +18,6 @@ from app.messaging.routers.message import (
 )
 from app.messaging.schemas.conversation import ConversationCreate
 from app.messaging.schemas.message import MessageCreate
-from app.users.models.user import User
 
 
 class TestMessagingRouters(unittest.IsolatedAsyncioTestCase):

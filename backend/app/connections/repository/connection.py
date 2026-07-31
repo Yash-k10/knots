@@ -49,3 +49,28 @@ class ConnectionRepository(BaseRepository[Connection]):
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
+
+    async def get_user_connected_user_ids(self, user_id: int) -> set[int]:
+        conns = await self.get_user_connections(user_id)
+        connected_ids = set()
+        for conn in conns:
+            if conn.requester_id == user_id:
+                connected_ids.add(conn.addressee_id)
+            else:
+                connected_ids.add(conn.requester_id)
+        return connected_ids
+
+    async def get_sent_pending_requests(self, user_id: int) -> list[Connection]:
+        stmt = select(self.model).where(
+            and_(
+                self.model.requester_id == user_id,
+                self.model.status == ConnectionStatus.PENDING,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_all_accepted_connections(self) -> list[Connection]:
+        stmt = select(self.model).where(self.model.status == ConnectionStatus.ACCEPTED)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())

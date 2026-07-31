@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   fetchConversations,
   fetchConversationMessages,
@@ -84,6 +85,9 @@ const EMOJI_CATEGORIES = [
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🔥', '🎉', '💡']
 
 export default function Messaging() {
+  const location = useLocation()
+  const targetUserId = (location.state as { targetUserId?: number })?.targetUserId
+
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -181,8 +185,16 @@ export default function Messaging() {
       setIsLoadingConvs(true)
       const data = await fetchConversations()
       setConversations(data)
-      if (data.length > 0 && activeConvId === null) {
-        selectConversation(data[0].id)
+      
+      if (data.length > 0) {
+        let foundConvId = data[0].id
+        if (targetUserId) {
+          const matching = data.find((c) =>
+            c.participants?.some((p) => p.user_id === targetUserId)
+          )
+          if (matching) foundConvId = matching.id
+        }
+        selectConversation(foundConvId)
       }
     } catch (err) {
       console.error('Failed to load conversations:', err)
