@@ -47,7 +47,7 @@ jobs:
           PYTHONPATH: .
         run: |
           cd backend
-          python -m unittest test_messaging_router.py test_messaging_service.py test_websocket_messaging.py test_notification_router.py
+          python -m unittest test_messaging_router.py test_messaging_service.py test_websocket_messaging.py test_notification_router.py test_profiles_service.py test_profiles_router.py test_jobs.py test_jobs_router.py test_analytics.py
 
   frontend-lint-build:
     runs-on: ubuntu-latest
