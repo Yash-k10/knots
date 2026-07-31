@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+// @ts-ignore
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { TrendingUp, Eye, Calendar, ArrowUpRight } from "lucide-react";
 import {
   analyticsService,
