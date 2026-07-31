@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Briefcase,
@@ -10,7 +10,7 @@ import {
   Send,
   Loader2,
   TrendingUp,
-} from 'lucide-react'
+} from "lucide-react";
 import {
   analyticsService,
   SystemStats,
@@ -18,15 +18,18 @@ import {
   PostEngagementResponse,
   TrendingPost,
   PlatformEngagementSummary,
-} from '../services/analytics'
-import { profileService, ProfileResponse } from '../services/profile'
+} from "../services/analytics";
+import { profileService, ProfileResponse } from "../services/profile";
 import {
   ProfileViewsChart,
   PostEngagementChart,
   PlatformEngagementDonut,
   TrendingPostsWidget,
-} from '../components/analytics'
-import { ActivitySummaryCards, AiRecommendationsHub } from '../components/dashboard'
+} from "../components/analytics";
+import {
+  ActivitySummaryCards,
+  AiRecommendationsHub,
+} from "../components/dashboard";
 import {
   aiService,
   ConnectionSuggestion,
@@ -34,102 +37,130 @@ import {
   ContentRecommendation,
   ResumeAnalysisResult,
   CareerRoadmapResult,
-} from '../services/ai'
+} from "../services/ai";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<SystemStats | null>(null)
-  const [profileViews, setProfileViews] = useState<ProfileViewsResponse | null>(null)
-  const [engagement, setEngagement] = useState<PostEngagementResponse | null>(null)
-  const [summary, setSummary] = useState<PlatformEngagementSummary | null>(null)
-  const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([])
-  const [profile, setProfile] = useState<ProfileResponse | null>(null)
+  const [stats, setStats] = useState<SystemStats | null>(null);
+  const [profileViews, setProfileViews] = useState<ProfileViewsResponse | null>(
+    null,
+  );
+  const [engagement, setEngagement] = useState<PostEngagementResponse | null>(
+    null,
+  );
+  const [summary, setSummary] = useState<PlatformEngagementSummary | null>(
+    null,
+  );
+  const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
 
   // AI Recommendation States
-  const [connectionSuggestions, setConnectionSuggestions] = useState<ConnectionSuggestion[]>([])
-  const [jobRecommendations, setJobRecommendations] = useState<JobRecommendation[]>([])
-  const [contentRecommendations, setContentRecommendations] = useState<ContentRecommendation[]>([])
+  const [connectionSuggestions, setConnectionSuggestions] = useState<
+    ConnectionSuggestion[]
+  >([]);
+  const [jobRecommendations, setJobRecommendations] = useState<
+    JobRecommendation[]
+  >([]);
+  const [contentRecommendations, setContentRecommendations] = useState<
+    ContentRecommendation[]
+  >([]);
 
   // UI View States
-  const [mainTab, setMainTab] = useState<'recommendations' | 'analytics' | 'aitools'>('recommendations')
-  const [aiToolCategory, setAiToolCategory] = useState<'resume' | 'roadmap'>('resume')
+  const [mainTab, setMainTab] = useState<
+    "recommendations" | "analytics" | "aitools"
+  >("recommendations");
+  const [aiToolCategory, setAiToolCategory] = useState<"resume" | "roadmap">(
+    "resume",
+  );
 
   // Interactive AI Tools States
-  const [resumeText, setResumeText] = useState('')
-  const [isAnalyzingResume, setIsAnalyzingResume] = useState(false)
-  const [resumeResult, setResumeResult] = useState<ResumeAnalysisResult | null>(null)
+  const [resumeText, setResumeText] = useState("");
+  const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
+  const [resumeResult, setResumeResult] = useState<ResumeAnalysisResult | null>(
+    null,
+  );
 
-  const [targetRole, setTargetRole] = useState('')
-  const [skillsInput, setSkillsInput] = useState('')
-  const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false)
-  const [roadmapResult, setRoadmapResult] = useState<CareerRoadmapResult | null>(null)
+  const [targetRole, setTargetRole] = useState("");
+  const [skillsInput, setSkillsInput] = useState("");
+  const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
+  const [roadmapResult, setRoadmapResult] =
+    useState<CareerRoadmapResult | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [sysStats, viewsData, engData, engSummary, trending, userProfile, connSugg, jobRecs, contentRecs] =
-          await Promise.all([
-            analyticsService.getSystemStats().catch(() => null),
-            analyticsService.getProfileViews(7).catch(() => null),
-            analyticsService.getPostEngagement().catch(() => null),
-            analyticsService.getPlatformEngagementSummary().catch(() => null),
-            analyticsService.getTrendingPosts(5).catch(() => []),
-            profileService.getOwnProfile().catch(() => null),
-            aiService.getConnectionSuggestions(6).catch(() => []),
-            aiService.getJobRecommendations(6).catch(() => []),
-            aiService.getContentRecommendations(6).catch(() => []),
-          ])
+        const [
+          sysStats,
+          viewsData,
+          engData,
+          engSummary,
+          trending,
+          userProfile,
+          connSugg,
+          jobRecs,
+          contentRecs,
+        ] = await Promise.all([
+          analyticsService.getSystemStats().catch(() => null),
+          analyticsService.getProfileViews(7).catch(() => null),
+          analyticsService.getPostEngagement().catch(() => null),
+          analyticsService.getPlatformEngagementSummary().catch(() => null),
+          analyticsService.getTrendingPosts(5).catch(() => []),
+          profileService.getOwnProfile().catch(() => null),
+          aiService.getConnectionSuggestions(6).catch(() => []),
+          aiService.getJobRecommendations(6).catch(() => []),
+          aiService.getContentRecommendations(6).catch(() => []),
+        ]);
 
-        setStats(sysStats)
-        setProfileViews(viewsData)
-        setEngagement(engData)
-        setSummary(engSummary)
-        setTrendingPosts(trending || [])
-        setProfile(userProfile)
-        setConnectionSuggestions(connSugg || [])
-        setJobRecommendations(jobRecs || [])
-        setContentRecommendations(contentRecs || [])
+        setStats(sysStats);
+        setProfileViews(viewsData);
+        setEngagement(engData);
+        setSummary(engSummary);
+        setTrendingPosts(trending || []);
+        setProfile(userProfile);
+        setConnectionSuggestions(connSugg || []);
+        setJobRecommendations(jobRecs || []);
+        setContentRecommendations(contentRecs || []);
       } catch (error) {
-        console.error('Failed to load dashboard data', error)
+        console.error("Failed to load dashboard data", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const handleAnalyzeResume = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!resumeText.trim()) return
-    setIsAnalyzingResume(true)
+    e.preventDefault();
+    if (!resumeText.trim()) return;
+    setIsAnalyzingResume(true);
     try {
-      const res = await aiService.analyzeResume(resumeText)
-      setResumeResult(res)
+      const res = await aiService.analyzeResume(resumeText);
+      setResumeResult(res);
     } catch (err) {
-      console.error('Resume analysis failed', err)
+      console.error("Resume analysis failed", err);
     } finally {
-      setIsAnalyzingResume(false)
+      setIsAnalyzingResume(false);
     }
-  }
+  };
 
   const handleGenerateRoadmap = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!targetRole.trim()) return
-    setIsGeneratingRoadmap(true)
+    e.preventDefault();
+    if (!targetRole.trim()) return;
+    setIsGeneratingRoadmap(true);
     const skillsList = skillsInput
-      .split(',')
+      .split(",")
       .map((s) => s.trim())
-      .filter(Boolean)
+      .filter(Boolean);
     try {
-      const res = await aiService.generateRoadmap(targetRole, skillsList)
-      setRoadmapResult(res)
+      const res = await aiService.generateRoadmap(targetRole, skillsList);
+      setRoadmapResult(res);
     } catch (err) {
-      console.error('Roadmap generation failed', err)
+      console.error("Roadmap generation failed", err);
     } finally {
-      setIsGeneratingRoadmap(false)
+      setIsGeneratingRoadmap(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -137,15 +168,18 @@ export default function Dashboard() {
         <div className="h-44 bg-slate-900 border border-slate-800 rounded-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-slate-900 border border-slate-800 rounded-xl" />
+            <div
+              key={i}
+              className="h-32 bg-slate-900 border border-slate-800 rounded-xl"
+            />
           ))}
         </div>
         <div className="h-96 bg-slate-900 border border-slate-800 rounded-2xl" />
       </div>
-    )
+    );
   }
 
-  const greetingName = profile?.first_name ? `, ${profile.first_name}` : ''
+  const greetingName = profile?.first_name ? `, ${profile.first_name}` : "";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
@@ -160,7 +194,9 @@ export default function Dashboard() {
             Welcome Back{greetingName} 👋
           </h2>
           <p className="text-indigo-200 text-sm max-w-2xl leading-relaxed">
-            Your personalized AI Hub has analyzed your skills, network activity, and target role to bring you high-value recommendations and career utilities.
+            Your personalized AI Hub has analyzed your skills, network activity,
+            and target role to bring you high-value recommendations and career
+            utilities.
           </p>
         </div>
 
@@ -193,31 +229,31 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-900 pb-4 gap-4">
         <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-900 gap-1">
           <button
-            onClick={() => setMainTab('recommendations')}
+            onClick={() => setMainTab("recommendations")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-              mainTab === 'recommendations'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              mainTab === "recommendations"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <Sparkles className="h-4 w-4" /> AI Recommendations
           </button>
           <button
-            onClick={() => setMainTab('analytics')}
+            onClick={() => setMainTab("analytics")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-              mainTab === 'analytics'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              mainTab === "analytics"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <TrendingUp className="h-4 w-4" /> Performance & Analytics
           </button>
           <button
-            onClick={() => setMainTab('aitools')}
+            onClick={() => setMainTab("aitools")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-              mainTab === 'aitools'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              mainTab === "aitools"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <Brain className="h-4 w-4" /> AI Career Tools
@@ -226,7 +262,7 @@ export default function Dashboard() {
       </div>
 
       {/* TAB CONTENT 1: AI Recommendations Hub */}
-      {mainTab === 'recommendations' && (
+      {mainTab === "recommendations" && (
         <AiRecommendationsHub
           connectionSuggestions={connectionSuggestions}
           jobRecommendations={jobRecommendations}
@@ -235,7 +271,7 @@ export default function Dashboard() {
       )}
 
       {/* TAB CONTENT 2: Performance & Analytics (Member 2 Components Integration) */}
-      {mainTab === 'analytics' && (
+      {mainTab === "analytics" && (
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <ProfileViewsChart initialData={profileViews} />
@@ -254,25 +290,25 @@ export default function Dashboard() {
       )}
 
       {/* TAB CONTENT 3: Interactive AI Tools */}
-      {mainTab === 'aitools' && (
+      {mainTab === "aitools" && (
         <div className="space-y-6">
           <div className="flex gap-3">
             <button
-              onClick={() => setAiToolCategory('resume')}
+              onClick={() => setAiToolCategory("resume")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 ${
-                aiToolCategory === 'resume'
-                  ? 'bg-indigo-600 text-white border-indigo-500'
-                  : 'bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800'
+                aiToolCategory === "resume"
+                  ? "bg-indigo-600 text-white border-indigo-500"
+                  : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
               }`}
             >
               <FileText className="h-4 w-4" /> AI Resume Optimizer
             </button>
             <button
-              onClick={() => setAiToolCategory('roadmap')}
+              onClick={() => setAiToolCategory("roadmap")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 ${
-                aiToolCategory === 'roadmap'
-                  ? 'bg-indigo-600 text-white border-indigo-500'
-                  : 'bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800'
+                aiToolCategory === "roadmap"
+                  ? "bg-indigo-600 text-white border-indigo-500"
+                  : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
               }`}
             >
               <Compass className="h-4 w-4" /> AI Career Roadmap Generator
@@ -280,7 +316,7 @@ export default function Dashboard() {
           </div>
 
           {/* AI Resume Optimizer */}
-          {aiToolCategory === 'resume' && (
+          {aiToolCategory === "resume" && (
             <div className="bg-slate-950/50 border border-slate-900 rounded-2xl p-6 backdrop-blur-md space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -288,7 +324,8 @@ export default function Dashboard() {
                   Smart Resume Feedback Sandbox
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Paste your resume text below to receive automated feedback on skills, formatting, and key recommendations.
+                  Paste your resume text below to receive automated feedback on
+                  skills, formatting, and key recommendations.
                 </p>
               </div>
 
@@ -307,7 +344,8 @@ export default function Dashboard() {
                 >
                   {isAnalyzingResume ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Analyzing Resume...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Analyzing
+                      Resume...
                     </>
                   ) : (
                     <>
@@ -321,7 +359,8 @@ export default function Dashboard() {
                 <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-6 space-y-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Analysis Results
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+                      Analysis Results
                     </h4>
                     {resumeResult.score !== undefined && (
                       <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 rounded-full text-xs font-black">
@@ -332,11 +371,15 @@ export default function Dashboard() {
 
                   {resumeResult.feedback && (
                     <div className="space-y-2">
-                      <span className="text-xs font-semibold text-slate-300">Key Feedback:</span>
+                      <span className="text-xs font-semibold text-slate-300">
+                        Key Feedback:
+                      </span>
                       <ul className="list-disc list-inside space-y-1 text-xs text-slate-400">
-                        {resumeResult.feedback.map((item: string, idx: number) => (
-                          <li key={idx}>{item}</li>
-                        ))}
+                        {resumeResult.feedback.map(
+                          (item: string, idx: number) => (
+                            <li key={idx}>{item}</li>
+                          ),
+                        )}
                       </ul>
                     </div>
                   )}
@@ -346,7 +389,7 @@ export default function Dashboard() {
           )}
 
           {/* AI Career Roadmap Generator */}
-          {aiToolCategory === 'roadmap' && (
+          {aiToolCategory === "roadmap" && (
             <div className="bg-slate-950/50 border border-slate-900 rounded-2xl p-6 backdrop-blur-md space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -354,14 +397,17 @@ export default function Dashboard() {
                   Target Career Step Generator
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Specify your target role and current skill set to generate tailored learning steps.
+                  Specify your target role and current skill set to generate
+                  tailored learning steps.
                 </p>
               </div>
 
               <form onSubmit={handleGenerateRoadmap} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Target Role</label>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Target Role
+                    </label>
                     <input
                       type="text"
                       value={targetRole}
@@ -391,7 +437,8 @@ export default function Dashboard() {
                 >
                   {isGeneratingRoadmap ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Generating Roadmap...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Generating
+                      Roadmap...
                     </>
                   ) : (
                     <>
@@ -404,21 +451,31 @@ export default function Dashboard() {
               {roadmapResult && (
                 <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-6 space-y-4 animate-in fade-in duration-300">
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Compass className="h-4 w-4 text-indigo-400" /> Proposed Career Path
+                    <Compass className="h-4 w-4 text-indigo-400" /> Proposed
+                    Career Path
                   </h4>
                   {roadmapResult.milestones && (
                     <div className="space-y-3">
-                      {roadmapResult.milestones.map((step: any, idx: number) => (
-                        <div key={idx} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-start gap-3">
-                          <span className="h-6 w-6 rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0">
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <h5 className="text-xs font-bold text-white">{step.title}</h5>
-                            <p className="text-xs text-slate-400 mt-1">{step.description}</p>
+                      {roadmapResult.milestones.map(
+                        (step: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-start gap-3"
+                          >
+                            <span className="h-6 w-6 rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <h5 className="text-xs font-bold text-white">
+                                {step.title}
+                              </h5>
+                              <p className="text-xs text-slate-400 mt-1">
+                                {step.description}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
                   )}
                 </div>
@@ -428,5 +485,5 @@ export default function Dashboard() {
         </div>
       )}
     </div>
-  )
+  );
 }

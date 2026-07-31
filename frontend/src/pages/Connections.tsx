@@ -143,7 +143,11 @@ export default function Connections() {
   );
 
   if (loading) {
-    return <div className="text-slate-400 p-6 flex items-center justify-center min-h-[50vh]">Loading network data...</div>;
+    return (
+      <div className="text-slate-400 p-6 flex items-center justify-center min-h-[50vh]">
+        Loading network data...
+      </div>
+    );
   }
 
   return (
@@ -155,7 +159,9 @@ export default function Connections() {
               <Users className="w-6 h-6 text-indigo-400" />
               My Network
             </h2>
-            <p className="text-slate-400 text-sm">Build relationships, connect with peers, and explore smart suggestions.</p>
+            <p className="text-slate-400 text-sm">
+              Build relationships, connect with peers, and explore smart suggestions.
+            </p>
           </div>
 
           {/* Search bar */}
@@ -334,4 +340,5 @@ export default function Connections() {
     </div>
   );
 }
+
 

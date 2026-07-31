@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Key,
   Mail,
@@ -13,257 +13,264 @@ import {
   Clock,
   Eye,
   EyeOff,
-} from 'lucide-react'
-import { apiRequest, ApiError } from '../services/api'
+} from "lucide-react";
+import { apiRequest, ApiError } from "../services/api";
 
 interface UserData {
-  id: number
-  email: string
-  role_id: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  id: number;
+  email: string;
+  role_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function Settings() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<UserData | null>(null)
-  const [loadingUser, setLoadingUser] = useState(true)
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Email state
-  const [email, setEmail] = useState('')
-  const [emailLoading, setEmailLoading] = useState(false)
-  const [emailSuccess, setEmailSuccess] = useState<string | null>(null)
-  const [emailError, setEmailError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   // Password state
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordLoading, setPasswordLoading] = useState(false)
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   // Delete account state
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Preferences toggles (local state for UX completeness)
-  const [emailAlerts, setEmailAlerts] = useState(true)
-  const [chatStatus, setChatStatus] = useState(true)
-  const [prefSuccess, setPrefSuccess] = useState(false)
+  const [emailAlerts, setEmailAlerts] = useState(true);
+  const [chatStatus, setChatStatus] = useState(true);
+  const [prefSuccess, setPrefSuccess] = useState(false);
 
   // Fetch current user details
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        setLoadingUser(true)
-        setFetchError(null)
-        const response = await apiRequest<UserData>('/users/me')
-        setUser(response)
-        setEmail(response.email)
+        setLoadingUser(true);
+        setFetchError(null);
+        const response = await apiRequest<UserData>("/users/me");
+        setUser(response);
+        setEmail(response.email);
       } catch (err) {
         if (err instanceof ApiError) {
-          setFetchError(err.message)
+          setFetchError(err.message);
         } else if (err instanceof Error) {
-          setFetchError(err.message)
+          setFetchError(err.message);
         } else {
-          setFetchError('Failed to fetch user details.')
+          setFetchError("Failed to fetch user details.");
         }
       } finally {
-        setLoadingUser(false)
+        setLoadingUser(false);
       }
-    }
-    fetchUser()
-  }, [])
+    };
+    fetchUser();
+  }, []);
 
   // Auto-clear success messages after 4 seconds
   useEffect(() => {
-    if (!emailSuccess) return
-    const timer = setTimeout(() => setEmailSuccess(null), 4000)
-    return () => clearTimeout(timer)
-  }, [emailSuccess])
+    if (!emailSuccess) return;
+    const timer = setTimeout(() => setEmailSuccess(null), 4000);
+    return () => clearTimeout(timer);
+  }, [emailSuccess]);
 
   useEffect(() => {
-    if (!passwordSuccess) return
-    const timer = setTimeout(() => setPasswordSuccess(null), 4000)
-    return () => clearTimeout(timer)
-  }, [passwordSuccess])
+    if (!passwordSuccess) return;
+    const timer = setTimeout(() => setPasswordSuccess(null), 4000);
+    return () => clearTimeout(timer);
+  }, [passwordSuccess]);
 
   // Handle email update
   const handleUpdateEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setEmailSuccess(null)
-    setEmailError(null)
+    e.preventDefault();
+    setEmailSuccess(null);
+    setEmailError(null);
 
-    if (!user) return
+    if (!user) return;
 
-    const trimmedEmail = email.trim()
+    const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
-      setEmailError('Email address is required.')
-      return
+      setEmailError("Email address is required.");
+      return;
     }
-    if (!trimmedEmail.includes('@')) {
-      setEmailError('Please enter a valid email address.')
-      return
+    if (!trimmedEmail.includes("@")) {
+      setEmailError("Please enter a valid email address.");
+      return;
     }
-    if (!trimmedEmail.endsWith('@sbjit.edu.in')) {
-      setEmailError('Only college email addresses (@sbjit.edu.in) are allowed.')
-      return
+    if (!trimmedEmail.endsWith("@sbjit.edu.in")) {
+      setEmailError(
+        "Only college email addresses (@sbjit.edu.in) are allowed.",
+      );
+      return;
     }
 
-    setEmailLoading(true)
+    setEmailLoading(true);
     try {
       const updatedUser = await apiRequest<UserData>(`/users/${user.id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         body: JSON.stringify({ email: trimmedEmail }),
-      })
-      setUser(updatedUser)
-      setEmail(updatedUser.email)
-      setEmailSuccess('Email address updated successfully.')
+      });
+      setUser(updatedUser);
+      setEmail(updatedUser.email);
+      setEmailSuccess("Email address updated successfully.");
     } catch (err) {
       if (err instanceof ApiError) {
-        setEmailError(err.message)
+        setEmailError(err.message);
       } else if (err instanceof Error) {
-        setEmailError(err.message)
+        setEmailError(err.message);
       } else {
-        setEmailError('An unexpected error occurred while updating email.')
+        setEmailError("An unexpected error occurred while updating email.");
       }
     } finally {
-      setEmailLoading(false)
+      setEmailLoading(false);
     }
-  }
+  };
 
   // Handle password change (uses secure current-password verification)
   const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setPasswordSuccess(null)
-    setPasswordError(null)
+    e.preventDefault();
+    setPasswordSuccess(null);
+    setPasswordError(null);
 
-    if (!user) return
+    if (!user) return;
 
     if (!currentPassword) {
-      setPasswordError('Current password is required.')
-      return
+      setPasswordError("Current password is required.");
+      return;
     }
     if (!newPassword) {
-      setPasswordError('New password is required.')
-      return
+      setPasswordError("New password is required.");
+      return;
     }
     if (newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long.')
-      return
+      setPasswordError("New password must be at least 6 characters long.");
+      return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match.')
-      return
+      setPasswordError("New passwords do not match.");
+      return;
     }
     if (currentPassword === newPassword) {
-      setPasswordError('New password must be different from the current password.')
-      return
+      setPasswordError(
+        "New password must be different from the current password.",
+      );
+      return;
     }
 
-    setPasswordLoading(true)
+    setPasswordLoading(true);
     try {
-      await apiRequest<UserData>('/users/me/change-password', {
-        method: 'POST',
+      await apiRequest<UserData>("/users/me/change-password", {
+        method: "POST",
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword,
         }),
-      })
-      setPasswordSuccess('Password changed successfully.')
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
+      });
+      setPasswordSuccess("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (err) {
       if (err instanceof ApiError) {
-        setPasswordError(err.message)
+        setPasswordError(err.message);
       } else if (err instanceof Error) {
-        setPasswordError(err.message)
+        setPasswordError(err.message);
       } else {
-        setPasswordError('An unexpected error occurred while changing password.')
+        setPasswordError(
+          "An unexpected error occurred while changing password.",
+        );
       }
     } finally {
-      setPasswordLoading(false)
+      setPasswordLoading(false);
     }
-  }
+  };
 
   // Handle delete account
   const handleDeleteAccount = async () => {
-    if (!user) return
-    if (deleteConfirmText !== 'DELETE') {
-      setDeleteError('Please type DELETE to confirm.')
-      return
+    if (!user) return;
+    if (deleteConfirmText !== "DELETE") {
+      setDeleteError("Please type DELETE to confirm.");
+      return;
     }
 
-    setDeleteLoading(true)
-    setDeleteError(null)
+    setDeleteLoading(true);
+    setDeleteError(null);
     try {
-      await apiRequest(`/users/${user.id}`, { method: 'DELETE' })
-      localStorage.removeItem('knots_token')
-      localStorage.removeItem('knots_refresh_token')
-      navigate('/login')
+      await apiRequest(`/users/${user.id}`, { method: "DELETE" });
+      localStorage.removeItem("knots_token");
+      localStorage.removeItem("knots_refresh_token");
+      navigate("/login");
     } catch (err) {
       if (err instanceof ApiError) {
-        setDeleteError(err.message)
+        setDeleteError(err.message);
       } else if (err instanceof Error) {
-        setDeleteError(err.message)
+        setDeleteError(err.message);
       } else {
-        setDeleteError('An unexpected error occurred.')
+        setDeleteError("An unexpected error occurred.");
       }
     } finally {
-      setDeleteLoading(false)
+      setDeleteLoading(false);
     }
-  }
+  };
 
   // Handle preferences save (local state mock toggle action)
   const handleSavePreferences = () => {
-    setPrefSuccess(true)
-    setTimeout(() => setPrefSuccess(false), 3000)
-  }
+    setPrefSuccess(true);
+    setTimeout(() => setPrefSuccess(false), 3000);
+  };
 
   const getRoleName = (roleId?: number) => {
     switch (roleId) {
       case 1:
-        return 'Admin'
+        return "Admin";
       case 2:
-        return 'Student'
+        return "Student";
       case 3:
-        return 'Alumni'
+        return "Alumni";
       case 4:
-        return 'Recruiter'
+        return "Recruiter";
       case 5:
-        return 'Faculty'
+        return "Faculty";
       default:
-        return 'User'
+        return "User";
     }
-  }
+  };
 
   // Password strength calculation
   const getPasswordStrength = (pwd: string) => {
-    if (!pwd) return { level: 0, label: '', color: '' }
-    let score = 0
-    if (pwd.length >= 6) score++
-    if (pwd.length >= 10) score++
-    if (/[A-Z]/.test(pwd)) score++
-    if (/[0-9]/.test(pwd)) score++
-    if (/[^A-Za-z0-9]/.test(pwd)) score++
+    if (!pwd) return { level: 0, label: "", color: "" };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
-    if (score <= 1) return { level: 1, label: 'Weak', color: 'bg-red-500' }
-    if (score <= 2) return { level: 2, label: 'Fair', color: 'bg-amber-500' }
-    if (score <= 3) return { level: 3, label: 'Good', color: 'bg-yellow-400' }
-    if (score <= 4) return { level: 4, label: 'Strong', color: 'bg-emerald-400' }
-    return { level: 5, label: 'Excellent', color: 'bg-emerald-500' }
-  }
+    if (score <= 1) return { level: 1, label: "Weak", color: "bg-red-500" };
+    if (score <= 2) return { level: 2, label: "Fair", color: "bg-amber-500" };
+    if (score <= 3) return { level: 3, label: "Good", color: "bg-yellow-400" };
+    if (score <= 4)
+      return { level: 4, label: "Strong", color: "bg-emerald-400" };
+    return { level: 5, label: "Excellent", color: "bg-emerald-500" };
+  };
 
-  const passwordStrength = getPasswordStrength(newPassword)
+  const passwordStrength = getPasswordStrength(newPassword);
 
   if (loadingUser) {
     return (
@@ -271,7 +278,7 @@ export default function Settings() {
         <Loader2 className="h-10 w-10 text-indigo-500 animate-spin" />
         <p className="text-slate-400 text-sm">Loading user settings...</p>
       </div>
-    )
+    );
   }
 
   if (fetchError) {
@@ -281,15 +288,15 @@ export default function Settings() {
         <div>
           <h3 className="font-bold text-white mb-1">Failed to Load Settings</h3>
           <p className="text-sm text-slate-400">{fetchError}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-3 bg-red-500/20 hover:bg-red-500/30 text-white rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
           >
             Retry
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -299,9 +306,13 @@ export default function Settings() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Shield className="h-6 w-6 text-indigo-400" /> Account Security & Settings
+              <Shield className="h-6 w-6 text-indigo-400" /> Account Security &
+              Settings
             </h2>
-            <p className="text-slate-400 text-sm mt-1">Configure your login credentials, email address, and notification preferences.</p>
+            <p className="text-slate-400 text-sm mt-1">
+              Configure your login credentials, email address, and notification
+              preferences.
+            </p>
           </div>
           <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" /> {getRoleName(user?.role_id)}
@@ -316,12 +327,23 @@ export default function Settings() {
           </div>
           <div className="flex items-center gap-2 text-slate-400 text-xs">
             <Clock className="h-3.5 w-3.5 text-slate-500" />
-            <span>Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</span>
+            <span>
+              Joined{" "}
+              {user?.created_at
+                ? new Date(user.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "—"}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-slate-400 text-xs">
             <Shield className="h-3.5 w-3.5 text-slate-500" />
-            <span>Account {user?.is_active ? 'Active' : 'Inactive'}</span>
-            <span className={`inline-block h-2 w-2 rounded-full ${user?.is_active ? 'bg-emerald-400' : 'bg-red-400'}`} />
+            <span>Account {user?.is_active ? "Active" : "Inactive"}</span>
+            <span
+              className={`inline-block h-2 w-2 rounded-full ${user?.is_active ? "bg-emerald-400" : "bg-red-400"}`}
+            />
           </div>
         </div>
       </div>
@@ -333,7 +355,9 @@ export default function Settings() {
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Mail className="h-5 w-5 text-indigo-400" /> Update Email Address
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Change the college email associated with your account.</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Change the college email associated with your account.
+            </p>
           </div>
 
           {emailError && (
@@ -352,7 +376,9 @@ export default function Settings() {
 
           <form onSubmit={handleUpdateEmail} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
                 value={email}
@@ -368,7 +394,11 @@ export default function Settings() {
               disabled={emailLoading || email === user?.email}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-4 py-2.5 font-semibold text-xs transition-all flex items-center gap-2"
             >
-              {emailLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {emailLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
               Save Email
             </button>
           </form>
@@ -380,7 +410,9 @@ export default function Settings() {
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <Key className="h-5 w-5 text-indigo-400" /> Change Password
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Verify your current password before setting a new one.</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Verify your current password before setting a new one.
+            </p>
           </div>
 
           {passwordError && (
@@ -399,10 +431,12 @@ export default function Settings() {
 
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Current Password</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Current Password
+              </label>
               <div className="relative">
                 <input
-                  type={showCurrentPassword ? 'text' : 'password'}
+                  type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
@@ -416,15 +450,21 @@ export default function Settings() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   tabIndex={-1}
                 >
-                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">New Password</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                New Password
+              </label>
               <div className="relative">
                 <input
-                  type={showNewPassword ? 'text' : 'password'}
+                  type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
@@ -438,7 +478,11 @@ export default function Settings() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   tabIndex={-1}
                 >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               {/* Password strength indicator */}
@@ -449,24 +493,33 @@ export default function Settings() {
                       <div
                         key={i}
                         className={`h-1 flex-1 rounded-full transition-all ${
-                          i <= passwordStrength.level ? passwordStrength.color : 'bg-slate-800'
+                          i <= passwordStrength.level
+                            ? passwordStrength.color
+                            : "bg-slate-800"
                         }`}
                       />
                     ))}
                   </div>
-                  <p className={`text-xs ${
-                    passwordStrength.level <= 1 ? 'text-red-400' :
-                    passwordStrength.level <= 2 ? 'text-amber-400' :
-                    passwordStrength.level <= 3 ? 'text-yellow-400' :
-                    'text-emerald-400'
-                  }`}>
+                  <p
+                    className={`text-xs ${
+                      passwordStrength.level <= 1
+                        ? "text-red-400"
+                        : passwordStrength.level <= 2
+                          ? "text-amber-400"
+                          : passwordStrength.level <= 3
+                            ? "text-yellow-400"
+                            : "text-emerald-400"
+                    }`}
+                  >
                     {passwordStrength.label}
                   </p>
                 </div>
               )}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Confirm New Password</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Confirm New Password
+              </label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -476,16 +529,24 @@ export default function Settings() {
                 required
                 disabled={passwordLoading}
               />
-              {confirmPassword && newPassword && confirmPassword !== newPassword && (
-                <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
-              )}
+              {confirmPassword &&
+                newPassword &&
+                confirmPassword !== newPassword && (
+                  <p className="text-red-400 text-xs mt-1">
+                    Passwords do not match
+                  </p>
+                )}
             </div>
             <button
               type="submit"
               disabled={passwordLoading}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-4 py-2.5 font-semibold text-xs transition-all flex items-center gap-2"
             >
-              {passwordLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {passwordLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
               Update Password
             </button>
           </form>
@@ -498,7 +559,9 @@ export default function Settings() {
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Save className="h-5 w-5 text-indigo-400" /> System Preferences
           </h3>
-          <p className="text-xs text-slate-500 mt-1">Manage notifications and chat visibility settings.</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Manage notifications and chat visibility settings.
+          </p>
         </div>
 
         {prefSuccess && (
@@ -512,30 +575,36 @@ export default function Settings() {
           <div className="flex justify-between items-center pb-4 border-b border-slate-900">
             <div>
               <h4 className="text-sm font-semibold text-white">Email Alerts</h4>
-              <p className="text-xs text-slate-500">Receive notifications when matching jobs are found</p>
+              <p className="text-xs text-slate-500">
+                Receive notifications when matching jobs are found
+              </p>
             </div>
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={emailAlerts}
               onChange={(e) => setEmailAlerts(e.target.checked)}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded bg-slate-900 border-slate-800 cursor-pointer" 
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded bg-slate-900 border-slate-800 cursor-pointer"
             />
           </div>
 
           <div className="flex justify-between items-center pb-4 border-b border-slate-900">
             <div>
-              <h4 className="text-sm font-semibold text-white">Real-time Chat Status</h4>
-              <p className="text-xs text-slate-500">Show online status badge to peers</p>
+              <h4 className="text-sm font-semibold text-white">
+                Real-time Chat Status
+              </h4>
+              <p className="text-xs text-slate-500">
+                Show online status badge to peers
+              </p>
             </div>
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={chatStatus}
               onChange={(e) => setChatStatus(e.target.checked)}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded bg-slate-900 border-slate-800 cursor-pointer" 
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded bg-slate-900 border-slate-800 cursor-pointer"
             />
           </div>
 
-          <button 
+          <button
             onClick={handleSavePreferences}
             className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 font-semibold text-xs transition-all"
           >
@@ -550,7 +619,10 @@ export default function Settings() {
           <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
             <Trash2 className="h-5 w-5" /> Danger Zone
           </h3>
-          <p className="text-xs text-slate-500 mt-1">Permanently delete your account and all associated data. This action cannot be undone.</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Permanently delete your account and all associated data. This action
+            cannot be undone.
+          </p>
         </div>
         <button
           onClick={() => setShowDeleteModal(true)}
@@ -570,7 +642,9 @@ export default function Settings() {
               </div>
               <div>
                 <h4 className="text-white font-bold">Delete Account</h4>
-                <p className="text-slate-400 text-xs">This action is permanent and cannot be reversed.</p>
+                <p className="text-slate-400 text-xs">
+                  This action is permanent and cannot be reversed.
+                </p>
               </div>
             </div>
 
@@ -582,7 +656,8 @@ export default function Settings() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-2">
-                Type <span className="text-red-400 font-mono">DELETE</span> to confirm
+                Type <span className="text-red-400 font-mono">DELETE</span> to
+                confirm
               </label>
               <input
                 type="text"
@@ -596,9 +671,9 @@ export default function Settings() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => {
-                  setShowDeleteModal(false)
-                  setDeleteConfirmText('')
-                  setDeleteError(null)
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                  setDeleteError(null);
                 }}
                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg py-2.5 font-semibold text-xs transition-all"
               >
@@ -606,10 +681,14 @@ export default function Settings() {
               </button>
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
+                disabled={deleteLoading || deleteConfirmText !== "DELETE"}
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg py-2.5 font-semibold text-xs transition-all flex items-center justify-center gap-2"
               >
-                {deleteLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                {deleteLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
                 Delete Forever
               </button>
             </div>
@@ -617,5 +696,5 @@ export default function Settings() {
         </div>
       )}
     </div>
-  )
+  );
 }

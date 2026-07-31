@@ -24,13 +24,33 @@ class ConnectionService:
         if existing:
             raise ValueError("Connection or request already exists")
 
-        return await self.repository.create(
+        conn = await self.repository.create(
             {
                 "requester_id": requester_id,
                 "addressee_id": addressee_id,
                 "status": ConnectionStatus.PENDING,
             }
         )
+
+        from app.notifications.services.notification import NotificationService
+        from app.profiles.repository.profile import ProfileRepository
+
+        prof_repo = ProfileRepository(self.repository.db)
+        req_prof = await prof_repo.get_by_user_id(requester_id)
+        req_name = (
+            f"{req_prof.first_name} {req_prof.last_name}"
+            if (req_prof and req_prof.first_name)
+            else "Someone"
+        )
+        notif_service = NotificationService(self.repository.db)
+        await notif_service.create_notification(
+            user_id=addressee_id,
+            title="New Connection Request",
+            content=f"{req_name} sent you a connection request.",
+            type="connection_request",
+        )
+
+        return conn
 
     async def accept_connection(self, connection_id: int, user_id: int) -> Connection:
         conn = await self.repository.get(connection_id)

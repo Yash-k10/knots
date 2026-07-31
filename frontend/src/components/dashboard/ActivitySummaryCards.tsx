@@ -1,17 +1,17 @@
-import { Users, Briefcase, MessageSquare, Activity } from 'lucide-react'
-import { SystemStats, ProfileViewsResponse } from '../../services/analytics'
+import { Users, Briefcase, MessageSquare, Activity } from "lucide-react";
+import { SystemStats, ProfileViewsResponse } from "../../services/analytics";
 import {
   ConnectionSuggestion,
   JobRecommendation,
   ContentRecommendation,
-} from '../../services/ai'
+} from "../../services/ai";
 
 interface ActivitySummaryCardsProps {
-  stats: SystemStats | null
-  profileViews: ProfileViewsResponse | null
-  connectionSuggestions: ConnectionSuggestion[]
-  jobRecommendations: JobRecommendation[]
-  contentRecommendations: ContentRecommendation[]
+  stats: SystemStats | null;
+  profileViews: ProfileViewsResponse | null;
+  connectionSuggestions: ConnectionSuggestion[];
+  jobRecommendations: JobRecommendation[];
+  contentRecommendations: ContentRecommendation[];
 }
 
 export function ActivitySummaryCards({
@@ -23,43 +23,43 @@ export function ActivitySummaryCards({
 }: ActivitySummaryCardsProps) {
   const summaryCards = [
     {
-      title: 'AI Peer Matches',
+      title: "AI Peer Matches",
       value: connectionSuggestions.length.toString(),
       desc: `Out of ${stats?.total_users || 0} active members`,
       icon: Users,
-      color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-      gradient: 'from-indigo-500/10 via-transparent to-transparent',
+      color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+      gradient: "from-indigo-500/10 via-transparent to-transparent",
     },
     {
-      title: 'Job Recommendations',
+      title: "Job Recommendations",
       value: jobRecommendations.length.toString(),
       desc: `From ${stats?.total_jobs || 0} active opportunities`,
       icon: Briefcase,
-      color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-      gradient: 'from-emerald-500/10 via-transparent to-transparent',
+      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      gradient: "from-emerald-500/10 via-transparent to-transparent",
     },
     {
-      title: 'Curated Discussions',
+      title: "Curated Discussions",
       value: contentRecommendations.length.toString(),
       desc: `Selected from ${stats?.total_posts || 0} posts`,
       icon: MessageSquare,
-      color: 'text-pink-400 bg-pink-500/10 border-pink-500/20',
-      gradient: 'from-pink-500/10 via-transparent to-transparent',
+      color: "text-pink-400 bg-pink-500/10 border-pink-500/20",
+      gradient: "from-pink-500/10 via-transparent to-transparent",
     },
     {
-      title: 'Profile Activity',
+      title: "Profile Activity",
       value: (profileViews?.total_views || 0).toLocaleString(),
-      desc: 'Total profile visits this week',
+      desc: "Total profile visits this week",
       icon: Activity,
-      color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-      gradient: 'from-amber-500/10 via-transparent to-transparent',
+      color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+      gradient: "from-amber-500/10 via-transparent to-transparent",
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {summaryCards.map((card) => {
-        const Icon = card.icon
+        const Icon = card.icon;
         return (
           <div
             key={card.title}
@@ -81,10 +81,12 @@ export function ActivitySummaryCards({
                 <Icon className="h-6 w-6" />
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-4 relative z-10">{card.desc}</p>
+            <p className="text-xs text-slate-500 mt-4 relative z-10">
+              {card.desc}
+            </p>
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

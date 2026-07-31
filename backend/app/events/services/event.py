@@ -356,7 +356,31 @@ class EventService:
             rsvp = await self.rsvp_repo.create(rsvp_data)
 
         # Eagerly load the user relationship to prevent greenlet/lazy-load errors during serialization
-        return await self.rsvp_repo.get_with_user(rsvp.id)
+        result_rsvp = await self.rsvp_repo.get_with_user(rsvp.id)
+
+        if event.organizer_id != user_id:
+            from app.notifications.services.notification import NotificationService
+            from app.profiles.repository.profile import ProfileRepository
+
+            prof_repo = ProfileRepository(self.db)
+            rsvper_prof = await prof_repo.get_by_user_id(user_id)
+            rsvper_name = (
+                f"{rsvper_prof.first_name} {rsvper_prof.last_name}"
+                if (rsvper_prof and rsvper_prof.first_name)
+                else "A user"
+            )
+            status_str = (
+                "is going to" if payload.status == RSVPStatus.GOING else "RSVPed to"
+            )
+            notif_service = NotificationService(self.db)
+            await notif_service.create_notification(
+                user_id=event.organizer_id,
+                title="New Event RSVP",
+                content=f"{rsvper_name} {status_str} your event: {event.title}",
+                type="event_rsvp",
+            )
+
+        return result_rsvp
 
     async def cancel_rsvp(self, event_id: int, user_id: int) -> None:
         """Cancel/delete an RSVP record."""

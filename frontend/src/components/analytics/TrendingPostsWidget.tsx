@@ -1,45 +1,54 @@
-import { useState, useEffect } from 'react'
-import { TrendingUp, Award, Eye, Heart, MessageCircle, Flame } from 'lucide-react'
-import { analyticsService, TrendingPost } from '../../services/analytics'
+import { useState, useEffect } from "react";
+import {
+  TrendingUp,
+  Award,
+  Eye,
+  Heart,
+  MessageCircle,
+  Flame,
+} from "lucide-react";
+import { analyticsService, TrendingPost } from "../../services/analytics";
 
 interface TrendingPostsWidgetProps {
-  initialPosts?: TrendingPost[]
+  initialPosts?: TrendingPost[];
 }
 
-export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidgetProps) {
-  const [posts, setPosts] = useState<TrendingPost[]>(initialPosts || [])
-  const [days, setDays] = useState<number>(7)
-  const [isLoading, setIsLoading] = useState<boolean>(!initialPosts)
+export default function TrendingPostsWidget({
+  initialPosts,
+}: TrendingPostsWidgetProps) {
+  const [posts, setPosts] = useState<TrendingPost[]>(initialPosts || []);
+  const [days, setDays] = useState<number>(7);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialPosts);
 
   useEffect(() => {
     if (initialPosts && days === 7) {
-      setPosts(initialPosts)
-      setIsLoading(false)
-      return
+      setPosts(initialPosts);
+      setIsLoading(false);
+      return;
     }
 
-    let isMounted = true
-    setIsLoading(true)
+    let isMounted = true;
+    setIsLoading(true);
 
     analyticsService
       .getTrendingPosts(5, days)
       .then((res) => {
         if (isMounted) {
-          setPosts(res)
-          setIsLoading(false)
+          setPosts(res);
+          setIsLoading(false);
         }
       })
       .catch((err) => {
-        console.error('Failed to load trending posts:', err)
-        if (isMounted) setIsLoading(false)
-      })
+        console.error("Failed to load trending posts:", err);
+        if (isMounted) setIsLoading(false);
+      });
 
     return () => {
-      isMounted = false
-    }
-  }, [days, initialPosts])
+      isMounted = false;
+    };
+  }, [days, initialPosts]);
 
-  const maxScore = Math.max(...posts.map((p) => p.score), 1)
+  const maxScore = Math.max(...posts.map((p) => p.score), 1);
 
   return (
     <div className="bg-slate-950/60 border border-slate-900 hover:border-slate-800/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md transition duration-300 flex flex-col justify-between">
@@ -69,8 +78,8 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
               onClick={() => setDays(d)}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 days === d
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
               }`}
             >
               {d}D
@@ -87,7 +96,10 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
           </div>
         ) : posts.length > 0 ? (
           posts.map((post, idx) => {
-            const scorePercent = Math.min(Math.round((post.score / maxScore) * 100), 100)
+            const scorePercent = Math.min(
+              Math.round((post.score / maxScore) * 100),
+              100,
+            );
             return (
               <div
                 key={post.post_id || idx}
@@ -102,19 +114,22 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-indigo-600/20 text-indigo-300 flex items-center justify-center font-bold text-xs border border-indigo-500/30">
-                      {post.author_name ? post.author_name.charAt(0) : 'U'}
+                      {post.author_name ? post.author_name.charAt(0) : "U"}
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white">
-                        {post.author_name || 'Anonymous'}
+                        {post.author_name || "Anonymous"}
                       </span>
                       <span className="text-[10px] text-slate-500 ml-2">
                         {post.created_at
-                          ? new Date(post.created_at).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          : ''}
+                          ? new Date(post.created_at).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
+                          : ""}
                       </span>
                     </div>
                   </div>
@@ -135,10 +150,12 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
                       <Eye className="h-3 w-3 text-indigo-400" /> {post.views}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Heart className="h-3 w-3 text-emerald-400" /> {post.likes}
+                      <Heart className="h-3 w-3 text-emerald-400" />{" "}
+                      {post.likes}
                     </span>
                     <span className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3 text-pink-400" /> {post.comments}
+                      <MessageCircle className="h-3 w-3 text-pink-400" />{" "}
+                      {post.comments}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500 font-semibold group-hover:text-indigo-400 transition">
@@ -146,7 +163,7 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
                   </span>
                 </div>
               </div>
-            )
+            );
           })
         ) : (
           <div className="text-center py-10 border border-dashed border-slate-800 rounded-xl">
@@ -158,5 +175,5 @@ export default function TrendingPostsWidget({ initialPosts }: TrendingPostsWidge
         )}
       </div>
     </div>
-  )
+  );
 }

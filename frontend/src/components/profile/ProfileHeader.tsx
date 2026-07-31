@@ -1,56 +1,63 @@
-import React, { useState } from 'react'
-import { Edit2, Save, X, GraduationCap, Building2, Users } from 'lucide-react'
-import { profileService, ProfileResponse } from '../../services/profile'
-import ProfilePictureUploader from './ProfilePictureUploader'
+import React, { useState } from "react";
+import { Edit2, Save, X, GraduationCap, Building2, Users } from "lucide-react";
+import { profileService, ProfileResponse } from "../../services/profile";
+import ProfilePictureUploader from "./ProfilePictureUploader";
 
 interface ProfileHeaderProps {
-  profile: ProfileResponse
-  onUpdate: (updatedProfile: ProfileResponse) => void
-  onError: (errorMessage: string) => void
-  isOwnProfile: boolean
+  profile: ProfileResponse;
+  onUpdate: (updatedProfile: ProfileResponse) => void;
+  onError: (errorMessage: string) => void;
+  isOwnProfile: boolean;
 }
 
-export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile }: ProfileHeaderProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+export default function ProfileHeader({
+  profile,
+  onUpdate,
+  onError,
+  isOwnProfile,
+}: ProfileHeaderProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form State
-  const [firstName, setFirstName] = useState(profile.first_name || '')
-  const [lastName, setLastName] = useState(profile.last_name || '')
-  const [bio, setBio] = useState(profile.bio || '')
-  const [department, setDepartment] = useState(profile.department || '')
-  const [graduationYear, setGraduationYear] = useState(profile.graduation_year?.toString() || '')
+  const [firstName, setFirstName] = useState(profile.first_name || "");
+  const [lastName, setLastName] = useState(profile.last_name || "");
+  const [bio, setBio] = useState(profile.bio || "");
+  const [department, setDepartment] = useState(profile.department || "");
+  const [graduationYear, setGraduationYear] = useState(
+    profile.graduation_year?.toString() || "",
+  );
 
   // Reset form to current profile state
   const handleCancel = () => {
-    setFirstName(profile.first_name || '')
-    setLastName(profile.last_name || '')
-    setBio(profile.bio || '')
-    setDepartment(profile.department || '')
-    setGraduationYear(profile.graduation_year?.toString() || '')
-    setIsEditing(false)
-  }
+    setFirstName(profile.first_name || "");
+    setLastName(profile.last_name || "");
+    setBio(profile.bio || "");
+    setDepartment(profile.department || "");
+    setGraduationYear(profile.graduation_year?.toString() || "");
+    setIsEditing(false);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Client-side validation: First and Last names are required
     if (!firstName.trim()) {
-      onError('First Name is required.')
-      return
+      onError("First Name is required.");
+      return;
     }
     if (!lastName.trim()) {
-      onError('Last Name is required.')
-      return
+      onError("Last Name is required.");
+      return;
     }
 
-    const gradYearNum = graduationYear ? parseInt(graduationYear, 10) : null
+    const gradYearNum = graduationYear ? parseInt(graduationYear, 10) : null;
     if (graduationYear && isNaN(gradYearNum || 0)) {
-      onError('Graduation Year must be a valid number.')
-      return
+      onError("Graduation Year must be a valid number.");
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const updated = await profileService.updateProfile({
         first_name: firstName.trim(),
@@ -58,18 +65,19 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
         bio: bio.trim() || null,
         department: department.trim() || null,
         graduation_year: gradYearNum,
-      })
-      onUpdate(updated)
-      setIsEditing(false)
+      });
+      onUpdate(updated);
+      setIsEditing(false);
     } catch (err: any) {
-      onError(err.message || 'Failed to update profile details.')
+      onError(err.message || "Failed to update profile details.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Derive initials
-  const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'U'
+  const initials =
+    `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
@@ -171,7 +179,7 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
               disabled={isSaving}
             >
               <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Profile'}
+              {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
         </form>
@@ -188,8 +196,8 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
             <div className="space-y-3">
               <h2 className="text-3xl font-extrabold text-white">
                 {profile.first_name || profile.last_name
-                  ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-                  : 'Add Your Name'}
+                  ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+                  : "Add Your Name"}
               </h2>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-slate-400 text-sm">
@@ -208,17 +216,25 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
                 {profile.connection_count !== undefined && (
                   <span className="flex items-center gap-1.5 font-medium bg-slate-900 border border-slate-800 text-indigo-300 text-xs px-2.5 py-1 rounded-full">
                     <Users className="h-3.5 w-3.5 text-indigo-400" />
-                    {profile.connection_count} {profile.connection_count === 1 ? 'Connection' : 'Connections'}
+                    {profile.connection_count}{" "}
+                    {profile.connection_count === 1
+                      ? "Connection"
+                      : "Connections"}
                   </span>
                 )}
                 {!profile.department && !profile.graduation_year && (
-                  <span className="text-slate-500 italic">No department or grad year specified</span>
+                  <span className="text-slate-500 italic">
+                    No department or grad year specified
+                  </span>
                 )}
               </div>
 
               <p className="text-slate-300 text-sm max-w-xl leading-relaxed">
                 {profile.bio || (
-                  <span className="text-slate-500 italic">No bio added yet. Tell people about your interests and goals!</span>
+                  <span className="text-slate-500 italic">
+                    No bio added yet. Tell people about your interests and
+                    goals!
+                  </span>
                 )}
               </p>
             </div>
@@ -236,5 +252,5 @@ export default function ProfileHeader({ profile, onUpdate, onError, isOwnProfile
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   Search,
   Briefcase,
@@ -13,7 +13,7 @@ import {
   X,
   FileText,
   Filter,
-} from 'lucide-react'
+} from "lucide-react";
 import {
   fetchJobs,
   createJobPosting,
@@ -27,149 +27,162 @@ import {
   Application,
   JobType,
   WorkplaceType,
-} from '../services/jobs'
-import { ApiError } from '../services/api'
+} from "../services/jobs";
+import { ApiError } from "../services/api";
 
 export default function Jobs() {
-  const [activeTab, setActiveTab] = useState<'explore' | 'applications' | 'post'>('explore')
-  const [jobs, setJobs] = useState<JobPosting[]>([])
-  const [companies, setCompanies] = useState<Company[]>([])
-  const [applications, setApplications] = useState<Application[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<
+    "explore" | "applications" | "post"
+  >("explore");
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Search and filter states
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [selectedJobType, setSelectedJobType] = useState<string>('ALL')
-  const [selectedWorkplace, setSelectedWorkplace] = useState<string>('ALL')
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedJobType, setSelectedJobType] = useState<string>("ALL");
+  const [selectedWorkplace, setSelectedWorkplace] = useState<string>("ALL");
 
   // Modals state
-  const [selectedJobForApply, setSelectedJobForApply] = useState<JobPosting | null>(null)
-  const [selectedJobForReferral, setSelectedJobForReferral] = useState<JobPosting | null>(null)
+  const [selectedJobForApply, setSelectedJobForApply] =
+    useState<JobPosting | null>(null);
+  const [selectedJobForReferral, setSelectedJobForReferral] =
+    useState<JobPosting | null>(null);
 
   // Job Detail state
-  const [selectedJobForDetail, setSelectedJobForDetail] = useState<JobPosting | null>(null)
+  const [selectedJobForDetail, setSelectedJobForDetail] =
+    useState<JobPosting | null>(null);
 
   // Apply Form State
-  const [resumeUrl, setResumeUrl] = useState<string>('')
-  const [coverLetter, setCoverLetter] = useState<string>('')
-  const [submittingApply, setSubmittingApply] = useState<boolean>(false)
+  const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [coverLetter, setCoverLetter] = useState<string>("");
+  const [submittingApply, setSubmittingApply] = useState<boolean>(false);
 
   // Referral Form State
-  const [referralMessage, setReferralMessage] = useState<string>('')
-  const [submittingReferral, setSubmittingReferral] = useState<boolean>(false)
+  const [referralMessage, setReferralMessage] = useState<string>("");
+  const [submittingReferral, setSubmittingReferral] = useState<boolean>(false);
 
   // Post Job Form State
-  const [postTitle, setPostTitle] = useState<string>('')
-  const [postCompanyId, setPostCompanyId] = useState<number | ''>('')
-  const [postJobType, setPostJobType] = useState<JobType>('FULL_TIME')
-  const [postWorkplaceType, setPostWorkplaceType] = useState<WorkplaceType>('ON_SITE')
-  const [postLocation, setPostLocation] = useState<string>('')
-  const [postSalaryRange, setPostSalaryRange] = useState<string>('')
-  const [postSkills, setPostSkills] = useState<string>('')
-  const [postDescription, setPostDescription] = useState<string>('')
+  const [postTitle, setPostTitle] = useState<string>("");
+  const [postCompanyId, setPostCompanyId] = useState<number | "">("");
+  const [postJobType, setPostJobType] = useState<JobType>("FULL_TIME");
+  const [postWorkplaceType, setPostWorkplaceType] =
+    useState<WorkplaceType>("ON_SITE");
+  const [postLocation, setPostLocation] = useState<string>("");
+  const [postSalaryRange, setPostSalaryRange] = useState<string>("");
+  const [postSkills, setPostSkills] = useState<string>("");
+  const [postDescription, setPostDescription] = useState<string>("");
 
   // New Company Form State inside Post Job
-  const [showCompanyModal, setShowCompanyModal] = useState<boolean>(false)
-  const [newCompanyName, setNewCompanyName] = useState<string>('')
-  const [newCompanyIndustry, setNewCompanyIndustry] = useState<string>('')
-  const [newCompanyLocation, setNewCompanyLocation] = useState<string>('')
-  const [newCompanyWebsite, setNewCompanyWebsite] = useState<string>('')
-  const [submittingCompany, setSubmittingCompany] = useState<boolean>(false)
+  const [showCompanyModal, setShowCompanyModal] = useState<boolean>(false);
+  const [newCompanyName, setNewCompanyName] = useState<string>("");
+  const [newCompanyIndustry, setNewCompanyIndustry] = useState<string>("");
+  const [newCompanyLocation, setNewCompanyLocation] = useState<string>("");
+  const [newCompanyWebsite, setNewCompanyWebsite] = useState<string>("");
+  const [submittingCompany, setSubmittingCompany] = useState<boolean>(false);
 
   const loadData = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
       const [fetchedJobs, fetchedCompanies, fetchedApps] = await Promise.all([
         fetchJobs({
           search: searchQuery || undefined,
-          job_type: selectedJobType !== 'ALL' ? (selectedJobType as JobType) : undefined,
+          job_type:
+            selectedJobType !== "ALL"
+              ? (selectedJobType as JobType)
+              : undefined,
           workplace_type:
-            selectedWorkplace !== 'ALL' ? (selectedWorkplace as WorkplaceType) : undefined,
+            selectedWorkplace !== "ALL"
+              ? (selectedWorkplace as WorkplaceType)
+              : undefined,
         }),
         fetchCompanies(),
         fetchMyApplications().catch(() => []),
-      ])
+      ]);
 
-      setJobs(fetchedJobs)
-      setCompanies(fetchedCompanies)
-      setApplications(fetchedApps)
+      setJobs(fetchedJobs);
+      setCompanies(fetchedCompanies);
+      setApplications(fetchedApps);
     } catch (err: any) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError('Failed to load opportunities. Please try again.')
+        setError("Failed to load opportunities. Please try again.");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadData()
-  }, [selectedJobType, selectedWorkplace])
+    loadData();
+  }, [selectedJobType, selectedWorkplace]);
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    loadData()
-  }
+    e.preventDefault();
+    loadData();
+  };
 
   const handleApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedJobForApply) return
-    setSubmittingApply(true)
-    setError(null)
+    e.preventDefault();
+    if (!selectedJobForApply) return;
+    setSubmittingApply(true);
+    setError(null);
     try {
       await applyForJob(selectedJobForApply.id, {
         resume_url: resumeUrl,
         cover_letter: coverLetter,
-      })
-      setSuccessMsg(`Successfully applied for ${selectedJobForApply.title}!`)
-      setSelectedJobForApply(null)
-      setResumeUrl('')
-      setCoverLetter('')
-      loadData()
+      });
+      setSuccessMsg(`Successfully applied for ${selectedJobForApply.title}!`);
+      setSelectedJobForApply(null);
+      setResumeUrl("");
+      setCoverLetter("");
+      loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit application.')
+      setError(err.message || "Failed to submit application.");
     } finally {
-      setSubmittingApply(false)
+      setSubmittingApply(false);
     }
-  }
+  };
 
   const handleReferralSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedJobForReferral) return
-    setSubmittingReferral(true)
-    setError(null)
+    e.preventDefault();
+    if (!selectedJobForReferral) return;
+    setSubmittingReferral(true);
+    setError(null);
     try {
       await requestReferral({
         job_posting_id: selectedJobForReferral.id,
         message: referralMessage,
-      })
-      setSuccessMsg(`Referral request sent for ${selectedJobForReferral.title}!`)
-      setSelectedJobForReferral(null)
-      setReferralMessage('')
+      });
+      setSuccessMsg(
+        `Referral request sent for ${selectedJobForReferral.title}!`,
+      );
+      setSelectedJobForReferral(null);
+      setReferralMessage("");
     } catch (err: any) {
-      setError(err.message || 'Failed to request referral.')
+      setError(err.message || "Failed to request referral.");
     } finally {
-      setSubmittingReferral(false)
+      setSubmittingReferral(false);
     }
-  }
+  };
 
   const handlePostJobSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!postCompanyId) {
-      setError('Please select or create a company.')
-      return
+      setError("Please select or create a company.");
+      return;
     }
-    setError(null)
+    setError(null);
     try {
       const skillsArray = postSkills
-        .split(',')
+        .split(",")
         .map((s) => s.trim())
-        .filter(Boolean)
+        .filter(Boolean);
       await createJobPosting({
         title: postTitle,
         company_id: Number(postCompanyId),
@@ -179,47 +192,47 @@ export default function Jobs() {
         salary_range: postSalaryRange || undefined,
         required_skills: skillsArray,
         description: postDescription,
-      })
+      });
 
-      setSuccessMsg('Job opportunity posted successfully!')
-      setPostTitle('')
-      setPostCompanyId('')
-      setPostLocation('')
-      setPostSalaryRange('')
-      setPostSkills('')
-      setPostDescription('')
-      setActiveTab('explore')
-      loadData()
+      setSuccessMsg("Job opportunity posted successfully!");
+      setPostTitle("");
+      setPostCompanyId("");
+      setPostLocation("");
+      setPostSalaryRange("");
+      setPostSkills("");
+      setPostDescription("");
+      setActiveTab("explore");
+      loadData();
     } catch (err: any) {
-      setError(err.message || 'Failed to post job opportunity.')
+      setError(err.message || "Failed to post job opportunity.");
     }
-  }
+  };
 
   const handleCreateCompanySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmittingCompany(true)
-    setError(null)
+    e.preventDefault();
+    setSubmittingCompany(true);
+    setError(null);
     try {
       const newCompany = await createCompany({
         name: newCompanyName,
         industry: newCompanyIndustry || undefined,
         location: newCompanyLocation || undefined,
         website: newCompanyWebsite || undefined,
-      })
-      setCompanies((prev) => [...prev, newCompany])
-      setPostCompanyId(newCompany.id)
-      setShowCompanyModal(false)
-      setNewCompanyName('')
-      setNewCompanyIndustry('')
-      setNewCompanyLocation('')
-      setNewCompanyWebsite('')
-      setSuccessMsg(`Company "${newCompany.name}" added successfully!`)
+      });
+      setCompanies((prev) => [...prev, newCompany]);
+      setPostCompanyId(newCompany.id);
+      setShowCompanyModal(false);
+      setNewCompanyName("");
+      setNewCompanyIndustry("");
+      setNewCompanyLocation("");
+      setNewCompanyWebsite("");
+      setSuccessMsg(`Company "${newCompany.name}" added successfully!`);
     } catch (err: any) {
-      setError(err.message || 'Failed to add company.')
+      setError(err.message || "Failed to add company.");
     } finally {
-      setSubmittingCompany(false)
+      setSubmittingCompany(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
@@ -234,11 +247,15 @@ export default function Jobs() {
               Jobs & Internship Portal
             </h1>
             <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-              Discover verified campus recruitment drives, alumni internship opportunities, and request direct referrals.
+              Discover verified campus recruitment drives, alumni internship
+              opportunities, and request direct referrals.
             </p>
           </div>
           <button
-            onClick={() => { setActiveTab('post'); setSelectedJobForDetail(null); }}
+            onClick={() => {
+              setActiveTab("post");
+              setSelectedJobForDetail(null);
+            }}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/25 text-sm"
           >
             <PlusCircle className="w-4 h-4" />
@@ -249,33 +266,42 @@ export default function Jobs() {
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 mt-6 border-t border-slate-800/80 pt-4">
           <button
-            onClick={() => { setActiveTab('explore'); setSelectedJobForDetail(null); }}
+            onClick={() => {
+              setActiveTab("explore");
+              setSelectedJobForDetail(null);
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'explore'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              activeTab === "explore"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <Briefcase className="w-4 h-4" />
             Explore Jobs ({jobs.length})
           </button>
           <button
-            onClick={() => { setActiveTab('applications'); setSelectedJobForDetail(null); }}
+            onClick={() => {
+              setActiveTab("applications");
+              setSelectedJobForDetail(null);
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'applications'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              activeTab === "applications"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <FileText className="w-4 h-4" />
             My Applications ({applications.length})
           </button>
           <button
-            onClick={() => { setActiveTab('post'); setSelectedJobForDetail(null); }}
+            onClick={() => {
+              setActiveTab("post");
+              setSelectedJobForDetail(null);
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === 'post'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              activeTab === "post"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
           >
             <PlusCircle className="w-4 h-4" />
@@ -306,8 +332,8 @@ export default function Jobs() {
       )}
 
       {/* EXPLORE JOBS TAB */}
-      {activeTab === 'explore' && (
-        selectedJobForDetail ? (
+      {activeTab === "explore" &&
+        (selectedJobForDetail ? (
           <div className="space-y-6 animate-fadeIn">
             {/* Back Button */}
             <button
@@ -316,7 +342,7 @@ export default function Jobs() {
             >
               &larr; Back to Job Search
             </button>
-            
+
             {/* Main Detail Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left side: Job Content */}
@@ -324,7 +350,11 @@ export default function Jobs() {
                 <div className="flex justify-between items-start gap-4 pb-6 border-b border-slate-900">
                   <div className="flex items-start gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-2xl flex-shrink-0 shadow-lg">
-                      {selectedJobForDetail.company?.name ? selectedJobForDetail.company.name.charAt(0).toUpperCase() : 'C'}
+                      {selectedJobForDetail.company?.name
+                        ? selectedJobForDetail.company.name
+                            .charAt(0)
+                            .toUpperCase()
+                        : "C"}
                     </div>
                     <div>
                       <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
@@ -332,17 +362,17 @@ export default function Jobs() {
                       </h2>
                       <p className="text-sm font-semibold text-indigo-400 flex items-center gap-2 mt-1">
                         <Building className="w-4 h-4 text-slate-400" />
-                        {selectedJobForDetail.company?.name || 'Company'}
+                        {selectedJobForDetail.company?.name || "Company"}
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="hidden sm:flex flex-col gap-2 items-end">
                     <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {selectedJobForDetail.job_type.replace('_', ' ')}
+                      {selectedJobForDetail.job_type.replace("_", " ")}
                     </span>
                     <span className="bg-slate-900 text-slate-300 border border-slate-800 px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider">
-                      {selectedJobForDetail.workplace_type.replace('_', ' ')}
+                      {selectedJobForDetail.workplace_type.replace("_", " ")}
                     </span>
                   </div>
                 </div>
@@ -353,21 +383,23 @@ export default function Jobs() {
                     <span className="text-slate-500 text-xs">Salary Range</span>
                     <p className="text-emerald-400 font-bold flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      {selectedJobForDetail.salary_range || 'Not Disclosed'}
+                      {selectedJobForDetail.salary_range || "Not Disclosed"}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-slate-500 text-xs">Location</span>
                     <p className="text-slate-300 font-semibold flex items-center gap-1">
                       <MapPin className="w-4 h-4 text-slate-500" />
-                      {selectedJobForDetail.location || 'Remote'}
+                      {selectedJobForDetail.location || "Remote"}
                     </p>
                   </div>
                   <div className="space-y-1 col-span-2 sm:col-span-1">
                     <span className="text-slate-500 text-xs">Posted Date</span>
                     <p className="text-slate-300 font-semibold flex items-center gap-1">
                       <Clock className="w-4 h-4 text-slate-500" />
-                      {new Date(selectedJobForDetail.created_at).toLocaleDateString()}
+                      {new Date(
+                        selectedJobForDetail.created_at,
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -383,40 +415,49 @@ export default function Jobs() {
                 </div>
 
                 {/* Skills Required */}
-                {selectedJobForDetail.required_skills && selectedJobForDetail.required_skills.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-md font-bold text-white uppercase tracking-wider text-xs border-l-2 border-indigo-500 pl-2">
-                      Required Skills
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedJobForDetail.required_skills.map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="bg-slate-900 text-slate-300 border border-slate-800 px-3 py-1 rounded-xl text-xs font-semibold"
-                        >
-                          {skill}
-                        </span>
-                      ))}
+                {selectedJobForDetail.required_skills &&
+                  selectedJobForDetail.required_skills.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-md font-bold text-white uppercase tracking-wider text-xs border-l-2 border-indigo-500 pl-2">
+                        Required Skills
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedJobForDetail.required_skills.map(
+                          (skill, idx) => (
+                            <span
+                              key={idx}
+                              className="bg-slate-900 text-slate-300 border border-slate-800 px-3 py-1 rounded-xl text-xs font-semibold"
+                            >
+                              {skill}
+                            </span>
+                          ),
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
 
               {/* Right side: Company Card & Actions */}
               <div className="space-y-6">
                 {/* Quick Action Box */}
                 <div className="bg-slate-950 border border-slate-800/90 rounded-2xl p-6 space-y-4">
-                  <h4 className="text-base font-bold text-white">Application Options</h4>
+                  <h4 className="text-base font-bold text-white">
+                    Application Options
+                  </h4>
                   <div className="flex flex-col gap-2.5">
                     <button
-                      onClick={() => setSelectedJobForApply(selectedJobForDetail)}
+                      onClick={() =>
+                        setSelectedJobForApply(selectedJobForDetail)
+                      }
                       className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
                     >
                       <Send className="w-4 h-4" />
                       Apply Now
                     </button>
                     <button
-                      onClick={() => setSelectedJobForReferral(selectedJobForDetail)}
+                      onClick={() =>
+                        setSelectedJobForReferral(selectedJobForDetail)
+                      }
                       className="w-full bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-indigo-500/30 font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
                     >
                       <UserCheck className="w-4 h-4" />
@@ -428,27 +469,43 @@ export default function Jobs() {
                 {/* Company Detail Box */}
                 {selectedJobForDetail.company && (
                   <div className="bg-slate-950 border border-slate-800/90 rounded-2xl p-6 space-y-4">
-                    <h4 className="text-base font-bold text-white">About the Company</h4>
+                    <h4 className="text-base font-bold text-white">
+                      About the Company
+                    </h4>
                     <div className="space-y-3 text-sm">
                       <div>
-                        <span className="text-slate-500 text-xs block">Company Name</span>
-                        <span className="text-slate-300 font-semibold">{selectedJobForDetail.company.name}</span>
+                        <span className="text-slate-500 text-xs block">
+                          Company Name
+                        </span>
+                        <span className="text-slate-300 font-semibold">
+                          {selectedJobForDetail.company.name}
+                        </span>
                       </div>
                       {selectedJobForDetail.company.industry && (
                         <div>
-                          <span className="text-slate-500 text-xs block">Industry</span>
-                          <span className="text-slate-300 font-semibold">{selectedJobForDetail.company.industry}</span>
+                          <span className="text-slate-500 text-xs block">
+                            Industry
+                          </span>
+                          <span className="text-slate-300 font-semibold">
+                            {selectedJobForDetail.company.industry}
+                          </span>
                         </div>
                       )}
                       {selectedJobForDetail.company.location && (
                         <div>
-                          <span className="text-slate-500 text-xs block">Headquarters</span>
-                          <span className="text-slate-300 font-semibold">{selectedJobForDetail.company.location}</span>
+                          <span className="text-slate-500 text-xs block">
+                            Headquarters
+                          </span>
+                          <span className="text-slate-300 font-semibold">
+                            {selectedJobForDetail.company.location}
+                          </span>
                         </div>
                       )}
                       {selectedJobForDetail.company.website && (
                         <div>
-                          <span className="text-slate-500 text-xs block">Website</span>
+                          <span className="text-slate-500 text-xs block">
+                            Website
+                          </span>
                           <a
                             href={selectedJobForDetail.company.website}
                             target="_blank"
@@ -461,8 +518,12 @@ export default function Jobs() {
                       )}
                       {selectedJobForDetail.company.description && (
                         <div className="pt-2 border-t border-slate-900">
-                          <span className="text-slate-500 text-xs block mb-1">Company Bio</span>
-                          <p className="text-slate-400 text-xs leading-relaxed">{selectedJobForDetail.company.description}</p>
+                          <span className="text-slate-500 text-xs block mb-1">
+                            Company Bio
+                          </span>
+                          <p className="text-slate-400 text-xs leading-relaxed">
+                            {selectedJobForDetail.company.description}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -475,7 +536,10 @@ export default function Jobs() {
           <div className="space-y-6">
             {/* Search & Filter Bar */}
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
-              <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+              <form
+                onSubmit={handleSearch}
+                className="flex flex-col sm:flex-row gap-3"
+              >
                 <div className="relative flex-grow">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
@@ -531,14 +595,19 @@ export default function Jobs() {
             {loading ? (
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-3">
                 <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-sm">Fetching available job opportunities...</p>
+                <p className="text-sm">
+                  Fetching available job opportunities...
+                </p>
               </div>
             ) : jobs.length === 0 ? (
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
                 <Briefcase className="w-12 h-12 text-slate-600 mx-auto" />
-                <h3 className="text-lg font-semibold text-white">No opportunities found</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  No opportunities found
+                </h3>
                 <p className="text-slate-400 text-sm max-w-md mx-auto">
-                  No active jobs match your search or filter criteria. Try expanding your filters or check back later!
+                  No active jobs match your search or filter criteria. Try
+                  expanding your filters or check back later!
                 </p>
               </div>
             ) : (
@@ -551,7 +620,9 @@ export default function Jobs() {
                     <div className="space-y-3 flex-grow">
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-lg flex-shrink-0">
-                          {job.company?.name ? job.company.name.charAt(0).toUpperCase() : 'C'}
+                          {job.company?.name
+                            ? job.company.name.charAt(0).toUpperCase()
+                            : "C"}
                         </div>
                         <div>
                           <h3
@@ -562,17 +633,17 @@ export default function Jobs() {
                           </h3>
                           <p className="text-sm font-medium text-slate-300 flex items-center gap-2 mt-0.5">
                             <Building className="w-3.5 h-3.5 text-slate-500" />
-                            {job.company?.name || 'Company'}
+                            {job.company?.name || "Company"}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                         <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md font-semibold">
-                          {job.job_type.replace('_', ' ')}
+                          {job.job_type.replace("_", " ")}
                         </span>
                         <span className="bg-slate-900 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-md font-medium">
-                          {job.workplace_type.replace('_', ' ')}
+                          {job.workplace_type.replace("_", " ")}
                         </span>
                         {job.location && (
                           <span className="text-slate-400 flex items-center gap-1">
@@ -588,20 +659,23 @@ export default function Jobs() {
                         )}
                       </div>
 
-                      <p className="text-slate-400 text-sm line-clamp-2">{job.description}</p>
+                      <p className="text-slate-400 text-sm line-clamp-2">
+                        {job.description}
+                      </p>
 
-                      {job.required_skills && job.required_skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {job.required_skills.map((skill, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-slate-900/80 text-slate-400 text-[11px] px-2 py-0.5 rounded border border-slate-800"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {job.required_skills &&
+                        job.required_skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {job.required_skills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-slate-900/80 text-slate-400 text-[11px] px-2 py-0.5 rounded border border-slate-800"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                     </div>
 
                     {/* Actions Column */}
@@ -625,23 +699,27 @@ export default function Jobs() {
               </div>
             )}
           </div>
-        )
-      )}
+        ))}
 
       {/* MY APPLICATIONS TAB */}
-      {activeTab === 'applications' && (
+      {activeTab === "applications" && (
         <div className="space-y-4">
           <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-1">Application Tracker</h2>
+            <h2 className="text-xl font-bold text-white mb-1">
+              Application Tracker
+            </h2>
             <p className="text-slate-400 text-sm">
-              Keep track of all your submitted job applications and their current recruitment stage.
+              Keep track of all your submitted job applications and their
+              current recruitment stage.
             </p>
           </div>
 
           {applications.length === 0 ? (
             <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
               <FileText className="w-12 h-12 text-slate-600 mx-auto" />
-              <h3 className="text-lg font-semibold text-white">No applications submitted yet</h3>
+              <h3 className="text-lg font-semibold text-white">
+                No applications submitted yet
+              </h3>
               <p className="text-slate-400 text-sm">
                 Browse open job opportunities and submit your first application!
               </p>
@@ -649,7 +727,7 @@ export default function Jobs() {
           ) : (
             <div className="space-y-3 animate-fadeIn">
               {applications.map((app) => {
-                const job = app.job_posting
+                const job = app.job_posting;
                 return (
                   <div
                     key={app.id}
@@ -658,7 +736,9 @@ export default function Jobs() {
                     <div className="space-y-3 flex-grow">
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-lg flex-shrink-0">
-                          {job?.company?.name ? job.company.name.charAt(0).toUpperCase() : 'C'}
+                          {job?.company?.name
+                            ? job.company.name.charAt(0).toUpperCase()
+                            : "C"}
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white">
@@ -666,7 +746,7 @@ export default function Jobs() {
                           </h3>
                           <p className="text-sm font-medium text-slate-300 flex items-center gap-2 mt-0.5">
                             <Building className="w-3.5 h-3.5 text-slate-500" />
-                            {job?.company?.name || 'Company'}
+                            {job?.company?.name || "Company"}
                           </p>
                         </div>
                       </div>
@@ -674,10 +754,10 @@ export default function Jobs() {
                       {job && (
                         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
                           <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md font-semibold">
-                            {job.job_type.replace('_', ' ')}
+                            {job.job_type.replace("_", " ")}
                           </span>
                           <span className="bg-slate-900 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-md font-medium">
-                            {job.workplace_type.replace('_', ' ')}
+                            {job.workplace_type.replace("_", " ")}
                           </span>
                           {job.location && (
                             <span className="text-slate-400 flex items-center gap-1">
@@ -697,7 +777,8 @@ export default function Jobs() {
                       <div className="pt-2.5 border-t border-slate-900/50 flex flex-col gap-1 text-xs text-slate-400">
                         <span className="flex items-center gap-2">
                           <Clock className="w-3.5 h-3.5 text-slate-500" />
-                          Applied on: {new Date(app.applied_at).toLocaleDateString()}
+                          Applied on:{" "}
+                          {new Date(app.applied_at).toLocaleDateString()}
                         </span>
                         {app.resume_url && (
                           <span className="flex items-center gap-2">
@@ -715,8 +796,12 @@ export default function Jobs() {
                         )}
                         {app.cover_letter && (
                           <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-800/80">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Your Pitch / Cover Letter:</span>
-                            <p className="text-slate-300 text-xs leading-relaxed">{app.cover_letter}</p>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
+                              Your Pitch / Cover Letter:
+                            </span>
+                            <p className="text-slate-300 text-xs leading-relaxed">
+                              {app.cover_letter}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -725,20 +810,20 @@ export default function Jobs() {
                     <div className="flex-shrink-0 w-full md:w-auto">
                       <span
                         className={`px-4 py-2 rounded-xl text-xs font-bold border block text-center ${
-                          app.status === 'ACCEPTED'
-                            ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800'
-                            : app.status === 'REJECTED'
-                            ? 'bg-rose-950/60 text-rose-400 border-rose-800'
-                            : app.status === 'REVIEWING'
-                            ? 'bg-amber-950/60 text-amber-400 border-amber-800'
-                            : 'bg-indigo-950/60 text-indigo-400 border-indigo-800'
+                          app.status === "ACCEPTED"
+                            ? "bg-emerald-950/60 text-emerald-400 border-emerald-800"
+                            : app.status === "REJECTED"
+                              ? "bg-rose-950/60 text-rose-400 border-rose-800"
+                              : app.status === "REVIEWING"
+                                ? "bg-amber-950/60 text-amber-400 border-amber-800"
+                                : "bg-indigo-950/60 text-indigo-400 border-indigo-800"
                         }`}
                       >
                         {app.status}
                       </span>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -746,12 +831,15 @@ export default function Jobs() {
       )}
 
       {/* POST OPPORTUNITY TAB */}
-      {activeTab === 'post' && (
+      {activeTab === "post" && (
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-3xl mx-auto space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-white">Post a Job or Internship</h2>
+            <h2 className="text-xl font-bold text-white">
+              Post a Job or Internship
+            </h2>
             <p className="text-slate-400 text-sm mt-1">
-              Share hiring opportunities with your college community and alumni network.
+              Share hiring opportunities with your college community and alumni
+              network.
             </p>
           </div>
 
@@ -773,7 +861,9 @@ export default function Jobs() {
             {/* Company Selection */}
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-300">Company *</label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Company *
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowCompanyModal(true)}
@@ -786,13 +876,15 @@ export default function Jobs() {
               <select
                 required
                 value={postCompanyId}
-                onChange={(e) => setPostCompanyId(e.target.value ? Number(e.target.value) : '')}
+                onChange={(e) =>
+                  setPostCompanyId(e.target.value ? Number(e.target.value) : "")
+                }
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
               >
                 <option value="">-- Select Company --</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry || 'Tech'})
+                    {c.name} ({c.industry || "Tech"})
                   </option>
                 ))}
               </select>
@@ -821,7 +913,9 @@ export default function Jobs() {
                 </label>
                 <select
                   value={postWorkplaceType}
-                  onChange={(e) => setPostWorkplaceType(e.target.value as WorkplaceType)}
+                  onChange={(e) =>
+                    setPostWorkplaceType(e.target.value as WorkplaceType)
+                  }
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
                 >
                   <option value="ON_SITE">On-Site</option>
@@ -910,7 +1004,8 @@ export default function Jobs() {
             <div>
               <h3 className="text-xl font-bold text-white">Apply for Role</h3>
               <p className="text-indigo-400 text-sm font-semibold mt-0.5">
-                {selectedJobForApply.title} • {selectedJobForApply.company?.name || 'Company'}
+                {selectedJobForApply.title} •{" "}
+                {selectedJobForApply.company?.name || "Company"}
               </p>
             </div>
 
@@ -954,7 +1049,7 @@ export default function Jobs() {
                   disabled={submittingApply}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md"
                 >
-                  {submittingApply ? 'Submitting...' : 'Submit Application'}
+                  {submittingApply ? "Submitting..." : "Submit Application"}
                 </button>
               </div>
             </form>
@@ -974,9 +1069,12 @@ export default function Jobs() {
             </button>
 
             <div>
-              <h3 className="text-xl font-bold text-white">Request Alumni Referral</h3>
+              <h3 className="text-xl font-bold text-white">
+                Request Alumni Referral
+              </h3>
               <p className="text-indigo-400 text-sm font-semibold mt-0.5">
-                {selectedJobForReferral.title} • {selectedJobForReferral.company?.name}
+                {selectedJobForReferral.title} •{" "}
+                {selectedJobForReferral.company?.name}
               </p>
             </div>
 
@@ -1008,7 +1106,7 @@ export default function Jobs() {
                   disabled={submittingReferral}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md"
                 >
-                  {submittingReferral ? 'Sending...' : 'Send Referral Request'}
+                  {submittingReferral ? "Sending..." : "Send Referral Request"}
                 </button>
               </div>
             </form>
@@ -1028,7 +1126,9 @@ export default function Jobs() {
             </button>
 
             <div>
-              <h3 className="text-xl font-bold text-white">Add Company Profile</h3>
+              <h3 className="text-xl font-bold text-white">
+                Add Company Profile
+              </h3>
               <p className="text-slate-400 text-xs mt-0.5">
                 Register a new company profile to post job opportunities.
               </p>
@@ -1050,7 +1150,9 @@ export default function Jobs() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Industry</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Industry
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. Software, Fintech, EdTech"
@@ -1099,7 +1201,7 @@ export default function Jobs() {
                   disabled={submittingCompany}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-md"
                 >
-                  {submittingCompany ? 'Saving...' : 'Add Company'}
+                  {submittingCompany ? "Saving..." : "Add Company"}
                 </button>
               </div>
             </form>
@@ -1107,5 +1209,5 @@ export default function Jobs() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -151,13 +151,34 @@ class PostService:
 
     async def like_post(self, post_id: int, user_id: int) -> Like:
         """Like a post. Raises ConflictError if already liked."""
-        await self.get_post(post_id)  # ensure post exists
+        post = await self.get_post(post_id)  # ensure post exists
 
         existing = await self.like_repo.get_by_post_and_user(post_id, user_id)
         if existing:
             raise ConflictError(message="You have already liked this post")
 
-        return await self.like_repo.create({"post_id": post_id, "user_id": user_id})
+        like = await self.like_repo.create({"post_id": post_id, "user_id": user_id})
+
+        if post.author_id != user_id:
+            from app.notifications.services.notification import NotificationService
+            from app.profiles.repository.profile import ProfileRepository
+
+            prof_repo = ProfileRepository(self.db)
+            liker_prof = await prof_repo.get_by_user_id(user_id)
+            liker_name = (
+                f"{liker_prof.first_name} {liker_prof.last_name}"
+                if (liker_prof and liker_prof.first_name)
+                else "A user"
+            )
+            notif_service = NotificationService(self.db)
+            await notif_service.create_notification(
+                user_id=post.author_id,
+                title="New Like",
+                content=f"{liker_name} liked your post.",
+                type="like",
+            )
+
+        return like
 
     async def unlike_post(self, post_id: int, user_id: int) -> None:
         """Remove a like from a post. Raises NotFoundError if not liked."""
@@ -173,15 +194,36 @@ class PostService:
         self, post_id: int, author_id: int, payload: CommentCreate
     ) -> Comment:
         """Add a comment to a post."""
-        await self.get_post(post_id)  # ensure post exists
+        post = await self.get_post(post_id)  # ensure post exists
 
-        return await self.comment_repo.create(
+        comment = await self.comment_repo.create(
             {
                 "post_id": post_id,
                 "author_id": author_id,
                 "content": payload.content,
             }
         )
+
+        if post.author_id != author_id:
+            from app.notifications.services.notification import NotificationService
+            from app.profiles.repository.profile import ProfileRepository
+
+            prof_repo = ProfileRepository(self.db)
+            commenter_prof = await prof_repo.get_by_user_id(author_id)
+            commenter_name = (
+                f"{commenter_prof.first_name} {commenter_prof.last_name}"
+                if (commenter_prof and commenter_prof.first_name)
+                else "A user"
+            )
+            notif_service = NotificationService(self.db)
+            await notif_service.create_notification(
+                user_id=post.author_id,
+                title="New Comment",
+                content=f'{commenter_name} commented on your post: "{payload.content}"',
+                type="comment",
+            )
+
+        return comment
 
     async def get_comments(
         self, post_id: int, skip: int = 0, limit: int = 50
