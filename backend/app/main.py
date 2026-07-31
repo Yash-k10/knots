@@ -9,6 +9,70 @@ from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.middleware import register_middlewares
 
+# Define OpenAPI metadata tags for domain-driven documentation
+openapi_tags = [
+    {
+        "name": "Profiles",
+        "description": "User profile management, education history, employment experience, profile picture upload, and peer skill endorsements.",
+    },
+    {
+        "name": "Jobs",
+        "description": "Job and internship postings, company directory, student job applications, and referral requests.",
+    },
+    {
+        "name": "Analytics",
+        "description": "Platform-wide engagement statistics, profile view analytics, post engagement metrics, and trending algorithm data.",
+    },
+    {
+        "name": "Auth",
+        "description": "Authentication and authorization endpoints including JWT register, login, refresh, logout, and verification.",
+    },
+    {
+        "name": "Users",
+        "description": "User account management, role administration, and security settings.",
+    },
+    {
+        "name": "Posts",
+        "description": "Social feed posts, media attachments, likes, and comment threads.",
+    },
+    {
+        "name": "Connections",
+        "description": "Student networking, connection requests, mutual connections, and peer recommendations.",
+    },
+    {
+        "name": "Messaging",
+        "description": "Direct messaging, conversation threads, and real-time chat history.",
+    },
+    {
+        "name": "Events",
+        "description": "Campus event scheduling, categories, RSVP tracking, and attendee lists.",
+    },
+    {
+        "name": "Clubs",
+        "description": "Student club organizations, member directories, and announcements.",
+    },
+    {
+        "name": "Notifications",
+        "description": "Real-time user alerts, badge counters, and notification preferences.",
+    },
+    {
+        "name": "AI",
+        "description": "AI-powered recommendations for job matching, feed personalization, and connection suggestions.",
+    },
+    {
+        "name": "Search",
+        "description": "Global search across users, posts, jobs, events, and clubs.",
+    },
+    {
+        "name": "Admin",
+        "description": "Platform moderation, system metrics, and RBAC administrative controls.",
+    },
+    {
+        "name": "Health Check",
+        "description": "System health and operational status probes.",
+    },
+]
+
 # Initialize FastAPI Application
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,6 +81,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    openapi_tags=openapi_tags,
 )
 
 # Register Custom Middlewares (CORS, Audit logs, Profiling)

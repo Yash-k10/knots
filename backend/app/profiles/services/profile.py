@@ -98,12 +98,14 @@ class ProfileService:
         """Create or update a profile for a given user."""
         profile = await self.profile_repo.get_by_user_id(user_id)
         if not profile:
-            data = profile_in.dict(exclude_unset=True)
+            data = profile_in.model_dump(exclude_unset=True)
             data["user_id"] = user_id
             await self.profile_repo.create(data)
             return await self.get_profile_by_user_id(user_id)
 
-        await self.profile_repo.update(profile, profile_in.dict(exclude_unset=True))
+        await self.profile_repo.update(
+            profile, profile_in.model_dump(exclude_unset=True)
+        )
         return await self.get_profile_by_user_id(user_id)
 
     # --- Education CRUD ---
@@ -111,10 +113,8 @@ class ProfileService:
         self, user_id: int, education_in: EducationCreate
     ) -> Education:
         """Add an education entry to the user's profile."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
-        data = education_in.dict()
+        profile = await self.get_profile_by_user_id(user_id)
+        data = education_in.model_dump()
         data["profile_id"] = profile.id
         return await self.education_repo.create(data)
 
@@ -122,21 +122,17 @@ class ProfileService:
         self, user_id: int, education_id: int, education_in: EducationUpdate
     ) -> Education:
         """Update an education entry."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
+        profile = await self.get_profile_by_user_id(user_id)
         education = await self.education_repo.get(education_id)
         if not education or education.profile_id != profile.id:
             raise NotFoundError("Education record not found.")
         return await self.education_repo.update(
-            education, education_in.dict(exclude_unset=True)
+            education, education_in.model_dump(exclude_unset=True)
         )
 
     async def delete_education(self, user_id: int, education_id: int) -> Education:
         """Delete an education entry."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
+        profile = await self.get_profile_by_user_id(user_id)
         education = await self.education_repo.get(education_id)
         if not education or education.profile_id != profile.id:
             raise NotFoundError("Education record not found.")
@@ -147,10 +143,8 @@ class ProfileService:
         self, user_id: int, employment_in: EmploymentHistoryCreate
     ) -> EmploymentHistory:
         """Add an employment history entry to the user's profile."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
-        data = employment_in.dict()
+        profile = await self.get_profile_by_user_id(user_id)
+        data = employment_in.model_dump()
         data["profile_id"] = profile.id
         return await self.employment_repo.create(data)
 
@@ -158,23 +152,19 @@ class ProfileService:
         self, user_id: int, employment_id: int, employment_in: EmploymentHistoryUpdate
     ) -> EmploymentHistory:
         """Update an employment history entry."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
+        profile = await self.get_profile_by_user_id(user_id)
         employment = await self.employment_repo.get(employment_id)
         if not employment or employment.profile_id != profile.id:
             raise NotFoundError("Employment history record not found.")
         return await self.employment_repo.update(
-            employment, employment_in.dict(exclude_unset=True)
+            employment, employment_in.model_dump(exclude_unset=True)
         )
 
     async def delete_employment_history(
         self, user_id: int, employment_id: int
     ) -> EmploymentHistory:
         """Delete an employment history entry."""
-        profile = await self.profile_repo.get_by_user_id(user_id)
-        if not profile:
-            raise NotFoundError("Profile not found.")
+        profile = await self.get_profile_by_user_id(user_id)
         employment = await self.employment_repo.get(employment_id)
         if not employment or employment.profile_id != profile.id:
             raise NotFoundError("Employment history record not found.")
