@@ -168,7 +168,7 @@ class PostService:
             liker_name = (
                 f"{liker_prof.first_name} {liker_prof.last_name}"
                 if (liker_prof and liker_prof.first_name)
-                else "Someone"
+                else "A user"
             )
             notif_service = NotificationService(self.db)
             await notif_service.create_notification(
@@ -213,7 +213,7 @@ class PostService:
             commenter_name = (
                 f"{commenter_prof.first_name} {commenter_prof.last_name}"
                 if (commenter_prof and commenter_prof.first_name)
-                else "Someone"
+                else "A user"
             )
             notif_service = NotificationService(self.db)
             await notif_service.create_notification(

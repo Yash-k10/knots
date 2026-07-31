@@ -367,7 +367,7 @@ class EventService:
             rsvper_name = (
                 f"{rsvper_prof.first_name} {rsvper_prof.last_name}"
                 if (rsvper_prof and rsvper_prof.first_name)
-                else "Someone"
+                else "A user"
             )
             status_str = (
                 "is going to" if payload.status == RSVPStatus.GOING else "RSVPed to"
