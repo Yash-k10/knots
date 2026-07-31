@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-import React, { useEffect, useState, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
-=======
 import React, { useEffect, useState, useRef } from "react";
->>>>>>> develop
+import { useLocation } from "react-router-dom";
 import {
   fetchConversations,
   fetchConversationMessages,
@@ -141,20 +137,9 @@ const EMOJI_CATEGORIES = [
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🎉", "💡"];
 
 export default function Messaging() {
-<<<<<<< HEAD
-  const location = useLocation()
-  const targetUserId = (location.state as { targetUserId?: number })?.targetUserId
+  const location = useLocation();
+  const targetUserId = (location.state as { targetUserId?: number })?.targetUserId;
 
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [activeConvId, setActiveConvId] = useState<number | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [inputContent, setInputContent] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isLoadingConvs, setIsLoadingConvs] = useState(true)
-  const [isLoadingMsgs, setIsLoadingMsgs] = useState(false)
-  const [isWsConnected, setIsWsConnected] = useState(false)
-  const [typingUsers, setTypingUsers] = useState<Record<number, boolean>>({})
-=======
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -164,7 +149,6 @@ export default function Messaging() {
   const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Record<number, boolean>>({});
->>>>>>> develop
 
   // Emoji Picker & Reaction State
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -261,27 +245,18 @@ export default function Messaging() {
 
   const loadConversations = async () => {
     try {
-<<<<<<< HEAD
-      setIsLoadingConvs(true)
-      const data = await fetchConversations()
-      setConversations(data)
-      
-      if (data.length > 0) {
-        let foundConvId = data[0].id
-        if (targetUserId) {
-          const matching = data.find((c) =>
-            c.participants?.some((p) => p.user_id === targetUserId)
-          )
-          if (matching) foundConvId = matching.id
-        }
-        selectConversation(foundConvId)
-=======
       setIsLoadingConvs(true);
       const data = await fetchConversations();
       setConversations(data);
-      if (data.length > 0 && activeConvId === null) {
-        selectConversation(data[0].id);
->>>>>>> develop
+      if (data.length > 0) {
+        let foundConvId = data[0].id;
+        if (targetUserId) {
+          const matching = data.find((c) =>
+            c.participants?.some((p) => p.user_id === targetUserId)
+          );
+          if (matching) foundConvId = matching.id;
+        }
+        selectConversation(foundConvId);
       }
     } catch (err) {
       console.error("Failed to load conversations:", err);
