@@ -32,23 +32,28 @@ class ConnectionService:
             }
         )
 
-        from app.notifications.services.notification import NotificationService
-        from app.profiles.repository.profile import ProfileRepository
+        try:
+            from app.notifications.services.notification import NotificationService
+            from app.profiles.repository.profile import ProfileRepository
 
-        prof_repo = ProfileRepository(self.repository.db)
-        req_prof = await prof_repo.get_by_user_id(requester_id)
-        req_name = (
-            f"{req_prof.first_name} {req_prof.last_name}"
-            if (req_prof and req_prof.first_name)
-            else "Someone"
-        )
-        notif_service = NotificationService(self.repository.db)
-        await notif_service.create_notification(
-            user_id=addressee_id,
-            title="New Connection Request",
-            content=f"{req_name} sent you a connection request.",
-            type="connection_request",
-        )
+            prof_repo = ProfileRepository(self.repository.db)
+            req_prof = await prof_repo.get_by_user_id(requester_id)
+            req_name = (
+                f"{req_prof.first_name} {req_prof.last_name}"
+                if (
+                    req_prof and hasattr(req_prof, "first_name") and req_prof.first_name
+                )
+                else "Someone"
+            )
+            notif_service = NotificationService(self.repository.db)
+            await notif_service.create_notification(
+                user_id=addressee_id,
+                title="New Connection Request",
+                content=f"{req_name} sent you a connection request.",
+                type="connection_request",
+            )
+        except Exception:
+            pass
 
         return conn
 

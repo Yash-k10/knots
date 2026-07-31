@@ -309,8 +309,8 @@ Week 4 (Sun) → Yash merges develop → main (PRODUCTION RELEASE 🎉)
 ### ✅ Week 3 Complete When:
 - [x] Dashboard shows AI-powered recommendations
 - [x] Analytics and engagement metrics are visible
-- [ ] Notifications work in real-time
-- [ ] Global search works across the platform
+- [x] Notifications work in real-time
+- [x] Global search works across the platform
 - [x] All pages are polished and responsive
 
 ### ✅ Week 4 Complete When:
