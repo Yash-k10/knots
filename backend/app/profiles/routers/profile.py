@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
@@ -25,6 +25,21 @@ from app.users.models.user import User
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
 UPLOAD_DIR = "static/profiles"
+
+
+@router.get("", response_model=APIResponse[list[ProfileResponse]])
+async def list_profiles(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    search: str | None = Query(
+        None, description="Search profile by name, headline, or bio"
+    ),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve a paginated list of user profiles with optional keyword search."""
+    service = ProfileService(db)
+    profiles = await service.list_profiles(skip=skip, limit=limit, search=search)
+    return APIResponse(message="Profiles retrieved successfully", data=profiles)
 
 
 @router.get("/me", response_model=APIResponse[ProfileResponse])
