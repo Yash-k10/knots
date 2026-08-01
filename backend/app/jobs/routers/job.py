@@ -32,6 +32,12 @@ from app.users.models.user import User
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
+def _is_user_admin(user: User) -> bool:
+    return user.role_id == 1 or (
+        getattr(user, "role", None) is not None and user.role.name.lower() == "admin"
+    )
+
+
 # --- Companies Endpoints ---
 
 
@@ -196,7 +202,7 @@ async def update_job(
 ):
     """Update an existing job posting."""
     service = JobService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     job = await service.update_job(
         job_id=job_id, user_id=current_user.id, job_in=payload, is_admin=is_admin
     )
@@ -211,7 +217,7 @@ async def delete_job(
 ):
     """Delete a job posting."""
     service = JobService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     await service.delete_job(job_id=job_id, user_id=current_user.id, is_admin=is_admin)
     return APIResponse(message="Job posting deleted successfully", data={"id": job_id})
 
@@ -247,7 +253,7 @@ async def read_job_applications(
 ):
     """Retrieve all applicants for a job posting (Recruiter/Poster or Admin)."""
     service = ApplicationService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     applications = await service.get_job_applications(
         job_posting_id=job_id,
         user_id=current_user.id,
@@ -269,7 +275,7 @@ async def update_application_status(
 ):
     """Update application status (e.g., PENDING -> REVIEWING -> ACCEPTED / REJECTED)."""
     service = ApplicationService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     application = await service.update_application_status(
         application_id=application_id,
         user_id=current_user.id,

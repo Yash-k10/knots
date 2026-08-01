@@ -9,6 +9,8 @@ from app.analytics.schemas.analytics import (
     SystemStats,
     TrendingPostResponse,
 )
+from app.core.exceptions import NotFoundError
+from app.posts.models.post import Post
 from app.profiles.models.profile import Profile
 
 
@@ -57,10 +59,16 @@ class AnalyticsService:
 
     async def record_profile_view(self, profile_id: int, viewer_id: int | None):
         """Record a view on a profile."""
+        profile = await self.repository.db.get(Profile, profile_id)
+        if not profile:
+            raise NotFoundError(message=f"Profile with ID {profile_id} not found.")
         return await self.repository.record_profile_view(profile_id, viewer_id)
 
     async def record_post_view(self, post_id: int, user_id: int | None):
         """Record a view on a post."""
+        post = await self.repository.db.get(Post, post_id)
+        if not post:
+            raise NotFoundError(message=f"Post with ID {post_id} not found.")
         return await self.repository.record_post_view(post_id, user_id)
 
     async def get_posts_engagement(self, user_id: int) -> PostEngagementResponse:
