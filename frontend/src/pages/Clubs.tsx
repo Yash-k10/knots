@@ -351,13 +351,6 @@ export default function Clubs() {
         </button>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
       {/* 2. Filter controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-950/40 p-4 border border-slate-800/80 rounded-2xl">
         <div className="relative flex-1 max-w-md">
@@ -401,7 +394,19 @@ export default function Clubs() {
         <div
           className={`${selectedClubId !== null ? "lg:col-span-2" : "lg:col-span-3"} grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-300`}
         >
-          {filteredClubs.length === 0 ? (
+          {error ? (
+            <div className="col-span-full bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
+              <h3 className="text-white font-medium text-base">Error Loading Clubs</h3>
+              <p className="text-slate-400 text-sm max-w-md mx-auto">{error}</p>
+              <button
+                onClick={() => fetchClubsAndUser()}
+                className="px-4 py-2 mt-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-all"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filteredClubs.length === 0 ? (
             <div className="col-span-full bg-slate-950/40 border border-slate-800 rounded-2xl p-16 text-center text-slate-500">
               <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
               <p className="font-semibold text-sm text-slate-400">
