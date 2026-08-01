@@ -418,9 +418,9 @@ export default function Clubs() {
                 <div
                   key={club.id}
                   onClick={() => setSelectedClubId(club.id)}
-                  className={`cursor-pointer bg-slate-950/60 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:scale-[1.01] ${
+                  className={`cursor-pointer bg-slate-950/60 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:scale-[1.01] shadow-lg ${
                     isSelected
-                      ? "border-indigo-500 shadow-xl shadow-indigo-500/5"
+                      ? "border-indigo-500 shadow-indigo-500/10"
                       : "border-slate-800/80 hover:border-slate-700/80"
                   }`}
                 >

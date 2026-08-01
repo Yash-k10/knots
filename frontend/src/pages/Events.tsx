@@ -165,7 +165,7 @@ export default function Events() {
           events.map((ev) => (
             <div
               key={ev.id}
-              className="bg-slate-950/60 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:scale-[1.02] shadow-lg"
+              className="bg-slate-950/60 backdrop-blur-md border border-slate-800/80 hover:border-slate-700/80 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:scale-[1.01] shadow-lg"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">

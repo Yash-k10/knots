@@ -608,7 +608,7 @@ export default function Feed() {
           {posts.map((post) => (
             <article
               key={post.id}
-              className="bg-slate-950/70 backdrop-blur border border-slate-800 rounded-2xl p-5 md:p-6 space-y-4 hover:border-slate-700/80 transition-all duration-300"
+              className="bg-slate-950/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-5 md:p-6 space-y-4 hover:border-slate-700/80 transition-all duration-300 hover:scale-[1.01] shadow-lg"
             >
               {/* Card Header: Author Profile Info */}
               <div className="flex items-start justify-between">
