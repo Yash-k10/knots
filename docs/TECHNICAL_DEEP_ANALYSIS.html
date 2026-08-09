@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KNOTS — Full Technical Deep Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --navy:   #0f3460;
+    --red:    #e94560;
+    --accent: #16213e;
+    --bg:     #f8faff;
+    --code:   #eef2ff;
+    --border: #d1daf0;
+    --text:   #1e293b;
+    --muted:  #64748b;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--text);
+    background: white;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 56px;
+}
+
+/* ── Cover Banner ─────────────────────────────── */
+.cover {
+    text-align: center;
+    padding: 36px 0 28px;
+    border-bottom: 4px solid var(--navy);
+    margin-bottom: 40px;
+}
+.cover h1 {
+    font-size: 34px;
+    color: var(--navy);
+    letter-spacing: -0.5px;
+    border: none; margin: 0;
+}
+.cover .tag {
+    display: inline-block;
+    margin-top: 10px;
+    background: var(--red);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 16px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* ── Headings ──────────────────────────────────── */
+h1 {
+    font-size: 22px;
+    color: var(--navy);
+    border-bottom: 3px solid var(--navy);
+    padding-bottom: 8px;
+    margin: 36px 0 14px;
+    page-break-after: avoid;
+}
+h2 {
+    font-size: 17px;
+    color: var(--accent);
+    border-left: 5px solid var(--red);
+    padding-left: 12px;
+    margin: 28px 0 10px;
+    page-break-after: avoid;
+}
+h3 {
+    font-size: 14.5px;
+    color: var(--navy);
+    margin: 20px 0 8px;
+    font-weight: 600;
+    page-break-after: avoid;
+}
+h4 {
+    font-size: 13.5px;
+    color: var(--red);
+    margin: 16px 0 6px;
+    font-weight: 600;
+}
+
+/* ── Body text ─────────────────────────────────── */
+p { margin: 6px 0 12px; }
+
+ul, ol { margin: 6px 0 12px 22px; }
+li { margin: 4px 0; }
+li > ul { margin-top: 4px; }
+
+strong { color: var(--navy); font-weight: 600; }
+em { color: var(--muted); }
+
+/* ── Tables ────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px;
+    font-size: 12.5px;
+    page-break-inside: avoid;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+thead { background: var(--navy); color: white; }
+th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+}
+td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: var(--bg); }
+tr:hover td { background: #eff6ff; }
+
+/* ── Code blocks ───────────────────────────────── */
+pre {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11.5px;
+    background: var(--code);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--navy);
+    padding: 14px 18px;
+    margin: 12px 0 18px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.6;
+    page-break-inside: avoid;
+}
+code {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11.5px;
+    background: var(--code);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: #1e3a5f;
+}
+
+/* ── Blockquote ────────────────────────────────── */
+blockquote {
+    border-left: 4px solid var(--red);
+    background: #fff5f7;
+    padding: 10px 16px;
+    margin: 12px 0 18px;
+    border-radius: 0 6px 6px 0;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* ── Dividers ──────────────────────────────────── */
+hr {
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 32px 0;
+}
+
+/* ── Slide heading badge ───────────────────────── */
+h1::before {
+    content: '';
+}
+
+/* ── Print styles ──────────────────────────────── */
+@media print {
+    body { padding: 20px 28px; font-size: 12.5px; }
+    .cover { padding: 20px 0 16px; }
+    .cover h1 { font-size: 28px; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 14px; }
+    pre { page-break-inside: avoid; font-size: 10.5px; }
+    table { page-break-inside: avoid; font-size: 11.5px; }
+    h1, h2, h3 { page-break-after: avoid; }
+    a { text-decoration: none; color: inherit; }
+}
+</style>
+</head>
+<body>
+<div class="cover">
+  <h1>KNOTS</h1>
+  <div class="tag">SIH 2025 &nbsp;|&nbsp; KNOTS — Full Technical Deep Analysis</div>
+</div>
+<h1>KNOTS — Full Technical Deep Analysis</h1>
+<h3>SIH 2025 | AI-Powered College Career &amp; Community Platform</h3>
+<hr />
+<h2>Architecture Overview</h2>
+<p>KNOTS is a <strong>full-stack, domain-driven application</strong> built with a FastAPI async Python backend and a React (TypeScript + Tailwind) frontend. Each feature is a self-contained module with its own models, schemas, repository, service, and router layers — a clean separation of concerns that makes the codebase production-grade.</p>
+<pre><code>backend/app/
+├── auth/          → JWT Auth (Register, Login, Refresh, Email Verify, Logout)
+├── profiles/      → Profile CRUD, Education, Experience, Skill Endorsements
+├── ai/            → Connection Suggestions, Job Recs, Content Recs, Resume AI, Roadmap AI
+├── connections/   → Follow/Connect system (Pending, Accept, Reject, Mutual, Suggestions)
+├── messaging/     → WebSocket real-time chat, Conversations, Read receipts, Typing indicators
+├── jobs/          → Job Postings, Companies, Applications, Referrals (Alumni → Student)
+├── posts/         → Social feed, likes, comments, media attachments
+├── clubs/         → Campus clubs, members, announcements
+├── events/        → Campus events, RSVP, attendee tracking
+├── notifications/ → Real-time alerts triggered by all other modules
+├── analytics/     → Profile views, post engagement, platform-wide stats
+├── search/        → Global search across users, posts, jobs, clubs, events
+└── admin/         → RBAC moderation, system metrics
+</code></pre>
+<hr />
+<h2>Module 1 — Authentication (JWT)</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Password Hashing:</strong> bcrypt (one-way hash with salt rounds)</li>
+<li><strong>Token Generation:</strong> HS256 HMAC-SHA256 signed JWTs</li>
+<li><strong>Token Types:</strong> 3 distinct token types — <code>access</code> (30 min), <code>refresh</code> (7 days), <code>verification</code></li>
+</ul>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auth/routers/auth.py</code></td>
+<td>REST endpoints: <code>/register</code>, <code>/login</code>, <code>/refresh</code>, <code>/verify-email</code>, <code>/logout</code></td>
+</tr>
+<tr>
+<td><code>auth/services/auth.py</code></td>
+<td>Core logic: credential check, token creation, email verify, role validation</td>
+</tr>
+<tr>
+<td><code>core/security.py</code></td>
+<td>bcrypt hashing, JWT encode/decode, <code>create_access_token</code>, <code>create_refresh_token</code></td>
+</tr>
+<tr>
+<td><code>auth/dependencies/auth.py</code></td>
+<td><code>get_current_user</code> dependency — validates Bearer JWT on every protected route</td>
+</tr>
+</tbody>
+</table>
+<h3>Auth Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 2 — Profile Management</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Profile View Tracking:</strong> Triggered on GET <code>/{user_id}</code> from a different user (inserts ProfileView analytics record)</li>
+<li><strong>Skill Endorsements:</strong> Unique DB constraint <code>(profile_id, skill_name, endorser_id)</code> prevents duplicates</li>
+<li><strong>File Upload:</strong> UUID-named file storage under <code>/static/profiles/</code> to prevent collisions</li>
+</ul>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>profiles/models/profile.py</code></td>
+<td>SQLAlchemy model: <code>skills</code> (JSON), <code>certifications</code> (JSON), <code>projects</code> (JSON), <code>graduation_year</code>, <code>department</code>, <code>profile_picture</code></td>
+</tr>
+<tr>
+<td><code>profiles/models/education.py</code></td>
+<td>Education history: institution, degree, field, GPA, dates</td>
+</tr>
+<tr>
+<td><code>profiles/models/skill_endorsement.py</code></td>
+<td><code>SkillEndorsement</code> with <code>UniqueConstraint(profile_id, skill_name, endorser_id)</code></td>
+</tr>
+<tr>
+<td><code>profiles/routers/profile.py</code></td>
+<td>12+ endpoints: CRUD profile, upload picture, add/update/delete education + experience, endorse/unendorse skill</td>
+</tr>
+<tr>
+<td><code>frontend/src/pages/Profile.tsx</code></td>
+<td>React page rendering full profile</td>
+</tr>
+<tr>
+<td><code>frontend/src/components/profile/ProfileHeader.tsx</code></td>
+<td>Avatar, name, bio, connect button</td>
+</tr>
+<tr>
+<td><code>frontend/src/components/profile/SkillsSection.tsx</code></td>
+<td>Skills list with endorsement buttons</td>
+</tr>
+<tr>
+<td><code>frontend/src/components/profile/EducationSection.tsx</code></td>
+<td>Education timeline</td>
+</tr>
+<tr>
+<td><code>frontend/src/components/profile/ExperienceSection.tsx</code></td>
+<td>Employment history timeline</td>
+</tr>
+</tbody>
+</table>
+<h3>Profile Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 3 — Badges &amp; Achievements</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Badge Allocation Rule Engine:</strong> Maps <code>club_member.position</code> string → badge tier</li>
+<li><strong>Points System:</strong> Higher positions = higher badge weight score → drives leaderboard ranking</li>
+</ul>
+<h3>Badge Allocation Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 4 — AI Recommendation Engine</h2>
+<h3>Algorithm Used</h3>
+<table>
+<thead>
+<tr>
+<th>Recommendation Type</th>
+<th>Algorithm</th>
+<th>Scoring Formula</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Connection Suggestions</strong></td>
+<td>Content-Based Filtering (Skill Overlap + Dept Match + Grad Year)</td>
+<td>Base 40 + Dept +30 + Skills 10/match (max 30) + Same year +10</td>
+</tr>
+<tr>
+<td><strong>Job Recommendations</strong></td>
+<td>Content-Based Filtering (Skill vs Job's required_skills + Dept in JD)</td>
+<td>Base 40 + Skills 15/match (max 45) + Dept in JD +15</td>
+</tr>
+<tr>
+<td><strong>Feed Content Recs</strong></td>
+<td>Topic-Keyword Match + Engagement Score</td>
+<td>Base 35 + Topic 20/match (max 40) + Engagement +15</td>
+</tr>
+</tbody>
+</table>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ai/services/ai.py</code></td>
+<td><code>AIConnectionSuggestionService</code>, <code>AIJobRecommendationService</code>, <code>AIContentRecommendationService</code>, <code>AIResumeService</code>, <code>CareerRoadmapService</code>, <code>AIAlumniMatcher</code></td>
+</tr>
+<tr>
+<td><code>ai/routers/ai.py</code></td>
+<td>Endpoints: <code>/ai/connection-suggestions</code>, <code>/ai/job-recommendations</code>, <code>/ai/content-recommendations</code>, <code>/ai/analyze-resume</code>, <code>/ai/roadmap</code></td>
+</tr>
+<tr>
+<td><code>frontend/src/services/ai.ts</code></td>
+<td>Frontend API calls to all AI endpoints</td>
+</tr>
+</tbody>
+</table>
+<h3>Connection Suggestion Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 5 — ATS Resume Matching</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Keyword Overlap:</strong> Lowercased exact match between <code>profile.skills</code> and job <code>required_skills</code></li>
+<li><strong>Score Formula:</strong> <code>base 40 + (15 × matched_skills_count)</code>, capped at 98</li>
+<li><strong>Reason Generation:</strong> Human-readable strings e.g. "3 matching skills (React, Python, FastAPI)"</li>
+</ul>
+<h3>ATS + Application Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 6 — 1-to-1 Connections (Networking)</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Mutual Connections:</strong> Python <code>set.intersection()</code> between User A's and User B's connected user IDs — O(n)</li>
+<li><strong>Suggestion Score:</strong> <code>score = 10 + (mutual_count × 25)</code> — favors users deeper in the social graph</li>
+</ul>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>connections/models/connection.py</code></td>
+<td><code>Connection</code> model — <code>ConnectionStatus</code>: PENDING, ACCEPTED, REJECTED</td>
+</tr>
+<tr>
+<td><code>connections/services/connection.py</code></td>
+<td><code>request_connection</code>, <code>accept_connection</code>, <code>reject_connection</code>, <code>withdraw</code>, <code>get_mutual_connections</code>, <code>get_connection_suggestions</code></td>
+</tr>
+<tr>
+<td><code>connections/routers/connection.py</code></td>
+<td>8 endpoints: POST connect, PATCH accept/reject, DELETE withdraw, GET me/requests/sent/mutual/suggestions</td>
+</tr>
+</tbody>
+</table>
+<h3>Connection Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 7 — Real-Time Messaging (WebSocket)</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Connection Manager Pattern:</strong> In-memory <code>dict[user_id → list[WebSocket]]</code> for tracking active sockets</li>
+<li><strong>Event Loop Handler:</strong> Each JSON frame has a <code>type</code> field — <code>send_message</code>, <code>typing</code>, <code>mark_read</code>, <code>ping/pong</code></li>
+<li><strong>Broadcast Algorithm:</strong> On new message → load <code>participant_ids</code> from DB → push to each active socket</li>
+</ul>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>messaging/routers/websocket.py</code></td>
+<td>WS endpoint at <code>ws://domain/api/v1/ws/chat?token=&lt;jwt&gt;</code>. Handles send_message, typing, mark_read, ping events</td>
+</tr>
+<tr>
+<td><code>messaging/websocket_manager.py</code></td>
+<td><code>ConnectionManager</code> — <code>connect</code>, <code>disconnect</code>, <code>broadcast_to_conversation</code></td>
+</tr>
+<tr>
+<td><code>messaging/services/message.py</code></td>
+<td><code>send_message()</code>, <code>mark_conversation_as_read()</code></td>
+</tr>
+<tr>
+<td><code>messaging/routers/conversation.py</code></td>
+<td>REST: conversation list and history</td>
+</tr>
+</tbody>
+</table>
+<h3>WebSocket Sequence</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Module 8 — Jobs, Applications &amp; Referrals</h2>
+<h3>Algorithm Used</h3>
+<ul>
+<li><strong>Job Filtering:</strong> Multi-dimensional SQL filter on <code>job_type</code>, <code>workplace_type</code>, <code>company_id</code>, <code>status</code> + free-text <code>ILIKE</code> on title/description/location</li>
+<li><strong>Application Status Machine:</strong> <code>PENDING → REVIEWING → ACCEPTED / REJECTED</code> enforced in service layer</li>
+<li><strong>RBAC on Applications:</strong> <code>user.role_id == 1</code> check for admin override on status updates</li>
+</ul>
+<h3>Key Files</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobs/models/job_posting.py</code></td>
+<td><code>JobPosting</code> — title, description, location, job_type (enum), workplace_type (enum), required_skills (JSON), salary_range, status</td>
+</tr>
+<tr>
+<td><code>jobs/models/application.py</code></td>
+<td><code>Application</code> — applicant_id, job_posting_id, status enum, resume_url, cover_letter</td>
+</tr>
+<tr>
+<td><code>jobs/models/referral.py</code></td>
+<td><code>Referral</code> — referrer_id (alumni), referred_user_id (student), job_posting_id, status</td>
+</tr>
+<tr>
+<td><code>jobs/services/application.py</code></td>
+<td><code>apply_for_job()</code>, <code>get_user_applications()</code>, <code>update_application_status()</code> with RBAC</td>
+</tr>
+<tr>
+<td><code>jobs/services/referral.py</code></td>
+<td><code>create_referral()</code> — links alumni to student to job</td>
+</tr>
+<tr>
+<td><code>jobs/routers/job.py</code></td>
+<td>13 endpoints: job CRUD, apply, list applicants, update status, companies, referrals</td>
+</tr>
+</tbody>
+</table>
+<h3>Jobs Flow</h3>
+<blockquote>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+<hr />
+<h2>Complete Summary Table</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Key Files</th>
+<th>Algorithm</th>
+<th>Technology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Auth</strong></td>
+<td><code>auth/services/auth.py</code>, <code>core/security.py</code></td>
+<td>bcrypt + HS256 JWT</td>
+<td>FastAPI, python-jose</td>
+</tr>
+<tr>
+<td><strong>Profiles</strong></td>
+<td><code>profiles/models/profile.py</code>, <code>profiles/routers/profile.py</code></td>
+<td>UUID file naming, UniqueConstraint</td>
+<td>SQLAlchemy JSON, FastAPI UploadFile</td>
+</tr>
+<tr>
+<td><strong>Badges</strong></td>
+<td><code>clubs/</code> models + badge mapping</td>
+<td>Rule Engine (position → tier)</td>
+<td>PostgreSQL enum, relationship loading</td>
+</tr>
+<tr>
+<td><strong>AI Recommendations</strong></td>
+<td><code>ai/services/ai.py</code> (5 service classes)</td>
+<td>Content-Based Filtering, Keyword Overlap</td>
+<td>SQLAlchemy, Python set ops, score sort</td>
+</tr>
+<tr>
+<td><strong>ATS Resume</strong></td>
+<td><code>ai/services/ai.py → AIResumeService</code></td>
+<td>Keyword Match + Score = 40 + 15/skill</td>
+<td>Python string ops, LLM placeholder</td>
+</tr>
+<tr>
+<td><strong>Connections</strong></td>
+<td><code>connections/services/connection.py</code></td>
+<td>Set Intersection (mutual), Score = 10 + mutual×25</td>
+<td>SQLAlchemy, FastAPI</td>
+</tr>
+<tr>
+<td><strong>Messaging</strong></td>
+<td><code>messaging/routers/websocket.py</code>, <code>messaging/websocket_manager.py</code></td>
+<td>Event-loop WebSocket, Broadcast dict</td>
+<td>WebSocket, asyncio</td>
+</tr>
+<tr>
+<td><strong>Jobs</strong></td>
+<td><code>jobs/routers/job.py</code>, <code>jobs/services/application.py</code></td>
+<td>SQL multi-filter, status state machine</td>
+<td>SQLAlchemy, RBAC role_id check</td>
+</tr>
+<tr>
+<td><strong>Analytics</strong></td>
+<td><code>analytics/routers/analytics.py</code>, <code>analytics/models/profile_view.py</code></td>
+<td>Aggregation queries</td>
+<td>Recharts, SQLAlchemy</td>
+</tr>
+<tr>
+<td><strong>Notifications</strong></td>
+<td><code>notifications/services/notification.py</code></td>
+<td>Event-driven triggers from all modules</td>
+<td>FastAPI, SQLAlchemy</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Sentinel Six Style — Master Linear Flow</h2>
+<blockquote>
+<p>Copy into <a href="https://mermaid.live">mermaid.live</a> → Export as PNG → Paste into PPT slide.</p>
+<p><strong>[Diagram]</strong> Copy the Mermaid code block from the .md file and paste into https://mermaid.live to generate the diagram image.</p>
+</blockquote>
+</body>
+</html>
