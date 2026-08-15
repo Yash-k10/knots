@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -21,10 +21,10 @@ class AuthRepository(BaseRepository[User]):
         return result.scalars().first()
 
     async def get_by_email(self, email: str) -> User | None:
-        """Fetch user by email with role relationship loaded."""
+        """Fetch user by email (case-insensitive) with role relationship loaded."""
         stmt = (
             select(self.model)
-            .filter(self.model.email == email)
+            .filter(func.lower(self.model.email) == email.strip().lower())
             .options(selectinload(self.model.role))
         )
         result = await self.db.execute(stmt)

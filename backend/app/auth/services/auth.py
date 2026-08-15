@@ -58,9 +58,10 @@ class AuthService:
 
     async def register_user(self, user_in: UserRegister) -> RegistrationResponse:
         """Register a new user in the system with is_verified=False."""
-        existing_user = await self.repository.get_by_email(user_in.email)
+        normalized_email = user_in.email.strip().lower()
+        existing_user = await self.repository.get_by_email(normalized_email)
         if existing_user:
-            raise ConflictError(message="Email already registered")
+            raise ConflictError(message="email id is already registered")
 
         # Verify role exists
         role_stmt = select(Role).filter(Role.id == user_in.role_id)
@@ -72,7 +73,7 @@ class AuthService:
         # Hash password and create user
         hashed_password = security.hash_password(user_in.password)
         user_data = {
-            "email": user_in.email,
+            "email": normalized_email,
             "hashed_password": hashed_password,
             "role_id": user_in.role_id,
             "is_active": True,

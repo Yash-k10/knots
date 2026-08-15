@@ -7,6 +7,11 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.strip().lower()
+
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -26,11 +31,12 @@ class UserRegister(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_college_domain(cls, v: str) -> str:
-        if not v.endswith("@sbjit.edu.in"):
+        email = v.strip().lower()
+        if not email.endswith("@sbjit.edu.in"):
             raise ValueError(
                 "Only college email addresses (@sbjit.edu.in) are allowed to register"
             )
-        return v
+        return email
 
 
 class UserRegisterResponse(BaseModel):
