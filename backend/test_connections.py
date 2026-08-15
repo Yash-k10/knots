@@ -32,9 +32,17 @@ class TestConnectionService(unittest.IsolatedAsyncioTestCase):
         )
         self.service.repository.create.return_value = mock_conn
 
-        res = await self.service.request_connection(1, 2)
-        self.assertEqual(res.id, 11)
-        self.assertEqual(res.status, ConnectionStatus.PENDING)
+        with unittest.mock.patch(
+            "app.profiles.repository.profile.ProfileRepository.get_by_user_id",
+            new_callable=AsyncMock,
+        ) as mock_get_prof, unittest.mock.patch(
+            "app.notifications.services.notification.NotificationService.create_notification",
+            new_callable=AsyncMock,
+        ):
+            mock_get_prof.return_value = None
+            res = await self.service.request_connection(1, 2)
+            self.assertEqual(res.id, 11)
+            self.assertEqual(res.status, ConnectionStatus.PENDING)
 
     async def test_accept_connection(self):
         mock_conn = Connection(
