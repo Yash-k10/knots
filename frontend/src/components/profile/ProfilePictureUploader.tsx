@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { profileService, ProfileResponse } from "../../services/profile";
+import { getMediaUrl } from "../../services/api";
 
 interface ProfilePictureUploaderProps {
   currentImageUrl: string | null;
@@ -69,11 +70,7 @@ export default function ProfilePictureUploader({
   };
 
   // Determine full image URL
-  const imageUrl = currentImageUrl
-    ? currentImageUrl.startsWith("http")
-      ? currentImageUrl
-      : `http://localhost:8000${currentImageUrl}`
-    : null;
+  const imageUrl = getMediaUrl(currentImageUrl);
 
   return (
     <div

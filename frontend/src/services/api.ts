@@ -1,4 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+export const BACKEND_URL = API_URL.replace(/\/api\/v1\/?$/, "");
+
+export function getMediaUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined;
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://") ||
+    path.startsWith("data:")
+  ) {
+    return path;
+  }
+  return `${BACKEND_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 export class ApiError extends Error {
   status: number;

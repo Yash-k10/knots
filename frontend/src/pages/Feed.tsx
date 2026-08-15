@@ -12,7 +12,7 @@ import {
   Image,
   X,
 } from "lucide-react";
-import { apiRequest } from "../services/api";
+import { apiRequest, getMediaUrl } from "../services/api";
 
 export interface PostAuthor {
   id: number;
@@ -647,7 +647,7 @@ export default function Feed() {
               {post.image_url && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 aspect-video max-h-[360px]">
                   <img
-                    src={post.image_url}
+                    src={getMediaUrl(post.image_url)}
                     alt="Post attachment"
                     className="w-full h-full object-cover"
                     loading="lazy"

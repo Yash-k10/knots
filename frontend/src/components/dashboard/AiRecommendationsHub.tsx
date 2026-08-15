@@ -16,6 +16,7 @@ import {
   JobRecommendation,
   ContentRecommendation,
 } from "../../services/ai";
+import { getMediaUrl } from "../../services/api";
 
 interface AiRecommendationsHubProps {
   connectionSuggestions: ConnectionSuggestion[];
@@ -82,7 +83,7 @@ export function AiRecommendationsHub({
                       <div className="h-12 w-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold text-base shadow-inner overflow-hidden">
                         {item.profile_picture ? (
                           <img
-                            src={item.profile_picture}
+                            src={getMediaUrl(item.profile_picture)}
                             alt={item.first_name || "User"}
                             className="w-full h-full object-cover"
                           />

@@ -11,7 +11,7 @@ import {
   Activity,
 } from "lucide-react";
 import { profileService, ProfileResponse } from "../services/profile";
-import { apiRequest } from "../services/api";
+import { apiRequest, getMediaUrl } from "../services/api";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import SkillsSection from "../components/profile/SkillsSection";
 import EducationSection from "../components/profile/EducationSection";
@@ -266,11 +266,7 @@ export default function Profile() {
                     {post.image_url && (
                       <div className="mt-3 rounded-lg overflow-hidden border border-slate-800 max-h-60 bg-slate-950 flex items-center justify-center">
                         <img
-                          src={
-                            post.image_url.startsWith("http")
-                              ? post.image_url
-                              : `http://localhost:8000${post.image_url}`
-                          }
+                          src={getMediaUrl(post.image_url)}
                           alt="Post attachment"
                           className="max-h-60 object-contain w-full"
                         />

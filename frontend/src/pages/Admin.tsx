@@ -37,6 +37,7 @@ import {
   AuditLog,
   FlaggedPost,
 } from "../services/admin";
+import { getMediaUrl } from "../services/api";
 
 type ActiveTab = "overview" | "moderation" | "audit";
 
@@ -896,7 +897,7 @@ export default function Admin() {
                       {flag.post?.image_url && (
                         <div className="mt-2">
                           <img
-                            src={flag.post.image_url}
+                            src={getMediaUrl(flag.post.image_url)}
                             alt="Flagged media"
                             className="max-h-48 rounded-lg object-cover border border-slate-800"
                           />
