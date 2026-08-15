@@ -11,12 +11,33 @@ class ConnectionUpdate(BaseModel):
     status: str  # ACCEPTED, REJECTED
 
 
+class ConnectionUserProfileSummary(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+    department: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ConnectionUserSummary(BaseModel):
+    id: int
+    email: str
+    profile: ConnectionUserProfileSummary | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class ConnectionResponse(BaseModel):
     id: int
     requester_id: int
     addressee_id: int
     status: str
     created_at: datetime
+    requester: ConnectionUserSummary | None = None
+    addressee: ConnectionUserSummary | None = None
 
     class Config:
         from_attributes = True

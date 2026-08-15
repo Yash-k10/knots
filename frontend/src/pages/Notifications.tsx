@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Briefcase,
@@ -20,6 +21,7 @@ export interface NotificationItem {
 }
 
 export default function Notifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -116,6 +118,34 @@ export default function Notifications() {
     }
   };
 
+  const handleNotificationClick = (item: NotificationItem) => {
+    if (!item.is_read) {
+      handleMarkAsRead(item.id);
+    }
+    if (
+      item.type === "connection_request" ||
+      item.title.toLowerCase().includes("connection") ||
+      item.content.toLowerCase().includes("connection")
+    ) {
+      navigate("/connections?tab=requests");
+    } else if (
+      item.type === "job_alert" ||
+      item.title.toLowerCase().includes("job")
+    ) {
+      navigate("/jobs");
+    } else if (
+      item.type === "message" ||
+      item.title.toLowerCase().includes("message")
+    ) {
+      navigate("/messaging");
+    } else if (
+      item.type === "event_alert" ||
+      item.title.toLowerCase().includes("event")
+    ) {
+      navigate("/events");
+    }
+  };
+
   const getNotificationIcon = (type?: string) => {
     switch (type) {
       case "job_alert":
@@ -178,7 +208,7 @@ export default function Notifications() {
             return (
               <div
                 key={item.id}
-                onClick={() => !item.is_read && handleMarkAsRead(item.id)}
+                onClick={() => handleNotificationClick(item)}
                 className={`p-6 flex gap-4 transition-all cursor-pointer ${
                   item.is_read
                     ? "bg-slate-950/40 opacity-75"

@@ -1,10 +1,13 @@
 import { UserPlus, Check, X, UserCheck, MessageSquare, Users, RotateCcw } from 'lucide-react';
+import { getMediaUrl } from '../../services/api';
 
 interface ConnectionCardProps {
   type: 'request' | 'connection' | 'discover' | 'sent';
   id: number; // The connection ID (or user ID if discover)
   targetId: number; // The user ID we are interacting with
   email?: string;
+  name?: string;
+  profilePicture?: string | null;
   subtitle: string;
   mutualCount?: number;
   reason?: string;
@@ -20,6 +23,8 @@ export default function ConnectionCard({
   id,
   targetId,
   email,
+  name,
+  profilePicture,
   subtitle,
   mutualCount,
   reason,
@@ -43,8 +48,10 @@ export default function ConnectionCard({
     };
   };
 
-  const displayName = email ? email.split('@')[0] : `User #${targetId}`;
-  const avatarLetter = email ? email.charAt(0).toUpperCase() : `U`;
+  const displayName = name && name.trim() ? name.trim() : (email ? email.split('@')[0] : `User #${targetId}`);
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  const resolvedAvatar = getMediaUrl(profilePicture);
 
   return (
     <div className="group relative bg-slate-950/40 backdrop-blur-md border border-slate-800/80 hover:border-indigo-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl hover:shadow-indigo-950/10 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between">
@@ -54,16 +61,22 @@ export default function ConnectionCard({
       <div>
         {/* Avatar Container */}
         <div className="relative mx-auto h-20 w-20 flex items-center justify-center mb-3">
-          {type === 'connection' ? (
+          {resolvedAvatar ? (
+            <img
+              src={resolvedAvatar}
+              alt={displayName}
+              className="h-20 w-20 rounded-2xl object-cover border border-slate-800 shadow-lg ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : type === 'connection' ? (
             <div
-              style={getGradientStyle(targetId)}
-              className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/10 ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
+              style={getGradientStyle(displayName || targetId)}
+              className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-indigo-500/10 ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
             >
-              <UserCheck className="w-9 h-9 text-white/90 drop-shadow-sm" />
+              {avatarLetter}
             </div>
           ) : (
             <div
-              style={getGradientStyle(email || targetId)}
+              style={getGradientStyle(displayName || targetId)}
               className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
             >
               {avatarLetter}

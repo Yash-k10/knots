@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Users, Search, Sparkles, Send } from 'lucide-react';
 import { apiRequest } from '../services/api';
 import ConnectionCard from '../components/connections/ConnectionCard';
@@ -9,12 +9,27 @@ interface User {
   email: string;
 }
 
+interface ConnectionUserProfile {
+  first_name?: string | null;
+  last_name?: string | null;
+  profile_picture?: string | null;
+  department?: string | null;
+}
+
+interface ConnectionUserSummary {
+  id: number;
+  email: string;
+  profile?: ConnectionUserProfile | null;
+}
+
 interface Connection {
   id: number;
   requester_id: number;
   addressee_id: number;
   status: string;
   created_at: string;
+  requester?: ConnectionUserSummary | null;
+  addressee?: ConnectionUserSummary | null;
 }
 
 interface ConnectionSuggestion {
@@ -27,7 +42,17 @@ interface ConnectionSuggestion {
 
 export default function Connections() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'requests' | 'sent' | 'connections' | 'discover'>('discover');
+  const [searchParams] = useSearchParams();
+  const [currentUser, setCurrentUser] = useState<{ id: number; email: string } | null>(null);
+
+  const initialTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'requests' | 'sent' | 'connections' | 'discover'>(() => {
+    if (initialTab === 'requests' || initialTab === 'pending') return 'requests';
+    if (initialTab === 'sent') return 'sent';
+    if (initialTab === 'connections' || initialTab === 'my-connections') return 'connections';
+    return 'discover';
+  });
+
   const [requests, setRequests] = useState<Connection[]>([]);
   const [sentRequests, setSentRequests] = useState<Connection[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -37,11 +62,21 @@ export default function Connections() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch all network data
+  // Sync searchParam tab changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'requests' || tabParam === 'pending') setActiveTab('requests');
+    else if (tabParam === 'sent') setActiveTab('sent');
+    else if (tabParam === 'connections' || tabParam === 'my-connections') setActiveTab('connections');
+    else if (tabParam === 'discover') setActiveTab('discover');
+  }, [searchParams]);
+
+  // Fetch all network data and current user
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [reqsData, sentData, connsData, suggData, usersData] = await Promise.all([
+      const [currentUserData, reqsData, sentData, connsData, suggData, usersData] = await Promise.all([
+        apiRequest<{ id: number; email: string }>('/users/me').catch(() => null),
         apiRequest<Connection[]>('/connections/me/requests').catch(() => []),
         apiRequest<Connection[]>('/connections/me/sent-requests').catch(() => []),
         apiRequest<Connection[]>('/connections/me').catch(() => []),
@@ -49,6 +84,7 @@ export default function Connections() {
         apiRequest<User[]>('/users').catch(() => [])
       ]);
 
+      if (currentUserData) setCurrentUser(currentUserData);
       setRequests(Array.isArray(reqsData) ? reqsData : []);
       setSentRequests(Array.isArray(sentData) ? sentData : []);
       setConnections(Array.isArray(connsData) ? connsData : []);
@@ -116,29 +152,47 @@ export default function Connections() {
     navigate('/messaging', { state: { targetUserId: userId } });
   };
 
+  // Helper to extract clean display name
+  const getUserProfileName = (userSummary?: ConnectionUserSummary | null, fallbackId?: number) => {
+    if (!userSummary) return `User #${fallbackId || '?'}`;
+    const name = `${userSummary.profile?.first_name || ''} ${userSummary.profile?.last_name || ''}`.trim();
+    if (name) return name;
+    if (userSummary.email) return userSummary.email.split('@')[0];
+    return `User #${userSummary.id}`;
+  };
+
   // Filter items based on search query
-  const filteredRequests = requests.filter((req) =>
-    req.requester_id.toString().includes(searchQuery.trim())
-  );
+  const query = searchQuery.toLowerCase().trim();
 
-  const filteredSentRequests = sentRequests.filter((req) =>
-    req.addressee_id.toString().includes(searchQuery.trim())
-  );
+  const filteredRequests = requests.filter((req) => {
+    const name = getUserProfileName(req.requester, req.requester_id).toLowerCase();
+    const email = (req.requester?.email || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || req.requester_id.toString().includes(query);
+  });
 
-  const filteredConnections = connections.filter((conn) =>
-    conn.requester_id.toString().includes(searchQuery.trim()) ||
-    conn.addressee_id.toString().includes(searchQuery.trim()) ||
-    conn.id.toString().includes(searchQuery.trim())
-  );
+  const filteredSentRequests = sentRequests.filter((req) => {
+    const name = getUserProfileName(req.addressee, req.addressee_id).toLowerCase();
+    const email = (req.addressee?.email || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || req.addressee_id.toString().includes(query);
+  });
+
+  const filteredConnections = connections.filter((conn) => {
+    const isRequester = conn.requester_id === currentUser?.id;
+    const targetUser = isRequester ? conn.addressee : conn.requester;
+    const targetId = isRequester ? conn.addressee_id : conn.requester_id;
+    const name = getUserProfileName(targetUser, targetId).toLowerCase();
+    const email = (targetUser?.email || '').toLowerCase();
+    return name.includes(query) || email.includes(query) || targetId.toString().includes(query);
+  });
 
   const filteredSuggestions = suggestions.filter((sugg) =>
-    sugg.email.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-    sugg.recommendation_reason.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    sugg.email.toLowerCase().includes(query) ||
+    sugg.recommendation_reason.toLowerCase().includes(query)
   );
 
   const filteredUsers = users.filter(
     (u) =>
-      u.email.toLowerCase().includes(searchQuery.toLowerCase().trim()) &&
+      u.email.toLowerCase().includes(query) &&
       !suggestions.some((s) => s.user_id === u.id)
   );
 
@@ -277,17 +331,24 @@ export default function Connections() {
                 {searchQuery ? 'No pending requests match your search.' : 'No incoming pending requests.'}
               </div>
             ) : (
-              filteredRequests.map((req) => (
-                <ConnectionCard
-                  key={req.id}
-                  type="request"
-                  id={req.id}
-                  targetId={req.requester_id}
-                  subtitle="Wants to connect"
-                  onAccept={handleAccept}
-                  onReject={handleReject}
-                />
-              ))
+              filteredRequests.map((req) => {
+                const targetUser = req.requester;
+                const name = getUserProfileName(targetUser, req.requester_id);
+                return (
+                  <ConnectionCard
+                    key={req.id}
+                    type="request"
+                    id={req.id}
+                    targetId={req.requester_id}
+                    email={targetUser?.email}
+                    name={name}
+                    profilePicture={targetUser?.profile?.profile_picture}
+                    subtitle="Wants to connect"
+                    onAccept={handleAccept}
+                    onReject={handleReject}
+                  />
+                );
+              })
             )}
           </>
         )}
@@ -300,16 +361,23 @@ export default function Connections() {
                 {searchQuery ? 'No sent requests match your search.' : 'No outgoing sent requests.'}
               </div>
             ) : (
-              filteredSentRequests.map((req) => (
-                <ConnectionCard
-                  key={req.id}
-                  type="sent"
-                  id={req.id}
-                  targetId={req.addressee_id}
-                  subtitle="Pending Request Sent"
-                  onWithdraw={handleWithdraw}
-                />
-              ))
+              filteredSentRequests.map((req) => {
+                const targetUser = req.addressee;
+                const name = getUserProfileName(targetUser, req.addressee_id);
+                return (
+                  <ConnectionCard
+                    key={req.id}
+                    type="sent"
+                    id={req.id}
+                    targetId={req.addressee_id}
+                    email={targetUser?.email}
+                    name={name}
+                    profilePicture={targetUser?.profile?.profile_picture}
+                    subtitle="Pending Request Sent"
+                    onWithdraw={handleWithdraw}
+                  />
+                );
+              })
             )}
           </>
         )}
@@ -322,16 +390,25 @@ export default function Connections() {
                 {searchQuery ? 'No connections match your search.' : "You don't have any connections yet."}
               </div>
             ) : (
-              filteredConnections.map((conn) => (
-                <ConnectionCard
-                  key={conn.id}
-                  type="connection"
-                  id={conn.id}
-                  targetId={conn.requester_id}
-                  subtitle="Connected"
-                  onMessage={handleSendMessage}
-                />
-              ))
+              filteredConnections.map((conn) => {
+                const isRequester = conn.requester_id === currentUser?.id;
+                const targetUser = isRequester ? conn.addressee : conn.requester;
+                const targetId = isRequester ? conn.addressee_id : conn.requester_id;
+                const name = getUserProfileName(targetUser, targetId);
+                return (
+                  <ConnectionCard
+                    key={conn.id}
+                    type="connection"
+                    id={conn.id}
+                    targetId={targetId}
+                    email={targetUser?.email}
+                    name={name}
+                    profilePicture={targetUser?.profile?.profile_picture}
+                    subtitle="Connected"
+                    onMessage={handleSendMessage}
+                  />
+                );
+              })
             )}
           </>
         )}

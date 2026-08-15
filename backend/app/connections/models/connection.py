@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -24,6 +25,13 @@ class Connection(Base):
     )
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    requester = relationship(
+        "User", foreign_keys=[requester_id], backref="requested_connections"
+    )
+    addressee = relationship(
+        "User", foreign_keys=[addressee_id], backref="received_connections"
+    )
 
     __table_args__ = (
         UniqueConstraint("requester_id", "addressee_id", name="uq_connection_pair"),
