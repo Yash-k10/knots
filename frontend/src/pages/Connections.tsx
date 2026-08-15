@@ -151,7 +151,7 @@ export default function Connections() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
