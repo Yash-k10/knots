@@ -65,6 +65,8 @@ alembic/versions/*.pyc
 # Local system configuration
 .agents/
 .gemini/
+backend/static/
 
 # Personal notes
 personal_notes/
+
