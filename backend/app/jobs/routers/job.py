@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies.auth import get_current_user
+from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
 from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
@@ -34,7 +34,8 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 def _is_user_admin(user: User) -> bool:
     return user.role_id == 1 or (
-        getattr(user, "role", None) is not None and user.role.name.lower() == "admin"
+        getattr(user, "role", None) is not None
+        and user.role.name.lower().strip() in ("admin", "super admin", "superadmin")
     )
 
 
@@ -142,10 +143,12 @@ async def create_referral(
 )
 async def create_job(
     payload: JobPostingCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        RoleRequired(["Alumni", "Faculty", "Admin", "Super Admin", "Recruiter"])
+    ),
     db: AsyncSession = Depends(get_db),
 ):
-    """Post a new job or internship opportunity."""
+    """Post a new job or internship opportunity (Alumni, Faculty, Admin only)."""
     service = JobService(db)
     job = await service.create_job(current_user.id, payload)
     return APIResponse(message="Job posting created successfully", data=job)

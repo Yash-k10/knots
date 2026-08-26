@@ -41,19 +41,23 @@ class SearchService:
 
         category_lower = (category or "all").lower()
 
-        # 1. Search Users / Profiles
+        # 1. Search Users / Profiles (Exclude Super Admin for complete invisibility)
         if category_lower in ("all", "users"):
+            from app.users.models.role import Role
+
             stmt = (
                 select(User)
                 .outerjoin(Profile, User.id == Profile.user_id)
+                .outerjoin(Role, User.role_id == Role.id)
                 .where(
+                    or_(Role.name.is_(None), Role.name != "Super Admin"),
                     or_(
                         User.email.ilike(search_pattern),
                         Profile.first_name.ilike(search_pattern),
                         Profile.last_name.ilike(search_pattern),
                         Profile.department.ilike(search_pattern),
                         Profile.bio.ilike(search_pattern),
-                    )
+                    ),
                 )
                 .options(selectinload(User.profile))
                 .limit(limit)

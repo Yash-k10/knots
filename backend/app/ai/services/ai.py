@@ -163,13 +163,29 @@ class AIConnectionSuggestionService:
                 " | ".join(reasons) if reasons else "Suggested based on profile details"
             )
 
+            clean_first = profile.first_name
+            clean_last = profile.last_name
+            if not clean_first or clean_first.strip().lower() == "user":
+                email_handle = user.email.split("@")[0]
+                parts = [
+                    p.capitalize()
+                    for p in email_handle.replace("_", ".").split(".")
+                    if p
+                ]
+                clean_first = parts[0] if parts else "Student"
+                clean_last = (
+                    " ".join(parts[1:]) if len(parts) > 1 else (clean_last or "")
+                )
+
             suggestions.append(
                 ConnectionSuggestionResponse(
                     user_id=profile.user_id,
-                    first_name=profile.first_name,
-                    last_name=profile.last_name,
+                    email=user.email,
+                    first_name=clean_first,
+                    last_name=clean_last or "",
                     bio=profile.bio,
-                    department=profile.department,
+                    department=profile.department
+                    or (user.role.name if user.role else "Student"),
                     graduation_year=profile.graduation_year,
                     profile_picture=profile.profile_picture,
                     skills=cand_skills,

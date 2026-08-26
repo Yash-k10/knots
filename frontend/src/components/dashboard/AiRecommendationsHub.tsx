@@ -17,6 +17,7 @@ import {
   ContentRecommendation,
 } from "../../services/ai";
 import { getMediaUrl } from "../../services/api";
+import { formatDate } from "../../utils/date";
 
 interface AiRecommendationsHubProps {
   connectionSuggestions: ConnectionSuggestion[];
@@ -38,30 +39,30 @@ export function AiRecommendationsHub({
       <div className="flex items-center gap-3">
         <button
           onClick={() => setRecCategory("peers")}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition border ${
+          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
             recCategory === "peers"
-              ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40"
-              : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+              ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
+              : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
           }`}
         >
           Peer Suggestions ({connectionSuggestions.length})
         </button>
         <button
           onClick={() => setRecCategory("jobs")}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition border ${
+          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
             recCategory === "jobs"
-              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-              : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+              ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
+              : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
           }`}
         >
           Job Matches ({jobRecommendations.length})
         </button>
         <button
           onClick={() => setRecCategory("content")}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition border ${
+          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
             recCategory === "content"
-              ? "bg-pink-500/20 text-pink-300 border-pink-500/40"
-              : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+              ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
+              : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
           }`}
         >
           Feed Highlights ({contentRecommendations.length})
@@ -72,52 +73,75 @@ export function AiRecommendationsHub({
       {recCategory === "peers" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {connectionSuggestions.length > 0 ? (
-            connectionSuggestions.map((item) => (
-              <div
-                key={item.user_id}
-                className="bg-slate-950/50 border border-slate-900 hover:border-indigo-500/30 rounded-2xl p-6 backdrop-blur-md transition duration-300 flex flex-col justify-between relative group"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold text-base shadow-inner overflow-hidden">
-                        {item.profile_picture ? (
-                          <img
-                            src={getMediaUrl(item.profile_picture)}
-                            alt={item.first_name || "User"}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          item.first_name?.[0] || "U"
-                        )}
+            connectionSuggestions.map((item) => {
+              // Extract real name or clean handle from email
+              const fullProfileName = `${item.first_name || ""} ${item.last_name || ""}`.trim();
+              let displayName = fullProfileName;
+              if (!displayName || displayName.toLowerCase() === "user" || displayName.toLowerCase() === "user user") {
+                if (item.email) {
+                  const raw = item.email.split("@")[0];
+                  displayName = raw
+                    .replace(/[_.-]+/g, " ")
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" ") || raw;
+                } else if (item.first_name && item.first_name.toLowerCase() !== "user") {
+                  displayName = item.first_name;
+                } else {
+                  displayName = `Peer #${item.user_id}`;
+                }
+              }
+
+              const initialLetter = displayName.charAt(0).toUpperCase() || "P";
+
+              return (
+                <div
+                  key={item.user_id}
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#4B63D2] flex items-center justify-center font-black text-base shadow-sm overflow-hidden">
+                          {item.profile_picture ? (
+                            <img
+                              src={getMediaUrl(item.profile_picture)}
+                              alt={displayName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            initialLetter
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-[#1E2746] leading-tight">
+                            {displayName}
+                          </h4>
+                          <p className="text-xs text-[#5851A4] font-medium mt-0.5">
+                            {item.department || "Student"}{" "}
+                            {item.graduation_year
+                              ? `'${item.graduation_year.toString().slice(-2)}`
+                              : ""}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-white leading-tight">
-                          {item.first_name || "User"} {item.last_name || ""}
-                        </h4>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {item.department || "Student"}{" "}
-                          {item.graduation_year
-                            ? `'${item.graduation_year.toString().slice(-2)}`
-                            : ""}
-                        </p>
+
+                      <div className="px-2.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-[11px] font-extrabold flex items-center gap-1 shrink-0">
+                        <Zap className="h-3 w-3 text-[#5851A4] fill-[#5851A4]" />
+                        {item.match_score}% Match
                       </div>
                     </div>
 
-                    <div className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[11px] font-extrabold flex items-center gap-1 shrink-0">
-                      <Zap className="h-3 w-3 text-amber-400 fill-amber-400" />
-                      {item.match_score}% Match
-                    </div>
-                  </div>
 
                   {item.bio && (
-                    <p className="text-xs text-slate-300 line-clamp-2 mb-4 leading-relaxed italic">
+                    <p className="text-xs text-[#1E2746] line-clamp-2 mb-4 leading-relaxed italic font-medium">
                       "{item.bio}"
                     </p>
                   )}
 
-                  <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3 mb-4 text-[11px] text-indigo-200/90 leading-relaxed">
-                    <span className="font-semibold text-indigo-300">
+                  <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-xl p-3 mb-4 text-[11px] text-[#5851A4] leading-relaxed font-medium">
+                    <span className="font-bold text-[#1E2746]">
                       Why recommended:{" "}
                     </span>
                     {item.reason}
@@ -128,7 +152,7 @@ export function AiRecommendationsHub({
                       {item.common_skills.map((skill, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 text-[10px] font-medium border border-slate-800"
+                          className="px-2.5 py-1 rounded-lg bg-white text-[#4B63D2] text-[10px] font-bold border border-[#EAE4F7]"
                         >
                           {skill}
                         </span>
@@ -139,16 +163,17 @@ export function AiRecommendationsHub({
 
                 <a
                   href="/connections"
-                  className="w-full py-2 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md"
+                  className="w-full py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <UserPlus className="h-3.5 w-3.5" /> Connect Now
                 </a>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-              <Users className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">
+            );
+          })
+        ) : (
+            <div className="col-span-full py-12 text-center border border-dashed border-[#D5CBEE] rounded-3xl bg-white">
+              <Users className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-sm font-medium">
                 No peer recommendations found right now.
               </p>
             </div>
@@ -163,43 +188,43 @@ export function AiRecommendationsHub({
             jobRecommendations.map((job) => (
               <div
                 key={job.job_id}
-                className="bg-slate-950/50 border border-slate-900 hover:border-emerald-500/30 rounded-2xl p-6 backdrop-blur-md transition duration-300 flex flex-col justify-between relative group"
+                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                         {job.job_type || "Full Time"}
                       </span>
-                      <h4 className="text-base font-bold text-white mt-2 leading-tight">
+                      <h4 className="text-base font-bold text-[#1E2746] mt-2 leading-tight">
                         {job.title}
                       </h4>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">
+                      <p className="text-xs text-[#5851A4] font-semibold mt-0.5">
                         {job.company_name || "Partner Company"}
                       </p>
                     </div>
-                    <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-extrabold flex items-center gap-1 shrink-0">
-                      <Zap className="h-3 w-3 text-amber-400 fill-amber-400" />
+                    <div className="px-2.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-[11px] font-extrabold flex items-center gap-1 shrink-0">
+                      <Zap className="h-3 w-3 text-[#5851A4] fill-[#5851A4]" />
                       {job.match_score}% Match
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-4">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#5851A4] mb-4 font-medium">
                     {job.location && (
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-slate-500" />{" "}
+                        <MapPin className="h-3.5 w-3.5 text-[#4B63D2]" />{" "}
                         {job.location}
                       </span>
                     )}
                     {job.salary_range && (
-                      <span className="text-slate-300 font-semibold">
+                      <span className="text-[#1E2746] font-bold">
                         {job.salary_range}
                       </span>
                     )}
                   </div>
 
-                  <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3 mb-4 text-[11px] text-emerald-200/90 leading-relaxed">
-                    <span className="font-semibold text-emerald-300">
+                  <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-xl p-3 mb-4 text-[11px] text-[#5851A4] leading-relaxed font-medium">
+                    <span className="font-bold text-[#1E2746]">
                       Matching details:{" "}
                     </span>
                     {job.reason}
@@ -210,7 +235,7 @@ export function AiRecommendationsHub({
                       {job.matching_skills.map((skill, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-md bg-emerald-950/40 text-emerald-300 text-[10px] font-medium border border-emerald-900/50"
+                          className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200"
                         >
                           ✓ {skill}
                         </span>
@@ -221,16 +246,16 @@ export function AiRecommendationsHub({
 
                 <a
                   href="/jobs"
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
                 >
-                  <Briefcase className="h-3.5 w-3.5" /> View Opportunity
+                  <Briefcase className="h-3.5 w-3.5 text-[#FFD21A]" /> View Opportunity
                 </a>
               </div>
             ))
           ) : (
-            <div className="col-span-full py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-              <Briefcase className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">
+            <div className="col-span-full py-12 text-center border border-dashed border-[#D5CBEE] rounded-3xl bg-white">
+              <Briefcase className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-sm font-medium">
                 No job recommendations tailored yet.
               </p>
             </div>
@@ -245,37 +270,37 @@ export function AiRecommendationsHub({
             contentRecommendations.map((post) => (
               <div
                 key={post.post_id}
-                className="bg-slate-950/50 border border-slate-900 hover:border-pink-500/30 rounded-2xl p-6 backdrop-blur-md transition duration-300 flex flex-col justify-between"
+                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-pink-600/20 border border-pink-500/30 text-pink-400 flex items-center justify-center font-bold text-xs">
+                      <div className="h-9 w-9 rounded-full bg-[#C8B6E2]/30 border border-[#C8B6E2] text-[#5851A4] flex items-center justify-center font-black text-xs">
                         {post.author_name?.[0] || "A"}
                       </div>
                       <div>
-                        <span className="text-xs font-bold text-white block">
+                        <span className="text-xs font-bold text-[#1E2746] block">
                           {post.author_name || "Campus Member"}
                         </span>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-[#9188BE] font-medium">
                           {post.created_at
-                            ? new Date(post.created_at).toLocaleDateString()
+                            ? formatDate(post.created_at)
                             : "Recent"}
                         </span>
                       </div>
                     </div>
-                    <div className="px-2.5 py-1 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 text-[11px] font-extrabold flex items-center gap-1">
-                      <Award className="h-3 w-3 text-pink-400" />
+                    <div className="px-2.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-[11px] font-extrabold flex items-center gap-1">
+                      <Award className="h-3 w-3 text-[#5851A4]" />
                       {post.relevance_score} Score
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-200 leading-relaxed line-clamp-3 mb-4">
+                  <p className="text-xs text-[#1E2746] leading-relaxed line-clamp-3 mb-4 font-medium">
                     {post.content}
                   </p>
 
-                  <div className="bg-slate-900/70 border border-slate-800/80 rounded-xl p-3 mb-4 text-[11px] text-pink-200/90 leading-relaxed">
-                    <span className="font-semibold text-pink-300">
+                  <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-xl p-3 mb-4 text-[11px] text-[#5851A4] leading-relaxed font-medium">
+                    <span className="font-bold text-[#1E2746]">
                       Topic match:{" "}
                     </span>
                     {post.reason}
@@ -286,7 +311,7 @@ export function AiRecommendationsHub({
                       {post.matched_topics.map((topic, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-md bg-slate-900 text-pink-300 text-[10px] font-medium border border-slate-800"
+                          className="px-2.5 py-1 rounded-md bg-[#FAF9FD] text-[#4B63D2] text-[10px] font-bold border border-[#EAE4F7]"
                         >
                           #{topic}
                         </span>
@@ -295,20 +320,20 @@ export function AiRecommendationsHub({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-900 text-xs text-slate-400">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between pt-3 border-t border-[#EAE4F7] text-xs text-[#5851A4]">
+                  <div className="flex items-center gap-4 font-semibold">
                     <span className="flex items-center gap-1">
-                      <Heart className="h-3.5 w-3.5 text-pink-500" />{" "}
+                      <Heart className="h-3.5 w-3.5 text-rose-500" />{" "}
                       {post.like_count}
                     </span>
                     <span className="flex items-center gap-1">
-                      <MessageCircle className="h-3.5 w-3.5 text-slate-400" />{" "}
+                      <MessageCircle className="h-3.5 w-3.5 text-[#5851A4]" />{" "}
                       {post.comment_count}
                     </span>
                   </div>
                   <a
                     href="/feed"
-                    className="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                    className="text-[#4B63D2] hover:text-[#5851A4] font-bold flex items-center gap-1"
                   >
                     Read on Feed <ArrowUpRight className="h-3.5 w-3.5" />
                   </a>
@@ -316,9 +341,9 @@ export function AiRecommendationsHub({
               </div>
             ))
           ) : (
-            <div className="col-span-full py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-              <MessageSquare className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-400 text-sm">
+            <div className="col-span-full py-12 text-center border border-dashed border-[#D5CBEE] rounded-3xl bg-white">
+              <MessageSquare className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-sm font-medium">
                 No curated feed recommendations available right now.
               </p>
             </div>

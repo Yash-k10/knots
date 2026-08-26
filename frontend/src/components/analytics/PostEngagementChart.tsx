@@ -127,18 +127,18 @@ export default function PostEngagementChart({
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#1e293b"
+                stroke="#273258"
                 vertical={false}
               />
               <XAxis
                 dataKey="name"
-                stroke="#64748b"
+                stroke="#B9B1D9"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#334155" }}
+                axisLine={{ stroke: "#364373" }}
               />
               <YAxis
-                stroke="#64748b"
+                stroke="#B9B1D9"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -186,7 +186,7 @@ export default function PostEngagementChart({
               {(activeMetric === "all" || activeMetric === "views") && (
                 <Bar
                   dataKey="Views"
-                  fill="#818cf8"
+                  fill="#4B63D2"
                   radius={[4, 4, 0, 0]}
                   barSize={16}
                 />
@@ -194,7 +194,7 @@ export default function PostEngagementChart({
               {(activeMetric === "all" || activeMetric === "likes") && (
                 <Bar
                   dataKey="Likes"
-                  fill="#10b981"
+                  fill="#5851A4"
                   radius={[4, 4, 0, 0]}
                   barSize={16}
                 />
@@ -202,7 +202,7 @@ export default function PostEngagementChart({
               {(activeMetric === "all" || activeMetric === "comments") && (
                 <Bar
                   dataKey="Comments"
-                  fill="#f43f5e"
+                  fill="#FFD21A"
                   radius={[4, 4, 0, 0]}
                   barSize={16}
                 />

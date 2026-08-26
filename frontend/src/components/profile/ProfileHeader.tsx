@@ -1,6 +1,14 @@
 import React, { useState } from "react";
-import { Edit2, Save, X, GraduationCap, Building2, Users } from "lucide-react";
-import { profileService, ProfileResponse } from "../../services/profile";
+import {
+  Building2,
+  GraduationCap,
+  Users,
+  Edit2,
+  Save,
+  X,
+} from "lucide-react";
+import { ProfileResponse } from "../../services/profile";
+import { profileService } from "../../services/profile";
 import ProfilePictureUploader from "./ProfilePictureUploader";
 
 interface ProfileHeaderProps {
@@ -9,6 +17,19 @@ interface ProfileHeaderProps {
   onError: (errorMessage: string) => void;
   isOwnProfile: boolean;
 }
+
+export const DEPARTMENTS = [
+  "First Year",
+  "CSE",
+  "CSE(AIML)",
+  "CSE(AIDS)",
+  "ETC",
+  "EE",
+  "ME",
+  "BCA",
+  "MCA",
+  "MBA",
+];
 
 export default function ProfileHeader({
   profile,
@@ -19,29 +40,26 @@ export default function ProfileHeader({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Form State
+  // Form states
   const [firstName, setFirstName] = useState(profile.first_name || "");
   const [lastName, setLastName] = useState(profile.last_name || "");
   const [bio, setBio] = useState(profile.bio || "");
   const [department, setDepartment] = useState(profile.department || "");
-  const [graduationYear, setGraduationYear] = useState(
-    profile.graduation_year?.toString() || "",
+  const [graduationYear, setGraduationYear] = useState<number | string>(
+    profile.graduation_year || "",
   );
 
-  // Reset form to current profile state
   const handleCancel = () => {
     setFirstName(profile.first_name || "");
     setLastName(profile.last_name || "");
     setBio(profile.bio || "");
     setDepartment(profile.department || "");
-    setGraduationYear(profile.graduation_year?.toString() || "");
+    setGraduationYear(profile.graduation_year || "");
     setIsEditing(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Client-side validation: First and Last names are required
     if (!firstName.trim()) {
       onError("First Name is required.");
       return;
@@ -51,7 +69,7 @@ export default function ProfileHeader({
       return;
     }
 
-    const gradYearNum = graduationYear ? parseInt(graduationYear, 10) : null;
+    const gradYearNum = graduationYear ? parseInt(graduationYear.toString(), 10) : null;
     if (graduationYear && isNaN(gradYearNum || 0)) {
       onError("Graduation Year must be a valid number.");
       return;
@@ -80,7 +98,7 @@ export default function ProfileHeader({
     `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 md:p-8 shadow-sm">
       {isEditing ? (
         <form onSubmit={handleSave} className="space-y-6">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
@@ -93,55 +111,62 @@ export default function ProfileHeader({
             />
             <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  First Name <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  First Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none transition"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
                   placeholder="e.g. Yash"
                   maxLength={50}
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Last Name <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Last Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none transition"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
                   placeholder="e.g. Kumar"
                   maxLength={50}
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                   Department
                 </label>
-                <input
-                  type="text"
+                <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none transition"
-                  placeholder="e.g. Computer Science"
-                  maxLength={100}
-                />
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] focus:outline-none transition font-medium text-sm cursor-pointer"
+                >
+                  <option value="">Select Department</option>
+                  {department && !DEPARTMENTS.includes(department) && (
+                    <option value={department}>{department}</option>
+                  )}
+                  {DEPARTMENTS.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                   Graduation Year
                 </label>
                 <input
                   type="number"
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none transition"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
                   placeholder="e.g. 2027"
                   min={1990}
                   max={2035}
@@ -151,13 +176,13 @@ export default function ProfileHeader({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
               Bio
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none transition h-24 resize-none"
+              className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition h-24 resize-none font-medium text-sm"
               placeholder="Tell other students and alumni about yourself..."
               maxLength={300}
             />
@@ -167,7 +192,7 @@ export default function ProfileHeader({
             <button
               type="button"
               onClick={handleCancel}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition font-medium text-sm"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746] transition font-bold text-sm cursor-pointer"
               disabled={isSaving}
             >
               <X className="h-4 w-4" />
@@ -175,10 +200,10 @@ export default function ProfileHeader({
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-medium text-sm transition shadow-lg shadow-indigo-500/20"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold text-sm transition shadow-md shadow-[#4B63D2]/25 cursor-pointer"
               disabled={isSaving}
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-[#FFD21A]" />
               {isSaving ? "Saving..." : "Save Profile"}
             </button>
           </div>
@@ -194,28 +219,28 @@ export default function ProfileHeader({
               isOwnProfile={isOwnProfile}
             />
             <div className="space-y-3">
-              <h2 className="text-3xl font-extrabold text-white">
+              <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
                 {profile.first_name || profile.last_name
                   ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
                   : "Add Your Name"}
               </h2>
 
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-slate-400 text-sm">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[#5851A4] text-sm">
                 {profile.department && (
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Building2 className="h-4 w-4 text-indigo-400" />
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <Building2 className="h-4 w-4 text-[#4B63D2]" />
                     {profile.department}
                   </span>
                 )}
                 {profile.graduation_year && (
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <GraduationCap className="h-4 w-4 text-indigo-400" />
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
                     Class of {profile.graduation_year}
                   </span>
                 )}
                 {profile.connection_count !== undefined && (
-                  <span className="flex items-center gap-1.5 font-medium bg-slate-900 border border-slate-800 text-indigo-300 text-xs px-2.5 py-1 rounded-full">
-                    <Users className="h-3.5 w-3.5 text-indigo-400" />
+                  <span className="flex items-center gap-1.5 font-bold bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#5851A4] text-xs px-3 py-1 rounded-full">
+                    <Users className="h-3.5 w-3.5 text-[#4B63D2]" />
                     {profile.connection_count}{" "}
                     {profile.connection_count === 1
                       ? "Connection"
@@ -223,15 +248,15 @@ export default function ProfileHeader({
                   </span>
                 )}
                 {!profile.department && !profile.graduation_year && (
-                  <span className="text-slate-500 italic">
+                  <span className="text-[#9188BE] italic font-medium">
                     No department or grad year specified
                   </span>
                 )}
               </div>
 
-              <p className="text-slate-300 text-sm max-w-xl leading-relaxed">
+              <p className="text-[#1E2746] text-sm max-w-xl leading-relaxed font-medium">
                 {profile.bio || (
-                  <span className="text-slate-500 italic">
+                  <span className="text-[#9188BE] italic">
                     No bio added yet. Tell people about your interests and
                     goals!
                   </span>
@@ -243,9 +268,9 @@ export default function ProfileHeader({
           {isOwnProfile && (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition text-sm font-medium self-center md:self-start mt-4 md:mt-0"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition text-sm font-bold self-center md:self-start mt-4 md:mt-0 shadow-sm cursor-pointer"
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="h-4 w-4 text-[#4B63D2]" />
               Edit Info
             </button>
           )}

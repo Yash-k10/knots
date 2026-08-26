@@ -43,14 +43,19 @@ class RoleRequired:
         if not role_name and role_id is None:
             raise AuthorizationError("User role not initialized")
 
-        allowed_lower = [r.lower() for r in self.allowed_roles]
+        role_lower = role_name.lower().strip()
+        allowed_lower = [r.lower().strip() for r in self.allowed_roles]
 
-        # Check if Admin is in allowed roles and user has role_id == 1 or role name 'Admin'
+        # Super Admin has master access across all role-protected endpoints
+        if role_lower in ("super admin", "superadmin"):
+            return current_user
+
+        # Admin checks
         is_admin_check = "admin" in allowed_lower and (
-            role_id == 1 or role_name.lower() == "admin"
+            role_id == 1 or role_lower == "admin"
         )
 
-        if not is_admin_check and role_name.lower() not in allowed_lower:
+        if not is_admin_check and role_lower not in allowed_lower:
             raise AuthorizationError(
                 f"Role not authorized. Required one of: {self.allowed_roles}"
             )
@@ -67,6 +72,16 @@ class PermissionRequired:
         if not current_user.role:
             raise AuthorizationError("User role permissions not initialized")
         permissions = current_user.role.permissions or []
+        role_name = (current_user.role.name or "").lower().strip()
+
+        # Super Admin or universal wildcard '*' bypasses all granular permission checks
+        if (
+            "*" in permissions
+            or "superadmin_access" in permissions
+            or role_name in ("super admin", "superadmin")
+        ):
+            return current_user
+
         if self.required_permission not in permissions:
             raise AuthorizationError(
                 f"Permission denied: missing {self.required_permission}"

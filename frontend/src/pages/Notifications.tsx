@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 import { wsClient } from "../services/websocket";
+import { formatTimeAgo } from "../utils/date";
 
 export interface NotificationItem {
   id: number;
@@ -100,6 +101,7 @@ export default function Notifications() {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
     );
+    window.dispatchEvent(new Event("notification-read"));
     if (id > 0) {
       try {
         await apiRequest(`/notifications/${id}/read`, { method: "PATCH" });
@@ -111,6 +113,7 @@ export default function Notifications() {
 
   const handleMarkAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    window.dispatchEvent(new Event("notification-read-all"));
     try {
       await apiRequest("/notifications/read-all", { method: "PATCH" });
     } catch (err) {
@@ -123,6 +126,11 @@ export default function Notifications() {
       handleMarkAsRead(item.id);
     }
     if (
+      item.type === "connection_accepted" ||
+      item.title.toLowerCase().includes("accepted")
+    ) {
+      navigate("/connections?tab=connections");
+    } else if (
       item.type === "connection_request" ||
       item.title.toLowerCase().includes("connection") ||
       item.content.toLowerCase().includes("connection")
@@ -146,46 +154,36 @@ export default function Notifications() {
     }
   };
 
+
   const getNotificationIcon = (type?: string) => {
     switch (type) {
       case "job_alert":
-        return { icon: Briefcase, color: "text-emerald-400 bg-emerald-500/10" };
+        return { icon: Briefcase, color: "text-emerald-700 bg-emerald-50 border border-emerald-200" };
       case "connection_request":
-        return { icon: Users, color: "text-indigo-400 bg-indigo-500/10" };
+        return { icon: Users, color: "text-[#4B63D2] bg-[#C8B6E2]/25 border border-[#C8B6E2]" };
       case "message":
-        return { icon: MessageSquare, color: "text-sky-400 bg-sky-500/10" };
+        return { icon: MessageSquare, color: "text-sky-700 bg-sky-50 border border-sky-200" };
       default:
-        return { icon: Bell, color: "text-amber-400 bg-amber-500/10" };
+        return { icon: Bell, color: "text-[#5851A4] bg-[#FFD21A]/20 border border-[#FFD21A]/50" };
     }
   };
 
-  const formatTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (e) {
-      return "Just now";
-    }
-  };
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-white mb-1">
+          <h2 className="text-2xl font-black text-[#1E2746] mb-1">
             Notifications Center
           </h2>
-          <p className="text-slate-400 text-sm">
+          <p className="text-[#5851A4] text-sm font-medium">
             Stay updated with real-time job alerts, networking connections, and
             campus events.
           </p>
         </div>
         <button
           onClick={handleMarkAllAsRead}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-indigo-400 hover:text-white bg-indigo-500/10 hover:bg-indigo-600 rounded-lg transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#4B63D2] hover:text-white bg-[#4B63D2]/10 hover:bg-[#4B63D2] rounded-xl transition-all cursor-pointer"
         >
           <CheckCircle2 className="h-4 w-4" />
           Mark All as Read
@@ -193,16 +191,16 @@ export default function Notifications() {
       </div>
 
       {loading && notifications.length === 0 ? (
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-slate-400">
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 text-center text-[#5851A4] font-medium shadow-sm">
           Loading notifications...
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-12 text-center text-slate-500">
-          <Bell className="h-10 w-10 mx-auto mb-3 text-slate-600" />
-          No notifications yet.
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center text-[#5851A4] shadow-sm">
+          <Bell className="h-10 w-10 mx-auto mb-3 text-[#B9B1D9]" />
+          <p className="font-semibold">No notifications yet.</p>
         </div>
       ) : (
-        <div className="bg-slate-950 border border-slate-800 rounded-xl divide-y divide-slate-900 overflow-hidden">
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl divide-y divide-[#EAE4F7] overflow-hidden shadow-sm">
           {notifications.map((item) => {
             const { icon: Icon, color } = getNotificationIcon(item.type);
             return (
@@ -211,26 +209,26 @@ export default function Notifications() {
                 onClick={() => handleNotificationClick(item)}
                 className={`p-6 flex gap-4 transition-all cursor-pointer ${
                   item.is_read
-                    ? "bg-slate-950/40 opacity-75"
-                    : "bg-slate-900/60 hover:bg-slate-900"
+                    ? "bg-[#FAF9FD]/50 opacity-80"
+                    : "bg-white hover:bg-[#FAF9FD]"
                 }`}
               >
-                <div className={`p-3 rounded-lg self-start ${color}`}>
+                <div className={`p-3 rounded-2xl self-start ${color} shadow-sm`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-[#1E2746] flex items-center gap-2">
                       {item.title}
                       {!item.is_read && (
-                        <span className="h-2 w-2 rounded-full bg-indigo-500 animate-ping inline-block" />
+                        <span className="h-2 w-2 rounded-full bg-[#4B63D2] animate-pulse inline-block" />
                       )}
                     </h4>
-                    <span className="text-[10px] text-slate-500">
-                      {formatTime(item.created_at)}
+                    <span className="text-[11px] font-semibold text-[#9188BE]">
+                      {formatTimeAgo(item.created_at)}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300">{item.content}</p>
+                  <p className="text-xs text-[#5851A4] font-medium leading-relaxed">{item.content}</p>
                 </div>
               </div>
             );

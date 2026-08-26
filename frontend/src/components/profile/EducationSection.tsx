@@ -163,18 +163,18 @@ export default function EducationSection({
   };
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-indigo-400" />
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
+        <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+          <GraduationCap className="h-5 w-5 text-[#4B63D2]" />
           Education
         </h3>
         {!isAdding && editingId === null && isOwnProfile && (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 text-[#4B63D2]" />
             Add Education
           </button>
         )}
@@ -184,108 +184,108 @@ export default function EducationSection({
       {(isAdding || editingId !== null) && (
         <form
           onSubmit={handleSave}
-          className="bg-slate-900/50 border border-slate-800/80 rounded-xl p-5 space-y-4 animate-in fade-in duration-200"
+          className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-5 space-y-4 animate-in fade-in duration-200"
         >
-          <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          <h4 className="text-sm font-bold text-[#1E2746] uppercase tracking-wider">
             {editingId !== null ? "Edit Education Entry" : "Add New Education"}
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Institution Name <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                Institution Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={institutionName}
                 onChange={(e) => setInstitutionName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
                 placeholder="e.g. Stanford University"
                 required
               />
               {formErrors.institutionName && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-rose-600 text-xs mt-1 font-bold">
                   {formErrors.institutionName}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Degree <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                Degree <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={degree}
                 onChange={(e) => setDegree(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
                 placeholder="e.g. Bachelor of Science"
                 required
               />
               {formErrors.degree && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.degree}</p>
+                <p className="text-rose-600 text-xs mt-1 font-bold">{formErrors.degree}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                 Field of Study
               </label>
               <input
                 type="text"
                 value={fieldOfStudy}
                 onChange={(e) => setFieldOfStudy(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
                 placeholder="e.g. Computer Science"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                 GPA (Optional, Out of 4.0)
               </label>
               <input
                 type="text"
                 value={gpa}
                 onChange={(e) => setGpa(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
                 placeholder="e.g. 3.85"
               />
               {formErrors.gpa && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.gpa}</p>
+                <p className="text-rose-600 text-xs mt-1 font-bold">{formErrors.gpa}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Start Date <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                Start Date <span className="text-rose-500">*</span>
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
                 required
               />
               {formErrors.startDate && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-rose-600 text-xs mt-1 font-bold">
                   {formErrors.startDate}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                 End Date (or Expected)
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white focus:outline-none transition text-sm"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
               />
               {formErrors.endDate && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-rose-600 text-xs mt-1 font-bold">
                   {formErrors.endDate}
                 </p>
               )}
@@ -293,13 +293,13 @@ export default function EducationSection({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm h-20 resize-none"
+              className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm h-20 resize-none font-medium"
               placeholder="Detail your coursework, achievements, or activities..."
               maxLength={300}
             />
@@ -309,7 +309,7 @@ export default function EducationSection({
             <button
               type="button"
               onClick={resetForm}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-800 text-slate-400 hover:bg-slate-950 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:bg-white hover:text-[#1E2746] transition text-xs font-bold cursor-pointer"
               disabled={isSubmitting}
             >
               <X className="h-4 w-4" />
@@ -317,10 +317,10 @@ export default function EducationSection({
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-medium text-xs transition shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:opacity-90 font-bold text-xs transition shadow-md cursor-pointer"
               disabled={isSubmitting}
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-[#FFD21A]" />
               {isSubmitting ? "Saving..." : "Save Entry"}
             </button>
           </div>
@@ -328,7 +328,7 @@ export default function EducationSection({
       )}
 
       {/* Education List */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {profile.education && profile.education.length > 0 ? (
           profile.education
             .sort(
@@ -339,18 +339,18 @@ export default function EducationSection({
             .map((edu) => (
               <div
                 key={edu.id}
-                className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition animate-in fade-in duration-300"
+                className="group flex gap-4 items-start bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl p-4 transition animate-in fade-in duration-300 shadow-sm"
               >
-                <div className="mt-1 bg-slate-900 border border-slate-800 p-2 rounded-lg text-indigo-400">
+                <div className="mt-1 bg-white border border-[#EAE4F7] p-2.5 rounded-xl text-[#4B63D2] shadow-sm">
                   <GraduationCap className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-semibold text-white text-base leading-tight">
+                      <h4 className="font-bold text-[#1E2746] text-base leading-tight">
                         {edu.institution_name}
                       </h4>
-                      <p className="text-slate-300 text-sm">
+                      <p className="text-[#5851A4] text-sm font-semibold">
                         {edu.degree}
                         {edu.field_of_study && ` in ${edu.field_of_study}`}
                       </p>
@@ -361,14 +361,14 @@ export default function EducationSection({
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                         <button
                           onClick={() => startEdit(edu)}
-                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-900 rounded-lg transition"
+                          className="p-1.5 text-[#5851A4] hover:text-[#1E2746] hover:bg-white rounded-lg transition"
                           title="Edit"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4 text-[#4B63D2]" />
                         </button>
                         <button
                           onClick={() => handleDelete(edu.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                          className="p-1.5 text-[#5851A4] hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -377,9 +377,9 @@ export default function EducationSection({
                     )}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#5851A4]/80 font-medium">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
+                      <Calendar className="h-3.5 w-3.5 text-[#4B63D2]" />
                       <span>{formatDate(edu.start_date)}</span>
                       <span>–</span>
                       <span>
@@ -388,16 +388,16 @@ export default function EducationSection({
                     </div>
                     {edu.gpa !== null && edu.gpa !== undefined && (
                       <>
-                        <span className="text-slate-700">•</span>
-                        <span className="bg-indigo-950/40 text-indigo-300 px-2 py-0.5 rounded border border-indigo-900/50">
-                          GPA: {edu.gpa.toFixed(2)} / 4.00
+                        <span className="text-[#D5CBEE]">•</span>
+                        <span className="text-[#4B63D2] font-bold">
+                          GPA: {edu.gpa.toFixed(2)}
                         </span>
                       </>
                     )}
                   </div>
 
                   {edu.description && (
-                    <p className="text-slate-400 text-xs mt-2 leading-relaxed bg-slate-900/20 p-2 border border-slate-800/40 rounded-lg max-w-2xl">
+                    <p className="text-[#1E2746] text-xs pt-2 font-medium leading-relaxed">
                       {edu.description}
                     </p>
                   )}
@@ -406,9 +406,9 @@ export default function EducationSection({
             ))
         ) : (
           <div className="text-center py-6">
-            <GraduationCap className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">
-              No education entries added yet.
+            <GraduationCap className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+            <p className="text-[#5851A4] text-sm font-medium">
+              No education history added yet.
             </p>
           </div>
         )}

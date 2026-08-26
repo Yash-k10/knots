@@ -27,6 +27,44 @@ export class ApiError extends Error {
   }
 }
 
+// In-flight refresh promise to prevent duplicate refresh requests
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem("knots_refresh_token");
+  if (!refreshToken) {
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) {
+      localStorage.removeItem("knots_token");
+      localStorage.removeItem("knots_refresh_token");
+      return null;
+    }
+
+    const data = await res.json();
+    if (data.data?.access_token) {
+      localStorage.setItem("knots_token", data.data.access_token);
+      if (data.data.refresh_token) {
+        localStorage.setItem("knots_refresh_token", data.data.refresh_token);
+      }
+      return data.data.access_token as string;
+    }
+    return null;
+  } catch {
+    localStorage.removeItem("knots_token");
+    localStorage.removeItem("knots_refresh_token");
+    return null;
+  }
+}
+
 export async function apiRequest<T = any>(
   endpoint: string,
   options?: RequestInit,
@@ -42,10 +80,43 @@ export async function apiRequest<T = any>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  let response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
   });
+
+  // Handle 401 Unauthorized by trying silent token refresh
+  if (
+    response.status === 401 &&
+    !endpoint.includes("/auth/login") &&
+    !endpoint.includes("/auth/refresh") &&
+    !endpoint.includes("/auth/register")
+  ) {
+    if (!refreshPromise) {
+      refreshPromise = refreshAccessToken().finally(() => {
+        refreshPromise = null;
+      });
+    }
+
+    const newAccessToken = await refreshPromise;
+    if (newAccessToken) {
+      headers.set("Authorization", `Bearer ${newAccessToken}`);
+      response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    } else {
+      // Refresh failed or no refresh token - clear credentials and redirect to login
+      localStorage.removeItem("knots_token");
+      localStorage.removeItem("knots_refresh_token");
+      if (
+        window.location.pathname !== "/login" &&
+        window.location.pathname !== "/register"
+      ) {
+        window.location.href = "/login";
+      }
+    }
+  }
 
   const contentType = response.headers.get("content-type");
   let json: any = {};

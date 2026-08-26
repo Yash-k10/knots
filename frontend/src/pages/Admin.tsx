@@ -286,35 +286,35 @@ export default function Admin() {
     if (roleId === 1)
       return {
         label: "Admin",
-        color: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+        color: "bg-[#5851A4]/15 text-[#5851A4] border-[#5851A4]/30 font-bold",
       };
     if (roleId === 2)
       return {
         label: "Faculty",
-        color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+        color: "bg-[#4B63D2]/15 text-[#4B63D2] border-[#4B63D2]/30 font-bold",
       };
     if (roleId === 3)
       return {
         label: "Student",
-        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        color: "bg-[#C8B6E2]/30 text-[#4B63D2] border-[#C8B6E2] font-bold",
       };
     return {
       label: "User",
-      color: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+      color: "bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7] font-semibold",
     };
   };
 
   const getActionBadge = (action: string) => {
     const act = action.toLowerCase();
     if (act.includes("ban"))
-      return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+      return "bg-rose-50 text-rose-700 border-rose-300 font-bold";
     if (act.includes("unban"))
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      return "bg-emerald-50 text-emerald-700 border-emerald-300 font-bold";
     if (act.includes("delete") || act.includes("remove"))
-      return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+      return "bg-amber-50 text-amber-700 border-amber-300 font-bold";
     if (act.includes("resolve") || act.includes("dismiss"))
-      return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-    return "bg-slate-500/10 text-slate-400 border-slate-500/20";
+      return "bg-[#4B63D2]/10 text-[#4B63D2] border-[#4B63D2]/30 font-bold";
+    return "bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7] font-medium";
   };
 
   return (
@@ -322,21 +322,21 @@ export default function Admin() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-xl backdrop-blur-md transition-all duration-300 ${
             toastMessage.type === "success"
-              ? "bg-emerald-950/90 border-emerald-800/80 text-emerald-200"
-              : "bg-rose-950/90 border-rose-800/80 text-rose-200"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
           {toastMessage.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
           )}
-          <span className="text-sm font-medium">{toastMessage.text}</span>
+          <span className="text-sm font-semibold">{toastMessage.text}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-2 text-slate-400 hover:text-white transition-colors"
+            className="ml-2 text-[#5851A4] hover:text-[#1E2746] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -344,22 +344,21 @@ export default function Admin() {
       )}
 
       {/* Page Header */}
-      <div className="bg-slate-950/70 border border-slate-800/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
         <div className="space-y-2 z-10">
           <div className="flex items-center gap-3">
-            <span className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <span className="p-2.5 rounded-2xl bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#4B63D2]">
               <Shield className="w-6 h-6" />
             </span>
-            <h2 className="text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-2xl font-black text-[#1E2746] tracking-tight">
               Admin Moderation Console
             </h2>
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="px-3 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live System Control
             </span>
           </div>
-          <p className="text-slate-400 text-sm max-w-2xl">
+          <p className="text-[#5851A4] text-sm max-w-2xl font-medium">
             Complete platform management: audit security events, process flagged
             content reports, and manage user roles & privileges.
           </p>
@@ -369,10 +368,10 @@ export default function Admin() {
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing || loading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF9FD] hover:bg-white border border-[#D5CBEE] text-[#1E2746] text-sm font-bold transition-all duration-200 disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw
-              className={`w-4 h-4 ${refreshing ? "animate-spin text-indigo-400" : ""}`}
+              className={`w-4 h-4 ${refreshing ? "animate-spin text-[#4B63D2]" : "text-[#5851A4]"}`}
             />
             <span>{refreshing ? "Refreshing..." : "Refresh All"}</span>
           </button>
@@ -381,15 +380,15 @@ export default function Admin() {
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-rose-950/40 border border-rose-800/60 rounded-xl p-4 flex items-start gap-3 text-rose-200">
-          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          <div className="flex-1 text-sm">
-            <p className="font-semibold text-rose-300">Administrative Error</p>
-            <p className="text-rose-200/80 mt-0.5">{error}</p>
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-start gap-3 text-rose-700">
+          <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <div className="flex-1 text-sm font-medium">
+            <p className="font-bold text-rose-800">Administrative Error</p>
+            <p className="text-rose-700 mt-0.5">{error}</p>
           </div>
           <button
             onClick={() => fetchData()}
-            className="text-xs px-3 py-1 bg-rose-900/60 hover:bg-rose-900 border border-rose-700 rounded-lg text-rose-100 font-medium transition-colors"
+            className="text-xs px-3 py-1 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl text-rose-800 font-bold transition-colors cursor-pointer"
           >
             Retry
           </button>
@@ -397,13 +396,13 @@ export default function Admin() {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-1">
+      <div className="flex items-center gap-2 border-b border-[#EAE4F7] pb-1">
         <button
           onClick={() => setActiveTab("overview")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
             activeTab === "overview"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              ? "bg-[#4B63D2] text-white shadow-sm"
+              : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
           }`}
         >
           <Users className="w-4 h-4" />
@@ -412,17 +411,17 @@ export default function Admin() {
 
         <button
           onClick={() => setActiveTab("moderation")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
             activeTab === "moderation"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              ? "bg-[#4B63D2] text-white shadow-sm"
+              : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
           }`}
         >
           <Flag className="w-4 h-4" />
           <span>Content Moderation</span>
           {flaggedPosts.filter((f) => f.status.toLowerCase() === "pending")
             .length > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-500 text-white">
+            <span className="px-2 py-0.5 text-xs font-black rounded-full bg-rose-500 text-white">
               {
                 flaggedPosts.filter((f) => f.status.toLowerCase() === "pending")
                   .length
@@ -433,10 +432,10 @@ export default function Admin() {
 
         <button
           onClick={() => setActiveTab("audit")}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 cursor-pointer ${
             activeTab === "audit"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              ? "bg-[#4B63D2] text-white shadow-sm"
+              : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
           }`}
         >
           <Terminal className="w-4 h-4" />
@@ -449,128 +448,128 @@ export default function Admin() {
         <div className="space-y-8 animate-fade-in">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5851A4]">
                   Total Users
                 </span>
-                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-2.5 rounded-2xl bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2]">
                   <Users className="w-5 h-5" />
                 </div>
               </div>
               <div className="mt-4">
                 {loading ? (
-                  <div className="h-8 w-24 bg-slate-900 animate-pulse rounded" />
+                  <div className="h-8 w-24 bg-[#FAF9FD] animate-pulse rounded-xl" />
                 ) : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                    <span className="text-3xl font-black text-[#1E2746] tracking-tight">
                       {stats?.total_users ?? users.length}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-[#5851A4] font-medium">
                       registered
                     </span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>Active Accounts</span>
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <div className="mt-3 flex items-center justify-between text-xs text-[#5851A4] border-t border-[#EAE4F7] pt-3">
+                <span className="font-medium">Active Accounts</span>
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   {stats?.active_users ??
                     users.filter((u) => u.is_active).length}
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5851A4]">
                   Total Posts
                 </span>
-                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-2.5 rounded-2xl bg-[#5851A4]/10 border border-[#5851A4]/20 text-[#5851A4]">
                   <FileText className="w-5 h-5" />
                 </div>
               </div>
               <div className="mt-4">
                 {loading ? (
-                  <div className="h-8 w-24 bg-slate-900 animate-pulse rounded" />
+                  <div className="h-8 w-24 bg-[#FAF9FD] animate-pulse rounded-xl" />
                 ) : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                    <span className="text-3xl font-black text-[#1E2746] tracking-tight">
                       {stats?.total_posts ?? 0}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-[#5851A4] font-medium">
                       publications
                     </span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>Posts Today</span>
-                <span className="text-purple-400 font-semibold">
+              <div className="mt-3 flex items-center justify-between text-xs text-[#5851A4] border-t border-[#EAE4F7] pt-3">
+                <span className="font-medium">Posts Today</span>
+                <span className="text-[#5851A4] font-bold">
                   +{stats?.daily_activity?.posts_today ?? 0}
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5851A4]">
                   Active Users
                 </span>
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700">
                   <UserCheck className="w-5 h-5" />
                 </div>
               </div>
               <div className="mt-4">
                 {loading ? (
-                  <div className="h-8 w-24 bg-slate-900 animate-pulse rounded" />
+                  <div className="h-8 w-24 bg-[#FAF9FD] animate-pulse rounded-xl" />
                 ) : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                    <span className="text-3xl font-black text-[#1E2746] tracking-tight">
                       {stats?.active_users ??
                         users.filter((u) => u.is_active).length}
                     </span>
-                    <span className="text-xs text-emerald-500 font-medium">
+                    <span className="text-xs text-emerald-700 font-bold">
                       active
                     </span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>Signups Today</span>
-                <span className="text-indigo-400 font-semibold">
+              <div className="mt-3 flex items-center justify-between text-xs text-[#5851A4] border-t border-[#EAE4F7] pt-3">
+                <span className="font-medium">Signups Today</span>
+                <span className="text-[#4B63D2] font-bold">
                   +{stats?.daily_activity?.users_today ?? 0}
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 relative overflow-hidden group hover:border-slate-700/80 transition-all duration-300">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 relative overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5851A4]">
                   Daily Activity
                 </span>
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-110 transition-transform duration-300">
+                <div className="p-2.5 rounded-2xl bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#5851A4]">
                   <Activity className="w-5 h-5" />
                 </div>
               </div>
               <div className="mt-4">
                 {loading ? (
-                  <div className="h-8 w-24 bg-slate-900 animate-pulse rounded" />
+                  <div className="h-8 w-24 bg-[#FAF9FD] animate-pulse rounded-xl" />
                 ) : (
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                    <span className="text-3xl font-black text-[#1E2746] tracking-tight">
                       {stats?.daily_activity?.actions_today ?? 0}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-[#5851A4] font-medium">
                       events
                     </span>
                   </div>
                 )}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400 border-t border-slate-900 pt-3">
-                <span>System Status</span>
-                <span className="text-emerald-400 font-medium flex items-center gap-1">
+              <div className="mt-3 flex items-center justify-between text-xs text-[#5851A4] border-t border-[#EAE4F7] pt-3">
+                <span className="font-medium">System Status</span>
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
                   Healthy
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
@@ -579,25 +578,25 @@ export default function Admin() {
           </div>
 
           {/* User Management Table */}
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-6 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">
+                <h3 className="text-lg font-black text-[#1E2746] tracking-tight">
                   User Directory & Governance
                 </h3>
-                <p className="text-slate-400 text-xs mt-0.5">
+                <p className="text-[#5851A4] text-xs mt-0.5 font-medium">
                   Manage user status, roles, and ban account access.
                 </p>
               </div>
 
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#9188BE] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search user by email or ID..."
                   value={userSearchQuery}
                   onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-9 pr-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-colors font-medium"
                 />
               </div>
             </div>
@@ -605,7 +604,7 @@ export default function Admin() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-900/50 border-b border-slate-800/80 text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                  <tr className="bg-[#FAF9FD] border-b border-[#EAE4F7] text-[#5851A4] text-xs uppercase tracking-wider font-bold">
                     <th className="py-3.5 px-6">User ID</th>
                     <th className="py-3.5 px-6">Account Email</th>
                     <th className="py-3.5 px-6">Role</th>
@@ -614,27 +613,27 @@ export default function Admin() {
                     <th className="py-3.5 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/80 text-xs">
+                <tbody className="divide-y divide-[#EAE4F7] text-xs">
                   {loading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <tr key={idx} className="animate-pulse">
                         <td className="py-4 px-6">
-                          <div className="h-4 w-12 bg-slate-900 rounded" />
+                          <div className="h-4 w-12 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-40 bg-slate-900 rounded" />
+                          <div className="h-4 w-40 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                          <div className="h-4 w-16 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                          <div className="h-4 w-16 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                          <div className="h-4 w-24 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <div className="h-4 w-20 bg-slate-900 rounded ml-auto" />
+                          <div className="h-4 w-20 bg-[#FAF9FD] rounded ml-auto" />
                         </td>
                       </tr>
                     ))
@@ -642,10 +641,10 @@ export default function Admin() {
                     <tr>
                       <td
                         colSpan={6}
-                        className="py-12 text-center text-slate-500"
+                        className="py-12 text-center text-[#5851A4]"
                       >
-                        <Users className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                        <p className="font-medium text-slate-400 text-sm">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-[#B9B1D9]" />
+                        <p className="font-bold text-[#1E2746] text-sm">
                           No users found
                         </p>
                       </td>
@@ -659,42 +658,42 @@ export default function Admin() {
                       return (
                         <tr
                           key={user.id}
-                          className="hover:bg-slate-900/40 transition-colors"
+                          className="hover:bg-[#FAF9FD] transition-colors"
                         >
-                          <td className="py-4 px-6 font-mono text-slate-400 font-medium">
+                          <td className="py-4 px-6 font-mono text-[#5851A4] font-bold">
                             #{user.id}
                           </td>
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs uppercase shrink-0">
+                              <div className="w-8 h-8 rounded-2xl bg-[#C8B6E2]/30 border border-[#C8B6E2] flex items-center justify-center text-[#4B63D2] font-black text-xs uppercase shrink-0">
                                 {user.email.charAt(0)}
                               </div>
-                              <span className="font-medium text-white">
+                              <span className="font-bold text-[#1E2746]">
                                 {user.email}
                               </span>
                             </div>
                           </td>
                           <td className="py-4 px-6">
                             <span
-                              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border ${role.color}`}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] border ${role.color}`}
                             >
                               {role.label}
                             </span>
                           </td>
                           <td className="py-4 px-6">
                             {user.is_active ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 Active
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                 Banned
                               </span>
                             )}
                           </td>
-                          <td className="py-4 px-6 text-slate-400 font-mono">
+                          <td className="py-4 px-6 text-[#5851A4] font-medium">
                             {user.created_at
                               ? new Date(user.created_at).toLocaleDateString()
                               : "N/A"}
@@ -704,10 +703,10 @@ export default function Admin() {
                               <button
                                 onClick={() => handleBanToggle(user)}
                                 disabled={isPendingAction}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 ${
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
                                   user.is_active
-                                    ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
-                                    : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-300"
+                                    ? "bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800"
+                                    : "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800"
                                 }`}
                               >
                                 {isPendingAction ? (
@@ -728,7 +727,7 @@ export default function Admin() {
                               <button
                                 onClick={() => setUserToDelete(user)}
                                 disabled={isPendingAction}
-                                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 transition-all duration-200"
+                                className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 transition-all duration-200 cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -749,28 +748,28 @@ export default function Admin() {
       {activeTab === "moderation" && (
         <div className="space-y-6 animate-fade-in">
           {/* Moderation Controls Header */}
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-lg font-black text-[#1E2746] tracking-tight flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-[#4B63D2]" />
                 Content Moderation Panel
               </h3>
-              <p className="text-slate-400 text-xs mt-0.5">
+              <p className="text-[#5851A4] text-xs mt-0.5 font-medium">
                 Review flagged posts, take administrative action, or dismiss
                 policy violation flags.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
-              <Filter className="w-3.5 h-3.5 text-slate-400 ml-2" />
+            <div className="flex items-center gap-2 bg-[#FAF9FD] p-1.5 rounded-2xl border border-[#D5CBEE]">
+              <Filter className="w-3.5 h-3.5 text-[#5851A4] ml-2" />
               {["all", "pending", "resolved", "dismissed"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setModerationFilterStatus(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-150 cursor-pointer ${
                     moderationFilterStatus === status
-                      ? "bg-indigo-600 text-white"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[#4B63D2] text-white shadow-sm"
+                      : "text-[#5851A4] hover:text-[#1E2746]"
                   }`}
                 >
                   {status}
@@ -785,20 +784,20 @@ export default function Admin() {
               Array.from({ length: 3 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 animate-pulse space-y-3"
+                  className="bg-white border border-[#EAE4F7] rounded-3xl p-6 animate-pulse space-y-3 shadow-sm"
                 >
-                  <div className="h-4 w-48 bg-slate-900 rounded" />
-                  <div className="h-16 w-full bg-slate-900 rounded" />
-                  <div className="h-8 w-32 bg-slate-900 rounded ml-auto" />
+                  <div className="h-4 w-48 bg-[#FAF9FD] rounded" />
+                  <div className="h-16 w-full bg-[#FAF9FD] rounded" />
+                  <div className="h-8 w-32 bg-[#FAF9FD] rounded ml-auto" />
                 </div>
               ))
             ) : filteredFlaggedPosts.length === 0 ? (
-              <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-500">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400/80 mx-auto mb-3" />
-                <p className="font-semibold text-white text-base">
+              <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center text-[#5851A4] shadow-sm">
+                <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-3" />
+                <p className="font-black text-[#1E2746] text-base">
                   No Flagged Posts Found
                 </p>
-                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                <p className="text-xs text-[#5851A4] max-w-md mx-auto mt-1 font-medium">
                   {moderationFilterStatus === "all"
                     ? "No community content reports or flagged posts are currently recorded."
                     : `No flagged content reports with status "${moderationFilterStatus}".`}
@@ -812,22 +811,22 @@ export default function Admin() {
                 return (
                   <div
                     key={flag.id}
-                    className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 space-y-4 hover:border-slate-700/80 transition-all duration-200 shadow-lg"
+                    className="bg-white border border-[#EAE4F7] rounded-3xl p-6 space-y-4 hover:border-[#C8B6E2] transition-all duration-200 shadow-sm"
                   >
                     {/* Header info */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-900 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EAE4F7] pb-3">
                       <div className="flex items-center gap-3">
-                        <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-900 text-slate-300 border border-slate-800">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#FAF9FD] text-[#4B63D2] border border-[#EAE4F7]">
                           Flag #{flag.id}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-[#5851A4] font-medium">
                           Post ID:{" "}
-                          <strong className="text-white">
+                          <strong className="text-[#1E2746]">
                             #{flag.post_id}
                           </strong>
                         </span>
-                        <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                        <span className="text-xs text-[#9188BE] font-mono flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[#9188BE]" />
                           {new Date(flag.created_at).toLocaleString()}
                         </span>
                       </div>
@@ -835,17 +834,17 @@ export default function Admin() {
                       {/* Status Badge */}
                       <div>
                         {flag.status.toLowerCase() === "pending" ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                             Pending Review
                           </span>
                         ) : flag.status.toLowerCase() === "resolved" ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
                             <Check className="w-3.5 h-3.5" />
                             Resolved
                           </span>
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20 flex items-center gap-1.5">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] flex items-center gap-1.5">
                             Dismissed
                           </span>
                         )}
@@ -853,17 +852,17 @@ export default function Admin() {
                     </div>
 
                     {/* Report Reason */}
-                    <div className="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3 text-xs text-rose-200 flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3.5 text-xs text-rose-800 flex items-start gap-2.5 font-medium">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold text-rose-300">
+                        <span className="font-bold text-rose-900">
                           Flag Reason:
                         </span>{" "}
                         {flag.reason ||
                           "Flagged for community guideline check."}
-                        <div className="text-[11px] text-slate-400 mt-1">
+                        <div className="text-[11px] text-[#5851A4] mt-1">
                           Reported by:{" "}
-                          <span className="text-slate-300 font-medium">
+                          <span className="text-[#1E2746] font-bold">
                             {flag.flagger?.email || `User #${flag.flagger_id}`}
                           </span>
                         </div>
@@ -871,24 +870,24 @@ export default function Admin() {
                     </div>
 
                     {/* Post Content Details */}
-                    <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-2">
-                      <div className="text-xs text-slate-400 flex items-center justify-between">
+                    <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-4 space-y-2">
+                      <div className="text-xs text-[#5851A4] flex items-center justify-between">
                         <span>
                           Post Author:{" "}
-                          <strong className="text-slate-200">
+                          <strong className="text-[#1E2746] font-bold">
                             {flag.post?.author?.email ||
                               `User #${flag.post?.author_id || "Unknown"}`}
                           </strong>
                         </span>
                         {flag.post?.created_at && (
-                          <span className="text-[11px] font-mono">
+                          <span className="text-[11px] font-mono text-[#9188BE]">
                             {new Date(
                               flag.post.created_at,
                             ).toLocaleDateString()}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-200 italic bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+                      <p className="text-sm text-[#1E2746] italic bg-white p-3 rounded-xl border border-[#EAE4F7] font-medium leading-relaxed">
                         "
                         {flag.post?.content ||
                           "Post content preview unavailable (or post removed)."}
@@ -899,7 +898,7 @@ export default function Admin() {
                           <img
                             src={getMediaUrl(flag.post.image_url)}
                             alt="Flagged media"
-                            className="max-h-48 rounded-lg object-cover border border-slate-800"
+                            className="max-h-48 rounded-xl object-cover border border-[#EAE4F7]"
                           />
                         </div>
                       )}
@@ -914,7 +913,7 @@ export default function Admin() {
                               handleResolveFlag(flag.id, "dismissed")
                             }
                             disabled={isPendingAction}
-                            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                            className="px-3.5 py-2 rounded-xl bg-[#FAF9FD] hover:bg-white border border-[#D5CBEE] text-[#5851A4] hover:text-[#1E2746] text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
                           >
                             {isPendingAction ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -929,7 +928,7 @@ export default function Admin() {
                               handleResolveFlag(flag.id, "resolved")
                             }
                             disabled={isPendingAction}
-                            className="px-3.5 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                            className="px-3.5 py-2 rounded-xl bg-[#4B63D2]/10 hover:bg-[#4B63D2]/20 border border-[#4B63D2]/30 text-[#4B63D2] text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
                           >
                             {isPendingAction ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -949,7 +948,7 @@ export default function Admin() {
                           })
                         }
                         disabled={isPendingAction}
-                        className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 shadow-lg shadow-rose-600/20"
+                        className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-sm cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Remove Post as Admin</span>
@@ -966,28 +965,28 @@ export default function Admin() {
       {/* TAB 3: SECURITY AUDIT LOGS VIEW */}
       {activeTab === "audit" && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden shadow-sm">
             {/* Header toolbar */}
-            <div className="p-6 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-6 border-b border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                  <Terminal className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-lg font-black text-[#1E2746] tracking-tight flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-[#4B63D2]" />
                   Security Audit Logs
                 </h3>
-                <p className="text-slate-400 text-xs mt-0.5">
+                <p className="text-[#5851A4] text-xs mt-0.5 font-medium">
                   Immutable record of administrative actions, moderation events,
                   and security events.
                 </p>
               </div>
 
               <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#9188BE] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Filter by action, actor, target, IP..."
                   value={auditSearchQuery}
                   onChange={(e) => setAuditSearchQuery(e.target.value)}
-                  className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-9 pr-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-colors font-medium"
                 />
               </div>
             </div>
@@ -996,7 +995,7 @@ export default function Admin() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-900/50 border-b border-slate-800/80 text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                  <tr className="bg-[#FAF9FD] border-b border-[#EAE4F7] text-[#5851A4] text-xs uppercase tracking-wider font-bold">
                     <th className="py-3.5 px-6">Timestamp</th>
                     <th className="py-3.5 px-6">Actor ID</th>
                     <th className="py-3.5 px-6">Action Event</th>
@@ -1004,24 +1003,24 @@ export default function Admin() {
                     <th className="py-3.5 px-6">IP Address</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-900/80 text-xs">
+                <tbody className="divide-y divide-[#EAE4F7] text-xs">
                   {loading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <tr key={idx} className="animate-pulse">
                         <td className="py-4 px-6">
-                          <div className="h-4 w-32 bg-slate-900 rounded" />
+                          <div className="h-4 w-32 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-16 bg-slate-900 rounded" />
+                          <div className="h-4 w-16 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                          <div className="h-4 w-24 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-48 bg-slate-900 rounded" />
+                          <div className="h-4 w-48 bg-[#FAF9FD] rounded" />
                         </td>
                         <td className="py-4 px-6">
-                          <div className="h-4 w-24 bg-slate-900 rounded" />
+                          <div className="h-4 w-24 bg-[#FAF9FD] rounded" />
                         </td>
                       </tr>
                     ))
@@ -1029,10 +1028,10 @@ export default function Admin() {
                     <tr>
                       <td
                         colSpan={5}
-                        className="py-12 text-center text-slate-500"
+                        className="py-12 text-center text-[#5851A4]"
                       >
-                        <Terminal className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                        <p className="font-medium text-slate-400 text-sm">
+                        <Terminal className="w-8 h-8 mx-auto mb-2 text-[#B9B1D9]" />
+                        <p className="font-bold text-[#1E2746] text-sm">
                           No audit logs found
                         </p>
                       </td>
@@ -1044,33 +1043,33 @@ export default function Admin() {
                       return (
                         <tr
                           key={log.id}
-                          className="hover:bg-slate-900/40 transition-colors"
+                          className="hover:bg-[#FAF9FD] transition-colors"
                         >
-                          <td className="py-3.5 px-6 font-mono text-slate-400">
+                          <td className="py-3.5 px-6 font-mono text-[#5851A4]">
                             {new Date(log.created_at).toLocaleString()}
                           </td>
                           <td className="py-3.5 px-6">
                             {log.actor_id ? (
-                              <span className="font-mono text-indigo-400 font-semibold">
+                              <span className="font-mono text-[#4B63D2] font-bold">
                                 User #{log.actor_id}
                               </span>
                             ) : (
-                              <span className="text-slate-500 italic">
+                              <span className="text-[#9188BE] italic">
                                 System
                               </span>
                             )}
                           </td>
                           <td className="py-3.5 px-6">
                             <span
-                              className={`px-2.5 py-1 rounded font-mono text-[11px] font-bold border uppercase tracking-wider ${badgeStyle}`}
+                              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] border uppercase tracking-wider ${badgeStyle}`}
                             >
                               {log.action}
                             </span>
                           </td>
-                          <td className="py-3.5 px-6 text-slate-300 font-medium">
+                          <td className="py-3.5 px-6 text-[#1E2746] font-bold">
                             {log.target || "—"}
                           </td>
-                          <td className="py-3.5 px-6 font-mono text-slate-400">
+                          <td className="py-3.5 px-6 font-mono text-[#5851A4]">
                             {log.ip_address || "127.0.0.1"}
                           </td>
                         </tr>
@@ -1081,7 +1080,7 @@ export default function Admin() {
               </table>
             </div>
 
-            <div className="p-4 bg-slate-900/30 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <div className="p-4 bg-[#FAF9FD] border-t border-[#EAE4F7] flex items-center justify-between text-xs text-[#5851A4] font-medium">
               <span>Showing {filteredAuditLogs.length} audit records</span>
               <span>Logged via FastAPI Middleware & Admin Audit System</span>
             </div>
@@ -1091,20 +1090,20 @@ export default function Admin() {
 
       {/* Delete User Confirmation Modal */}
       {userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center gap-3 text-rose-400">
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E2746]/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 border border-rose-200">
                 <AlertTriangle className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-black text-[#1E2746]">
                 Delete User Account
               </h3>
             </div>
 
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-[#5851A4] leading-relaxed font-medium">
               Are you sure you want to permanently delete user{" "}
-              <strong className="text-white">{userToDelete.email}</strong> (ID:
+              <strong className="text-[#1E2746]">{userToDelete.email}</strong> (ID:
               #{userToDelete.id})? This action cannot be undone and will purge
               all associated profile data.
             </p>
@@ -1113,14 +1112,14 @@ export default function Admin() {
               <button
                 onClick={() => setUserToDelete(null)}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#FAF9FD] hover:bg-white border border-[#D5CBEE] text-[#5851A4] text-xs font-bold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteUserConfirm}
                 disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>{deleting ? "Deleting..." : "Delete User"}</span>
@@ -1132,20 +1131,20 @@ export default function Admin() {
 
       {/* Delete Post Confirmation Modal */}
       {postToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div className="flex items-center gap-3 text-rose-400">
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E2746]/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="p-2.5 rounded-2xl bg-rose-50 border border-rose-200">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-black text-[#1E2746]">
                 Remove Post as Admin
               </h3>
             </div>
 
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-[#5851A4] leading-relaxed font-medium">
               Are you sure you want to remove post{" "}
-              <strong className="text-white">#{postToRemove.postId}</strong>?
+              <strong className="text-[#1E2746]">#{postToRemove.postId}</strong>?
               This action will permanently remove the publication from the feed
               and create a security audit log event.
             </p>
@@ -1154,14 +1153,14 @@ export default function Admin() {
               <button
                 onClick={() => setPostToRemove(null)}
                 disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#FAF9FD] hover:bg-white border border-[#D5CBEE] text-[#5851A4] text-xs font-bold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRemovePostConfirm}
                 disabled={deleting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
               >
                 {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 <span>{deleting ? "Removing..." : "Remove Post"}</span>

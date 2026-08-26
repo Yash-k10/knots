@@ -20,9 +20,11 @@ from app.core.database import Base
 class PostVisibility(str, enum.Enum):
     """Controls who can see a post."""
 
-    PUBLIC = "PUBLIC"  # Visible to all users
-    CONNECTIONS = "CONNECTIONS"  # Visible only to connections
-    PRIVATE = "PRIVATE"  # Visible only to the author
+    PUBLIC = "PUBLIC"  # For Everyone (Students, Alumni, Faculty, Admin, Recruiters)
+    STUDENTS_ONLY = "STUDENTS_ONLY"  # For Students only
+    STUDENTS_AND_ALUMNI = "STUDENTS_AND_ALUMNI"  # For Students & Alumni
+    CONNECTIONS = "CONNECTIONS"  # Visible only to connections (legacy)
+    PRIVATE = "PRIVATE"  # Visible only to the author (legacy)
 
 
 class Post(Base):

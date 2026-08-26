@@ -38,8 +38,12 @@ async def get_feed(
 ):
     """Retrieve the post feed (newest first, with like/comment counts)."""
     service = PostService(db)
+    user_role = current_user.role.name if current_user.role else ""
     posts = await service.get_feed(
-        skip=skip, limit=limit, current_user_id=current_user.id
+        skip=skip,
+        limit=limit,
+        current_user_id=current_user.id,
+        user_role=user_role,
     )
     return APIResponse(data=posts)
 
@@ -104,8 +108,9 @@ async def get_post(
 ):
     """Retrieve a single post with full details (comments, likes, author)."""
     service = PostService(db)
+    user_role = current_user.role.name if current_user.role else ""
     post_detail = await service.get_post_detail(
-        post_id, current_user_id=current_user.id
+        post_id, current_user_id=current_user.id, user_role=user_role
     )
     return APIResponse(data=post_detail)
 
@@ -129,9 +134,10 @@ async def delete_post(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a post (author only)."""
+    """Delete a post (author, Admin, or Super Admin)."""
     service = PostService(db)
-    await service.delete_post(post_id, current_user.id)
+    user_role = current_user.role.name if current_user.role else ""
+    await service.delete_post(post_id, current_user.id, user_role=user_role)
     return APIResponse(message="Post deleted successfully")
 
 
@@ -198,9 +204,12 @@ async def delete_comment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a comment (comment author only)."""
+    """Delete a comment (comment author, post owner, Admin, or Super Admin)."""
     service = PostService(db)
-    await service.delete_comment(post_id, comment_id, current_user.id)
+    user_role = current_user.role.name if current_user.role else ""
+    await service.delete_comment(
+        post_id, comment_id, current_user.id, user_role=user_role
+    )
     return APIResponse(message="Comment deleted")
 
 

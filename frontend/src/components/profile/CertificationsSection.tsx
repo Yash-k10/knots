@@ -119,18 +119,18 @@ export default function CertificationsSection({
   };
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <Award className="h-5 w-5 text-indigo-400" />
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
+        <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+          <Award className="h-5 w-5 text-[#4B63D2]" />
           Certifications
         </h3>
         {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-4 w-4 text-[#4B63D2]" />
             Edit Certifications
           </button>
         )}
@@ -141,47 +141,47 @@ export default function CertificationsSection({
           {/* Add / Edit Certification Entry Form */}
           <form
             onSubmit={handleAddOrUpdateEntry}
-            className="bg-slate-900/40 border border-slate-900 rounded-xl p-4 space-y-4"
+            className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-4 space-y-4"
           >
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-[#1E2746] uppercase tracking-wider">
               {editIndex !== null
                 ? "Edit Certification"
                 : "Add New Certification"}
             </h4>
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Certification Name <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Certification Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. AWS Certified Solutions Architect"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-700 focus:outline-none transition animate-none"
+                  className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
                   required
                 />
                 {formErrors.name && (
-                  <p className="text-red-500 text-[10px] mt-1">
+                  <p className="text-rose-600 text-[10px] mt-1 font-bold">
                     {formErrors.name}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  Issuing Organization <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Issuing Organization <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={issuer}
                   onChange={(e) => setIssuer(e.target.value)}
                   placeholder="e.g. Amazon Web Services"
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-700 focus:outline-none transition"
+                  className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
                   required
                 />
                 {formErrors.issuer && (
-                  <p className="text-red-500 text-[10px] mt-1">
+                  <p className="text-rose-600 text-[10px] mt-1 font-bold">
                     {formErrors.issuer}
                   </p>
                 )}
@@ -193,14 +193,14 @@ export default function CertificationsSection({
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-3 py-1.5 border border-slate-800 rounded-xl text-slate-400 hover:bg-slate-900 transition text-xs font-medium"
+                  className="px-3 py-1.5 border border-[#EAE4F7] rounded-xl text-[#5851A4] hover:bg-white transition text-xs font-bold"
                 >
                   Cancel Edit
                 </button>
               )}
               <button
                 type="submit"
-                className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-200 text-xs font-semibold transition"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] rounded-xl text-white text-xs font-bold transition shadow-sm"
               >
                 <Plus className="h-3.5 w-3.5" />
                 {editIndex !== null ? "Update" : "Add to List"}
@@ -214,26 +214,26 @@ export default function CertificationsSection({
               certifications.map((cert, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between bg-slate-900/20 border border-slate-800 rounded-xl p-3 text-xs"
+                  className="flex items-center justify-between bg-white border border-[#EAE4F7] rounded-xl p-3 text-xs shadow-sm"
                 >
                   <div className="space-y-0.5">
-                    <p className="font-bold text-white leading-snug">
+                    <p className="font-bold text-[#1E2746] leading-snug">
                       {cert.name}
                     </p>
-                    <p className="text-slate-400 text-[11px]">{cert.issuer}</p>
+                    <p className="text-[#5851A4] text-[11px] font-medium">{cert.issuer}</p>
                   </div>
                   <div className="flex gap-1">
                     <button
                       type="button"
                       onClick={() => startEditEntry(idx)}
-                      className="p-1 text-slate-400 hover:text-white transition"
+                      className="p-1 text-[#9188BE] hover:text-[#1E2746] transition"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemoveEntry(idx)}
-                      className="p-1 text-slate-400 hover:text-red-450 transition"
+                      className="p-1 text-[#9188BE] hover:text-rose-500 transition"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -241,17 +241,17 @@ export default function CertificationsSection({
                 </div>
               ))
             ) : (
-              <p className="text-slate-650 text-xs italic text-center py-4">
+              <p className="text-[#9188BE] text-xs italic text-center py-4">
                 No certifications added. Add one above!
               </p>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="flex justify-end gap-3 border-t border-slate-800 pt-3">
+          <div className="flex justify-end gap-3 border-t border-[#EAE4F7] pt-3">
             <button
               onClick={handleEditToggle}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746] transition text-xs font-bold cursor-pointer"
               disabled={isSaving}
             >
               <X className="h-4 w-4" />
@@ -259,10 +259,10 @@ export default function CertificationsSection({
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-medium text-xs transition shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:opacity-90 font-bold text-xs transition shadow-md shadow-[#4B63D2]/25 cursor-pointer"
               disabled={isSaving}
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-[#FFD21A]" />
               {isSaving ? "Saving..." : "Save Certifications"}
             </button>
           </div>
@@ -274,23 +274,23 @@ export default function CertificationsSection({
             certifications.map((cert, idx) => (
               <div
                 key={idx}
-                className="flex gap-3 items-start bg-slate-900/10 border border-slate-900/40 rounded-xl p-3 animate-in fade-in duration-200"
+                className="flex gap-3 items-start bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl p-4 animate-in fade-in duration-200 shadow-sm"
               >
-                <div className="mt-0.5 bg-slate-900 border border-slate-800 p-1.5 rounded-lg text-indigo-400">
+                <div className="mt-0.5 bg-white border border-[#EAE4F7] p-2 rounded-xl text-[#4B63D2] shadow-sm">
                   <Award className="h-4 w-4" />
                 </div>
                 <div className="space-y-0.5">
-                  <h4 className="font-semibold text-white text-sm leading-tight">
+                  <h4 className="font-bold text-[#1E2746] text-sm leading-tight">
                     {cert.name}
                   </h4>
-                  <p className="text-slate-400 text-xs">{cert.issuer}</p>
+                  <p className="text-[#5851A4] text-xs font-semibold">{cert.issuer}</p>
                 </div>
               </div>
             ))
           ) : (
             <div className="text-center py-4 w-full">
-              <Award className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-500 text-xs">
+              <Award className="h-8 w-8 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-xs font-medium">
                 No certifications added yet.
               </p>
             </div>

@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -27,6 +26,19 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     role_id: int
+    otp: str
+
+    # 1. Contact Details
+    phone_number: str | None = None
+    github_profile: str | None = None
+    linkedin_profile: str | None = None
+    leetcode_profile: str | None = None
+    hackerrank_profile: str | None = None
+
+    # 2. Educational Qualifications
+    tenth_percentage: float | None = None
+    twelfth_or_diploma_percentage: float | None = None
+    gpa: float | None = None
 
     @field_validator("email")
     @classmethod
@@ -35,6 +47,60 @@ class UserRegister(BaseModel):
         if not email.endswith("@sbjit.edu.in"):
             raise ValueError(
                 "Only college email addresses (@sbjit.edu.in) are allowed to register"
+            )
+        return email
+
+
+class SendOTPRequest(BaseModel):
+    email: EmailStr
+    purpose: str = "login"  # "login" | "reset" | "register"
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        email = v.strip().lower()
+        if not email.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are authorized"
+            )
+        return email
+
+
+class SendOTPResponse(BaseModel):
+    message: str
+    email: str
+    expires_in_seconds: int = 600
+    demo_otp: str | None = None  # Returned for instant dev/demo access
+
+
+class LoginOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    role: str = "Student"
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        email = v.strip().lower()
+        if not email.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are authorized"
+            )
+        return email
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        email = v.strip().lower()
+        if not email.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are authorized"
             )
         return email
 

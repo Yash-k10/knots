@@ -31,6 +31,7 @@ class TestConnectionService(unittest.IsolatedAsyncioTestCase):
             id=11, requester_id=1, addressee_id=2, status=ConnectionStatus.PENDING
         )
         self.service.repository.create.return_value = mock_conn
+        self.service.repository.get.return_value = mock_conn
 
         with unittest.mock.patch(
             "app.profiles.repository.profile.ProfileRepository.get_by_user_id",
@@ -48,10 +49,11 @@ class TestConnectionService(unittest.IsolatedAsyncioTestCase):
         mock_conn = Connection(
             id=15, requester_id=2, addressee_id=1, status=ConnectionStatus.PENDING
         )
-        self.service.repository.get.return_value = mock_conn
-        self.service.repository.update.return_value = Connection(
+        accepted_conn = Connection(
             id=15, requester_id=2, addressee_id=1, status=ConnectionStatus.ACCEPTED
         )
+        self.service.repository.get.side_effect = [mock_conn, accepted_conn]
+        self.service.repository.update.return_value = accepted_conn
 
         res = await self.service.accept_connection(15, user_id=1)
         self.assertEqual(res.status, ConnectionStatus.ACCEPTED)

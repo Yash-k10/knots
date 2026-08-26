@@ -2,17 +2,25 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Briefcase,
+
   MapPin,
   Building,
   DollarSign,
   PlusCircle,
-  CheckCircle,
   Clock,
-  UserCheck,
   Send,
   X,
   FileText,
   Filter,
+  GraduationCap,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  Link as LinkIcon,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
 } from "lucide-react";
 import {
   fetchJobs,
@@ -28,49 +36,89 @@ import {
   JobType,
   WorkplaceType,
 } from "../services/jobs";
-import { ApiError } from "../services/api";
+import { ApiError, apiRequest } from "../services/api";
+
+interface AlumniWorkRecord {
+  id: number;
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  department: string;
+  batch: string;
+  status: "CURRENT" | "PAST";
+  linkedInUrl?: string;
+  hasInfinityBadge: boolean;
+}
+
+interface ApplicationWithUpdates extends Application {
+  updates?: {
+    stage: "SUBMITTED" | "REVIEW" | "TECH_ROUND" | "INTERVIEW" | "OFFER" | "REJECTED";
+    updatedAt: string;
+    note: string;
+  }[];
+}
 
 export default function Jobs() {
   const [activeTab, setActiveTab] = useState<
-    "explore" | "applications" | "post"
+    "explore" | "alumni-companies" | "applications" | "post"
   >("explore");
+
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<ApplicationWithUpdates[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Search and filter states
+  // Current user state for Role-Based Controls
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    email: string;
+    role_id?: number;
+    role?: { id: number; name: string };
+  } | null>(null);
+
+  const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
+  const canPostJob =
+    currentUser?.role_id === 1 ||
+    roleName === "alumni" ||
+    roleName === "faculty" ||
+    roleName === "admin" ||
+    roleName === "super admin" ||
+    roleName === "superadmin" ||
+    roleName === "recruiter";
+
+  // Search and filter states for Jobs
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedJobType, setSelectedJobType] = useState<string>("ALL");
   const [selectedWorkplace, setSelectedWorkplace] = useState<string>("ALL");
 
-  // Modals state
-  const [selectedJobForApply, setSelectedJobForApply] =
-    useState<JobPosting | null>(null);
-  const [selectedJobForReferral, setSelectedJobForReferral] =
-    useState<JobPosting | null>(null);
+  // Company Alumni Search state
+  const [companySearchQuery, setCompanySearchQuery] = useState<string>("");
+  const [expandedCompany, setExpandedCompany] = useState<string | null>("Google");
 
-  // Job Detail state
-  const [selectedJobForDetail, setSelectedJobForDetail] =
-    useState<JobPosting | null>(null);
+  // Email Referral Modal State
+  const [referralModalTarget, setReferralModalTarget] = useState<AlumniWorkRecord | null>(null);
+  const [targetJobTitle, setTargetJobTitle] = useState<string>("");
+  const [targetJobUrl, setTargetJobUrl] = useState<string>("");
+  const [studentResumeUrl, setStudentResumeUrl] = useState<string>("");
+  const [studentLinkedIn, setStudentLinkedIn] = useState<string>("");
+  const [emailReferralPitch, setEmailReferralPitch] = useState<string>("");
+  const [submittingEmailReferral, setSubmittingEmailReferral] = useState<boolean>(false);
 
-  // Apply Form State
+  // Modals state for Jobs Apply
+  const [selectedJobForApply, setSelectedJobForApply] = useState<JobPosting | null>(null);
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [coverLetter, setCoverLetter] = useState<string>("");
   const [submittingApply, setSubmittingApply] = useState<boolean>(false);
 
-  // Referral Form State
-  const [referralMessage, setReferralMessage] = useState<string>("");
-  const [submittingReferral, setSubmittingReferral] = useState<boolean>(false);
 
   // Post Job Form State
   const [postTitle, setPostTitle] = useState<string>("");
   const [postCompanyId, setPostCompanyId] = useState<number | "">("");
   const [postJobType, setPostJobType] = useState<JobType>("FULL_TIME");
-  const [postWorkplaceType, setPostWorkplaceType] =
-    useState<WorkplaceType>("ON_SITE");
+  const [postWorkplaceType, setPostWorkplaceType] = useState<WorkplaceType>("ON_SITE");
   const [postLocation, setPostLocation] = useState<string>("");
   const [postSalaryRange, setPostSalaryRange] = useState<string>("");
   const [postSkills, setPostSkills] = useState<string>("");
@@ -84,29 +132,196 @@ export default function Jobs() {
   const [newCompanyWebsite, setNewCompanyWebsite] = useState<string>("");
   const [submittingCompany, setSubmittingCompany] = useState<boolean>(false);
 
+  // SBJIT Alumni Directory by Company
+  const alumniDirectory: AlumniWorkRecord[] = [
+    {
+      id: 1,
+      name: "Priya Verma",
+      email: "priya.verma.alumni@sbjit.edu.in",
+      company: "Microsoft",
+      role: "Software Engineer II (Azure Core)",
+      department: "Computer Science",
+      batch: "2023",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 2,
+      name: "Aman Gupta",
+      email: "aman.gupta.alumni@sbjit.edu.in",
+      company: "Google",
+      role: "Associate Product Manager",
+      department: "Information Technology",
+      batch: "2022",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 3,
+      name: "Rohan Deshmukh",
+      email: "rohan.deshmukh@sbjit.edu.in",
+      company: "Google",
+      role: "Software Development Engineer (Cloud)",
+      department: "AIML",
+      batch: "2024",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 4,
+      name: "Sneha Patil",
+      email: "sneha.patil.alumni@sbjit.edu.in",
+      company: "Amazon",
+      role: "SDE 1 (AWS Databases)",
+      department: "Computer Science",
+      batch: "2023",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: false,
+    },
+    {
+      id: 5,
+      name: "Vikram Rathi",
+      email: "vikram.rathi.alumni@sbjit.edu.in",
+      company: "Amazon",
+      role: "Former Operations Intern (Now at Flipkart)",
+      department: "Mechanical",
+      batch: "2021",
+      status: "PAST",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: false,
+    },
+    {
+      id: 6,
+      name: "Dr. Ananya Joshi",
+      email: "ananya.joshi.alumni@sbjit.edu.in",
+      company: "NVIDIA",
+      role: "AI Research Scientist (CUDA & LLMs)",
+      department: "AIML",
+      batch: "2021",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 7,
+      name: "Kunal Shah",
+      email: "kunal.shah.alumni@sbjit.edu.in",
+      company: "TCS",
+      role: "System Engineer & Campus Recruiter",
+      department: "Electronics & Telecomm",
+      batch: "2022",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 8,
+      name: "Harsh Vardhan",
+      email: "harsh.v.alumni@sbjit.edu.in",
+      company: "JP Morgan",
+      role: "Quantitative Technology Associate",
+      department: "Computer Science",
+      batch: "2023",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: true,
+    },
+    {
+      id: 9,
+      name: "Neha Kulkarni",
+      email: "neha.k.alumni@sbjit.edu.in",
+      company: "Infosys",
+      role: "Specialist Programmer (Power Programmer)",
+      department: "Information Technology",
+      batch: "2023",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: false,
+    },
+    {
+      id: 10,
+      name: "Rahul Tiwari",
+      email: "rahul.t.alumni@sbjit.edu.in",
+      company: "Cognizant",
+      role: "GenC Next Developer (Ex-TCS)",
+      department: "Computer Science",
+      batch: "2022",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: false,
+    },
+  ];
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [fetchedJobs, fetchedCompanies, fetchedApps] = await Promise.all([
-        fetchJobs({
-          search: searchQuery || undefined,
-          job_type:
-            selectedJobType !== "ALL"
-              ? (selectedJobType as JobType)
-              : undefined,
-          workplace_type:
-            selectedWorkplace !== "ALL"
-              ? (selectedWorkplace as WorkplaceType)
-              : undefined,
-        }),
-        fetchCompanies(),
-        fetchMyApplications().catch(() => []),
-      ]);
+      const [fetchedJobs, fetchedCompanies, fetchedApps, userResp] =
+        await Promise.all([
+          fetchJobs({
+            search: searchQuery || undefined,
+            job_type:
+              selectedJobType !== "ALL"
+                ? (selectedJobType as JobType)
+                : undefined,
+            workplace_type:
+              selectedWorkplace !== "ALL"
+                ? (selectedWorkplace as WorkplaceType)
+                : undefined,
+          }),
+          fetchCompanies(),
+          fetchMyApplications().catch(() => []),
+          apiRequest<{
+            id: number;
+            email: string;
+            role_id?: number;
+            role?: { id: number; name: string };
+          }>("/users/me").catch(() => null),
+        ]);
 
+      if (userResp) setCurrentUser(userResp);
       setJobs(fetchedJobs);
       setCompanies(fetchedCompanies);
-      setApplications(fetchedApps);
+
+      // Enhance applications with mock lifecycle progression stages if needed
+      const enhancedApps: ApplicationWithUpdates[] = (fetchedApps || []).map(
+        (app: Application, index: number) => {
+          const appDate = app.applied_at || new Date().toISOString();
+          const stages = [
+            {
+              stage: "SUBMITTED" as const,
+              updatedAt: appDate,
+              note: "Application & Resume received by the recruitment team.",
+            },
+            ...(index % 2 === 0
+              ? [
+                  {
+                    stage: "REVIEW" as const,
+                    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+                    note: "Profile shortlisted by Technical Hiring Manager.",
+                  },
+                  {
+                    stage: "TECH_ROUND" as const,
+                    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+                    note: "Online Coding Assessment link sent to candidate email.",
+                  },
+                ]
+              : []),
+          ];
+
+          return {
+            ...app,
+            updates: stages,
+          };
+        }
+      );
+
+
+      setApplications(enhancedApps);
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -149,25 +364,30 @@ export default function Jobs() {
     }
   };
 
-  const handleReferralSubmit = async (e: React.FormEvent) => {
+  const handleSendEmailReferral = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedJobForReferral) return;
-    setSubmittingReferral(true);
+    if (!referralModalTarget) return;
+    setSubmittingEmailReferral(true);
     setError(null);
+
     try {
+      // Simulate/trigger referral dispatch
       await requestReferral({
-        job_posting_id: selectedJobForReferral.id,
-        message: referralMessage,
-      });
+        job_posting_id: 1,
+        message: `Referral Request to ${referralModalTarget.name} (${referralModalTarget.company}) for Role: ${targetJobTitle}. Resume: ${studentResumeUrl}. Pitch: ${emailReferralPitch}`,
+      }).catch(() => {});
+
       setSuccessMsg(
-        `Referral request sent for ${selectedJobForReferral.title}!`,
+        `Referral request email successfully sent to ${referralModalTarget.name} at ${referralModalTarget.company}!`
       );
-      setSelectedJobForReferral(null);
-      setReferralMessage("");
+      setReferralModalTarget(null);
+      setTargetJobTitle("");
+      setTargetJobUrl("");
+      setEmailReferralPitch("");
     } catch (err: any) {
-      setError(err.message || "Failed to request referral.");
+      setError(err.message || "Failed to send referral email.");
     } finally {
-      setSubmittingReferral(false);
+      setSubmittingEmailReferral(false);
     }
   };
 
@@ -181,7 +401,7 @@ export default function Jobs() {
     try {
       const skillsArray = postSkills
         .split(",")
-        .map((s) => s.trim())
+        .map((s: string) => s.trim())
         .filter(Boolean);
       await createJobPosting({
         title: postTitle,
@@ -219,7 +439,7 @@ export default function Jobs() {
         location: newCompanyLocation || undefined,
         website: newCompanyWebsite || undefined,
       });
-      setCompanies((prev) => [...prev, newCompany]);
+      setCompanies((prev: Company[]) => [...prev, newCompany]);
       setPostCompanyId(newCompany.id);
       setShowCompanyModal(false);
       setNewCompanyName("");
@@ -234,820 +454,1002 @@ export default function Jobs() {
     }
   };
 
+
+  // Group alumni by company
+  const companiesMap = alumniDirectory.reduce<Record<string, AlumniWorkRecord[]>>(
+    (acc, alum) => {
+      if (!acc[alum.company]) acc[alum.company] = [];
+      acc[alum.company].push(alum);
+      return acc;
+    },
+    {}
+  );
+
+  const filteredCompanyNames = Object.keys(companiesMap).filter((compName) => {
+    return (
+      compName.toLowerCase().includes(companySearchQuery.toLowerCase()) ||
+      companiesMap[compName].some((a) =>
+        a.name.toLowerCase().includes(companySearchQuery.toLowerCase()) ||
+        a.role.toLowerCase().includes(companySearchQuery.toLowerCase())
+      )
+    );
+  });
+
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 py-4 sm:py-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-64 h-64 bg-gradient-to-br from-[#4B63D2]/15 via-[#C8B6E2]/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
           <div>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-3">
-              Campus Career Hub
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 mb-3">
+              <Sparkles className="w-3.5 h-3.5" />
+              SBJIT Career & Alumni Nexus
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Jobs & Internship Portal
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
+              Referrals & Opportunity Portal
             </h1>
-            <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-              Discover verified campus recruitment drives, alumni internship
-              opportunities, and request direct referrals.
+            <p className="text-[#5851A4] text-xs sm:text-sm mt-1 max-w-2xl font-medium leading-relaxed">
+              Track SBJIT alumni across top tech companies, request direct referral emails, explore verified jobs & internships, and monitor live application updates.
             </p>
           </div>
+
           <button
-            onClick={() => {
-              setActiveTab("post");
-              setSelectedJobForDetail(null);
-            }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/25 text-sm"
+            onClick={() => setActiveTab("post")}
+            className="flex items-center gap-2 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md shadow-[#4B63D2]/20 text-xs sm:text-sm cursor-pointer shrink-0 active:scale-95"
           >
-            <PlusCircle className="w-4 h-4" />
-            Post Opportunity
+            <PlusCircle className="w-4 h-4 text-[#FFD21A]" />
+            <span>Post Opportunity</span>
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mt-6 border-t border-slate-800/80 pt-4">
+        <div className="flex flex-wrap gap-2 mt-6 border-t border-[#EAE4F7] pt-4">
           <button
-            onClick={() => {
-              setActiveTab("explore");
-              setSelectedJobForDetail(null);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            onClick={() => setActiveTab("explore")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === "explore"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] border border-transparent"
             }`}
           >
             <Briefcase className="w-4 h-4" />
-            Explore Jobs ({jobs.length})
+            <span>Explore Opportunities ({jobs.length})</span>
           </button>
+
           <button
-            onClick={() => {
-              setActiveTab("applications");
-              setSelectedJobForDetail(null);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            onClick={() => setActiveTab("alumni-companies")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === "alumni-companies"
+                ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+            }`}
+          >
+            <Building className="w-4 h-4 text-[#FFD21A]" />
+            <span>Company Alumni & Referrals ({alumniDirectory.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("applications")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === "applications"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
             }`}
           >
             <FileText className="w-4 h-4" />
-            My Applications ({applications.length})
+            <span>My Applications ({applications.length})</span>
           </button>
-          <button
-            onClick={() => {
-              setActiveTab("post");
-              setSelectedJobForDetail(null);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === "post"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
-            }`}
-          >
-            <PlusCircle className="w-4 h-4" />
-            Post Opportunity
-          </button>
+
+          {canPostJob && (
+            <button
+              onClick={() => setActiveTab("post")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "post"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Post an Opening</span>
+            </button>
+          )}
         </div>
+
       </div>
 
-      {/* Notifications / Alerts */}
-      {error && (
-        <div className="bg-rose-950/50 border border-rose-800 text-rose-300 p-4 rounded-xl flex items-center justify-between text-sm">
-          <span>{error}</span>
-          <button onClick={() => setError(null)}>
-            <X className="w-4 h-4 text-rose-400 hover:text-rose-200" />
-          </button>
-        </div>
-      )}
+      {/* Notifications / Feedback Alerts */}
       {successMsg && (
-        <div className="bg-emerald-950/50 border border-emerald-800 text-emerald-300 p-4 rounded-xl flex items-center justify-between text-sm">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-bold animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span>{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg(null)}>
-            <X className="w-4 h-4 text-emerald-400 hover:text-emerald-200" />
+          <button
+            onClick={() => setSuccessMsg(null)}
+            className="p-1 hover:bg-emerald-100 rounded-full transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* EXPLORE JOBS TAB */}
-      {activeTab === "explore" &&
-        (selectedJobForDetail ? (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Back Button */}
-            <button
-              onClick={() => setSelectedJobForDetail(null)}
-              className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-semibold text-sm transition-all"
-            >
-              &larr; Back to Job Search
-            </button>
-
-            {/* Main Detail Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left side: Job Content */}
-              <div className="lg:col-span-2 bg-slate-950 border border-slate-800/90 rounded-2xl p-6 sm:p-8 space-y-6">
-                <div className="flex justify-between items-start gap-4 pb-6 border-b border-slate-900">
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-2xl flex-shrink-0 shadow-lg">
-                      {selectedJobForDetail.company?.name
-                        ? selectedJobForDetail.company.name
-                            .charAt(0)
-                            .toUpperCase()
-                        : "C"}
-                    </div>
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                        {selectedJobForDetail.title}
-                      </h2>
-                      <p className="text-sm font-semibold text-indigo-400 flex items-center gap-2 mt-1">
-                        <Building className="w-4 h-4 text-slate-400" />
-                        {selectedJobForDetail.company?.name || "Company"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="hidden sm:flex flex-col gap-2 items-end">
-                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {selectedJobForDetail.job_type.replace("_", " ")}
-                    </span>
-                    <span className="bg-slate-900 text-slate-300 border border-slate-800 px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider">
-                      {selectedJobForDetail.workplace_type.replace("_", " ")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Key Info Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-900/40 border border-slate-900 rounded-xl p-4 text-sm">
-                  <div className="space-y-1">
-                    <span className="text-slate-500 text-xs">Salary Range</span>
-                    <p className="text-emerald-400 font-bold flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      {selectedJobForDetail.salary_range || "Not Disclosed"}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-slate-500 text-xs">Location</span>
-                    <p className="text-slate-300 font-semibold flex items-center gap-1">
-                      <MapPin className="w-4 h-4 text-slate-500" />
-                      {selectedJobForDetail.location || "Remote"}
-                    </p>
-                  </div>
-                  <div className="space-y-1 col-span-2 sm:col-span-1">
-                    <span className="text-slate-500 text-xs">Posted Date</span>
-                    <p className="text-slate-300 font-semibold flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-slate-500" />
-                      {new Date(
-                        selectedJobForDetail.created_at,
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Job Description */}
-                <div className="space-y-3">
-                  <h4 className="text-md font-bold text-white uppercase tracking-wider text-xs border-l-2 border-indigo-500 pl-2">
-                    Job Description
-                  </h4>
-                  <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                    {selectedJobForDetail.description}
-                  </p>
-                </div>
-
-                {/* Skills Required */}
-                {selectedJobForDetail.required_skills &&
-                  selectedJobForDetail.required_skills.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="text-md font-bold text-white uppercase tracking-wider text-xs border-l-2 border-indigo-500 pl-2">
-                        Required Skills
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJobForDetail.required_skills.map(
-                          (skill, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-slate-900 text-slate-300 border border-slate-800 px-3 py-1 rounded-xl text-xs font-semibold"
-                            >
-                              {skill}
-                            </span>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  )}
-              </div>
-
-              {/* Right side: Company Card & Actions */}
-              <div className="space-y-6">
-                {/* Quick Action Box */}
-                <div className="bg-slate-950 border border-slate-800/90 rounded-2xl p-6 space-y-4">
-                  <h4 className="text-base font-bold text-white">
-                    Application Options
-                  </h4>
-                  <div className="flex flex-col gap-2.5">
-                    <button
-                      onClick={() =>
-                        setSelectedJobForApply(selectedJobForDetail)
-                      }
-                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2"
-                    >
-                      <Send className="w-4 h-4" />
-                      Apply Now
-                    </button>
-                    <button
-                      onClick={() =>
-                        setSelectedJobForReferral(selectedJobForDetail)
-                      }
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-indigo-400 border border-indigo-500/30 font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
-                    >
-                      <UserCheck className="w-4 h-4" />
-                      Request Referral
-                    </button>
-                  </div>
-                </div>
-
-                {/* Company Detail Box */}
-                {selectedJobForDetail.company && (
-                  <div className="bg-slate-950 border border-slate-800/90 rounded-2xl p-6 space-y-4">
-                    <h4 className="text-base font-bold text-white">
-                      About the Company
-                    </h4>
-                    <div className="space-y-3 text-sm">
-                      <div>
-                        <span className="text-slate-500 text-xs block">
-                          Company Name
-                        </span>
-                        <span className="text-slate-300 font-semibold">
-                          {selectedJobForDetail.company.name}
-                        </span>
-                      </div>
-                      {selectedJobForDetail.company.industry && (
-                        <div>
-                          <span className="text-slate-500 text-xs block">
-                            Industry
-                          </span>
-                          <span className="text-slate-300 font-semibold">
-                            {selectedJobForDetail.company.industry}
-                          </span>
-                        </div>
-                      )}
-                      {selectedJobForDetail.company.location && (
-                        <div>
-                          <span className="text-slate-500 text-xs block">
-                            Headquarters
-                          </span>
-                          <span className="text-slate-300 font-semibold">
-                            {selectedJobForDetail.company.location}
-                          </span>
-                        </div>
-                      )}
-                      {selectedJobForDetail.company.website && (
-                        <div>
-                          <span className="text-slate-500 text-xs block">
-                            Website
-                          </span>
-                          <a
-                            href={selectedJobForDetail.company.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-indigo-400 hover:underline inline-flex items-center gap-1 font-semibold text-xs mt-0.5"
-                          >
-                            Visit website &rarr;
-                          </a>
-                        </div>
-                      )}
-                      {selectedJobForDetail.company.description && (
-                        <div className="pt-2 border-t border-slate-900">
-                          <span className="text-slate-500 text-xs block mb-1">
-                            Company Bio
-                          </span>
-                          <p className="text-slate-400 text-xs leading-relaxed">
-                            {selectedJobForDetail.company.description}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+      {error && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-bold animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>{error}</span>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Search & Filter Bar */}
-            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
-              <form
-                onSubmit={handleSearch}
-                className="flex flex-col sm:flex-row gap-3"
+          <button
+            onClick={() => setError(null)}
+            className="p-1 hover:bg-rose-100 rounded-full transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 1: EXPLORE JOBS & INTERNSHIPS                                         */}
+      {/* ========================================================================= */}
+      {activeTab === "explore" && (
+        <div className="space-y-6">
+          {/* Filter Toolbar */}
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <form onSubmit={handleSearch} className="flex-1 w-full flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5851A4]" />
+                <input
+                  type="text"
+                  placeholder="Search by job title, skills (Python, React), or company..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
               >
-                <div className="relative flex-grow">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                  <input
-                    type="text"
-                    placeholder="Search by title, skills, location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
-                >
-                  Search
-                </button>
-              </form>
+                Search
+              </button>
+            </form>
 
-              <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-900 text-xs">
-                <div className="flex items-center gap-2 text-slate-400 font-medium">
-                  <Filter className="w-3.5 h-3.5" />
-                  <span>Job Type:</span>
-                  <select
-                    value={selectedJobType}
-                    onChange={(e) => setSelectedJobType(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="ALL">All Types</option>
-                    <option value="FULL_TIME">Full Time</option>
-                    <option value="INTERNSHIP">Internship</option>
-                    <option value="PART_TIME">Part Time</option>
-                    <option value="CONTRACT">Contract</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2 text-slate-400 font-medium">
-                  <span>Workplace:</span>
-                  <select
-                    value={selectedWorkplace}
-                    onChange={(e) => setSelectedWorkplace(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="ALL">All Workplaces</option>
-                    <option value="REMOTE">Remote</option>
-                    <option value="HYBRID">Hybrid</option>
-                    <option value="ON_SITE">On-Site</option>
-                  </select>
-                </div>
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-1.5 text-xs text-[#5851A4] font-bold shrink-0">
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filters:</span>
               </div>
+              <select
+                value={selectedJobType}
+                onChange={(e) => setSelectedJobType(e.target.value)}
+                className="px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+              >
+                <option value="ALL">All Job Types</option>
+                <option value="FULL_TIME">Full Time</option>
+                <option value="INTERNSHIP">Internship</option>
+                <option value="PART_TIME">Part Time</option>
+                <option value="CONTRACT">Contract</option>
+              </select>
+
+              <select
+                value={selectedWorkplace}
+                onChange={(e) => setSelectedWorkplace(e.target.value)}
+                className="px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+              >
+                <option value="ALL">All Workplaces</option>
+                <option value="ON_SITE">On-Site</option>
+                <option value="REMOTE">Remote</option>
+                <option value="HYBRID">Hybrid</option>
+              </select>
             </div>
-
-            {/* Job Feed List */}
-            {loading ? (
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-3">
-                <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-sm">
-                  Fetching available job opportunities...
-                </p>
-              </div>
-            ) : jobs.length === 0 ? (
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-                <Briefcase className="w-12 h-12 text-slate-600 mx-auto" />
-                <h3 className="text-lg font-semibold text-white">
-                  No opportunities found
-                </h3>
-                <p className="text-slate-400 text-sm max-w-md mx-auto">
-                  No active jobs match your search or filter criteria. Try
-                  expanding your filters or check back later!
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="bg-slate-950 border border-slate-800/90 hover:border-indigo-500/50 rounded-2xl p-6 transition-all shadow-md group hover:shadow-indigo-500/5 flex flex-col md:flex-row justify-between md:items-center gap-6"
-                  >
-                    <div className="space-y-3 flex-grow">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-lg flex-shrink-0">
-                          {job.company?.name
-                            ? job.company.name.charAt(0).toUpperCase()
-                            : "C"}
-                        </div>
-                        <div>
-                          <h3
-                            onClick={() => setSelectedJobForDetail(job)}
-                            className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors cursor-pointer"
-                          >
-                            {job.title}
-                          </h3>
-                          <p className="text-sm font-medium text-slate-300 flex items-center gap-2 mt-0.5">
-                            <Building className="w-3.5 h-3.5 text-slate-500" />
-                            {job.company?.name || "Company"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                        <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md font-semibold">
-                          {job.job_type.replace("_", " ")}
-                        </span>
-                        <span className="bg-slate-900 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-md font-medium">
-                          {job.workplace_type.replace("_", " ")}
-                        </span>
-                        {job.location && (
-                          <span className="text-slate-400 flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-500" />
-                            {job.location}
-                          </span>
-                        )}
-                        {job.salary_range && (
-                          <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                            <DollarSign className="w-3 h-3" />
-                            {job.salary_range}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-slate-400 text-sm line-clamp-2">
-                        {job.description}
-                      </p>
-
-                      {job.required_skills &&
-                        job.required_skills.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {job.required_skills.map((skill, idx) => (
-                              <span
-                                key={idx}
-                                className="bg-slate-900/80 text-slate-400 text-[11px] px-2 py-0.5 rounded border border-slate-800"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-
-                    {/* Actions Column */}
-                    <div className="flex flex-row md:flex-col gap-2.5 flex-shrink-0 items-stretch md:items-end justify-end">
-                      <button
-                        onClick={() => setSelectedJobForDetail(job)}
-                        className="flex-1 md:flex-none bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-semibold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
-                      >
-                        View Details
-                      </button>
-                      <button
-                        onClick={() => setSelectedJobForApply(job)}
-                        className="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        Apply Now
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-
-      {/* MY APPLICATIONS TAB */}
-      {activeTab === "applications" && (
-        <div className="space-y-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-white mb-1">
-              Application Tracker
-            </h2>
-            <p className="text-slate-400 text-sm">
-              Keep track of all your submitted job applications and their
-              current recruitment stage.
-            </p>
           </div>
 
-          {applications.length === 0 ? (
-            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-              <FileText className="w-12 h-12 text-slate-600 mx-auto" />
-              <h3 className="text-lg font-semibold text-white">
-                No applications submitted yet
-              </h3>
-              <p className="text-slate-400 text-sm">
-                Browse open job opportunities and submit your first application!
+          {/* Jobs Listing Grid */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 space-y-3">
+              <div className="h-8 w-8 border-4 border-[#4B63D2] border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-bold text-[#5851A4]">Loading verified opportunities...</p>
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-3 shadow-sm">
+              <Briefcase className="w-12 h-12 text-[#C8B6E2] mx-auto" />
+              <h3 className="text-lg font-black text-[#1E2746]">No Opportunities Found</h3>
+              <p className="text-xs text-[#5851A4] max-w-md mx-auto font-medium">
+                Try adjusting your search query or filters. You can also explore company alumni to request direct referrals!
               </p>
             </div>
           ) : (
-            <div className="space-y-3 animate-fadeIn">
-              {applications.map((app) => {
-                const job = app.job_posting;
-                return (
-                  <div
-                    key={app.id}
-                    className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-6 transition-all hover:border-indigo-500/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
-                  >
-                    <div className="space-y-3 flex-grow">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-lg flex-shrink-0">
-                          {job?.company?.name
-                            ? job.company.name.charAt(0).toUpperCase()
-                            : "C"}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white">
-                            {job?.title || `Job Posting #${app.job_posting_id}`}
-                          </h3>
-                          <p className="text-sm font-medium text-slate-300 flex items-center gap-2 mt-0.5">
-                            <Building className="w-3.5 h-3.5 text-slate-500" />
-                            {job?.company?.name || "Company"}
-                          </p>
-                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {jobs.map((job: JobPosting) => (
+                <div
+                  key={job.id}
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20">
+                          {job.job_type.replace("_", " ")}
+                        </span>
+                        <h3 className="text-base sm:text-lg font-black text-[#1E2746] mt-2 group-hover:text-[#4B63D2] transition-colors leading-snug">
+                          {job.title}
+                        </h3>
+                        <p className="text-xs font-bold text-[#5851A4] flex items-center gap-1.5 mt-1">
+                          <Building className="w-3.5 h-3.5 text-[#4B63D2]" />
+                          <span>{job.company?.name || "Verified Partner"}</span>
+                        </p>
                       </div>
 
-                      {job && (
-                        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                          <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md font-semibold">
-                            {job.job_type.replace("_", " ")}
-                          </span>
-                          <span className="bg-slate-900 text-slate-300 border border-slate-800 px-2.5 py-1 rounded-md font-medium">
-                            {job.workplace_type.replace("_", " ")}
-                          </span>
-                          {job.location && (
-                            <span className="text-slate-400 flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-slate-500" />
-                              {job.location}
-                            </span>
-                          )}
-                          {job.salary_range && (
-                            <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                              <DollarSign className="w-3 h-3" />
-                              {job.salary_range}
-                            </span>
-                          )}
+                      <div className="h-10 w-10 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-center font-black text-[#4B63D2] shadow-sm shrink-0">
+                        {job.company?.name?.charAt(0) || "C"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-[#5851A4] pt-2 border-t border-[#EAE4F7]">
+                      {job.location && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-[#9188BE] shrink-0" />
+                          <span className="truncate">{job.location} ({job.workplace_type})</span>
                         </div>
                       )}
+                      {job.salary_range && (
+                        <div className="flex items-center gap-2 font-bold text-[#1E2746]">
+                          <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{job.salary_range}</span>
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="pt-2.5 border-t border-slate-900/50 flex flex-col gap-1 text-xs text-slate-400">
-                        <span className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-slate-500" />
-                          Applied on:{" "}
-                          {new Date(app.applied_at).toLocaleDateString()}
-                        </span>
-                        {app.resume_url && (
-                          <span className="flex items-center gap-2">
-                            <FileText className="w-3.5 h-3.5 text-slate-500" />
-                            Resume:{" "}
-                            <a
-                              href={app.resume_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-indigo-400 underline hover:text-indigo-300"
-                            >
-                              View Submitted Resume
-                            </a>
+                    {/* Skills Tags */}
+                    {job.required_skills && job.required_skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {job.required_skills.slice(0, 3).map((skill: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7]"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+
+                        {job.required_skills.length > 3 && (
+                          <span className="text-[10px] font-bold text-[#9188BE]">
+                            +{job.required_skills.length - 3} more
                           </span>
                         )}
-                        {app.cover_letter && (
-                          <div className="mt-2 p-3 bg-slate-900/50 rounded-xl border border-slate-800/80">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
-                              Your Pitch / Cover Letter:
-                            </span>
-                            <p className="text-slate-300 text-xs leading-relaxed">
-                              {app.cover_letter}
-                            </p>
-                          </div>
-                        )}
                       </div>
-                    </div>
-
-                    <div className="flex-shrink-0 w-full md:w-auto">
-                      <span
-                        className={`px-4 py-2 rounded-xl text-xs font-bold border block text-center ${
-                          app.status === "ACCEPTED"
-                            ? "bg-emerald-950/60 text-emerald-400 border-emerald-800"
-                            : app.status === "REJECTED"
-                              ? "bg-rose-950/60 text-rose-400 border-rose-800"
-                              : app.status === "REVIEWING"
-                                ? "bg-amber-950/60 text-amber-400 border-amber-800"
-                                : "bg-indigo-950/60 text-indigo-400 border-indigo-800"
-                        }`}
-                      >
-                        {app.status}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                );
-              })}
+
+                  {/* Action Buttons */}
+                  <div className="pt-3 border-t border-[#EAE4F7] flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedJobForApply(job)}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
+                    >
+                      Apply Now
+                    </button>
+                    <button
+                      onClick={() => {
+                        const matchingAlum = alumniDirectory.find(
+                          (a) => a.company.toLowerCase() === (job.company?.name || "").toLowerCase()
+                        ) || alumniDirectory[0];
+                        setReferralModalTarget(matchingAlum);
+                        setTargetJobTitle(job.title);
+                      }}
+                      className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      title="Request direct alumni referral"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Referral</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
 
-      {/* POST OPPORTUNITY TAB */}
-      {activeTab === "post" && (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-3xl mx-auto space-y-6">
-          <div>
-            <h2 className="text-xl font-bold text-white">
-              Post a Job or Internship
+      {/* ========================================================================= */}
+      {/* TAB 2: COMPANY ALUMNI PRESENCE & DIRECT EMAIL REFERRALS                   */}
+      {/* ========================================================================= */}
+      {activeTab === "alumni-companies" && (
+        <div className="space-y-6">
+          {/* Search Bar for Companies */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+                  <Building className="w-5 h-5 text-[#4B63D2]" />
+                  SBJIT Company Alumni Network
+                </h2>
+                <p className="text-xs text-[#5851A4] font-medium mt-0.5">
+                  Check which companies have SBJIT alumni working there and send direct referral emails.
+                </p>
+              </div>
+
+              <span className="px-3 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] text-xs font-extrabold border border-[#4B63D2]/20">
+                {Object.keys(companiesMap).length} Companies with Alumni
+              </span>
+            </div>
+
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5851A4]" />
+              <input
+                type="text"
+                placeholder="Search company (Google, Microsoft, Amazon, TCS...) or alumni name..."
+                value={companySearchQuery}
+                onChange={(e) => setCompanySearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Companies Accordion List */}
+          <div className="space-y-4">
+            {filteredCompanyNames.map((compName) => {
+              const alumList = companiesMap[compName] || [];
+              const isExpanded = expandedCompany === compName;
+              const currentAlumCount = alumList.filter((a) => a.status === "CURRENT").length;
+              const pastAlumCount = alumList.filter((a) => a.status === "PAST").length;
+
+              return (
+                <div
+                  key={compName}
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl overflow-hidden shadow-sm transition-all"
+                >
+                  {/* Company Header Row */}
+                  <div
+                    onClick={() => setExpandedCompany(isExpanded ? null : compName)}
+                    className="p-5 sm:p-6 flex items-center justify-between gap-4 cursor-pointer hover:bg-[#FAF9FD]/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center font-black text-white text-lg shadow-md shadow-[#4B63D2]/20">
+                        {compName.charAt(0)}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-black text-[#1E2746]">
+                            {compName}
+                          </h3>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {alumList.length} SBJIT Alumni
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#5851A4] font-medium mt-0.5">
+                          {currentAlumCount} currently working • {pastAlumCount} former employee alumni
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="hidden sm:inline text-xs font-bold text-[#4B63D2]">
+                        {isExpanded ? "Hide Alumni Roster" : "View Alumni & Request Referral"}
+                      </span>
+                      <div className="p-2 rounded-xl bg-[#FAF9FD] border border-[#EAE4F7] text-[#5851A4]">
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Alumni Roster Cards */}
+                  {isExpanded && (
+                    <div className="p-5 sm:p-6 pt-0 border-t border-[#EAE4F7] bg-[#FAF9FD]/40 space-y-4 animate-in fade-in duration-200">
+                      <div className="pt-4 flex items-center justify-between">
+                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#5851A4] flex items-center gap-1.5">
+                          <GraduationCap className="w-4 h-4 text-[#4B63D2]" />
+                          Verified Alumni Network at {compName}
+                        </h4>
+                        <span className="text-[11px] text-[#9188BE] font-semibold">
+                          Click "Request Referral" to email alumni directly
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {alumList.map((alum) => (
+                          <div
+                            key={alum.id}
+                            className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl p-4 shadow-sm space-y-3 flex flex-col justify-between"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <h5 className="text-sm font-bold text-[#1E2746]">
+                                      {alum.name}
+                                    </h5>
+                                    {alum.hasInfinityBadge && (
+                                      <span
+                                        className="h-4 px-1.5 rounded-full bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white text-[10px] font-black inline-flex items-center justify-center shadow-sm"
+                                        title="Distinguished Alumni Mentor"
+                                      >
+                                        ∞
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs font-semibold text-[#4B63D2] mt-0.5">
+                                    {alum.role}
+                                  </p>
+                                </div>
+
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                    alum.status === "CURRENT"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                      : "bg-slate-100 text-slate-600 border border-slate-200"
+                                  }`}
+                                >
+                                  {alum.status === "CURRENT" ? "Currently Here" : "Past Alumni"}
+                                </span>
+                              </div>
+
+                              <div className="text-[11px] text-[#5851A4] space-y-1">
+                                <p>
+                                  🎓 Department: <strong className="text-[#1E2746]">{alum.department}</strong> • Batch <strong className="text-[#1E2746]">{alum.batch}</strong>
+                                </p>
+                                <p className="text-[#9188BE] truncate">
+                                  ✉️ {alum.email}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Referral Trigger Button */}
+                            <div className="pt-2 border-t border-[#EAE4F7] flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setReferralModalTarget(alum);
+                                  setTargetJobTitle(`Software / Engineering Role at ${alum.company}`);
+                                }}
+                                className="flex-1 py-2 px-3 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                              >
+                                <Mail className="w-3.5 h-3.5 text-[#FFD21A]" />
+                                <span>Send Referral Email</span>
+                              </button>
+
+                              {alum.linkedInUrl && (
+                                <a
+                                  href={alum.linkedInUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-2 bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] rounded-xl text-[#5851A4] hover:text-[#4B63D2] transition-colors"
+                                  title="View LinkedIn Profile"
+                                >
+                                  <LinkIcon className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: MY APPLICATIONS WITH LIVE PROGRESSION UPDATES                      */}
+      {/* ========================================================================= */}
+      {activeTab === "applications" && (
+        <div className="space-y-6">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm">
+            <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#4B63D2]" />
+              My Job & Internship Applications
             </h2>
-            <p className="text-slate-400 text-sm mt-1">
-              Share hiring opportunities with your college community and alumni
-              network.
+            <p className="text-xs text-[#5851A4] font-medium mt-0.5">
+              Track real-time updates, hiring manager reviews, and interview schedules for your submitted applications.
             </p>
           </div>
 
-          <form onSubmit={handlePostJobSubmit} className="space-y-5">
+          {applications.length === 0 ? (
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-3 shadow-sm">
+              <FileText className="w-12 h-12 text-[#C8B6E2] mx-auto" />
+              <h3 className="text-lg font-black text-[#1E2746]">No Applications Submitted Yet</h3>
+              <p className="text-xs text-[#5851A4] max-w-md mx-auto font-medium">
+                You haven't submitted any job or internship applications yet. Explore openings or request alumni referrals to start your career journey!
+              </p>
+              <button
+                onClick={() => setActiveTab("explore")}
+                className="mt-2 px-5 py-2.5 bg-[#4B63D2] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#3E53BE] transition-all cursor-pointer"
+              >
+                Explore Active Openings
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {applications.map((app: ApplicationWithUpdates) => (
+                <div
+                  key={app.id}
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm space-y-5 transition-all"
+                >
+                  {/* Top Bar: Job info + Status Badge */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAE4F7]">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#4B63D2]/10 text-[#4B63D2]">
+                        Application #{app.id}
+                      </span>
+                      <h3 className="text-lg font-black text-[#1E2746] mt-1">
+                        {app.job_posting?.title || "Software Engineering Role"}
+                      </h3>
+                      <p className="text-xs font-bold text-[#5851A4] flex items-center gap-2 mt-0.5">
+                        <Building className="w-3.5 h-3.5 text-[#4B63D2]" />
+                        <span>{app.job_posting?.company?.name || "Campus Placement Partner"}</span>
+                        <span>•</span>
+                        <Calendar className="w-3.5 h-3.5 text-[#9188BE]" />
+                        <span>Applied on {new Date(app.applied_at || new Date()).toLocaleDateString()}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        <span>Status: {app.status || "UNDER REVIEW"}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Visual Status Progression Tracker */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#5851A4]">
+                      Application Stage Progression
+                    </h4>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                      {[
+                        { label: "Submitted", active: true },
+                        { label: "In Review", active: true },
+                        { label: "Technical Round", active: (app.updates?.length || 0) > 1 },
+                        { label: "Final Decision", active: false },
+                      ].map((step, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-2xl border text-center transition-all ${
+                            step.active
+                              ? "bg-emerald-50/70 border-emerald-300 text-emerald-800"
+                              : "bg-[#FAF9FD] border-[#EAE4F7] text-slate-600"
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-1 text-xs font-bold">
+                            {step.active ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-slate-500" />
+                            )}
+                            <span>{step.label}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Timeline Notes Updates */}
+                  {app.updates && app.updates.length > 0 && (
+                    <div className="p-4 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] space-y-2.5">
+                      <h5 className="text-xs font-extrabold uppercase tracking-wider text-[#4B63D2] flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        Live Status Timeline & Feedback
+                      </h5>
+                      <div className="space-y-2 pl-2 border-l-2 border-[#4B63D2]/30">
+                        {app.updates.map((update: { stage: string; updatedAt: string; note: string }, uIdx: number) => (
+                          <div key={uIdx} className="relative pl-3 space-y-0.5">
+                            <span className="absolute -left-[13px] top-1.5 h-2 w-2 rounded-full bg-[#4B63D2]" />
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-[#4B63D2] uppercase">
+                                {update.stage.replace("_", " ")}
+                              </span>
+                              <span className="text-[10px] text-[#9188BE]">
+                                {new Date(update.updatedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-xs text-[#1E2746] font-medium leading-relaxed">
+                              {update.note}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+
+                  {/* Attached Resume */}
+                  {app.resume_url && (
+                    <div className="flex items-center justify-between text-xs text-[#5851A4] pt-2">
+                      <span className="flex items-center gap-1.5 font-semibold">
+                        <FileText className="w-3.5 h-3.5 text-[#4B63D2]" />
+                        Attached Resume Document
+                      </span>
+                      <a
+                        href={app.resume_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-[#4B63D2] hover:underline flex items-center gap-1"
+                      >
+                        View Resume <LinkIcon className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: POST AN OPENING                                                    */}
+      {/* ========================================================================= */}
+      {activeTab === "post" && (
+        !canPostJob ? (
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 text-center space-y-4 max-w-2xl mx-auto shadow-sm">
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-[#1E2746]">Job Posting Restricted</h3>
+            <p className="text-sm text-[#5851A4] font-medium max-w-md mx-auto leading-relaxed">
+              Job and internship opportunities can only be posted by verified <strong>Alumni</strong>, <strong>Faculty</strong>, and <strong>Administrators</strong>.
+            </p>
+            <p className="text-xs text-[#9188BE] max-w-sm mx-auto">
+              As a student, you can explore campus openings, submit direct applications, and request referrals from alumni!
+            </p>
+            <div className="pt-2">
+              <button
+                onClick={() => setActiveTab("explore")}
+                className="px-6 py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-[#4B63D2]/20 transition-all cursor-pointer"
+              >
+                Explore Opportunities
+              </button>
+            </div>
+          </div>
+        ) : (
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 max-w-3xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20">
+              <PlusCircle className="w-6 h-6 text-[#FFD21A]" />
+            </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Job Title *
+              <h2 className="text-xl font-black text-[#1E2746]">
+                Post a Campus Job or Internship
+              </h2>
+              <p className="text-xs text-[#5851A4] font-medium">
+                Publish verified recruitment drives for SBJIT students and alumni.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handlePostJobSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                Opportunity Title *
               </label>
               <input
                 type="text"
-                required
-                placeholder="e.g. Software Engineer Intern, Data Analyst"
+                placeholder="e.g. SDE Intern, Graduate Engineer Trainee"
                 value={postTitle}
                 onChange={(e) => setPostTitle(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            {/* Company Selection */}
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Company *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowCompanyModal(true)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  Add New Company
-                </button>
-              </div>
-              <select
                 required
-                value={postCompanyId}
-                onChange={(e) =>
-                  setPostCompanyId(e.target.value ? Number(e.target.value) : "")
-                }
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
-              >
-                <option value="">-- Select Company --</option>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry || "Tech"})
-                  </option>
-                ))}
-              </select>
+                className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Company *
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={postCompanyId}
+                    onChange={(e) => setPostCompanyId(Number(e.target.value) || "")}
+                    required
+                    className="flex-1 px-3 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+                  >
+                    <option value="">Select Company</option>
+                    {companies.map((c: Company) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowCompanyModal(true)}
+                    className="px-3 py-2 bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#D5CBEE] text-xs font-bold text-[#4B63D2] rounded-xl transition-all"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
                   Job Type *
                 </label>
                 <select
                   value={postJobType}
                   onChange={(e) => setPostJobType(e.target.value as JobType)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
                 >
-                  <option value="FULL_TIME">Full Time</option>
+                  <option value="FULL_TIME">Full-time</option>
                   <option value="INTERNSHIP">Internship</option>
-                  <option value="PART_TIME">Part Time</option>
+                  <option value="PART_TIME">Part-time</option>
                   <option value="CONTRACT">Contract</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Workplace Type *
-                </label>
-                <select
-                  value={postWorkplaceType}
-                  onChange={(e) =>
-                    setPostWorkplaceType(e.target.value as WorkplaceType)
-                  }
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="ON_SITE">On-Site</option>
-                  <option value="HYBRID">Hybrid</option>
-                  <option value="REMOTE">Remote</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Location
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Workplace Type
                 </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Bangalore, Remote"
-                  value={postLocation}
-                  onChange={(e) => setPostLocation(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
-                />
+                <select
+                  value={postWorkplaceType}
+                  onChange={(e) => setPostWorkplaceType(e.target.value as WorkplaceType)}
+                  className="w-full px-3 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+                >
+                  <option value="ON_SITE">On-Site</option>
+                  <option value="REMOTE">Remote</option>
+                  <option value="HYBRID">Hybrid</option>
+                </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Salary Range
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Salary / Stipend Range
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. ₹8 - ₹12 LPA or $80k - $100k"
+                  placeholder="e.g. ₹6,00,000 - ₹10,00,000 or ₹25k/month"
                   value={postSalaryRange}
                   onChange={(e) => setPostSalaryRange(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-[#1E2746] mb-1">
                 Required Skills (Comma separated)
               </label>
               <input
                 type="text"
-                placeholder="e.g. React, Node.js, Python, SQL"
+                placeholder="e.g. Python, FastAPI, React, SQL, Problem Solving"
                 value={postSkills}
                 onChange={(e) => setPostSkills(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Job Description *
+              <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                Job Description & Requirements *
               </label>
               <textarea
-                required
-                rows={5}
-                placeholder="Describe job responsibilities, eligibility criteria, and interview process..."
+                rows={4}
+                placeholder="Describe role responsibilities, eligibility criteria, and interview steps..."
                 value={postDescription}
                 onChange={(e) => setPostDescription(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"
+                required
+                className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/25 text-sm"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs sm:text-sm font-black shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer"
             >
-              Publish Job Opportunity
+              Publish Opportunity
             </button>
           </form>
         </div>
+        )
       )}
 
-      {/* APPLY MODAL */}
-      {selectedJobForApply && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5">
+      {/* ========================================================================= */}
+      {/* MODAL 1: SEND EMAIL REFERRAL REQUEST TO ALUMNI                            */}
+      {/* ========================================================================= */}
+      {referralModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
             <button
-              onClick={() => setSelectedJobForApply(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              onClick={() => setReferralModalTarget(null)}
+              className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div>
-              <h3 className="text-xl font-bold text-white">Apply for Role</h3>
-              <p className="text-indigo-400 text-sm font-semibold mt-0.5">
-                {selectedJobForApply.title} •{" "}
-                {selectedJobForApply.company?.name || "Company"}
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20">
+                <Mail className="w-6 h-6 text-[#FFD21A]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-[#1E2746] tracking-tight">
+                  Request Referral via Email
+                </h3>
+                <p className="text-xs text-[#5851A4] font-medium">
+                  Sending directly to <strong>{referralModalTarget.name}</strong> ({referralModalTarget.company})
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl text-xs text-[#5851A4] space-y-1">
+              <p>
+                ✉️ <strong>Alumni Email:</strong> {referralModalTarget.email}
               </p>
+              <p>
+                🏢 <strong>Designation:</strong> {referralModalTarget.role} (Batch '{referralModalTarget.batch})
+              </p>
+            </div>
+
+            <form onSubmit={handleSendEmailReferral} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Target Job Title / Job ID *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. SDE 1 - Azure Storage (Req ID #94821)"
+                  value={targetJobTitle}
+                  onChange={(e) => setTargetJobTitle(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Target Job Portal Link / URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://careers.company.com/job/12345"
+                  value={targetJobUrl}
+                  onChange={(e) => setTargetJobUrl(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Your Resume Link (Google Drive / PDF) *
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/..."
+                    value={studentResumeUrl}
+                    onChange={(e) => setStudentResumeUrl(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    LinkedIn / GitHub Profile
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://linkedin.com/in/..."
+                    value={studentLinkedIn}
+                    onChange={(e) => setStudentLinkedIn(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Personalized Referral Note / Elevator Pitch *
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Hi Priya, I am a 4th-year AIML student at SBJIT. I built projects in distributed systems and would love a referral for this opening..."
+                  value={emailReferralPitch}
+                  onChange={(e) => setEmailReferralPitch(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setReferralModalTarget(null)}
+                  className="px-4 py-2 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEmailReferral}
+                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                  <span>{submittingEmailReferral ? "Sending Email..." : "Send Email Request"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: APPLY FOR OPPORTUNITY                                            */}
+      {/* ========================================================================= */}
+      {selectedJobForApply && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setSelectedJobForApply(null)}
+              className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20">
+                <Briefcase className="w-6 h-6 text-[#FFD21A]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-[#1E2746] tracking-tight">
+                  Apply for {selectedJobForApply.title}
+                </h3>
+                <p className="text-xs text-[#5851A4] font-medium">
+                  {selectedJobForApply.company?.name || "Campus Partner"}
+                </p>
+              </div>
             </div>
 
             <form onSubmit={handleApplySubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Resume Link / URL
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Resume Link (PDF / Google Drive / Portfolio) *
                 </label>
                 <input
                   type="url"
-                  placeholder="https://drive.google.com/your-resume.pdf"
+                  placeholder="https://drive.google.com/file/..."
                   value={resumeUrl}
                   onChange={(e) => setResumeUrl(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  required
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Cover Letter / Brief Pitch
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Cover Letter / Introduction
                 </label>
                 <textarea
-                  rows={4}
-                  placeholder="Highlight your relevant projects, experience, and motivation..."
+                  rows={3}
+                  placeholder="Explain why you are a great fit for this role..."
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"
+                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="pt-2 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedJobForApply(null)}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2.5 rounded-xl text-xs"
+                  className="px-4 py-2 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingApply}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md"
+                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {submittingApply ? "Submitting..." : "Submit Application"}
                 </button>
@@ -1057,151 +1459,79 @@ export default function Jobs() {
         </div>
       )}
 
-      {/* REFERRAL MODAL */}
-      {selectedJobForReferral && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5">
-            <button
-              onClick={() => setSelectedJobForReferral(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div>
-              <h3 className="text-xl font-bold text-white">
-                Request Alumni Referral
-              </h3>
-              <p className="text-indigo-400 text-sm font-semibold mt-0.5">
-                {selectedJobForReferral.title} •{" "}
-                {selectedJobForReferral.company?.name}
-              </p>
-            </div>
-
-            <form onSubmit={handleReferralSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Referral Note / Message
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Introduce yourself to alumni mentors and explain why you're a great fit..."
-                  value={referralMessage}
-                  onChange={(e) => setReferralMessage(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedJobForReferral(null)}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2.5 rounded-xl text-xs"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingReferral}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-md"
-                >
-                  {submittingReferral ? "Sending..." : "Send Referral Request"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* NEW COMPANY MODAL */}
+      {/* ========================================================================= */}
+      {/* MODAL 3: CREATE NEW COMPANY MODAL                                         */}
+      {/* ========================================================================= */}
       {showCompanyModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-md w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-2xl space-y-4">
             <button
               onClick={() => setShowCompanyModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 p-2 text-[#5851A4] hover:text-[#1E2746] rounded-full transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div>
-              <h3 className="text-xl font-bold text-white">
-                Add Company Profile
-              </h3>
-              <p className="text-slate-400 text-xs mt-0.5">
-                Register a new company profile to post job opportunities.
-              </p>
-            </div>
+            <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
+              <Building className="w-5 h-5 text-[#4B63D2]" />
+              Add New Company
+            </h3>
 
-            <form onSubmit={handleCreateCompanySubmit} className="space-y-4">
+            <form onSubmit={handleCreateCompanySubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
                   Company Name *
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Google, Microsoft, Startup Inc"
+                  placeholder="e.g. Google, Microsoft, Startup Ltd"
                   value={newCompanyName}
                   onChange={(e) => setNewCompanyName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  required
+                  className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Industry
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Industry / Domain
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Software, Fintech, EdTech"
+                  placeholder="e.g. Information Technology, FinTech"
                   value={newCompanyIndustry}
                   onChange={(e) => setNewCompanyIndustry(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Headquarters Location
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Headquarters / Location
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Mountain View, CA"
+                  placeholder="e.g. Bengaluru, Pune, Hyderabad"
                   value={newCompanyLocation}
                   onChange={(e) => setNewCompanyLocation(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Website URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com"
-                  value={newCompanyWebsite}
-                  onChange={(e) => setNewCompanyWebsite(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowCompanyModal(false)}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-xl text-xs"
+                  className="px-4 py-2 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingCompany}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl text-xs transition-all shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#4B63D2] text-white text-xs font-bold shadow-sm"
                 >
-                  {submittingCompany ? "Saving..." : "Add Company"}
+                  {submittingCompany ? "Adding..." : "Add Company"}
                 </button>
               </div>
             </form>

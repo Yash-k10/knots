@@ -3,7 +3,9 @@ import shutil
 import uuid
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
@@ -59,11 +61,24 @@ async def get_profile_by_user_id(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve profile details for any user by user ID."""
+    """Retrieve profile details for any user by user ID (Super Admin is completely stealth)."""
     # Check if user exists to raise NotFoundError
-    user = await db.get(User, user_id)
+
+    stmt = select(User).options(selectinload(User.role)).where(User.id == user_id)
+    res = await db.execute(stmt)
+    user = res.scalars().first()
     if not user:
         raise NotFoundError("User not found.")
+
+    is_viewer_superadmin = current_user.role and current_user.role.name == "Super Admin"
+    if (
+        user.role
+        and user.role.name == "Super Admin"
+        and current_user.id != user_id
+        and not is_viewer_superadmin
+    ):
+        raise NotFoundError("User not found.")
+
     service = ProfileService(db)
     profile = await service.get_profile_by_user_id(user_id)
 
@@ -237,12 +252,17 @@ async def endorse_skill(
     if user_id == current_user.id:
         raise ValidationError("You cannot endorse your own skills.")
 
+    target_user_res = await db.execute(
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
+    )
+    target_user = target_user_res.scalars().first()
+    if not target_user or (target_user.role and target_user.role.name == "Super Admin"):
+        raise NotFoundError("Profile not found.")
+
     service = ProfileService(db)
     profile = await service.get_profile_by_user_id(user_id)
     if not profile:
         raise NotFoundError("Profile not found.")
-
-    from sqlalchemy import select
 
     from app.profiles.models.skill_endorsement import SkillEndorsement
 
@@ -280,12 +300,18 @@ async def unendorse_skill(
     db: AsyncSession = Depends(get_db),
 ):
     """Remove your endorsement from a user's skill."""
+
+    target_user_res = await db.execute(
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
+    )
+    target_user = target_user_res.scalars().first()
+    if not target_user or (target_user.role and target_user.role.name == "Super Admin"):
+        raise NotFoundError("Profile not found.")
+
     service = ProfileService(db)
     profile = await service.get_profile_by_user_id(user_id)
     if not profile:
         raise NotFoundError("Profile not found.")
-
-    from sqlalchemy import select
 
     from app.profiles.models.skill_endorsement import SkillEndorsement
 

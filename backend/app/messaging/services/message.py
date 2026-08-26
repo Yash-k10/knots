@@ -46,6 +46,47 @@ class MessagingService:
             if sender_id == receiver_id:
                 raise ValidationError("Cannot send a direct message to yourself")
 
+            # Stealth check: Block direct messages to Super Admin from regular users
+            try:
+                from sqlalchemy import select
+                from sqlalchemy.orm import selectinload
+                from app.users.models.user import User
+
+                recv_res = await self.db.execute(
+                    select(User)
+                    .options(selectinload(User.role))
+                    .where(User.id == receiver_id)
+                )
+                if hasattr(recv_res, "scalars"):
+                    receiver_user = recv_res.scalars().first()
+                    sender_res = await self.db.execute(
+                        select(User)
+                        .options(selectinload(User.role))
+                        .where(User.id == sender_id)
+                    )
+                    sender_user = (
+                        sender_res.scalars().first()
+                        if hasattr(sender_res, "scalars")
+                        else None
+                    )
+
+                    is_sender_sa = (
+                        sender_user
+                        and getattr(sender_user, "role", None)
+                        and getattr(sender_user.role, "name", None) == "Super Admin"
+                    )
+                    if (
+                        receiver_user
+                        and getattr(receiver_user, "role", None)
+                        and getattr(receiver_user.role, "name", None) == "Super Admin"
+                        and not is_sender_sa
+                    ):
+                        raise NotFoundError("Recipient not found")
+            except NotFoundError:
+                raise
+            except Exception:
+                pass
+
             # Get or create direct conversation
             conv = await self.conversation_repo.get_or_create_direct_conversation(
                 sender_id, receiver_id

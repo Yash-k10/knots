@@ -218,18 +218,18 @@ export default function SkillsSection({
   const categoryEntries = Object.entries(skills);
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <Hash className="h-5 w-5 text-indigo-400" />
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
+        <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+          <Hash className="h-5 w-5 text-[#4B63D2]" />
           Skills
         </h3>
         {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-4 w-4 text-[#4B63D2]" />
             Edit Skills
           </button>
         )}
@@ -239,7 +239,7 @@ export default function SkillsSection({
         <div className="space-y-6">
           {/* Add Category Form */}
           <form onSubmit={handleAddCategory} className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider">
               Create New Category
             </label>
             <div className="flex gap-2">
@@ -247,20 +247,20 @@ export default function SkillsSection({
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-white placeholder-slate-700 focus:outline-none transition text-sm"
+                className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
                 placeholder="e.g. Frontend, Backend, Devops..."
                 maxLength={40}
               />
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-medium text-sm transition"
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] rounded-xl text-white font-bold text-sm transition shadow-sm cursor-pointer"
               >
                 <Plus className="h-4 w-4" />
                 Add Category
               </button>
             </div>
             {validationErrors.category && (
-              <p className="text-red-500 text-xs mt-1">
+              <p className="text-rose-600 text-xs mt-1 font-bold">
                 {validationErrors.category}
               </p>
             )}
@@ -272,16 +272,16 @@ export default function SkillsSection({
               categoryEntries.map(([category, items]) => (
                 <div
                   key={category}
-                  className="bg-slate-900/30 border border-slate-900 rounded-xl p-4 space-y-4"
+                  className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-4 space-y-4"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-2">
+                    <span className="text-sm font-bold text-[#1E2746] uppercase tracking-wider">
                       {category}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRemoveCategory(category)}
-                      className="text-slate-500 hover:text-red-400 transition"
+                      className="text-[#9188BE] hover:text-rose-500 transition cursor-pointer"
                       title={`Delete entire category ${category}`}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -302,20 +302,20 @@ export default function SkillsSection({
                           [category]: e.target.value,
                         })
                       }
-                      className="flex-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-1.5 text-white placeholder-slate-700 focus:outline-none transition text-xs"
+                      className="flex-1 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-3 py-1.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-xs font-medium"
                       placeholder={`Add skill in ${category}...`}
                       maxLength={30}
                     />
                     <button
                       type="submit"
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-200 text-xs font-semibold transition"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] rounded-xl text-white text-xs font-bold transition shadow-sm cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Add
                     </button>
                   </form>
                   {validationErrors[category] && (
-                    <p className="text-red-500 text-xs mt-1">
+                    <p className="text-rose-600 text-xs mt-1 font-bold">
                       {validationErrors[category]}
                     </p>
                   )}
@@ -326,20 +326,20 @@ export default function SkillsSection({
                       items.map((skill) => (
                         <span
                           key={skill}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-slate-950 border border-slate-800 rounded-full text-xs font-medium text-slate-300"
+                          className="flex items-center gap-1.5 px-3 py-1 bg-white border border-[#EAE4F7] rounded-full text-xs font-bold text-[#1E2746] shadow-sm"
                         >
                           {skill}
                           <button
                             type="button"
                             onClick={() => handleRemoveSkill(category, skill)}
-                            className="p-0.5 rounded-full hover:bg-slate-800 text-slate-500 hover:text-red-400 transition"
+                            className="p-0.5 rounded-full hover:bg-rose-50 text-[#9188BE] hover:text-rose-600 transition"
                           >
                             <X className="h-3 w-3" />
                           </button>
                         </span>
                       ))
                     ) : (
-                      <span className="text-slate-600 text-xs italic">
+                      <span className="text-[#9188BE] text-xs italic">
                         No skills in this category yet.
                       </span>
                     )}
@@ -347,8 +347,8 @@ export default function SkillsSection({
                 </div>
               ))
             ) : (
-              <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl">
-                <p className="text-slate-500 text-sm">
+              <div className="text-center py-6 border border-dashed border-[#D5CBEE] rounded-2xl">
+                <p className="text-[#5851A4] text-sm font-medium">
                   Create a category above to start adding skills.
                 </p>
               </div>
@@ -358,7 +358,7 @@ export default function SkillsSection({
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={handleEditToggle}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746] transition text-xs font-bold cursor-pointer"
               disabled={isSaving}
             >
               <X className="h-4 w-4" />
@@ -366,10 +366,10 @@ export default function SkillsSection({
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-medium text-xs transition shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold text-xs transition shadow-md shadow-[#4B63D2]/25 cursor-pointer"
               disabled={isSaving}
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-[#FFD21A]" />
               {isSaving ? "Saving..." : "Save Skills"}
             </button>
           </div>
@@ -381,9 +381,9 @@ export default function SkillsSection({
             categoryEntries.map(([category, items]) => (
               <div
                 key={category}
-                className="space-y-2 border-b border-slate-900 pb-4 last:border-none last:pb-0"
+                className="space-y-2 border-b border-[#EAE4F7] pb-4 last:border-none last:pb-0"
               >
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
                   {category}
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -401,17 +401,17 @@ export default function SkillsSection({
                       return (
                         <div
                           key={skill}
-                          className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs font-medium text-slate-300 hover:border-slate-700 transition"
+                          className="flex items-center gap-2 px-3.5 py-1.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded-full text-xs font-bold text-[#1E2746] hover:border-[#C8B6E2] transition"
                         >
                           <span>{skill}</span>
                           {/* Endorsement badge/button */}
                           {isOwnProfile ? (
                             endorsedCount > 0 && (
                               <span
-                                className="flex items-center gap-1 bg-indigo-950/60 border border-indigo-800/40 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                                className="flex items-center gap-1 bg-[#C8B6E2]/30 border border-[#C8B6E2] text-[#5851A4] text-[10px] px-2 py-0.5 rounded-full font-bold"
                                 title={`Endorsed by: ${skillEndorsements.map((e) => e.endorser_name).join(", ")}`}
                               >
-                                <ThumbsUp className="h-2.5 w-2.5" />
+                                <ThumbsUp className="h-2.5 w-2.5 text-[#4B63D2]" />
                                 {endorsedCount}
                               </span>
                             )
@@ -421,8 +421,8 @@ export default function SkillsSection({
                               onClick={() => handleToggleEndorsement(skill)}
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border transition ${
                                 hasEndorsed
-                                  ? "bg-emerald-950/40 border-emerald-800/40 text-emerald-400 font-bold shadow-sm"
-                                  : "bg-slate-950/40 border-slate-800/40 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 font-bold shadow-sm"
+                                  : "bg-white border-[#EAE4F7] text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2]"
                               }`}
                               title={
                                 endorsedCount > 0
@@ -430,7 +430,7 @@ export default function SkillsSection({
                                   : "Endorse this skill"
                               }
                             >
-                              <ThumbsUp className="h-2.5 w-2.5" />
+                              <ThumbsUp className="h-2.5 w-2.5 text-[#4B63D2]" />
                               {endorsedCount}
                             </button>
                           )}
@@ -438,7 +438,7 @@ export default function SkillsSection({
                       );
                     })
                   ) : (
-                    <span className="text-slate-600 text-xs italic">
+                    <span className="text-[#9188BE] text-xs italic">
                       No skills added.
                     </span>
                   )}
@@ -447,8 +447,8 @@ export default function SkillsSection({
             ))
           ) : (
             <div className="text-center py-6 w-full">
-              <Settings className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-              <p className="text-slate-500 text-sm">No skills added yet.</p>
+              <Settings className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-sm font-medium">No skills added yet.</p>
             </div>
           )}
         </div>

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.posts.models.comment import Comment
 from app.posts.models.like import Like
-from app.posts.models.post import Post
+from app.posts.models.post import Post, PostVisibility
 from app.posts.repository.comment import CommentRepository
 from app.posts.repository.like import LikeRepository
 from app.posts.repository.post import PostRepository
@@ -41,12 +41,35 @@ class PostService:
         return post
 
     async def get_post_detail(
-        self, post_id: int, current_user_id: int | None = None
+        self,
+        post_id: int,
+        current_user_id: int | None = None,
+        user_role: str | None = None,
     ) -> PostDetailResponse:
-        """Fetch a post with full details (comments, likes, author)."""
+        """Fetch a post with full details (comments, likes, author) and verify visibility."""
         post = await self.post_repo.get_with_details(post_id)
         if not post:
             raise NotFoundError(message=f"Post with id {post_id} not found")
+
+        role_str = user_role.lower().strip() if user_role else ""
+        is_author = current_user_id is not None and post.author_id == current_user_id
+        is_admin = role_str in ("admin", "super admin", "superadmin")
+
+        if not is_admin and not is_author:
+            if (
+                post.visibility == PostVisibility.STUDENTS_ONLY
+                and role_str != "student"
+            ):
+                raise AuthorizationError(
+                    message="This post is visible to students only"
+                )
+            elif (
+                post.visibility == PostVisibility.STUDENTS_AND_ALUMNI
+                and role_str not in ("student", "alumni")
+            ):
+                raise AuthorizationError(
+                    message="This post is visible to students and alumni only"
+                )
 
         is_liked = False
         if current_user_id:
@@ -75,9 +98,15 @@ class PostService:
         skip: int = 0,
         limit: int = 20,
         current_user_id: int | None = None,
+        user_role: str | None = None,
     ) -> list[PostResponse]:
-        """Fetch the public post feed (newest first)."""
-        posts = await self.post_repo.get_feed(skip=skip, limit=limit)
+        """Fetch the post feed (newest first) matching role visibility permissions."""
+        posts = await self.post_repo.get_feed(
+            skip=skip,
+            limit=limit,
+            user_role=user_role,
+            current_user_id=current_user_id,
+        )
         results: list[PostResponse] = []
         for post in posts:
             is_liked = False
@@ -139,11 +168,17 @@ class PostService:
 
         return await self.post_repo.update(post, update_data)
 
-    async def delete_post(self, post_id: int, author_id: int) -> Post:
-        """Delete a post (only the author can delete)."""
+    async def delete_post(
+        self, post_id: int, user_id: int, user_role: str | None = None
+    ) -> Post:
+        """Delete a post (author, Admin, or Super Admin can delete)."""
         post = await self.get_post(post_id)
-        if post.author_id != author_id:
-            raise AuthorizationError(message="You can only delete your own posts")
+        role_str = (user_role or "").lower().strip()
+        is_admin_or_superadmin = role_str in ("admin", "super admin", "superadmin")
+        if post.author_id != user_id and not is_admin_or_superadmin:
+            raise AuthorizationError(
+                message="You do not have permission to delete this post"
+            )
 
         return await self.post_repo.remove(post_id)
 
@@ -232,14 +267,25 @@ class PostService:
         await self.get_post(post_id)  # ensure post exists
         return await self.comment_repo.get_by_post(post_id, skip=skip, limit=limit)
 
-    async def delete_comment(self, post_id: int, comment_id: int, user_id: int) -> None:
-        """Delete a comment (only the comment author can delete)."""
+    async def delete_comment(
+        self, post_id: int, comment_id: int, user_id: int, user_role: str | None = None
+    ) -> None:
+        """Delete a comment (comment author, post author, Admin, or Super Admin)."""
         comment = await self.comment_repo.get(comment_id)
         if not comment:
             raise NotFoundError(message=f"Comment with id {comment_id} not found")
         if comment.post_id != post_id:
             raise NotFoundError(message="Comment does not belong to this post")
-        if comment.author_id != user_id:
-            raise AuthorizationError(message="You can only delete your own comments")
+
+        post = await self.get_post(post_id)
+        role_str = (user_role or "").lower().strip()
+        is_admin_or_superadmin = role_str in ("admin", "super admin", "superadmin")
+        is_post_owner = post.author_id == user_id
+        is_comment_author = comment.author_id == user_id
+
+        if not (is_comment_author or is_post_owner or is_admin_or_superadmin):
+            raise AuthorizationError(
+                message="You do not have permission to delete this comment"
+            )
 
         await self.comment_repo.remove(comment_id)

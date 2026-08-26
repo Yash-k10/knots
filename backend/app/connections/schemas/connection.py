@@ -52,6 +52,14 @@ class MutualConnectionsResponse(BaseModel):
 class ConnectionSuggestionResponse(BaseModel):
     user_id: int
     email: str
-    mutual_count: int
-    recommendation_reason: str
-    score: int
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+    department: str | None = None
+    mutual_count: int = 0
+    recommendation_reason: str = "Suggested connection"
+    score: int = 10
+    profile: ConnectionUserProfileSummary | None = None
+
+    class Config:
+        from_attributes = True

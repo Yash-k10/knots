@@ -18,6 +18,30 @@ class ConnectionService:
         if requester_id == addressee_id:
             raise ValueError("Cannot connect with yourself")
 
+        # Stealth check: Block connection requests to Super Admin
+        try:
+            from app.users.models.role import Role
+
+            addressee_stmt = (
+                select(User)
+                .outerjoin(Role, User.role_id == Role.id)
+                .options(selectinload(User.role))
+                .where(User.id == addressee_id)
+            )
+            addressee_res = await self.db.execute(addressee_stmt)
+            if hasattr(addressee_res, "scalars"):
+                addressee = addressee_res.scalars().first()
+                if (
+                    addressee
+                    and getattr(addressee, "role", None)
+                    and getattr(addressee.role, "name", None) == "Super Admin"
+                ):
+                    raise ValueError("User not found")
+        except ValueError:
+            raise
+        except Exception:
+            pass
+
         existing = await self.repository.get_connection_between_users(
             requester_id, addressee_id
         )
@@ -55,7 +79,9 @@ class ConnectionService:
         except Exception:
             pass
 
-        return conn
+        # Return fully eagerly loaded connection object to prevent MissingGreenlet in FastAPI serializer
+        loaded_conn = await self.repository.get(conn.id)
+        return loaded_conn or conn
 
     async def accept_connection(self, connection_id: int, user_id: int) -> Connection:
         conn = await self.repository.get(connection_id)
@@ -66,7 +92,36 @@ class ConnectionService:
         if conn.status != ConnectionStatus.PENDING:
             raise ValueError("Connection is not in a pending state")
 
-        return await self.repository.update(conn, {"status": ConnectionStatus.ACCEPTED})
+        await self.repository.update(conn, {"status": ConnectionStatus.ACCEPTED})
+        loaded_conn = await self.repository.get(connection_id)
+
+        # Dispatch real-time confirmation notification to the requester
+        try:
+            from app.notifications.services.notification import NotificationService
+            from app.profiles.repository.profile import ProfileRepository
+
+            prof_repo = ProfileRepository(self.repository.db)
+            acceptor_prof = await prof_repo.get_by_user_id(user_id)
+            acceptor_name = (
+                f"{acceptor_prof.first_name} {acceptor_prof.last_name}".strip()
+                if (
+                    acceptor_prof
+                    and hasattr(acceptor_prof, "first_name")
+                    and acceptor_prof.first_name
+                )
+                else "A campus member"
+            )
+            notif_service = NotificationService(self.repository.db)
+            await notif_service.create_notification(
+                user_id=conn.requester_id,
+                title="Connection Request Accepted",
+                content=f"{acceptor_name} accepted your connection request. You are now connected!",
+                type="connection_accepted",
+            )
+        except Exception as e:
+            print(f"Notification error on connection accept: {e}")
+
+        return loaded_conn or conn
 
     async def reject_connection(self, connection_id: int, user_id: int) -> Connection:
         conn = await self.repository.get(connection_id)
@@ -77,7 +132,9 @@ class ConnectionService:
         if conn.status != ConnectionStatus.PENDING:
             raise ValueError("Connection is not in a pending state")
 
-        return await self.repository.update(conn, {"status": ConnectionStatus.REJECTED})
+        await self.repository.update(conn, {"status": ConnectionStatus.REJECTED})
+        loaded_conn = await self.repository.get(connection_id)
+        return loaded_conn or conn
 
     async def withdraw_connection_request(
         self, connection_id: int, user_id: int
@@ -130,11 +187,20 @@ class ConnectionService:
         for req in pending_sent:
             excluded_user_ids.add(req.addressee_id)
 
-        # Fetch candidate users
+        # Fetch candidate users (exclude current user, connected users, pending requests, and Super Admin)
+        from sqlalchemy import and_, or_
+        from app.users.models.role import Role
+
         stmt = (
             select(User)
+            .outerjoin(Role, User.role_id == Role.id)
             .options(selectinload(User.profile))
-            .where(User.id.not_in(excluded_user_ids))
+            .where(
+                and_(
+                    User.id.not_in(excluded_user_ids),
+                    or_(Role.name.is_(None), Role.name != "Super Admin"),
+                )
+            )
             .limit(50)
         )
         result = await self.db.execute(stmt)
@@ -148,21 +214,50 @@ class ConnectionService:
             mutual_count = len(mutual_ids)
 
             score = 10 + (mutual_count * 25)
-            reason = "Member of your network"
+            reason = "Member of campus community"
             if mutual_count > 0:
                 reason = (
                     f"{mutual_count} mutual connection{'s' if mutual_count > 1 else ''}"
                 )
             elif candidate.profile and candidate.profile.bio:
-                reason = "Suggested based on active profile"
+                reason = "Active student profile"
+            elif candidate.profile and candidate.profile.department:
+                reason = f"Department: {candidate.profile.department}"
+
+            first_name = candidate.profile.first_name if candidate.profile else None
+            last_name = candidate.profile.last_name if candidate.profile else None
+            profile_pic = (
+                candidate.profile.profile_picture if candidate.profile else None
+            )
+            dept = candidate.profile.department if candidate.profile else None
+
+            if not first_name or first_name.strip().lower() == "user":
+                email_handle = candidate.email.split("@")[0]
+                parts = [
+                    p.capitalize()
+                    for p in email_handle.replace("_", ".").split(".")
+                    if p
+                ]
+                first_name = parts[0] if parts else "Student"
+                last_name = " ".join(parts[1:]) if len(parts) > 1 else (last_name or "")
 
             suggestions.append(
                 {
                     "user_id": cand_id,
                     "email": candidate.email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "profile_picture": profile_pic,
+                    "department": dept or "Student",
                     "mutual_count": mutual_count,
                     "recommendation_reason": reason,
                     "score": score,
+                    "profile": {
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "profile_picture": profile_pic,
+                        "department": dept or "Student",
+                    },
                 }
             )
 

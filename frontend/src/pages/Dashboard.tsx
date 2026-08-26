@@ -184,16 +184,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Hero Intro Panel */}
-      <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900/40 border border-indigo-500/20 rounded-2xl p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(99,102,241,0.15),transparent_50%)]" />
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#C8B6E2]/20 via-[#4B63D2]/10 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5" /> AI Engine Active
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/60 text-[#1E2746] text-xs font-black shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-[#5851A4]" /> AI Engine Active
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
             Welcome Back{greetingName} 👋
           </h2>
-          <p className="text-indigo-200 text-sm max-w-2xl leading-relaxed">
+          <p className="text-[#5851A4] text-sm max-w-2xl leading-relaxed font-medium">
             Your personalized AI Hub has analyzed your skills, network activity,
             and target role to bring you high-value recommendations and career
             utilities.
@@ -203,15 +203,16 @@ export default function Dashboard() {
         <div className="relative z-10 flex flex-wrap gap-3 shrink-0">
           <a
             href="/jobs"
-            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white rounded-xl font-semibold text-xs transition flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-[#F8F6FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#1E2746] rounded-xl font-bold text-xs transition flex items-center gap-2"
           >
-            Explore Jobs <Briefcase className="h-4 w-4 text-emerald-400" />
+            Referrals & Opportunities <Briefcase className="h-4 w-4 text-[#4B63D2]" />
           </a>
           <a
+
             href="/profile"
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-indigo-600/30 hover:scale-[1.02] flex items-center gap-1.5"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl font-bold text-xs tracking-wider uppercase transition shadow-md shadow-[#4B63D2]/20 hover:scale-[1.02] flex items-center gap-2"
           >
-            My Profile <ArrowUpRight className="h-4 w-4" />
+            My Profile <ArrowUpRight className="h-4 w-4 text-[#FFD21A]" />
           </a>
         </div>
       </div>
@@ -226,37 +227,37 @@ export default function Dashboard() {
       />
 
       {/* Main Section Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-900 pb-4 gap-4">
-        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-900 gap-1">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#EAE4F7] pb-4 gap-4">
+        <div className="flex bg-white p-1.5 rounded-2xl border border-[#EAE4F7] gap-1.5 shadow-sm">
           <button
             onClick={() => setMainTab("recommendations")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               mainTab === "recommendations"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
-            <Sparkles className="h-4 w-4" /> AI Recommendations
+            <Sparkles className={`h-4 w-4 ${mainTab === "recommendations" ? "text-[#FFD21A]" : "text-[#5851A4]"}`} /> AI Recommendations
           </button>
           <button
             onClick={() => setMainTab("analytics")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               mainTab === "analytics"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
-            <TrendingUp className="h-4 w-4" /> Performance & Analytics
+            <TrendingUp className={`h-4 w-4 ${mainTab === "analytics" ? "text-[#FFD21A]" : "text-[#5851A4]"}`} /> Performance & Analytics
           </button>
           <button
             onClick={() => setMainTab("aitools")}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               mainTab === "aitools"
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-slate-900"
+                ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
+                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
-            <Brain className="h-4 w-4" /> AI Career Tools
+            <Brain className={`h-4 w-4 ${mainTab === "aitools" ? "text-[#FFD21A]" : "text-[#5851A4]"}`} /> AI Career Tools
           </button>
         </div>
       </div>
@@ -295,20 +296,20 @@ export default function Dashboard() {
           <div className="flex gap-3">
             <button
               onClick={() => setAiToolCategory("resume")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 cursor-pointer ${
                 aiToolCategory === "resume"
-                  ? "bg-indigo-600 text-white border-indigo-500"
-                  : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+                  ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
+                  : "bg-white text-[#5851A4] border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
               }`}
             >
               <FileText className="h-4 w-4" /> AI Resume Optimizer
             </button>
             <button
               onClick={() => setAiToolCategory("roadmap")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-2 cursor-pointer ${
                 aiToolCategory === "roadmap"
-                  ? "bg-indigo-600 text-white border-indigo-500"
-                  : "bg-slate-950 text-slate-400 border-slate-900 hover:border-slate-800"
+                  ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
+                  : "bg-white text-[#5851A4] border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
               }`}
             >
               <Compass className="h-4 w-4" /> AI Career Roadmap Generator
@@ -317,13 +318,13 @@ export default function Dashboard() {
 
           {/* AI Resume Optimizer */}
           {aiToolCategory === "resume" && (
-            <div className="bg-slate-950/50 border border-slate-900 rounded-2xl p-6 backdrop-blur-md space-y-6">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-400" />
+                <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-[#4B63D2]" />
                   Smart Resume Feedback Sandbox
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#5851A4] mt-1 font-medium">
                   Paste your resume text below to receive automated feedback on
                   skills, formatting, and key recommendations.
                 </p>
@@ -335,12 +336,12 @@ export default function Dashboard() {
                   onChange={(e) => setResumeText(e.target.value)}
                   placeholder="Paste your resume content or bullet points here..."
                   rows={6}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl p-4 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
                 />
                 <button
                   type="submit"
                   disabled={isAnalyzingResume || !resumeText.trim()}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+                  className="px-5 py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   {isAnalyzingResume ? (
                     <>
@@ -356,14 +357,14 @@ export default function Dashboard() {
               </form>
 
               {resumeResult && (
-                <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-6 space-y-4 animate-in fade-in duration-300">
+                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-4 animate-in fade-in duration-300">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+                    <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />{" "}
                       Analysis Results
                     </h4>
                     {resumeResult.score !== undefined && (
-                      <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 rounded-full text-xs font-black">
+                      <span className="px-3 py-1 bg-[#4B63D2]/10 border border-[#4B63D2]/30 text-[#4B63D2] rounded-full text-xs font-black">
                         Resume Score: {resumeResult.score}/100
                       </span>
                     )}
@@ -371,10 +372,10 @@ export default function Dashboard() {
 
                   {resumeResult.feedback && (
                     <div className="space-y-2">
-                      <span className="text-xs font-semibold text-slate-300">
+                      <span className="text-xs font-bold text-[#1E2746]">
                         Key Feedback:
                       </span>
-                      <ul className="list-disc list-inside space-y-1 text-xs text-slate-400">
+                      <ul className="list-disc list-inside space-y-1 text-xs text-[#5851A4] font-medium">
                         {resumeResult.feedback.map(
                           (item: string, idx: number) => (
                             <li key={idx}>{item}</li>
@@ -390,13 +391,13 @@ export default function Dashboard() {
 
           {/* AI Career Roadmap Generator */}
           {aiToolCategory === "roadmap" && (
-            <div className="bg-slate-950/50 border border-slate-900 rounded-2xl p-6 backdrop-blur-md space-y-6">
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Compass className="h-5 w-5 text-indigo-400" />
+                <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
+                  <Compass className="h-5 w-5 text-[#4B63D2]" />
                   Target Career Step Generator
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-[#5851A4] mt-1 font-medium">
                   Specify your target role and current skill set to generate
                   tailored learning steps.
                 </p>
@@ -405,7 +406,7 @@ export default function Dashboard() {
               <form onSubmit={handleGenerateRoadmap} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1.5 uppercase tracking-wider">
                       Target Role
                     </label>
                     <input
@@ -413,11 +414,11 @@ export default function Dashboard() {
                       value={targetRole}
                       onChange={(e) => setTargetRole(e.target.value)}
                       placeholder="e.g. Senior Full-Stack Engineer, AI Research Intern"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                      className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl p-3 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1.5 uppercase tracking-wider">
                       Current Skills (comma separated)
                     </label>
                     <input
@@ -425,7 +426,7 @@ export default function Dashboard() {
                       value={skillsInput}
                       onChange={(e) => setSkillsInput(e.target.value)}
                       placeholder="e.g. Python, React, PostgreSQL"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition"
+                      className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl p-3 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
                     />
                   </div>
                 </div>
@@ -433,7 +434,7 @@ export default function Dashboard() {
                 <button
                   type="submit"
                   disabled={isGeneratingRoadmap || !targetRole.trim()}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+                  className="px-5 py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   {isGeneratingRoadmap ? (
                     <>
@@ -449,9 +450,9 @@ export default function Dashboard() {
               </form>
 
               {roadmapResult && (
-                <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-6 space-y-4 animate-in fade-in duration-300">
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <Compass className="h-4 w-4 text-indigo-400" /> Proposed
+                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-4 animate-in fade-in duration-300">
+                  <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                    <Compass className="h-4 w-4 text-[#4B63D2]" /> Proposed
                     Career Path
                   </h4>
                   {roadmapResult.milestones && (
@@ -460,16 +461,16 @@ export default function Dashboard() {
                         (step: any, idx: number) => (
                           <div
                             key={idx}
-                            className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-start gap-3"
+                            className="bg-white p-3.5 rounded-2xl border border-[#EAE4F7] flex items-start gap-3 shadow-sm"
                           >
-                            <span className="h-6 w-6 rounded-full bg-indigo-600/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0">
+                            <span className="h-6 w-6 rounded-full bg-[#4B63D2]/15 text-[#4B63D2] font-black text-xs flex items-center justify-center shrink-0">
                               {idx + 1}
                             </span>
                             <div>
-                              <h5 className="text-xs font-bold text-white">
+                              <h5 className="text-xs font-bold text-[#1E2746]">
                                 {step.title}
                               </h5>
-                              <p className="text-xs text-slate-400 mt-1">
+                              <p className="text-xs text-[#5851A4] mt-1 font-medium leading-relaxed">
                                 {step.description}
                               </p>
                             </div>

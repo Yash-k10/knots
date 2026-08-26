@@ -51,8 +51,12 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
           role?: { name: string };
         }>("/users/me");
         if (isMounted) {
+          const roleName = user.role?.name?.toLowerCase().trim();
           const hasAdminRole =
-            user.role_id === 1 || user.role?.name?.toLowerCase() === "admin";
+            user.role_id === 1 ||
+            roleName === "admin" ||
+            roleName === "super admin" ||
+            roleName === "superadmin";
           setIsAdmin(hasAdminRole);
         }
       } catch (err) {

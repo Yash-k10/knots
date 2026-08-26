@@ -1,4 +1,4 @@
-import { UserPlus, Check, X, UserCheck, MessageSquare, Users, RotateCcw } from 'lucide-react';
+import { UserPlus, Check, X, MessageSquare, Users, RotateCcw } from 'lucide-react';
 import { getMediaUrl } from '../../services/api';
 
 interface ConnectionCardProps {
@@ -34,7 +34,7 @@ export default function ConnectionCard({
   onConnect,
   onMessage,
 }: ConnectionCardProps) {
-  // Generate a premium gradient background based on targetId or email
+  // Generate a vibrant gradient background based on targetId or email
   const getGradientStyle = (seed: string | number) => {
     const seedStr = seed.toString();
     let hash = 0;
@@ -44,7 +44,7 @@ export default function ConnectionCard({
     const hue1 = Math.abs(hash % 360);
     const hue2 = Math.abs((hash + 80) % 360);
     return {
-      background: `linear-gradient(135deg, hsl(${hue1}, 75%, 55%) 0%, hsl(${hue2}, 85%, 65%) 100%)`,
+      background: `linear-gradient(135deg, hsl(${hue1}, 70%, 50%) 0%, hsl(${hue2}, 80%, 60%) 100%)`,
     };
   };
 
@@ -54,10 +54,7 @@ export default function ConnectionCard({
   const resolvedAvatar = getMediaUrl(profilePicture);
 
   return (
-    <div className="group relative bg-slate-950/40 backdrop-blur-md border border-slate-800/80 hover:border-indigo-500/40 rounded-2xl p-6 text-center space-y-4 shadow-xl hover:shadow-indigo-950/10 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between">
-      {/* Background glow animation */}
-      <div className="absolute inset-0 rounded-2xl bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10" />
-
+    <div className="group relative bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 text-center space-y-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
       <div>
         {/* Avatar Container */}
         <div className="relative mx-auto h-20 w-20 flex items-center justify-center mb-3">
@@ -65,19 +62,12 @@ export default function ConnectionCard({
             <img
               src={resolvedAvatar}
               alt={displayName}
-              className="h-20 w-20 rounded-2xl object-cover border border-slate-800 shadow-lg ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
+              className="h-20 w-20 rounded-2xl object-cover border border-[#EAE4F7] shadow-md group-hover:scale-105 transition-transform duration-300"
             />
-          ) : type === 'connection' ? (
-            <div
-              style={getGradientStyle(displayName || targetId)}
-              className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-indigo-500/10 ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
-            >
-              {avatarLetter}
-            </div>
           ) : (
             <div
               style={getGradientStyle(displayName || targetId)}
-              className="h-20 w-20 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg ring-4 ring-slate-900 group-hover:scale-105 transition-transform duration-300"
+              className="h-20 w-20 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-md group-hover:scale-105 transition-transform duration-300"
             >
               {avatarLetter}
             </div>
@@ -86,13 +76,13 @@ export default function ConnectionCard({
 
         {/* Text Info */}
         <div className="space-y-1">
-          <h4 className="text-base font-semibold text-white truncate px-2 transition-colors group-hover:text-indigo-200" title={email || displayName}>
+          <h4 className="text-base font-bold text-[#1E2746] truncate px-2 transition-colors group-hover:text-[#4B63D2]" title={email || displayName}>
             {displayName}
           </h4>
-          <p className={`text-xs font-medium tracking-wide ${
-            type === 'request' ? 'text-indigo-400' :
-            type === 'connection' ? 'text-emerald-400' :
-            type === 'sent' ? 'text-amber-400' : 'text-slate-400'
+          <p className={`text-xs font-semibold tracking-wide ${
+            type === 'request' ? 'text-[#4B63D2]' :
+            type === 'connection' ? 'text-emerald-600' :
+            type === 'sent' ? 'text-amber-600' : 'text-[#5851A4]'
           }`}>
             {subtitle}
           </p>
@@ -101,13 +91,13 @@ export default function ConnectionCard({
           {((mutualCount !== undefined && mutualCount > 0) || reason) && (
             <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5">
               {mutualCount !== undefined && mutualCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                  <Users className="w-3 h-3 text-indigo-400" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20">
+                  <Users className="w-3 h-3 text-[#4B63D2]" />
                   {mutualCount} mutual
                 </span>
               )}
               {reason && (
-                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] text-slate-400 bg-slate-900 border border-slate-800 truncate max-w-[200px]" title={reason}>
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium text-[#5851A4] bg-[#FAF9FD] border border-[#EAE4F7] truncate max-w-[200px]" title={reason}>
                   {reason}
                 </span>
               )}
@@ -117,18 +107,18 @@ export default function ConnectionCard({
       </div>
 
       {/* Action Buttons */}
-      <div className="pt-3 border-t border-slate-900/60 mt-2">
+      <div className="pt-3 border-t border-[#EAE4F7] mt-2">
         {type === 'request' && (
           <div className="flex gap-2.5">
             <button
               onClick={() => onAccept && onAccept(id)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 py-2.5 rounded-xl text-xs font-semibold text-white transition-all shadow-md shadow-indigo-900/30 hover:shadow-indigo-500/20"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] active:scale-95 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
             >
               <Check className="w-4 h-4" /> Accept
             </button>
             <button
               onClick={() => onReject && onReject(id)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 py-2.5 rounded-xl text-xs font-semibold text-slate-200 transition-all border border-slate-700/50 hover:border-slate-600/50"
+              className="flex-1 flex items-center justify-center gap-1.5 bg-[#FAF9FD] hover:bg-rose-50 hover:text-rose-600 active:scale-95 py-2.5 rounded-xl text-xs font-bold text-[#5851A4] transition-all border border-[#EAE4F7] cursor-pointer"
             >
               <X className="w-4 h-4" /> Reject
             </button>
@@ -138,7 +128,7 @@ export default function ConnectionCard({
         {type === 'sent' && (
           <button
             onClick={() => onWithdraw && onWithdraw(id)}
-            className="w-full flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-red-950/40 hover:text-red-300 hover:border-red-500/30 active:scale-[0.98] py-2.5 rounded-xl text-xs font-semibold text-slate-400 transition-all border border-slate-800"
+            className="w-full flex items-center justify-center gap-1.5 bg-[#FAF9FD] hover:bg-rose-50 hover:text-rose-600 active:scale-[0.98] py-2.5 rounded-xl text-xs font-bold text-[#5851A4] transition-all border border-[#EAE4F7] cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Withdraw Request
           </button>
@@ -147,16 +137,16 @@ export default function ConnectionCard({
         {type === 'connection' && (
           <button
             onClick={() => onMessage && onMessage(targetId)}
-            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 hover:border-indigo-500/40 active:scale-[0.98] py-2.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white transition-all border border-slate-800 shadow-inner group-hover:shadow-indigo-950/20"
+            className="w-full flex items-center justify-center gap-2 bg-[#FAF9FD] hover:bg-[#F0EDF9] hover:border-[#C8B6E2] active:scale-[0.98] py-2.5 rounded-xl text-xs font-bold text-[#1E2746] transition-all border border-[#EAE4F7] shadow-sm cursor-pointer"
           >
-            <MessageSquare className="w-4 h-4 text-indigo-400" /> Send Message
+            <MessageSquare className="w-4 h-4 text-[#4B63D2]" /> Send Message
           </button>
         )}
 
         {type === 'discover' && (
           <button
             onClick={() => onConnect && onConnect(targetId)}
-            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] py-2.5 rounded-xl text-xs font-semibold text-white transition-all shadow-md shadow-indigo-900/20 hover:shadow-indigo-500/20"
+            className="w-full flex items-center justify-center gap-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] active:scale-[0.98] py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
           >
             <UserPlus className="w-4 h-4" /> Connect
           </button>
@@ -165,5 +155,3 @@ export default function ConnectionCard({
     </div>
   );
 }
-
-

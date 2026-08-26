@@ -239,23 +239,23 @@ export default function ProjectsSection({
     } catch (err: any) {
       onError(err.message || "Failed to save projects.");
     } finally {
-      setIsSaving(false);
+setIsSaving(false);
     }
   };
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <FolderGit className="h-5 w-5 text-indigo-400" />
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
+        <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+          <FolderGit className="h-5 w-5 text-[#4B63D2]" />
           Projects
         </h3>
         {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-900 transition"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
           >
-            <Edit2 className="h-4 w-4" />
+            <Edit2 className="h-4 w-4 text-[#4B63D2]" />
             Edit Projects
           </button>
         )}
@@ -266,45 +266,45 @@ export default function ProjectsSection({
           {/* Add / Edit Project Form */}
           <form
             onSubmit={handleAddOrUpdateEntry}
-            className="bg-slate-900/40 border border-slate-900 rounded-xl p-5 space-y-4"
+            className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-5 space-y-4"
           >
-            <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+            <h4 className="text-sm font-bold text-[#1E2746] uppercase tracking-wider">
               {editIndex !== null ? "Edit Project details" : "Add New Project"}
             </h4>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Project Title <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                Project Title <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Automated Attendance Tracker"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-700 focus:outline-none transition"
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
                 required
               />
               {formErrors.title && (
-                <p className="text-red-500 text-[10px] mt-1">
+                <p className="text-rose-600 text-[10px] mt-1 font-bold">
                   {formErrors.title}
                 </p>
               )}
             </div>
 
             {/* Bullet points editor for project highlights */}
-            <div className="space-y-2 border-t border-slate-900 pt-3">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <div className="space-y-2 border-t border-[#EAE4F7] pt-3">
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1">
                 Project Highlights / Accomplishments{" "}
-                <span className="text-red-500">*</span>
+                <span className="text-rose-500">*</span>
               </label>
 
               <div className="space-y-2">
                 {highlights.map((highlight, idx) => (
                   <div
                     key={idx}
-                    className="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80"
+                    className="flex gap-2 items-center bg-white p-2.5 rounded-xl border border-[#EAE4F7]"
                   >
-                    <div className="flex-1 text-xs text-slate-300">
+                    <div className="flex-1 text-xs text-[#1E2746]">
                       {editingHighlightIndex === idx ? (
                         <input
                           type="text"
@@ -317,11 +317,11 @@ export default function ProjectsSection({
                             if (e.key === "Enter") handleSaveHighlightEdit(idx);
                           }}
                           autoFocus
-                          className="w-full bg-slate-900 border border-slate-800 px-2 py-1 text-xs text-white rounded focus:outline-none focus:border-indigo-500"
+                          className="w-full bg-white border border-[#D5CBEE] px-2 py-1 text-xs text-[#1E2746] rounded focus:outline-none focus:border-[#4B63D2]"
                         />
                       ) : (
                         <span
-                          className="cursor-pointer"
+                          className="cursor-pointer font-medium"
                           onClick={() =>
                             handleStartEditHighlight(idx, highlight)
                           }
@@ -336,7 +336,7 @@ export default function ProjectsSection({
                         type="button"
                         onClick={() => handleMoveHighlight(idx, "up")}
                         disabled={idx === 0}
-                        className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
+                        className="p-1 hover:bg-[#FAF9FD] rounded text-[#9188BE] hover:text-[#4B63D2] disabled:opacity-30"
                       >
                         <ArrowUp className="h-3.5 w-3.5" />
                       </button>
@@ -344,14 +344,14 @@ export default function ProjectsSection({
                         type="button"
                         onClick={() => handleMoveHighlight(idx, "down")}
                         disabled={idx === highlights.length - 1}
-                        className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-indigo-400 disabled:opacity-30"
+                        className="p-1 hover:bg-[#FAF9FD] rounded text-[#9188BE] hover:text-[#4B63D2] disabled:opacity-30"
                       >
                         <ArrowDown className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveHighlight(idx)}
-                        className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-red-400"
+                        className="p-1 hover:bg-[#FAF9FD] rounded text-[#9188BE] hover:text-rose-500"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -367,26 +367,26 @@ export default function ProjectsSection({
                   value={newHighlightText}
                   onChange={(e) => setNewHighlightText(e.target.value)}
                   placeholder="Add bullet highlight (e.g. Achieved 95% model accuracy)..."
-                  className="flex-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-700 focus:outline-none"
+                  className="flex-1 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-3 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none font-medium"
                 />
                 <button
                   type="button"
                   onClick={handleAddHighlight}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition"
+                  className="px-3 py-2 bg-[#FAF9FD] border border-[#EAE4F7] hover:bg-[#F0EDF9] rounded-xl text-xs font-bold text-[#5851A4] hover:text-[#1E2746] transition"
                 >
                   Add Bullet
                 </button>
               </div>
               {formErrors.highlights && (
-                <p className="text-red-500 text-[10px]">
+                <p className="text-rose-600 text-[10px] font-bold">
                   {formErrors.highlights}
                 </p>
               )}
             </div>
 
             {/* Tech stack tag editor */}
-            <div className="space-y-2 border-t border-slate-900 pt-3">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <div className="space-y-2 border-t border-[#EAE4F7] pt-3">
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1">
                 Tech Stack tags (Optional)
               </label>
 
@@ -395,13 +395,13 @@ export default function ProjectsSection({
                 {techStack.map((tag) => (
                   <span
                     key={tag}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-950 border border-slate-800 rounded-full text-[10px] font-bold text-indigo-300"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#EAE4F7] rounded-full text-[10px] font-bold text-[#4B63D2]"
                   >
                     {tag}
                     <button
                       type="button"
                       onClick={() => handleRemoveTechTag(tag)}
-                      className="p-0.5 rounded-full hover:bg-slate-800 text-slate-500 hover:text-red-400 transition"
+                      className="p-0.5 rounded-full hover:bg-[#FAF9FD] text-[#9188BE] hover:text-rose-500 transition"
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -421,34 +421,34 @@ export default function ProjectsSection({
                     }
                   }}
                   placeholder="Add tech (e.g. React, FastApi, PostgreSQL) and press Enter..."
-                  className="flex-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-700 focus:outline-none"
+                  className="flex-1 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-3 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none font-medium"
                 />
                 <button
                   type="button"
                   onClick={handleAddTechTag}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition"
+                  className="px-3 py-2 bg-[#FAF9FD] border border-[#EAE4F7] hover:bg-[#F0EDF9] rounded-xl text-xs font-bold text-[#5851A4] hover:text-[#1E2746] transition"
                 >
                   Add Tag
                 </button>
               </div>
               {formErrors.tech && (
-                <p className="text-red-500 text-[10px]">{formErrors.tech}</p>
+                <p className="text-rose-600 text-[10px] font-bold">{formErrors.tech}</p>
               )}
             </div>
 
-            <div className="flex gap-2 justify-end border-t border-slate-900 pt-3">
+            <div className="flex gap-2 justify-end border-t border-[#EAE4F7] pt-3">
               {editIndex !== null && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-3 py-1.5 border border-slate-800 rounded-xl text-slate-400 hover:bg-slate-900 transition text-xs font-medium"
+                  className="px-3 py-1.5 border border-[#EAE4F7] rounded-xl text-[#5851A4] hover:bg-[#FAF9FD] transition text-xs font-bold"
                 >
                   Cancel Edit
                 </button>
               )}
               <button
                 type="submit"
-                className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-200 text-xs font-semibold transition"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] rounded-xl text-white text-xs font-bold transition"
               >
                 <Plus className="h-3.5 w-3.5" />
                 {editIndex !== null ? "Update Project" : "Add to Projects List"}
@@ -462,31 +462,31 @@ export default function ProjectsSection({
               projects.map((proj, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-900/20 border border-slate-800 rounded-xl p-4 text-xs space-y-3"
+                  className="bg-white border border-[#EAE4F7] rounded-xl p-4 text-xs space-y-3 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
-                    <h5 className="font-bold text-white text-sm leading-snug">
+                    <h5 className="font-bold text-[#1E2746] text-sm leading-snug">
                       {proj.title}
                     </h5>
                     <div className="flex gap-1">
                       <button
                         type="button"
                         onClick={() => startEditEntry(idx)}
-                        className="p-1 text-slate-400 hover:text-white transition"
+                        className="p-1 text-[#9188BE] hover:text-[#1E2746] transition"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveEntry(idx)}
-                        className="p-1 text-slate-400 hover:text-red-400 transition"
+                        className="p-1 text-[#9188BE] hover:text-rose-500 transition"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[11px]">
+                  <ul className="list-disc pl-4 space-y-1 text-[#1E2746] text-[11px] font-medium">
                     {proj.highlights.map((bullet, bIdx) => (
                       <li key={bIdx}>{bullet}</li>
                     ))}
@@ -497,7 +497,7 @@ export default function ProjectsSection({
                       {proj.tech_stack.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2 py-0.5 bg-slate-950 border border-slate-900 rounded text-[9px] font-bold text-indigo-400"
+                          className="px-2 py-0.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded text-[9px] font-bold text-[#4B63D2]"
                         >
                           {tag}
                         </span>
@@ -507,17 +507,17 @@ export default function ProjectsSection({
                 </div>
               ))
             ) : (
-              <p className="text-slate-650 text-xs italic text-center py-6">
+              <p className="text-[#9188BE] text-xs italic text-center py-6">
                 No projects added yet. Create one above!
               </p>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="flex justify-end gap-3 border-t border-slate-800 pt-3">
+          <div className="flex justify-end gap-3 border-t border-[#EAE4F7] pt-3">
             <button
               onClick={handleEditToggle}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-white transition text-xs font-medium"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746] transition text-xs font-bold"
               disabled={isSaving}
             >
               <X className="h-4 w-4" />
@@ -525,28 +525,28 @@ export default function ProjectsSection({
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 font-medium text-xs transition shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:opacity-90 font-bold text-xs transition shadow-md shadow-[#4B63D2]/25"
               disabled={isSaving}
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 text-[#FFD21A]" />
               {isSaving ? "Saving..." : "Save Projects"}
             </button>
           </div>
         </div>
       ) : (
         /* View Mode */
-        <div className="space-y-6">
+        <div className="space-y-4">
           {projects.length > 0 ? (
             projects.map((proj, idx) => (
               <div
                 key={idx}
-                className="group flex gap-4 items-start bg-slate-900/10 border border-transparent hover:border-slate-800/60 rounded-xl p-3 transition animate-in fade-in duration-200"
+                className="group flex gap-4 items-start bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl p-4 transition animate-in fade-in duration-200 shadow-sm"
               >
-                <div className="mt-1 bg-slate-900 border border-slate-800 p-2 rounded-lg text-indigo-400">
+                <div className="mt-1 bg-white border border-[#EAE4F7] p-2.5 rounded-xl text-[#4B63D2] shadow-sm">
                   <Code className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <h4 className="font-semibold text-white text-base leading-tight">
+                  <h4 className="font-bold text-[#1E2746] text-base leading-tight">
                     {proj.title}
                   </h4>
 
@@ -554,7 +554,7 @@ export default function ProjectsSection({
                     {proj.highlights.map((bullet, bIdx) => (
                       <li
                         key={bIdx}
-                        className="text-slate-300 text-xs leading-relaxed"
+                        className="text-[#1E2746] text-xs leading-relaxed font-medium"
                       >
                         {bullet}
                       </li>
@@ -566,7 +566,7 @@ export default function ProjectsSection({
                       {proj.tech_stack.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-indigo-300"
+                          className="px-2.5 py-1 bg-white border border-[#EAE4F7] rounded-lg text-[10px] font-bold text-[#4B63D2] shadow-sm"
                         >
                           {tag}
                         </span>
@@ -578,8 +578,8 @@ export default function ProjectsSection({
             ))
           ) : (
             <div className="text-center py-6 w-full">
-              <FolderGit className="h-10 w-10 text-slate-650 mx-auto mb-2" />
-              <p className="text-slate-500 text-sm">No projects added yet.</p>
+              <FolderGit className="h-10 w-10 text-[#B9B1D9] mx-auto mb-2" />
+              <p className="text-[#5851A4] text-sm font-medium">No projects added yet.</p>
             </div>
           )}
         </div>
