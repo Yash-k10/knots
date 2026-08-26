@@ -29,7 +29,6 @@ from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
 
-
 # In-memory OTP storage: email -> {"otp": str, "expires_at": float, "purpose": str}
 OTP_STORE: dict[str, dict] = {}
 
