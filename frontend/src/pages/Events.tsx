@@ -425,15 +425,19 @@ export default function Events() {
     loadClubs();
   }, []);
 
-  // Check if current user is President, Secretary, or Admin
+  // Check if current user is Controller, President, Secretary, Admin, or Management
   const isPresidentOrSecretary =
     currentUser?.email?.toLowerCase().includes("president") ||
     currentUser?.email?.toLowerCase().includes("secretary") ||
     currentUser?.email?.toLowerCase().includes("admin") ||
     currentUser?.email?.toLowerCase().includes("dean") ||
+    currentUser?.email?.toLowerCase().includes("controller") ||
     currentUser?.email?.toLowerCase().includes("yashkapse") ||
     currentUser?.role?.name?.toLowerCase() === "admin" ||
-    currentUser?.role?.name?.toLowerCase() === "management";
+    currentUser?.role?.name?.toLowerCase() === "super admin" ||
+    currentUser?.role?.name?.toLowerCase() === "controller" ||
+    currentUser?.role?.name?.toLowerCase() === "management" ||
+    currentUser?.role?.name?.toLowerCase() === "faculty";
 
   const handleRSVP = (eventId: number) => {
     setEvents((prev) =>

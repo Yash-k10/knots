@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from app.messaging.schemas.message import MessageResponse
+from app.users.schemas.user import UserResponse
 
 
 class ConversationParticipantResponse(BaseModel):
@@ -11,6 +12,7 @@ class ConversationParticipantResponse(BaseModel):
     user_id: int
     joined_at: datetime
     last_read_at: datetime | None = None
+    user: UserResponse | None = None
 
     class Config:
         from_attributes = True

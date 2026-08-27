@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analytics.models.post_engagement import PostEngagement
@@ -14,6 +14,7 @@ from app.posts.models.comment import Comment
 from app.posts.models.like import Like
 from app.posts.models.post import Post
 from app.profiles.models.profile import Profile
+from app.users.models.role import Role
 from app.users.models.user import User
 
 
@@ -23,8 +24,21 @@ class AnalyticsRepository(BaseRepository[User]):
 
     async def get_system_stats(self) -> dict:
         """Fetch actual database counts for users, connections, jobs, posts, events, clubs, likes, comments, and views."""
-        # 1. Total users
-        users_result = await self.db.execute(select(func.count(User.id)))
+        # 1. Total users (stealth: exclude Super Admin)
+        users_result = await self.db.execute(
+            select(func.count(User.id))
+            .outerjoin(Role, User.role_id == Role.id)
+            .where(
+                or_(
+                    Role.name.is_(None),
+                    and_(
+                        Role.name != "Super Admin",
+                        Role.name != "super admin",
+                        Role.name != "superadmin",
+                    ),
+                )
+            )
+        )
         total_users = users_result.scalar() or 0
 
         # 2. Total accepted connections

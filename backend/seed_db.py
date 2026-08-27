@@ -63,6 +63,28 @@ ROLES_DATA = {
         "create_events",
         "post_jobs",
     ],
+    "Management": [
+        "admin_access",
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "delete_posts",
+        "moderate_content",
+        "manage_users",
+        "post_jobs",
+        "create_events",
+        "manage_clubs",
+    ],
+    "Controller": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "create_events",
+        "manage_clubs",
+        "post_jobs",
+    ],
 }
 
 # Pre-defined event categories

@@ -6,6 +6,8 @@ import {
   Edit2,
   Save,
   X,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { ProfileResponse } from "../../services/profile";
 import { profileService } from "../../services/profile";
@@ -39,6 +41,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDownloadingResume, setIsDownloadingResume] = useState(false);
 
   // Form states
   const [firstName, setFirstName] = useState(profile.first_name || "");
@@ -48,6 +51,17 @@ export default function ProfileHeader({
   const [graduationYear, setGraduationYear] = useState<number | string>(
     profile.graduation_year || "",
   );
+
+  const handleGenerateResume = async () => {
+    setIsDownloadingResume(true);
+    try {
+      await profileService.downloadResume(isOwnProfile ? undefined : profile.user_id);
+    } catch (err: any) {
+      onError(err.message || "Failed to generate resume. Please try again.");
+    } finally {
+      setIsDownloadingResume(false);
+    }
+  };
 
   const handleCancel = () => {
     setFirstName(profile.first_name || "");
@@ -265,15 +279,39 @@ export default function ProfileHeader({
             </div>
           </div>
 
-          {isOwnProfile && (
+          <div className="flex flex-wrap items-center gap-3 self-center md:self-start mt-4 md:mt-0">
             <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition text-sm font-bold self-center md:self-start mt-4 md:mt-0 shadow-sm cursor-pointer"
+              onClick={handleGenerateResume}
+              disabled={isDownloadingResume}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold text-sm transition shadow-md shadow-[#4B63D2]/25 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden"
+              title="Generate and download personalized ATS-friendly Word DOCX resume"
             >
-              <Edit2 className="h-4 w-4 text-[#4B63D2]" />
-              Edit Info
+              {isDownloadingResume ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
+                  <span>Generating DOCX...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 text-[#FFD21A] group-hover:rotate-12 transition-transform" />
+                  <span>Generate Resume</span>
+                  <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white ml-0.5">
+                    DOCX
+                  </span>
+                </>
+              )}
             </button>
-          )}
+
+            {isOwnProfile && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#EAE4F7] text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition text-sm font-bold shadow-sm cursor-pointer"
+              >
+                <Edit2 className="h-4 w-4 text-[#4B63D2]" />
+                Edit Info
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

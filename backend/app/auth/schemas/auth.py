@@ -35,10 +35,20 @@ class UserRegister(BaseModel):
     leetcode_profile: str | None = None
     hackerrank_profile: str | None = None
 
-    # 2. Educational Qualifications
+    # 2. Educational Qualifications (Students only)
     tenth_percentage: float | None = None
     twelfth_or_diploma_percentage: float | None = None
     gpa: float | None = None
+
+    # 3. Role-Specific Custom Attributes
+    department: str | None = None  # Faculty and Management: Controller
+    faculty_type: str | None = None  # "HOD" | "Normal faculty"
+    management_role: str | None = (
+        None  # "Controller" | "Central Admin" | "TPO" | "DEAN" | "CEO" | "Principal"
+    )
+    access_key: str | None = None  # Department Controller or Central Admin Security Key
+    current_company: str | None = None  # Alumni
+    designation: str | None = None
 
     @field_validator("email")
     @classmethod

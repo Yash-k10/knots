@@ -108,6 +108,40 @@ class MessagingService:
         msg_in = MessageCreate(receiver_id=payload.receiver_id, content=payload.content)
         return await self.send_message(sender_id, msg_in)
 
+    async def get_or_create_direct_conversation(
+        self, user1_id: int, user2_id: int
+    ) -> ConversationResponse:
+        """Get or initialize a direct 1-on-1 conversation with populated details."""
+        if user1_id == user2_id:
+            raise ValidationError("Cannot create a direct conversation with yourself")
+
+        conv = await self.conversation_repo.get_or_create_direct_conversation(
+            user1_id, user2_id
+        )
+        conversations = await self.get_user_conversations(user1_id)
+        existing = next((c for c in conversations if c.id == conv.id), None)
+        if existing:
+            return existing
+
+        conv_full = await self.conversation_repo.get_conversation_with_participants(
+            conv.id
+        )
+        from datetime import datetime
+
+        now = datetime.utcnow()
+        return ConversationResponse(
+            id=conv.id,
+            is_group=False,
+            name=None,
+            created_at=getattr(conv, "created_at", None) or now,
+            updated_at=getattr(conv, "updated_at", None) or now,
+            participants=[
+                ConversationParticipantResponse.from_orm(p)
+                for p in (getattr(conv_full, "participants", []) if conv_full else [])
+            ],
+            unread_count=0,
+        )
+
     async def create_group_conversation(
         self, creator_id: int, name: str, participant_ids: list[int]
     ) -> Conversation:

@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -329,3 +329,83 @@ async def unendorse_skill(
 
     profile = await service.get_profile_by_user_id(user_id)
     return APIResponse(message="Endorsement removed successfully", data=profile)
+
+
+@router.get("/me/resume/download")
+async def download_own_resume(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate and download a personalized DOCX resume matching the clean student template."""
+    service = ProfileService(db)
+    profile = await service.get_profile_by_user_id(current_user.id)
+    if not profile:
+        raise NotFoundError("Profile not found.")
+
+    from app.profiles.services.resume_generator import ResumeGeneratorService
+
+    profile_dict = ProfileResponse.model_validate(profile).model_dump()
+    docx_stream = ResumeGeneratorService.generate_docx(
+        profile_dict, user_email=current_user.email
+    )
+
+    first = (profile.first_name or "").strip() or "Student"
+    last = (profile.last_name or "").strip() or "Resume"
+    filename = f"{first}_{last}_Resume.docx".replace(" ", "_")
+
+    return Response(
+        content=docx_stream.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
+
+
+@router.get("/{user_id}/resume/download")
+async def download_user_resume(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate and download a personalized DOCX resume for any user by user ID."""
+    stmt = select(User).options(selectinload(User.role)).where(User.id == user_id)
+    res = await db.execute(stmt)
+    target_user = res.scalars().first()
+    if not target_user:
+        raise NotFoundError("User not found.")
+
+    is_viewer_superadmin = current_user.role and current_user.role.name == "Super Admin"
+    if (
+        target_user.role
+        and target_user.role.name == "Super Admin"
+        and current_user.id != user_id
+        and not is_viewer_superadmin
+    ):
+        raise NotFoundError("User not found.")
+
+    service = ProfileService(db)
+    profile = await service.get_profile_by_user_id(user_id)
+    if not profile:
+        raise NotFoundError("Profile not found.")
+
+    from app.profiles.services.resume_generator import ResumeGeneratorService
+
+    profile_dict = ProfileResponse.model_validate(profile).model_dump()
+    docx_stream = ResumeGeneratorService.generate_docx(
+        profile_dict, user_email=target_user.email
+    )
+
+    first = (profile.first_name or "").strip() or "Student"
+    last = (profile.last_name or "").strip() or "Resume"
+    filename = f"{first}_{last}_Resume.docx".replace(" ", "_")
+
+    return Response(
+        content=docx_stream.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )

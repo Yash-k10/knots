@@ -112,13 +112,27 @@ export default function Dashboard() {
           aiService.getContentRecommendations(6).catch(() => []),
         ]);
 
+        const cleanSuggestions = (connSugg || []).filter((item) => {
+          const name = `${item.first_name || ""} ${item.last_name || ""}`.toLowerCase();
+          const dept = (item.department || "").toLowerCase();
+          const bio = (item.bio || "").toLowerCase();
+          return (
+            !name.includes("super admin") &&
+            !name.includes("superadmin") &&
+            !dept.includes("super admin") &&
+            !dept.includes("superadmin") &&
+            !bio.includes("super admin") &&
+            !bio.includes("superadmin")
+          );
+        });
+
         setStats(sysStats);
         setProfileViews(viewsData);
         setEngagement(engData);
         setSummary(engSummary);
         setTrendingPosts(trending || []);
         setProfile(userProfile);
-        setConnectionSuggestions(connSugg || []);
+        setConnectionSuggestions(cleanSuggestions);
         setJobRecommendations(jobRecs || []);
         setContentRecommendations(contentRecs || []);
       } catch (error) {

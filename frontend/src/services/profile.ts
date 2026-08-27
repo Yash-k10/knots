@@ -228,4 +228,44 @@ export const profileService = {
       },
     );
   },
+
+  downloadResume: async (userId?: number): Promise<void> => {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+    const endpoint = userId
+      ? `/profiles/${userId}/resume/download`
+      : `/profiles/me/resume/download`;
+    const token = localStorage.getItem("knots_token");
+    const headers = new Headers();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate and download resume. Please try again.");
+    }
+
+    let filename = "Resume.docx";
+    const disposition = response.headers.get("Content-Disposition");
+    if (disposition && disposition.includes("filename=")) {
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) {
+        filename = match[1].trim();
+      }
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
 };

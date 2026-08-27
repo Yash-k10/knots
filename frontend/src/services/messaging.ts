@@ -13,12 +13,22 @@ export interface Message {
   reactions?: Record<string, number>;
 }
 
+export interface ConversationParticipantUser {
+  id: number;
+  email: string;
+  role?: {
+    id?: number;
+    name: string;
+  };
+}
+
 export interface ConversationParticipant {
   id: number;
   conversation_id: number;
   user_id: number;
   joined_at: string;
   last_read_at?: string;
+  user?: ConversationParticipantUser | null;
 }
 
 export interface Conversation {
@@ -37,6 +47,15 @@ export interface UnreadSummary {
   unread_by_conversation: Record<number, number>;
 }
 
+export interface CampusUser {
+  id: number;
+  email: string;
+  role?: {
+    id?: number;
+    name: string;
+  };
+}
+
 export async function fetchConversations(
   skip = 0,
   limit = 50,
@@ -44,6 +63,14 @@ export async function fetchConversations(
   return apiRequest<Conversation[]>(
     `/conversations?skip=${skip}&limit=${limit}`,
   );
+}
+
+export async function getOrCreateDirectConversation(
+  targetUserId: number,
+): Promise<Conversation> {
+  return apiRequest<Conversation>(`/conversations/direct/${targetUserId}`, {
+    method: "POST",
+  });
 }
 
 export async function createGroupConversation(
@@ -94,4 +121,11 @@ export async function sendMessage(
 
 export async function fetchUnreadCount(): Promise<UnreadSummary> {
   return apiRequest<UnreadSummary>("/messages/unread/count");
+}
+
+export async function fetchCampusUsers(
+  skip = 0,
+  limit = 100,
+): Promise<CampusUser[]> {
+  return apiRequest<CampusUser[]>(`/users?skip=${skip}&limit=${limit}`);
 }

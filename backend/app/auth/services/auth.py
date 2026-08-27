@@ -18,6 +18,7 @@ from app.auth.schemas.auth import (
     UserRegister,
 )
 from app.core import security
+from app.core.security_keys import verify_security_key
 from app.core.exceptions import (
     AuthenticationError,
     ConflictError,
@@ -25,6 +26,7 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.profiles.models.education import Education
+from app.profiles.models.employment_history import EmploymentHistory
 from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
@@ -244,17 +246,55 @@ class AuthService:
         # Clean up OTP after successful registration
         OTP_STORE.pop(normalized_email, None)
 
-        # Verify role exists
-        role_stmt = select(Role).filter(Role.id == user_in.role_id)
-        role_result = await self.db.execute(role_stmt)
-        role = role_result.scalars().first()
-        if not role:
-            # Fallback to Student role if specific role_id not found
+        # Verify Security Access Key for Controller & Central Admin
+        if user_in.management_role:
+            role_type = user_in.management_role.strip()
+            if role_type.lower() == "controller":
+                if not user_in.department:
+                    raise ValidationError(
+                        message="Department must be specified when registering as Department Controller."
+                    )
+                if not verify_security_key(
+                    "Controller", user_in.department, user_in.access_key
+                ):
+                    raise ValidationError(
+                        message=f"Invalid Controller Security Key for {user_in.department}. Please provide the authorized departmental access key."
+                    )
+            elif role_type.lower() in ["central admin", "central_admin", "admin"]:
+                if not verify_security_key("Central Admin", None, user_in.access_key):
+                    raise ValidationError(
+                        message="Invalid Central Admin Master Security Key. Please provide the authorized administrator key."
+                    )
+
+        # Verify or resolve role
+        target_role = None
+        if user_in.management_role:
+            if user_in.management_role.lower() == "controller":
+                controller_stmt = select(Role).filter(
+                    func.lower(Role.name) == "controller"
+                )
+                controller_res = await self.db.execute(controller_stmt)
+                target_role = controller_res.scalars().first()
+            if not target_role:
+                mgmt_stmt = select(Role).filter(
+                    func.lower(Role.name).in_(["management", "admin"])
+                )
+                mgmt_res = await self.db.execute(mgmt_stmt)
+                target_role = mgmt_res.scalars().first()
+
+        if not target_role:
+            role_stmt = select(Role).filter(Role.id == user_in.role_id)
+            role_result = await self.db.execute(role_stmt)
+            target_role = role_result.scalars().first()
+
+        if not target_role:
             fallback_stmt = select(Role).limit(1)
             fallback_res = await self.db.execute(fallback_stmt)
-            role = fallback_res.scalars().first()
-            if not role:
+            target_role = fallback_res.scalars().first()
+            if not target_role:
                 raise ValidationError(message="Role not found")
+
+        role = target_role
 
         # Hash password
         hashed_password = security.hash_password(user_in.password)
@@ -283,8 +323,30 @@ class AuthService:
             for p in normalized_email.split("@")[0].replace("_", ".").split(".")
             if p
         ]
-        first_name = name_parts[0] if name_parts else "Student"
+        first_name = name_parts[0] if name_parts else (role.name or "User")
         last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+
+        # Determine department
+        department_val = user_in.department if user_in.department else role.name
+
+        # Determine customized bio and designation
+        if user_in.faculty_type:
+            bio_val = f"{user_in.faculty_type} at SBJIT in {department_val} Department."
+        elif user_in.management_role:
+            if user_in.management_role.lower() == "controller":
+                bio_val = f"Department Controller for {department_val} at SBJIT (Managing departmental events, clubs, and student activities)."
+            else:
+                bio_val = f"{user_in.management_role} at SBJIT Management."
+        elif user_in.current_company:
+            bio_val = f"SBJIT Alumni working at {user_in.current_company}."
+        else:
+            if user_in.department and role.name and role.name.lower() == "student":
+                bio_val = f"Student ({department_val}) at SBJIT."
+            else:
+                bio_val = f"{role.name} at SBJIT."
+
+        if user_in.github_profile:
+            bio_val += f" | GitHub: {user_in.github_profile}"
 
         contact_info = {
             "phone_number": user_in.phone_number,
@@ -295,23 +357,38 @@ class AuthService:
             "tenth_percentage": user_in.tenth_percentage,
             "twelfth_or_diploma_percentage": user_in.twelfth_or_diploma_percentage,
             "gpa": user_in.gpa,
+            "department": user_in.department,
+            "faculty_type": user_in.faculty_type,
+            "management_role": user_in.management_role,
+            "access_key": user_in.access_key,
+            "current_company": user_in.current_company,
         }
 
         profile = Profile(
             user_id=user.id,
             first_name=first_name,
             last_name=last_name,
-            department=role.name,
+            department=department_val,
             projects=[{"type": "contact_and_coding_profiles", "data": contact_info}],
-            bio=f"{role.name} at SBJIT."
-            + (
-                f" | GitHub: {user_in.github_profile}" if user_in.github_profile else ""
-            ),
+            bio=bio_val,
         )
         self.db.add(profile)
         await self.db.flush()
 
-        # Add Education records if 10th / 12th / GPA provided
+        # Add EmploymentHistory record if current_company provided (for Alumni)
+        if user_in.current_company:
+            emp = EmploymentHistory(
+                profile_id=profile.id,
+                company_name=user_in.current_company,
+                title=user_in.designation or "Alumni Professional / Software Engineer",
+                location="India",
+                start_date=date.today(),
+                end_date=None,
+                description=f"Current working organization: {user_in.current_company}",
+            )
+            self.db.add(emp)
+
+        # Add Education records if 10th / 12th / GPA provided (primarily for Students)
         if user_in.tenth_percentage is not None:
             edu_10 = Education(
                 profile_id=profile.id,

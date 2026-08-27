@@ -14,6 +14,7 @@ from app.jobs.models.enums import JobStatusEnum
 from app.jobs.models.job_posting import JobPosting
 from app.posts.models.post import Post, PostVisibility
 from app.profiles.models.profile import Profile
+from app.users.models.role import Role
 from app.users.models.user import User
 
 
@@ -91,12 +92,28 @@ class AIConnectionSuggestionService:
             excluded_ids.add(conn.addressee_id)
 
         cand_stmt = (
-            select(Profile, User)
-            .join(User, Profile.user_id == User.id)
-            .where(and_(User.is_active == True, Profile.user_id.notin_(excluded_ids)))
+            select(User)
+            .outerjoin(Profile, User.id == Profile.user_id)
+            .outerjoin(Role, User.role_id == Role.id)
+            .options(selectinload(User.role), selectinload(User.profile))
+            .where(
+                and_(
+                    User.is_active == True,
+                    User.id.notin_(excluded_ids),
+                    or_(
+                        Role.name.is_(None),
+                        and_(
+                            Role.name != "Super Admin",
+                            Role.name != "super admin",
+                            Role.name != "superadmin",
+                            Role.name != "SUPER ADMIN",
+                        ),
+                    ),
+                )
+            )
         )
         cand_res = await db.execute(cand_stmt)
-        candidates = cand_res.all()
+        candidates = cand_res.scalars().all()
 
         user_skills: list[str] = []
         user_dept = current_profile.department if current_profile else None
@@ -113,9 +130,10 @@ class AIConnectionSuggestionService:
         user_skills_lower = {s.lower(): s for s in user_skills}
         suggestions: list[ConnectionSuggestionResponse] = []
 
-        for profile, user in candidates:
+        for user in candidates:
+            profile = user.profile
             cand_skills: list[str] = []
-            if profile.skills:
+            if profile and profile.skills:
                 if isinstance(profile.skills, list):
                     cand_skills = [str(s).strip() for s in profile.skills]
                 elif isinstance(profile.skills, dict):
@@ -132,15 +150,20 @@ class AIConnectionSuggestionService:
             score = 40
             reasons: list[str] = []
 
+            cand_dept = profile.department if profile else None
+            cand_grad_year = profile.graduation_year if profile else None
+            cand_bio = profile.bio if profile else None
+            cand_picture = profile.profile_picture if profile else None
+
             if (
                 user_dept
-                and profile.department
-                and user_dept.strip().lower() == profile.department.strip().lower()
+                and cand_dept
+                and user_dept.strip().lower() == cand_dept.strip().lower()
             ):
                 score += 30
-                reasons.append(f"Matching department: {profile.department}")
-            elif profile.department:
-                reasons.append(f"Department: {profile.department}")
+                reasons.append(f"Matching department: {cand_dept}")
+            elif cand_dept:
+                reasons.append(f"Department: {cand_dept}")
 
             if common_skills:
                 skill_points = min(len(common_skills) * 10, 30)
@@ -150,21 +173,23 @@ class AIConnectionSuggestionService:
                     f"{len(common_skills)} shared skill{'s' if len(common_skills) > 1 else ''} ({skills_str})"
                 )
 
-            if user_grad_year and profile.graduation_year:
-                year_diff = abs(user_grad_year - profile.graduation_year)
+            if user_grad_year and cand_grad_year:
+                year_diff = abs(user_grad_year - cand_grad_year)
                 if year_diff == 0:
                     score += 10
-                    reasons.append(f"Same graduation year ({profile.graduation_year})")
+                    reasons.append(f"Same graduation year ({cand_grad_year})")
                 elif year_diff == 1:
                     score += 5
 
             score = min(score, 98)
             reason_text = (
-                " | ".join(reasons) if reasons else "Suggested based on profile details"
+                " | ".join(reasons)
+                if reasons
+                else f"Recommended {user.role.name if user.role else 'campus peer'}"
             )
 
-            clean_first = profile.first_name
-            clean_last = profile.last_name
+            clean_first = profile.first_name if profile else None
+            clean_last = profile.last_name if profile else None
             if not clean_first or clean_first.strip().lower() == "user":
                 email_handle = user.email.split("@")[0]
                 parts = [
@@ -179,15 +204,15 @@ class AIConnectionSuggestionService:
 
             suggestions.append(
                 ConnectionSuggestionResponse(
-                    user_id=profile.user_id,
+                    user_id=user.id,
                     email=user.email,
                     first_name=clean_first,
                     last_name=clean_last or "",
-                    bio=profile.bio,
-                    department=profile.department
+                    bio=cand_bio,
+                    department=cand_dept
                     or (user.role.name if user.role else "Student"),
-                    graduation_year=profile.graduation_year,
-                    profile_picture=profile.profile_picture,
+                    graduation_year=cand_grad_year,
+                    profile_picture=cand_picture,
                     skills=cand_skills,
                     match_score=score,
                     common_skills=common_skills,
