@@ -487,14 +487,14 @@ setIsSaving(false);
                   </div>
 
                   <ul className="list-disc pl-4 space-y-1 text-[#1E2746] text-[11px] font-medium">
-                    {proj.highlights.map((bullet, bIdx) => (
+                    {(proj.highlights || []).map((bullet, bIdx) => (
                       <li key={bIdx}>{bullet}</li>
                     ))}
                   </ul>
 
                   {proj.tech_stack && proj.tech_stack.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                      {proj.tech_stack.map((tag) => (
+                      {(proj.tech_stack || []).map((tag) => (
                         <span
                           key={tag}
                           className="px-2 py-0.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded text-[9px] font-bold text-[#4B63D2]"
@@ -551,7 +551,7 @@ setIsSaving(false);
                   </h4>
 
                   <ul className="list-disc pl-4 space-y-1">
-                    {proj.highlights.map((bullet, bIdx) => (
+                    {(proj.highlights || []).map((bullet, bIdx) => (
                       <li
                         key={bIdx}
                         className="text-[#1E2746] text-xs leading-relaxed font-medium"
@@ -563,7 +563,7 @@ setIsSaving(false);
 
                   {proj.tech_stack && proj.tech_stack.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {proj.tech_stack.map((tag) => (
+                      {(proj.tech_stack || []).map((tag) => (
                         <span
                           key={tag}
                           className="px-2.5 py-1 bg-white border border-[#EAE4F7] rounded-lg text-[10px] font-bold text-[#4B63D2] shadow-sm"

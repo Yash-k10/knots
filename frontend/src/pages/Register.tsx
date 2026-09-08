@@ -59,7 +59,7 @@ export default function Register() {
 
   // Role Selection
   const [selectedRole, setSelectedRole] = useState<MainRole>("Student");
-  const [roleId, setRoleId] = useState<number>(2); // Default to Student (2)
+  const [roleId, setRoleId] = useState<number>(3); // Default to Student (3)
 
   // Subtype Selections
   const [facultyType, setFacultyType] = useState<FacultyType>("Normal faculty");
@@ -123,19 +123,19 @@ export default function Register() {
     setSelectedRole(role);
     switch (role) {
       case "Student":
-        setRoleId(2);
-        break;
-      case "Alumni":
         setRoleId(3);
         break;
+      case "Alumni":
+        setRoleId(4);
+        break;
       case "Faculty":
-        setRoleId(5);
+        setRoleId(6);
         break;
       case "Management":
-        setRoleId(1);
+        setRoleId(7);
         break;
       default:
-        setRoleId(2);
+        setRoleId(3);
     }
   };
 
