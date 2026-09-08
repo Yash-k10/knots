@@ -25,24 +25,35 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
         self.db = self.SessionLocal()
 
         # Seed initial roles
-        self.admin_role = Role(id=1, name="ADMIN", permissions=["admin"])
-        self.student_role = Role(id=2, name="STUDENT", permissions=["apply_job"])
-        self.recruiter_role = Role(id=3, name="RECRUITER", permissions=["create_job"])
+        self.admin_role = Role(id=1, name="Admin", permissions=["admin"])
+        self.student_role = Role(id=2, name="Student", permissions=["apply_job"])
+        self.recruiter_role = Role(id=3, name="Recruiter", permissions=["create_job"])
         self.db.add_all([self.admin_role, self.student_role, self.recruiter_role])
         await self.db.commit()
 
-        # Create mock user
+        # Create mock users
         self.test_user = User(
             id=1,
             email="test_user@sbjit.edu.in",
             hashed_password="hashed_password",
-            role_id=1,  # Set as Admin for testing all endpoints
+            role_id=1,  # Set as Admin for testing all admin/posting endpoints
             is_active=True,
             is_verified=True,
         )
-        self.db.add(self.test_user)
+        self.student_user = User(
+            id=2,
+            email="student@sbjit.edu.in",
+            hashed_password="hashed_password",
+            role_id=2,  # Set as Student for applying for jobs
+            is_active=True,
+            is_verified=True,
+        )
+        self.db.add_all([self.test_user, self.student_user])
         await self.db.commit()
         await self.db.refresh(self.test_user)
+        await self.db.refresh(self.student_user)
+
+        self.current_user_id = 1
 
         async def override_get_db():
             async with self.SessionLocal() as session:
@@ -53,7 +64,7 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
             async with self.SessionLocal() as session:
                 stmt = (
                     select(User)
-                    .where(User.id == self.test_user.id)
+                    .where(User.id == self.current_user_id)
                     .options(selectinload(User.role))
                 )
                 res = await session.execute(stmt)
@@ -127,7 +138,8 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(res.status_code, 200)
             self.assertEqual(res.json()["data"]["title"], "Lead FastAPI Developer")
 
-            # 8. Apply for job
+            # 8. Apply for job (as Student)
+            self.current_user_id = 2
             app_payload = {
                 "job_posting_id": job_id,
                 "resume_url": "http://example.com/cv.pdf",
@@ -137,17 +149,18 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(res.status_code, 201)
             app_id = res.json()["data"]["id"]
 
-            # 9. Get my applications
+            # 9. Get my applications (as Student)
             res = await ac.get("/api/v1/jobs/applications/me")
             self.assertEqual(res.status_code, 200)
             self.assertEqual(len(res.json()["data"]), 1)
 
-            # 10. Get job applications
+            # 10. Get job applications (as Admin)
+            self.current_user_id = 1
             res = await ac.get(f"/api/v1/jobs/{job_id}/applications")
             self.assertEqual(res.status_code, 200)
             self.assertEqual(len(res.json()["data"]), 1)
 
-            # 11. Update application status
+            # 11. Update application status (as Admin)
             status_payload = {"status": "accepted"}
             res = await ac.patch(
                 f"/api/v1/jobs/applications/{app_id}", json=status_payload
@@ -155,7 +168,8 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(res.status_code, 200)
             self.assertEqual(res.json()["data"]["status"], "accepted")
 
-            # 12. Create referral request
+            # 12. Create referral request (as Student)
+            self.current_user_id = 2
             ref_payload = {
                 "job_posting_id": job_id,
                 "referred_user_id": 1,
@@ -164,12 +178,13 @@ class TestJobsRouter(unittest.IsolatedAsyncioTestCase):
             res = await ac.post("/api/v1/jobs/referrals", json=ref_payload)
             self.assertEqual(res.status_code, 201)
 
-            # 13. Get referrals
+            # 13. Get referrals (as Student)
             res = await ac.get("/api/v1/jobs/referrals")
             self.assertEqual(res.status_code, 200)
             self.assertEqual(len(res.json()["data"]), 1)
 
-            # 14. Delete Job
+            # 14. Delete Job (as Admin)
+            self.current_user_id = 1
             res = await ac.delete(f"/api/v1/jobs/{job_id}")
             self.assertEqual(res.status_code, 200)
             self.assertEqual(res.json()["message"], "Job posting deleted successfully")
