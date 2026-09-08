@@ -2,6 +2,7 @@ import { apiRequest } from "./api";
 
 export interface ConnectionSuggestion {
   user_id: number;
+  email?: string | null;
   first_name: string | null;
   last_name: string | null;
   bio: string | null;

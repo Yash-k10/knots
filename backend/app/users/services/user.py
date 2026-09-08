@@ -20,9 +20,10 @@ class UserService:
 
     async def create_user(self, user_in: UserCreate) -> User:
         """Create a new user with hashed password after validating email and role."""
-        existing_user = await self.repository.get_by_field("email", user_in.email)
+        normalized_email = user_in.email.strip().lower()
+        existing_user = await self.repository.get_by_field("email", normalized_email)
         if existing_user:
-            raise ConflictError(message="Email already registered")
+            raise ConflictError(message="email id is already registered")
 
         # Verify role exists
         role_stmt = select(Role).filter(Role.id == user_in.role_id)
@@ -33,6 +34,7 @@ class UserService:
 
         hashed_password = security.hash_password(user_in.password)
         obj_data = user_in.model_dump(exclude={"password"})
+        obj_data["email"] = normalized_email
         obj_data["hashed_password"] = hashed_password
         return await self.repository.create(obj_data)
 
@@ -54,11 +56,13 @@ class UserService:
         update_data = user_in.model_dump(exclude_unset=True)
 
         if update_data.get("email"):
+            normalized_email = update_data["email"].strip().lower()
             existing_user = await self.repository.get_by_field(
-                "email", update_data["email"]
+                "email", normalized_email
             )
             if existing_user and existing_user.id != user_id:
-                raise ConflictError(message="Email already in use by another account")
+                raise ConflictError(message="email id is already registered")
+            update_data["email"] = normalized_email
 
         if update_data.get("password"):
             update_data["hashed_password"] = security.hash_password(

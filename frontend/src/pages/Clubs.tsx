@@ -329,14 +329,13 @@ export default function Clubs() {
   return (
     <div className="space-y-6">
       {/* 1. Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
         <div className="space-y-2 relative z-10">
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white flex items-center gap-3">
-            <Compass className="w-8 h-8 text-indigo-400" />
+          <h2 className="text-2xl md:text-3xl font-black text-[#1E2746] flex items-center gap-3">
+            <Compass className="w-8 h-8 text-[#4B63D2]" />
             Student Clubs
           </h2>
-          <p className="text-slate-400 text-sm max-w-xl">
+          <p className="text-[#5851A4] text-sm max-w-xl font-medium">
             Explore college clubs, view active member rosters, promote
             colleagues to leadership roles, or register a new club.
           </p>
@@ -344,7 +343,7 @@ export default function Clubs() {
 
         <button
           onClick={openCreateModal}
-          className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/20 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 transform active:scale-95 flex items-center gap-2 relative z-10 shrink-0"
+          className="bg-[#4B63D2] hover:bg-[#3E53BE] text-white shadow-sm px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 relative z-10 shrink-0 cursor-pointer"
         >
           <Plus className="w-5 h-5" />
           Create Club
@@ -352,31 +351,31 @@ export default function Clubs() {
       </div>
 
       {/* 2. Filter controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-950/40 p-4 border border-slate-800/80 rounded-2xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 border border-[#EAE4F7] rounded-3xl shadow-sm">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
           <input
             type="text"
             placeholder="Search clubs by name, description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 bg-slate-900 border border-slate-800 focus:border-indigo-500/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
+            className="w-full pl-10 pr-8 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:ring-2 focus:ring-[#4B63D2]/10 transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-[10px]"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9188BE] hover:text-[#1E2746] text-[10px] font-bold"
             >
               Clear
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-2">
+        <div className="flex items-center gap-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl px-3">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-transparent border-0 py-2 text-xs text-slate-300 focus:outline-none pr-6 cursor-pointer"
+            className="bg-transparent border-0 py-2.5 text-xs font-bold text-[#1E2746] focus:outline-none pr-6 cursor-pointer"
           >
             <option value="ALL">All Categories</option>
             {categoriesList.map((cat) => (
@@ -395,24 +394,24 @@ export default function Clubs() {
           className={`${selectedClubId !== null ? "lg:col-span-2" : "lg:col-span-3"} grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-300`}
         >
           {error ? (
-            <div className="col-span-full bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center space-y-3">
-              <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
-              <h3 className="text-white font-medium text-base">Error Loading Clubs</h3>
-              <p className="text-slate-400 text-sm max-w-md mx-auto">{error}</p>
+            <div className="col-span-full bg-rose-50 border border-rose-200 rounded-3xl p-6 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
+              <h3 className="text-rose-800 font-bold text-base">Error Loading Clubs</h3>
+              <p className="text-rose-700 text-sm max-w-md mx-auto">{error}</p>
               <button
                 onClick={() => fetchClubsAndUser()}
-                className="px-4 py-2 mt-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-all"
+                className="px-4 py-2 mt-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold transition-all cursor-pointer"
               >
                 Try Again
               </button>
             </div>
           ) : filteredClubs.length === 0 ? (
-            <div className="col-span-full bg-slate-950/40 border border-slate-800 rounded-2xl p-16 text-center text-slate-500">
-              <Users className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="font-semibold text-sm text-slate-400">
+            <div className="col-span-full bg-white border border-[#EAE4F7] rounded-3xl p-16 text-center text-[#5851A4] shadow-sm">
+              <Users className="w-12 h-12 text-[#B9B1D9] mx-auto mb-4" />
+              <p className="font-black text-sm text-[#1E2746]">
                 No clubs found
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-[#5851A4] mt-1 font-medium">
                 Be the first to schedule and register a new student club!
               </p>
             </div>
@@ -423,16 +422,16 @@ export default function Clubs() {
                 <div
                   key={club.id}
                   onClick={() => setSelectedClubId(club.id)}
-                  className={`cursor-pointer bg-slate-950/60 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:scale-[1.01] shadow-lg ${
+                  className={`cursor-pointer bg-white border rounded-3xl p-6 transition-all duration-300 flex flex-col justify-between hover:shadow-md ${
                     isSelected
-                      ? "border-indigo-500 shadow-indigo-500/10"
-                      : "border-slate-800/80 hover:border-slate-700/80"
+                      ? "border-[#4B63D2] shadow-sm ring-2 ring-[#4B63D2]/20"
+                      : "border-[#EAE4F7] hover:border-[#C8B6E2]"
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getCategoryBadgeStyle(
+                        className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getCategoryBadgeStyle(
                           club.category,
                         )}`}
                       >
@@ -440,15 +439,15 @@ export default function Clubs() {
                       </span>
                     </div>
 
-                    <h4 className="text-lg font-bold text-white mb-2">
+                    <h4 className="text-lg font-black text-[#1E2746] mb-2">
                       {club.name}
                     </h4>
-                    <p className="text-slate-400 text-xs line-clamp-3 leading-relaxed mb-4">
+                    <p className="text-[#5851A4] text-xs line-clamp-3 leading-relaxed mb-4 font-medium">
                       {club.description || "No description provided."}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/60 text-xs text-indigo-400 font-semibold group">
+                  <div className="flex items-center justify-between pt-4 border-t border-[#EAE4F7] text-xs text-[#4B63D2] font-bold group">
                     <span>View roster and details</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </div>
@@ -460,17 +459,17 @@ export default function Clubs() {
 
         {/* Side Detail Panel Column */}
         {selectedClubId !== null && (
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden flex flex-col">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
             <button
               onClick={() => setSelectedClubId(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-4 right-4 text-[#9188BE] hover:text-[#1E2746] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {detailLoading || !clubDetail ? (
-              <div className="flex flex-col items-center justify-center py-24 text-slate-500 space-y-3">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+              <div className="flex flex-col items-center justify-center py-24 text-[#5851A4] space-y-3 font-medium">
+                <Loader2 className="w-6 h-6 animate-spin text-[#4B63D2]" />
                 <span className="text-xs">Loading roster details...</span>
               </div>
             ) : (
@@ -478,32 +477,32 @@ export default function Clubs() {
                 {/* Meta details */}
                 <div className="space-y-2 pr-6">
                   <span
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getCategoryBadgeStyle(
+                    className={`text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getCategoryBadgeStyle(
                       clubDetail.category,
                     )}`}
                   >
                     {clubDetail.category || "Other"}
                   </span>
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className="text-xl font-black text-[#1E2746]">
                     {clubDetail.name}
                   </h3>
-                  <p className="text-slate-400 text-xs leading-relaxed max-h-36 overflow-y-auto">
+                  <p className="text-[#5851A4] text-xs leading-relaxed max-h-36 overflow-y-auto font-medium">
                     {clubDetail.description || "No description provided."}
                   </p>
                 </div>
 
                 {/* Membership Roster counts & Actions */}
-                <div className="border-t border-slate-800/60 pt-4 space-y-4">
+                <div className="border-t border-[#EAE4F7] pt-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-[#5851A4] font-medium">
                       Roster:{" "}
-                      <strong className="text-slate-200">
+                      <strong className="text-[#1E2746] font-bold">
                         {clubDetail.members_count}
                       </strong>{" "}
                       members
                     </span>
                     {clubDetail.user_role && (
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 font-bold uppercase tracking-wider flex items-center gap-1.5">
                         <ShieldCheck className="w-3.5 h-3.5" />
                         {clubDetail.user_role}
                       </span>
@@ -515,7 +514,7 @@ export default function Clubs() {
                     {!clubDetail.user_role ? (
                       <button
                         onClick={handleJoinClub}
-                        className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors"
+                        className="flex-1 bg-[#4B63D2] hover:bg-[#3E53BE] text-white font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer shadow-sm"
                       >
                         Join Club
                       </button>
@@ -523,7 +522,7 @@ export default function Clubs() {
                       // Allow leaving only if not sole leader, or let server validate
                       <button
                         onClick={handleLeaveClub}
-                        className="flex-1 bg-red-950/20 hover:bg-red-950/40 border border-red-900/40 text-red-400 font-semibold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         Leave Club
@@ -535,14 +534,14 @@ export default function Clubs() {
                       <div className="flex gap-2">
                         <button
                           onClick={openEditModal}
-                          className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 p-2.5 rounded-xl transition-colors"
+                          className="bg-[#FAF9FD] hover:bg-white border border-[#D5CBEE] text-[#5851A4] p-2.5 rounded-xl transition-colors cursor-pointer"
                           title="Edit Club Details"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={handleDeleteClub}
-                          className="bg-red-950/20 hover:bg-red-950/40 border border-red-900/40 text-red-400 p-2.5 rounded-xl transition-colors"
+                          className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 p-2.5 rounded-xl transition-colors cursor-pointer"
                           title="Delete Club"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -553,18 +552,18 @@ export default function Clubs() {
                 </div>
 
                 {/* Member List */}
-                <div className="border-t border-slate-800/60 pt-4 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                <div className="border-t border-[#EAE4F7] pt-4 space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#5851A4]">
                     Roster Directory
                   </h4>
                   <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {clubDetail.members.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-800/50 rounded-xl text-xs"
+                        className="flex items-center justify-between p-3 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl text-xs"
                       >
                         <span
-                          className="text-slate-300 truncate max-w-[150px]"
+                          className="text-[#1E2746] font-bold truncate max-w-[150px]"
                           title={member.user?.email}
                         >
                           {member.user?.email || `User #${member.user_id}`}
@@ -582,7 +581,7 @@ export default function Clubs() {
                                 e.target.value as any,
                               )
                             }
-                            className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[10px] text-slate-300 focus:outline-none"
+                            className="bg-white border border-[#D5CBEE] rounded-lg px-2 py-1 text-[10px] text-[#1E2746] font-semibold focus:outline-none"
                           >
                             <option value="MEMBER">Member</option>
                             <option value="OFFICER">Officer</option>
@@ -590,12 +589,12 @@ export default function Clubs() {
                           </select>
                         ) : (
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
                               member.role === "LEADER"
-                                ? "text-amber-400 bg-amber-500/10"
+                                ? "text-amber-800 bg-amber-50 border border-amber-200"
                                 : member.role === "OFFICER"
-                                  ? "text-indigo-400 bg-indigo-500/10"
-                                  : "text-slate-400 bg-slate-500/10"
+                                  ? "text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20"
+                                  : "text-[#5851A4] bg-[#FAF9FD] border border-[#EAE4F7]"
                             }`}
                           >
                             {member.role}
@@ -613,19 +612,19 @@ export default function Clubs() {
 
       {/* ── 4. Create/Edit Club Modal ───────────────────────────────────────── */}
       {showFormModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E2746]/50 backdrop-blur-sm">
           <div
-            className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="w-full max-w-md bg-white border border-[#EAE4F7] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">
+            <div className="px-6 py-4 bg-white border-b border-[#EAE4F7] flex items-center justify-between">
+              <h3 className="text-lg font-black text-[#1E2746]">
                 {isEditing ? "Modify Club Settings" : "Register Student Club"}
               </h3>
               <button
                 onClick={() => setShowFormModal(false)}
-                className="text-slate-400 hover:text-white transition-colors"
+                className="text-[#9188BE] hover:text-[#1E2746] transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -635,8 +634,8 @@ export default function Clubs() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {/* Name */}
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Club Name <span className="text-red-400">*</span>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
+                  Club Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -645,19 +644,19 @@ export default function Clubs() {
                   placeholder="e.g. Developer Student Club"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-sm text-[#1E2746] placeholder-[#9188BE] outline-none focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
                 />
               </div>
 
               {/* Category */}
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
                   Category
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-sm text-[#1E2746] outline-none focus:ring-2 focus:ring-[#4B63D2]/10 cursor-pointer font-semibold"
                 >
                   {categoriesList.map((cat) => (
                     <option key={cat} value={cat}>
@@ -669,7 +668,7 @@ export default function Clubs() {
 
               {/* Description */}
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
                   Description
                 </label>
                 <textarea
@@ -678,23 +677,23 @@ export default function Clubs() {
                   placeholder="Tell students about the club's activities, meeting times, and projects..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-sm text-[#1E2746] placeholder-[#9188BE] outline-none focus:ring-2 focus:ring-[#4B63D2]/10 resize-none font-medium"
                 />
               </div>
 
               {/* Actions Footer */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800/60">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#EAE4F7]">
                 <button
                   type="button"
                   onClick={() => setShowFormModal(false)}
-                  className="bg-slate-950 border border-slate-800 hover:bg-slate-900 text-slate-300 px-5 py-2.5 rounded-xl text-xs font-semibold transition-colors"
+                  className="bg-[#FAF9FD] border border-[#D5CBEE] hover:bg-white text-[#5851A4] px-5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingForm}
-                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-2"
+                  className="bg-[#4B63D2] hover:bg-[#3E53BE] text-white shadow-sm px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer"
                 >
                   {submittingForm && (
                     <Loader2 className="w-3 h-3 animate-spin" />

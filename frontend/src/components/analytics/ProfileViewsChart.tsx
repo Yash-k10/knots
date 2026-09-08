@@ -179,8 +179,8 @@ export default function ProfileViewsChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#4B63D2" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#5851A4" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient
                   id="profileViewsStroke"
@@ -189,24 +189,24 @@ export default function ProfileViewsChart({
                   x2="1"
                   y2="0"
                 >
-                  <stop offset="0%" stopColor="#818cf8" />
-                  <stop offset="100%" stopColor="#6366f1" />
+                  <stop offset="0%" stopColor="#C8B6E2" />
+                  <stop offset="100%" stopColor="#4B63D2" />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#1e293b"
+                stroke="#273258"
                 vertical={false}
               />
               <XAxis
                 dataKey="label"
-                stroke="#64748b"
+                stroke="#B9B1D9"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#334155" }}
+                axisLine={{ stroke: "#364373" }}
               />
               <YAxis
-                stroke="#64748b"
+                stroke="#B9B1D9"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -241,8 +241,8 @@ export default function ProfileViewsChart({
                 fill="url(#profileViewsGradient)"
                 activeDot={{
                   r: 6,
-                  fill: "#818cf8",
-                  stroke: "#0f172a",
+                  fill: "#C8B6E2",
+                  stroke: "#12172C",
                   strokeWidth: 2,
                 }}
               />

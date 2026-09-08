@@ -72,6 +72,7 @@ class EventCreate(BaseModel):
     description: str = Field(..., min_length=1)
     location: str | None = Field(None, max_length=300)
     banner_image_url: str | None = None
+    google_form_url: str | None = None
     start_datetime: datetime
     end_datetime: datetime | None = None
     max_capacity: int | None = Field(None, ge=1)
@@ -86,6 +87,7 @@ class EventUpdate(BaseModel):
     description: str | None = None
     location: str | None = Field(None, max_length=300)
     banner_image_url: str | None = None
+    google_form_url: str | None = None
     start_datetime: datetime | None = None
     end_datetime: datetime | None = None
     max_capacity: int | None = Field(None, ge=1)
@@ -112,6 +114,7 @@ class EventResponse(BaseModel):
     description: str
     location: str | None = None
     banner_image_url: str | None = None
+    google_form_url: str | None = None
     start_datetime: datetime
     end_datetime: datetime | None = None
     max_capacity: int | None = None

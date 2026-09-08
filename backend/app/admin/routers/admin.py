@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.admin.schemas.admin import (
@@ -33,7 +33,9 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
 
 @router.get("/audit-logs", response_model=APIResponse[list[AuditLogResponse]])
 async def read_audit_logs(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
 ):
     """Retrieve system audit logs for administrative audit tracking."""
     service = AdminService(db)
@@ -43,7 +45,9 @@ async def read_audit_logs(
 
 @router.get("/users", response_model=APIResponse[list[UserResponse]])
 async def list_users(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
 ):
     """Retrieve a list of users (Admin only)."""
     service = AdminService(db)
@@ -101,7 +105,9 @@ async def delete_user(
 
 @router.get("/posts/flagged", response_model=APIResponse[list[FlaggedPostResponse]])
 async def list_flagged_posts(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
 ):
     """Retrieve a list of flagged posts (Admin only)."""
     service = AdminService(db)

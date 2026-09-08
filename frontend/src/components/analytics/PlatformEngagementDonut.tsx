@@ -7,7 +7,7 @@ interface PlatformEngagementDonutProps {
   summary: PlatformEngagementSummary | null;
 }
 
-const COLORS = ["#6366f1", "#10b981", "#ec4899", "#f59e0b"];
+const COLORS = ["#4B63D2", "#5851A4", "#FFD21A", "#C8B6E2"];
 
 export default function PlatformEngagementDonut({
   summary,
@@ -71,7 +71,7 @@ export default function PlatformEngagementDonut({
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    stroke="#0f172a"
+                    stroke="#12172C"
                     strokeWidth={2}
                   />
                 ))}

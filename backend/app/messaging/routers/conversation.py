@@ -71,6 +71,23 @@ async def create_group_conversation(
     return APIResponse(message="Group conversation created successfully", data=created)
 
 
+@router.post(
+    "/direct/{target_user_id}", response_model=APIResponse[ConversationResponse]
+)
+async def get_or_create_direct_conversation(
+    target_user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve or initialize a 1-on-1 direct conversation with a target user."""
+    service = MessagingService(db)
+    conv = await service.get_or_create_direct_conversation(
+        user1_id=current_user.id, user2_id=target_user_id
+    )
+    await db.commit()
+    return APIResponse(message="Direct conversation retrieved successfully", data=conv)
+
+
 @router.get(
     "/{conversation_id}/messages", response_model=APIResponse[list[MessageResponse]]
 )

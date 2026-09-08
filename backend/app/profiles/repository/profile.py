@@ -42,9 +42,16 @@ class ProfileRepository(BaseRepository[Profile]):
         limit: int = 50,
         search: str | None = None,
     ) -> list[Profile]:
-        """Fetch paginated list of profiles with education and employment history loaded."""
+        """Fetch paginated list of profiles with education and employment history loaded (excluding Super Admin)."""
+        from sqlalchemy import or_
+        from app.users.models.role import Role
+        from app.users.models.user import User
+
         stmt = (
             select(self.model)
+            .join(User, self.model.user_id == User.id)
+            .outerjoin(Role, User.role_id == Role.id)
+            .where(or_(Role.name.is_(None), Role.name != "Super Admin"))
             .options(
                 selectinload(self.model.education),
                 selectinload(self.model.employment_history),
@@ -53,8 +60,6 @@ class ProfileRepository(BaseRepository[Profile]):
             .limit(limit)
         )
         if search:
-            from sqlalchemy import or_
-
             search_pattern = f"%{search}%"
             stmt = stmt.filter(
                 or_(

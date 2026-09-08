@@ -38,8 +38,12 @@ async def get_feed(
 ):
     """Retrieve the post feed (newest first, with like/comment counts)."""
     service = PostService(db)
+    user_role = current_user.role.name if current_user.role else ""
     posts = await service.get_feed(
-        skip=skip, limit=limit, current_user_id=current_user.id
+        skip=skip,
+        limit=limit,
+        current_user_id=current_user.id,
+        user_role=user_role,
     )
     return APIResponse(data=posts)
 
@@ -77,14 +81,31 @@ async def upload_post_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Upload an image for a post and return the relative static URL."""
+    """Upload an image or document attachment for a post and return the relative static URL."""
     upload_dir = "static/posts"
     os.makedirs(upload_dir, exist_ok=True)
 
-    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    allowed_extensions = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+    }
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in allowed_extensions:
-        raise ValidationError("Invalid file type. Only image files are allowed.")
+        raise ValidationError(
+            "Invalid file type. Only image and document files (PDF, DOCX, etc.) are allowed."
+        )
 
     filename = f"{uuid.uuid4()}{file_ext}"
     file_path = os.path.join(upload_dir, filename)
@@ -93,7 +114,7 @@ async def upload_post_image(
         shutil.copyfileobj(file.file, buffer)
 
     picture_url = f"/static/posts/{filename}"
-    return APIResponse(message="Image uploaded successfully", data=picture_url)
+    return APIResponse(message="File uploaded successfully", data=picture_url)
 
 
 @router.get("/{post_id}", response_model=APIResponse[PostDetailResponse])
@@ -104,8 +125,9 @@ async def get_post(
 ):
     """Retrieve a single post with full details (comments, likes, author)."""
     service = PostService(db)
+    user_role = current_user.role.name if current_user.role else ""
     post_detail = await service.get_post_detail(
-        post_id, current_user_id=current_user.id
+        post_id, current_user_id=current_user.id, user_role=user_role
     )
     return APIResponse(data=post_detail)
 
@@ -129,9 +151,10 @@ async def delete_post(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a post (author only)."""
+    """Delete a post (author, Admin, or Super Admin)."""
     service = PostService(db)
-    await service.delete_post(post_id, current_user.id)
+    user_role = current_user.role.name if current_user.role else ""
+    await service.delete_post(post_id, current_user.id, user_role=user_role)
     return APIResponse(message="Post deleted successfully")
 
 
@@ -198,9 +221,12 @@ async def delete_comment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a comment (comment author only)."""
+    """Delete a comment (comment author, post owner, Admin, or Super Admin)."""
     service = PostService(db)
-    await service.delete_comment(post_id, comment_id, current_user.id)
+    user_role = current_user.role.name if current_user.role else ""
+    await service.delete_comment(
+        post_id, comment_id, current_user.id, user_role=user_role
+    )
     return APIResponse(message="Comment deleted")
 
 
