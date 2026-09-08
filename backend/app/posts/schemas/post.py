@@ -75,11 +75,21 @@ class LikeResponse(BaseModel):
 # ── Post Response Schemas ────────────────────────────────────────────────────
 
 
+class AuthorProfile(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class PostAuthor(BaseModel):
     """Compact author info embedded in post responses."""
 
     id: int
     email: str
+    profile: AuthorProfile | None = None
 
     class Config:
         from_attributes = True

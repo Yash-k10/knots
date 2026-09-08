@@ -48,11 +48,40 @@ const getFileExtension = (url: string): string => {
   return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : "FILE";
 };
 
+const renderContentWithLinks = (content: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
 
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-[#4B63D2] font-bold hover:underline break-all inline-flex items-center gap-1 bg-[#4B63D2]/10 px-2 py-0.5 rounded-lg my-0.5"
+        >
+          <Globe className="w-3.5 h-3.5 inline" />
+          <span>{part}</span>
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
+export interface AuthorProfile {
+  first_name?: string | null;
+  last_name?: string | null;
+  profile_picture?: string | null;
+}
 
 export interface PostAuthor {
   id: number;
   email: string;
+  profile?: AuthorProfile | null;
 }
 
 export interface CommentAuthor {
@@ -284,13 +313,30 @@ export default function Feed() {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPostContent.trim()) return;
+
+    let contentToSubmit = newPostContent.trim();
+    if (externalLinkUrl.trim()) {
+      contentToSubmit = contentToSubmit
+        ? `${contentToSubmit}\n\n${externalLinkUrl.trim()}`
+        : externalLinkUrl.trim();
+    }
+
+    const fileToUpload = selectedImage || attachedDoc?.file;
+
+    if (!contentToSubmit) {
+      if (attachedDoc) {
+        contentToSubmit = `Shared a document: ${attachedDoc.name}`;
+      } else if (selectedImage) {
+        contentToSubmit = `Shared a photo`;
+      } else {
+        alert("Please write a post message, upload a file, or add a link before sharing.");
+        return;
+      }
+    }
 
     setSubmittingPost(true);
     try {
       let imageUrl: string | null = null;
-
-      const fileToUpload = selectedImage || attachedDoc?.file;
 
       if (fileToUpload) {
         const formData = new FormData();
@@ -304,7 +350,7 @@ export default function Feed() {
       const newPost = await apiRequest<PostResponse>("/posts", {
         method: "POST",
         body: JSON.stringify({
-          content: newPostContent,
+          content: contentToSubmit,
           image_url: imageUrl,
           visibility: newPostVisibility,
         }),
@@ -954,13 +1000,25 @@ export default function Feed() {
               {/* Card Header: Author Profile Info */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
-                    {getInitials(post.author?.email)}
-                  </div>
+                  {getMediaUrl(post.author?.profile?.profile_picture) ? (
+                    <img
+                      src={getMediaUrl(post.author?.profile?.profile_picture)}
+                      alt="Author Avatar"
+                      className="h-10 w-10 rounded-full object-cover border border-[#EAE4F7] shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
+                      {getInitials(post.author?.email)}
+                    </div>
+                  )}
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-sm font-bold text-[#1E2746] hover:text-[#4B63D2] transition-colors cursor-pointer flex items-center gap-1.5">
-                        <span>{getEmailPrefix(post.author?.email)}</span>
+                        <span>
+                          {post.author?.profile?.first_name || post.author?.profile?.last_name
+                            ? `${post.author.profile.first_name || ""} ${post.author.profile.last_name || ""}`.trim()
+                            : getEmailPrefix(post.author?.email)}
+                        </span>
                         {hasInfinityBadge(post.author?.email) && (
                           <img
                             src="/infinity-badge.png"
@@ -1018,10 +1076,10 @@ export default function Feed() {
                 )}
               </div>
 
-              {/* Card Body: Post Text Content */}
-              <p className="text-[#1E2746] text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                {post.content}
-              </p>
+              {/* Card Body: Post Text Content with clickable link rendering */}
+              <div className="text-[#1E2746] text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                {renderContentWithLinks(post.content)}
+              </div>
 
               {/* Card Body: Attachment (Image, PDF/DOCX Document, or Fallback Preview) */}
               {post.image_url && (

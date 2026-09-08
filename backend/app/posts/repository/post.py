@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from app.core.repository import BaseRepository
 from app.posts.models.comment import Comment
 from app.posts.models.post import Post, PostVisibility
+from app.users.models.user import User
 
 
 class PostRepository(BaseRepository[Post]):
@@ -14,11 +15,11 @@ class PostRepository(BaseRepository[Post]):
         super().__init__(Post, db)
 
     async def get_with_details(self, post_id: int) -> Post | None:
-        """Fetch a single post with its author, comments (+ their authors), and likes."""
+        """Fetch a single post with its author (+ profile), comments (+ their authors), and likes."""
         result = await self.db.execute(
             select(Post)
             .options(
-                selectinload(Post.author),
+                selectinload(Post.author).selectinload(User.profile),
                 selectinload(Post.comments).selectinload(Comment.author),
                 selectinload(Post.likes),
             )
@@ -35,12 +36,12 @@ class PostRepository(BaseRepository[Post]):
     ) -> list[Post]:
         """
         Fetch posts for the feed filtered by the user's role visibility permissions,
-        ordered by newest first. Eager-loads author, comments, and likes to avoid N+1 queries.
+        ordered by newest first. Eager-loads author (+ profile), comments, and likes to avoid N+1 queries.
         """
         stmt = (
             select(Post)
             .options(
-                selectinload(Post.author),
+                selectinload(Post.author).selectinload(User.profile),
                 selectinload(Post.comments),
                 selectinload(Post.likes),
             )
