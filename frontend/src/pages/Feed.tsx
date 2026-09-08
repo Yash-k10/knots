@@ -22,6 +22,32 @@ import { apiRequest, getMediaUrl } from "../services/api";
 import TiesRecommendations from "../components/feed/TiesRecommendations";
 import { formatTimeAgo } from "../utils/date";
 
+const isDocumentUrl = (url: string | null | undefined): boolean => {
+  if (!url) return false;
+  const clean = url.toLowerCase().split("?")[0];
+  return (
+    clean.endsWith(".pdf") ||
+    clean.endsWith(".doc") ||
+    clean.endsWith(".docx") ||
+    clean.endsWith(".txt") ||
+    clean.endsWith(".xls") ||
+    clean.endsWith(".xlsx") ||
+    clean.endsWith(".ppt") ||
+    clean.endsWith(".pptx")
+  );
+};
+
+const getFileName = (url: string): string => {
+  const parts = url.split("/");
+  return parts[parts.length - 1] || "Attachment";
+};
+
+const getFileExtension = (url: string): string => {
+  const clean = url.split("?")[0];
+  const parts = clean.split(".");
+  return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : "FILE";
+};
+
 
 
 export interface PostAuthor {
@@ -63,6 +89,8 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{
@@ -262,9 +290,11 @@ export default function Feed() {
     try {
       let imageUrl: string | null = null;
 
-      if (selectedImage) {
+      const fileToUpload = selectedImage || attachedDoc?.file;
+
+      if (fileToUpload) {
         const formData = new FormData();
-        formData.append("file", selectedImage);
+        formData.append("file", fileToUpload);
         imageUrl = await apiRequest<string>("/posts/upload-image", {
           method: "POST",
           body: formData,
@@ -287,6 +317,12 @@ export default function Feed() {
       setNewPostContent("");
       setNewPostVisibility("PUBLIC");
       handleRemoveImage();
+      setAttachedDoc(null);
+      if (docInputRef.current) {
+        docInputRef.current.value = "";
+      }
+      setShowLinkInput(false);
+      setExternalLinkUrl("");
     } catch (err: any) {
       alert(err.message || "Failed to share the post.");
     } finally {
@@ -987,24 +1023,65 @@ export default function Feed() {
                 {post.content}
               </p>
 
-              {/* Card Body: Image Attachment if available (Retains original dimensions; click for lightbox) */}
+              {/* Card Body: Attachment (Image, PDF/DOCX Document, or Fallback Preview) */}
               {post.image_url && (
-                <div
-                  onClick={() => setActiveLightboxImage(getMediaUrl(post.image_url) ?? null)}
-                  className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD]/40 my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
-                >
-                  <img
-                    src={getMediaUrl(post.image_url)}
-                    alt="Post attachment"
-                    className="w-auto max-w-full max-h-[550px] object-contain rounded-xl shadow-sm"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
-                    <span className="opacity-0 group-hover:opacity-100 bg-slate-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
-                      <Maximize2 className="w-3.5 h-3.5" /> Click to view full size
-                    </span>
+                isDocumentUrl(post.image_url) ? (
+                  <div className="my-3 p-4 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all group">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider">
+                        {getFileExtension(post.image_url)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#1E2746] truncate group-hover:text-[#4B63D2] transition-colors">
+                          {getFileName(post.image_url)}
+                        </p>
+                        <span className="text-[10px] font-semibold text-[#5851A4]">
+                          Document Attachment • Click to View / Download
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={getMediaUrl(post.image_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                      className="px-3.5 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Download</span>
+                    </a>
                   </div>
-                </div>
+                ) : !failedImages[post.id] ? (
+                  <div
+                    onClick={() => setActiveLightboxImage(getMediaUrl(post.image_url) ?? null)}
+                    className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD]/40 my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
+                  >
+                    <img
+                      src={getMediaUrl(post.image_url)}
+                      alt="Post attachment"
+                      className="w-auto max-w-full max-h-[550px] object-contain rounded-xl shadow-sm"
+                      loading="lazy"
+                      onError={() => {
+                        setFailedImages((prev) => ({ ...prev, [post.id]: true }));
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
+                      <span className="opacity-0 group-hover:opacity-100 bg-slate-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
+                        <Maximize2 className="w-3.5 h-3.5" /> Click to view full size
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="my-3 p-4 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center gap-3 text-[#5851A4]">
+                    <div className="w-10 h-10 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2] shrink-0 font-bold text-xs">
+                      📄
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#1E2746]">Post Attachment</p>
+                      <p className="text-[11px] text-[#5851A4]">Media preview unavailable</p>
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Card Actions: Likes and Comments triggers */}

@@ -81,14 +81,31 @@ async def upload_post_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Upload an image for a post and return the relative static URL."""
+    """Upload an image or document attachment for a post and return the relative static URL."""
     upload_dir = "static/posts"
     os.makedirs(upload_dir, exist_ok=True)
 
-    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    allowed_extensions = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+    }
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in allowed_extensions:
-        raise ValidationError("Invalid file type. Only image files are allowed.")
+        raise ValidationError(
+            "Invalid file type. Only image and document files (PDF, DOCX, etc.) are allowed."
+        )
 
     filename = f"{uuid.uuid4()}{file_ext}"
     file_path = os.path.join(upload_dir, filename)
@@ -97,7 +114,7 @@ async def upload_post_image(
         shutil.copyfileobj(file.file, buffer)
 
     picture_url = f"/static/posts/{filename}"
-    return APIResponse(message="Image uploaded successfully", data=picture_url)
+    return APIResponse(message="File uploaded successfully", data=picture_url)
 
 
 @router.get("/{post_id}", response_model=APIResponse[PostDetailResponse])
