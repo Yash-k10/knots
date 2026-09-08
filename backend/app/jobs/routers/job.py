@@ -144,7 +144,9 @@ async def create_referral(
 async def create_job(
     payload: JobPostingCreate,
     current_user: User = Depends(
-        RoleRequired(["TPO", "Controller", "Admin", "Super Admin", "Central Admin", "Management"])
+        RoleRequired(
+            ["TPO", "Controller", "Admin", "Super Admin", "Central Admin", "Management"]
+        )
     ),
     db: AsyncSession = Depends(get_db),
 ):

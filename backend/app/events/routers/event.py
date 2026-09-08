@@ -87,7 +87,9 @@ async def list_event_categories(
 async def create_event(
     payload: EventCreate,
     current_user: User = Depends(
-        RoleRequired(["Controller", "Admin", "Super Admin", "Central Admin", "Management"])
+        RoleRequired(
+            ["Controller", "Admin", "Super Admin", "Central Admin", "Management"]
+        )
     ),
     db: AsyncSession = Depends(get_db),
 ):
