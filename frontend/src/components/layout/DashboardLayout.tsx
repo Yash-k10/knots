@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Sliders,
 } from "lucide-react";
 
 import { wsClient } from "../../services/websocket";
@@ -120,6 +121,8 @@ export default function DashboardLayout() {
 
   const isAdmin =
     user?.role_id === 1 || user?.role?.name?.toLowerCase() === "admin";
+  const isController =
+    user?.role_id === 4 || user?.role?.name?.toLowerCase() === "controller";
 
   const navLinks = [
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -135,6 +138,9 @@ export default function DashboardLayout() {
       icon: Bell,
       badge: unreadNotifications,
     },
+    ...(isController
+      ? [{ name: "Controller", path: "/controller", icon: Sliders }]
+      : []),
     ...(isAdmin
       ? [{ name: "Admin", path: "/admin", icon: ShieldAlert, adminOnly: true }]
       : []),

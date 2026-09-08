@@ -148,7 +148,7 @@ export default function ConnectionCard({
             onClick={() => onConnect && onConnect(targetId)}
             className="w-full flex items-center justify-center gap-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] active:scale-[0.98] py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" /> Connect
+            <UserPlus className="w-4 h-4" /> Tie
           </button>
         )}
       </div>

@@ -144,11 +144,11 @@ async def create_referral(
 async def create_job(
     payload: JobPostingCreate,
     current_user: User = Depends(
-        RoleRequired(["Alumni", "Faculty", "Admin", "Super Admin", "Recruiter"])
+        RoleRequired(["TPO", "Controller", "Admin", "Super Admin", "Central Admin", "Management"])
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    """Post a new job or internship opportunity (Alumni, Faculty, Admin only)."""
+    """Post a new job or internship opportunity (TPO, Controller, Admin only)."""
     service = JobService(db)
     job = await service.create_job(current_user.id, payload)
     return APIResponse(message="Job posting created successfully", data=job)
@@ -233,7 +233,7 @@ async def delete_job(
 async def apply_for_job(
     job_id: int,
     payload: ApplicationCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleRequired(["Student", "Alumni"])),
     db: AsyncSession = Depends(get_db),
 ):
     """Submit an application for a job posting."""

@@ -365,12 +365,12 @@ export default function TiesRecommendations() {
 
                       {/* ✨ Infinity Symbol Position Badge (like blue tick) ✨ */}
                       {profile.has_infinity_badge && (
-                        <span
-                          className="inline-flex items-center justify-center h-4 px-1.5 rounded-full bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white text-[10px] font-black shadow-sm"
+                        <img
+                          src="/infinity-badge.png"
+                          className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
+                          alt="Infinity Badge"
                           title="Verified Campus Distinction / Leadership Position"
-                        >
-                          ∞
-                        </span>
+                        />
                       )}
                     </div>
 

@@ -120,23 +120,24 @@ export default function Connections() {
   };
 
   const handleAccept = async (id: number) => {
+    // Instantly remove from Pending Requests UI
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+    setActionSuccess('Tie request accepted successfully!');
     try {
       await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-      setActionSuccess('Connection accepted successfully!');
-      fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to accept connection request');
+      setError(err.message || 'Failed to accept tie request');
     }
   };
 
   const handleReject = async (id: number) => {
+    // Instantly remove from Pending Requests UI
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+    setActionSuccess('Tie request rejected.');
     try {
       await apiRequest(`/connections/${id}/reject`, { method: 'PATCH' });
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-      setActionSuccess('Connection request rejected.');
     } catch (err: any) {
-      setError(err.message || 'Failed to reject connection request');
+      setError(err.message || 'Failed to reject tie request');
     }
   };
 
@@ -401,7 +402,7 @@ export default function Connections() {
             }`}
           >
             <Users className="w-4 h-4" />
-            My Connections
+            My Ties
             <span className={`text-xs px-2 py-0.5 rounded-full ${
               activeTab === 'connections' ? 'bg-white/20 text-white' : 'bg-[#EAE4F7] text-[#5851A4]'
             }`}>

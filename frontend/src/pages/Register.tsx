@@ -105,6 +105,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // OTP Countdown Timer
   useEffect(() => {
@@ -192,6 +193,7 @@ export default function Register() {
   // Step 2: Register Account with role-specific payload
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasSubmitted(true);
     setError(null);
 
     const trimmedEmail = email.trim();
@@ -729,8 +731,9 @@ export default function Register() {
           {/* ========================================================================= */}
           <div className="space-y-3 bg-[#FAF9FD] p-4 rounded-2xl border border-[#EAE4F7]">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#1E2746] uppercase tracking-wider">
-                2. Authorized College Email
+              <label className="text-xs font-bold text-[#1E2746] uppercase tracking-wider flex items-center gap-1">
+                <span>2. Authorized College Email</span>
+                <span className="text-rose-500 font-bold">*</span>
               </label>
               <span className="text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
                 @sbjit.edu.in
@@ -747,7 +750,11 @@ export default function Register() {
                   setDemoOtpNotice(null);
                 }}
                 placeholder="yourname@sbjit.edu.in"
-                className="w-full bg-white border border-[#D5CBEE] rounded-xl pl-10 pr-24 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 transition-all text-xs font-medium disabled:opacity-50"
+                className={`w-full rounded-xl pl-10 pr-24 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition-all text-xs font-medium disabled:opacity-50 ${
+                  hasSubmitted && !email.trim()
+                    ? "bg-rose-50/30 border-2 border-rose-500 ring-2 ring-rose-500/20"
+                    : "bg-white border border-[#D5CBEE] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20"
+                }`}
                 required
                 disabled={loading}
               />
@@ -818,8 +825,9 @@ export default function Register() {
           {/* ========================================================================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1.5">
-                Password
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <span>Password</span>
+                <span className="text-rose-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
@@ -828,7 +836,11 @@ export default function Register() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
-                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl pl-10 pr-10 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:bg-white focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 transition-all text-xs font-medium disabled:opacity-50"
+                  className={`w-full rounded-xl pl-10 pr-10 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition-all text-xs font-medium disabled:opacity-50 ${
+                    hasSubmitted && (!password || password.length < 6)
+                      ? "bg-rose-50/30 border-2 border-rose-500 ring-2 ring-rose-500/20"
+                      : "bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20"
+                  }`}
                   required
                   disabled={loading}
                 />
@@ -849,8 +861,9 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1.5">
-                Confirm Password
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <span>Confirm Password</span>
+                <span className="text-rose-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
@@ -859,7 +872,11 @@ export default function Register() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter password"
-                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl pl-10 pr-10 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:bg-white focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 transition-all text-xs font-medium disabled:opacity-50"
+                  className={`w-full rounded-xl pl-10 pr-10 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition-all text-xs font-medium disabled:opacity-50 ${
+                    hasSubmitted && (!confirmPassword || confirmPassword !== password)
+                      ? "bg-rose-50/30 border-2 border-rose-500 ring-2 ring-rose-500/20"
+                      : "bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20"
+                  }`}
                   required
                   disabled={loading}
                 />

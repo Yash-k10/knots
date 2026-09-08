@@ -165,7 +165,7 @@ export function AiRecommendationsHub({
                   href="/connections"
                   className="w-full py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
                 >
-                  <UserPlus className="h-3.5 w-3.5" /> Connect Now
+                  <UserPlus className="h-3.5 w-3.5" /> Tie
                 </a>
               </div>
             );

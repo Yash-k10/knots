@@ -47,6 +47,7 @@ interface CampusEvent {
   highlights: string[];
   organizer: string;
   isUpcoming: boolean;
+  google_form_url?: string;
 }
 
 export default function Events() {
@@ -55,6 +56,19 @@ export default function Events() {
     email: string;
     role?: { name: string };
   } | null>(null);
+
+  // Event Creation Modal state (Controller & Admin restricted)
+  const [showCreateEventModal, setShowCreateEventModal] = useState<boolean>(false);
+  const [newEventTitle, setNewEventTitle] = useState<string>("");
+  const [newEventTagline, setNewEventTagline] = useState<string>("");
+  const [newEventCategory, setNewEventCategory] = useState<"Cultural" | "Technical" | "Sports" | "Academic">("Technical");
+  const [newEventDate, setNewEventDate] = useState<string>("");
+  const [newEventTimeRange, setNewEventTimeRange] = useState<string>("");
+  const [newEventVenue, setNewEventVenue] = useState<string>("");
+  const [newEventGoogleFormUrl, setNewEventGoogleFormUrl] = useState<string>("");
+  const [newEventHighlights, setNewEventHighlights] = useState<string>("");
+  const [createEventError, setCreateEventError] = useState<string | null>(null);
+  const [createEventSuccess, setCreateEventSuccess] = useState<string | null>(null);
 
   // Active category filter for clubs
   const [clubCategory, setClubCategory] = useState<string>("ALL");
@@ -425,6 +439,17 @@ export default function Events() {
     loadClubs();
   }, []);
 
+  const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
+  const canCreateEvent =
+    roleName === "controller" ||
+    roleName === "admin" ||
+    roleName === "super admin" ||
+    roleName === "superadmin" ||
+    roleName === "central admin" ||
+    roleName === "management" ||
+    currentUser?.email?.toLowerCase().includes("controller") ||
+    currentUser?.email?.toLowerCase().includes("admin");
+
   // Check if current user is Controller, President, Secretary, Admin, or Management
   const isPresidentOrSecretary =
     currentUser?.email?.toLowerCase().includes("president") ||
@@ -583,6 +608,16 @@ export default function Events() {
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               {events.length} Upcoming Events
             </span>
+
+            {canCreateEvent && (
+              <button
+                onClick={() => setShowCreateEventModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Post Event</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -702,14 +737,24 @@ export default function Events() {
                   </button>
 
                   <button
-                    onClick={() => handleRSVP(event.id)}
+                    onClick={() => {
+                      if (event.google_form_url) {
+                        window.open(event.google_form_url, "_blank");
+                      } else {
+                        handleRSVP(event.id);
+                      }
+                    }}
                     className={`py-2.5 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
-                      event.isRsvp
+                      event.google_form_url
+                        ? "bg-purple-600 text-white hover:bg-purple-700"
+                        : event.isRsvp
                         ? "bg-emerald-600 text-white hover:bg-emerald-700"
                         : "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:shadow-md active:scale-95"
                     }`}
                   >
-                    {event.isRsvp ? (
+                    {event.google_form_url ? (
+                      <span>Register via Google Form ↗</span>
+                    ) : event.isRsvp ? (
                       <>
                         <Check className="w-4 h-4" />
                         <span>RSVP'd</span>
@@ -1068,6 +1113,219 @@ export default function Events() {
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isSubmittingClub ? "Creating Club..." : "Launch Club"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CONTROLLER & ADMIN EVENT CREATION MODAL                                   */}
+      {/* ========================================================================= */}
+      {showCreateEventModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#4B63D2]" />
+                <h3 className="text-lg font-black text-[#1E2746]">Post New Campus Event</h3>
+              </div>
+              <button
+                onClick={() => setShowCreateEventModal(false)}
+                className="p-1 hover:bg-[#FAF9FD] rounded-full text-[#9188BE] hover:text-[#1E2746] transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {createEventSuccess && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{createEventSuccess}</span>
+              </div>
+            )}
+
+            {createEventError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{createEventError}</span>
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newEventTitle.trim() || !newEventDate.trim()) {
+                  setCreateEventError("Please enter event title and date.");
+                  return;
+                }
+                const newEvt: CampusEvent = {
+                  id: Date.now(),
+                  title: newEventTitle.trim(),
+                  tagline: newEventTagline.trim() || "Official Campus Event",
+                  category: newEventCategory,
+                  date: newEventDate.trim(),
+                  timeRange: newEventTimeRange.trim() || "10:00 AM - 4:00 PM",
+                  venue: newEventVenue.trim() || "SBJIT Auditorium",
+                  bannerGradient: "from-blue-600 via-indigo-600 to-purple-600",
+                  accentColor: "#4B63D2",
+                  rsvpCount: 1,
+                  isRsvp: false,
+                  highlights: newEventHighlights.trim()
+                    ? newEventHighlights.split(",").map((s) => s.trim())
+                    : ["Authorized Controller / Admin Program", "Open to all Students & Faculty"],
+                  organizer: "Controller & Campus Academic Office",
+                  isUpcoming: true,
+                  timeline: [],
+                  google_form_url: newEventGoogleFormUrl.trim() || undefined,
+                };
+                setEvents((prev) => [newEvt, ...prev]);
+                setCreateEventSuccess("Event posted successfully!");
+                setTimeout(() => {
+                  setShowCreateEventModal(false);
+                  setNewEventTitle("");
+                  setNewEventTagline("");
+                  setNewEventDate("");
+                  setNewEventTimeRange("");
+                  setNewEventVenue("");
+                  setNewEventGoogleFormUrl("");
+                  setNewEventHighlights("");
+                  setCreateEventSuccess(null);
+                }, 1200);
+              }}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Event Title <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SBJIT Hackathon 2026"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Category <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={newEventCategory}
+                    onChange={(e) => setNewEventCategory(e.target.value as any)}
+                    className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  >
+                    <option value="Technical">Technical</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Academic">Academic</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Tagline / Brief Rationale
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Annual National Inter-College Hackathon & Paper Presentation"
+                  value={newEventTagline}
+                  onChange={(e) => setNewEventTagline(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Date <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Nov 15, 2026"
+                    value={newEventDate}
+                    onChange={(e) => setNewEventDate(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Time Range
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 10:00 AM - 5:00 PM"
+                    value={newEventTimeRange}
+                    onChange={(e) => setNewEventTimeRange(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Venue / Location
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SBJIT Main Auditorium"
+                    value={newEventVenue}
+                    onChange={(e) => setNewEventVenue(e.target.value)}
+                    className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Requirement 6: Google Form Link */}
+              <div className="bg-[#4B63D2]/5 p-3 rounded-2xl border border-[#4B63D2]/20 space-y-1">
+                <label className="block text-xs font-bold text-[#4B63D2]">
+                  Google Form Link (Optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://forms.google.com/..."
+                  value={newEventGoogleFormUrl}
+                  onChange={(e) => setNewEventGoogleFormUrl(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-mono text-[#1E2746] focus:outline-none"
+                />
+                <p className="text-[10px] text-[#5851A4] font-medium">
+                  If provided, clicking "Register" on the event card will redirect users directly to this Google Form.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                  Event Highlights (Comma separated)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Cash Prizes ₹50,000, Free Lunch & Certificates, Industry Jury"
+                  value={newEventHighlights}
+                  onChange={(e) => setNewEventHighlights(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateEventModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer"
+                >
+                  Publish Event
                 </button>
               </div>
             </form>

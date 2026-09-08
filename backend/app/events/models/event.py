@@ -51,6 +51,7 @@ class Event(Base):
     description = Column(Text, nullable=False)
     location = Column(String(300), nullable=True)  # physical address or "Online"
     banner_image_url = Column(String(500), nullable=True)
+    google_form_url = Column(String(500), nullable=True)
 
     # ── Timing ───────────────────────────────────────────────────────────────
     start_datetime = Column(DateTime, nullable=False)

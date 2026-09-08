@@ -82,12 +82,20 @@ export default function Jobs() {
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
   const canPostJob =
     currentUser?.role_id === 1 ||
-    roleName === "alumni" ||
-    roleName === "faculty" ||
+    roleName === "tpo" ||
+    roleName === "controller" ||
     roleName === "admin" ||
     roleName === "super admin" ||
     roleName === "superadmin" ||
-    roleName === "recruiter";
+    roleName === "management" ||
+    roleName === "central admin";
+
+  const isStudentOrAlumni =
+    currentUser?.role_id === 2 ||
+    currentUser?.role_id === 3 ||
+    roleName === "student" ||
+    roleName === "alumni" ||
+    !roleName;
 
   // Search and filter states for Jobs
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -726,12 +734,22 @@ export default function Jobs() {
 
                   {/* Action Buttons */}
                   <div className="pt-3 border-t border-[#EAE4F7] flex items-center gap-2">
-                    <button
-                      onClick={() => setSelectedJobForApply(job)}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
-                    >
-                      Apply Now
-                    </button>
+                    {isStudentOrAlumni ? (
+                      <button
+                        onClick={() => setSelectedJobForApply(job)}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
+                      >
+                        Apply Now
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex-1 py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-[11px] font-bold text-center cursor-not-allowed"
+                        title="Job applications are restricted to Students and Alumni accounts."
+                      >
+                        Student / Alumni Only
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         const matchingAlum = alumniDirectory.find(
@@ -864,12 +882,12 @@ export default function Jobs() {
                                       {alum.name}
                                     </h5>
                                     {alum.hasInfinityBadge && (
-                                      <span
-                                        className="h-4 px-1.5 rounded-full bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white text-[10px] font-black inline-flex items-center justify-center shadow-sm"
+                                      <img
+                                        src="/infinity-badge.png"
+                                        className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
+                                        alt="Infinity Badge"
                                         title="Distinguished Alumni Mentor"
-                                      >
-                                        ∞
-                                      </span>
+                                      />
                                     )}
                                   </div>
                                   <p className="text-xs font-semibold text-[#4B63D2] mt-0.5">
