@@ -17,6 +17,7 @@ The Profiles API manages user profiles, educational history, employment experien
 
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
+| `GET` | `/api/v1/profiles` | Retrieve paginated list of user profiles with keyword search (`search`, `skip`, `limit`) | Yes |
 | `GET` | `/api/v1/profiles/me` | Retrieve currently authenticated user's profile (auto-initializes if missing) | Yes |
 | `PUT` | `/api/v1/profiles/me` | Update current user's profile (name, bio, department, grad year, skills) | Yes |
 | `POST` | `/api/v1/profiles/me/picture` | Upload profile picture (`multipart/form-data`) | Yes |

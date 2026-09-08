@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies.auth import get_current_user
+from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
 from app.events.models.event import EventStatus
@@ -86,7 +86,11 @@ async def list_event_categories(
 @router.post("", response_model=APIResponse[EventResponse])
 async def create_event(
     payload: EventCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        RoleRequired(
+            ["Controller", "Admin", "Super Admin", "Central Admin", "Management"]
+        )
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """Schedule a new college career or collaboration event."""

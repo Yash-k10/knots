@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.repository import BaseRepository
 from app.messaging.models.conversation import Conversation, ConversationParticipant
+from app.users.models.user import User
 
 
 class ConversationRepository(BaseRepository[Conversation]):
@@ -15,7 +16,11 @@ class ConversationRepository(BaseRepository[Conversation]):
     ) -> Conversation | None:
         stmt = (
             select(self.model)
-            .options(selectinload(self.model.participants))
+            .options(
+                selectinload(self.model.participants)
+                .selectinload(ConversationParticipant.user)
+                .selectinload(User.role)
+            )
             .where(self.model.id == conversation_id)
         )
         result = await self.db.execute(stmt)
@@ -99,7 +104,11 @@ class ConversationRepository(BaseRepository[Conversation]):
 
         stmt = (
             select(self.model)
-            .options(selectinload(self.model.participants))
+            .options(
+                selectinload(self.model.participants)
+                .selectinload(ConversationParticipant.user)
+                .selectinload(User.role)
+            )
             .where(self.model.id.in_(subq))
             .order_by(self.model.updated_at.desc())
             .offset(skip)

@@ -46,6 +46,47 @@ class MessagingService:
             if sender_id == receiver_id:
                 raise ValidationError("Cannot send a direct message to yourself")
 
+            # Stealth check: Block direct messages to Super Admin from regular users
+            try:
+                from sqlalchemy import select
+                from sqlalchemy.orm import selectinload
+                from app.users.models.user import User
+
+                recv_res = await self.db.execute(
+                    select(User)
+                    .options(selectinload(User.role))
+                    .where(User.id == receiver_id)
+                )
+                if hasattr(recv_res, "scalars"):
+                    receiver_user = recv_res.scalars().first()
+                    sender_res = await self.db.execute(
+                        select(User)
+                        .options(selectinload(User.role))
+                        .where(User.id == sender_id)
+                    )
+                    sender_user = (
+                        sender_res.scalars().first()
+                        if hasattr(sender_res, "scalars")
+                        else None
+                    )
+
+                    is_sender_sa = (
+                        sender_user
+                        and getattr(sender_user, "role", None)
+                        and getattr(sender_user.role, "name", None) == "Super Admin"
+                    )
+                    if (
+                        receiver_user
+                        and getattr(receiver_user, "role", None)
+                        and getattr(receiver_user.role, "name", None) == "Super Admin"
+                        and not is_sender_sa
+                    ):
+                        raise NotFoundError("Recipient not found")
+            except NotFoundError:
+                raise
+            except Exception:
+                pass
+
             # Get or create direct conversation
             conv = await self.conversation_repo.get_or_create_direct_conversation(
                 sender_id, receiver_id
@@ -66,6 +107,40 @@ class MessagingService:
         """Send a direct 1-on-1 message."""
         msg_in = MessageCreate(receiver_id=payload.receiver_id, content=payload.content)
         return await self.send_message(sender_id, msg_in)
+
+    async def get_or_create_direct_conversation(
+        self, user1_id: int, user2_id: int
+    ) -> ConversationResponse:
+        """Get or initialize a direct 1-on-1 conversation with populated details."""
+        if user1_id == user2_id:
+            raise ValidationError("Cannot create a direct conversation with yourself")
+
+        conv = await self.conversation_repo.get_or_create_direct_conversation(
+            user1_id, user2_id
+        )
+        conversations = await self.get_user_conversations(user1_id)
+        existing = next((c for c in conversations if c.id == conv.id), None)
+        if existing:
+            return existing
+
+        conv_full = await self.conversation_repo.get_conversation_with_participants(
+            conv.id
+        )
+        from datetime import datetime
+
+        now = datetime.utcnow()
+        return ConversationResponse(
+            id=conv.id,
+            is_group=False,
+            name=None,
+            created_at=getattr(conv, "created_at", None) or now,
+            updated_at=getattr(conv, "updated_at", None) or now,
+            participants=[
+                ConversationParticipantResponse.from_orm(p)
+                for p in (getattr(conv_full, "participants", []) if conv_full else [])
+            ],
+            unread_count=0,
+        )
 
     async def create_group_conversation(
         self, creator_id: int, name: str, participant_ids: list[int]

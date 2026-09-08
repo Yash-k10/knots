@@ -35,3 +35,39 @@ class ProfileRepository(BaseRepository[Profile]):
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()
+
+    async def list_profiles(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> list[Profile]:
+        """Fetch paginated list of profiles with education and employment history loaded (excluding Super Admin)."""
+        from sqlalchemy import or_
+        from app.users.models.role import Role
+        from app.users.models.user import User
+
+        stmt = (
+            select(self.model)
+            .join(User, self.model.user_id == User.id)
+            .outerjoin(Role, User.role_id == Role.id)
+            .where(or_(Role.name.is_(None), Role.name != "Super Admin"))
+            .options(
+                selectinload(self.model.education),
+                selectinload(self.model.employment_history),
+            )
+            .offset(skip)
+            .limit(limit)
+        )
+        if search:
+            search_pattern = f"%{search}%"
+            stmt = stmt.filter(
+                or_(
+                    self.model.first_name.ilike(search_pattern),
+                    self.model.last_name.ilike(search_pattern),
+                    self.model.department.ilike(search_pattern),
+                    self.model.bio.ilike(search_pattern),
+                )
+            )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())

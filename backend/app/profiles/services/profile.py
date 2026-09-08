@@ -108,6 +108,21 @@ class ProfileService:
         )
         return await self.get_profile_by_user_id(user_id)
 
+    async def list_profiles(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> list[Profile]:
+        """Retrieve a paginated list of profiles with enriched endorsements and connection counts."""
+        profiles = await self.profile_repo.list_profiles(
+            skip=skip, limit=limit, search=search
+        )
+        enriched = []
+        for profile in profiles:
+            enriched.append(await self._enrich_profile(profile))
+        return enriched
+
     # --- Education CRUD ---
     async def add_education(
         self, user_id: int, education_in: EducationCreate

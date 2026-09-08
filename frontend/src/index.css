@@ -3,7 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --palette-white: #FFFFFF;
+    --palette-lavender: #C8B6E2;
+    --palette-deep-purple: #5851A4;
+    --palette-periwinkle: #4B63D2;
+    --palette-navy: #1E2746;
+    --palette-pastel-lavender: #B9B1D9;
+    --palette-yellow: #FFD21A;
+    --palette-bg-light: #F8F6FD;
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 min-h-screen font-sans;
+    @apply bg-[#F8F6FD] text-[#1E2746] min-h-screen font-sans antialiased selection:bg-[#C8B6E2]/50 selection:text-[#1E2746];
+    background-color: #F8F6FD;
+    color: #1E2746;
+  }
+
+  /* Custom clean scrollbars with lavender & periwinkle palette */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #F8F6FD;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #C8B6E2;
+    border-radius: 4px;
+    border: 2px solid #F8F6FD;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #5851A4;
   }
 }

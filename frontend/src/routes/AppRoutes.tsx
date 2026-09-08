@@ -20,6 +20,7 @@ import Events from "../pages/Events";
 import Messaging from "../pages/Messaging";
 import Notifications from "../pages/Notifications";
 import Admin from "../pages/Admin";
+import Controller from "../pages/Controller";
 import Settings from "../pages/Settings";
 
 // Protected Route Wrapper Component
@@ -38,6 +39,80 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return children;
 };
 
+// Controller Route Wrapper Component for Role-Based Access Control
+const ControllerRoute = ({ children }: ProtectedRouteProps) => {
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkControllerRole = async () => {
+      try {
+        const user = await apiRequest<{
+          role_id?: number;
+          role?: { name: string };
+        }>("/users/me");
+        if (isMounted) {
+          const roleName = user.role?.name?.toLowerCase().trim();
+          const hasAccess =
+            user.role_id === 1 ||
+            roleName === "controller" ||
+            roleName === "admin" ||
+            roleName === "super admin" ||
+            roleName === "superadmin" ||
+            roleName === "management" ||
+            roleName === "central admin";
+          setIsAuthorized(hasAccess);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setIsAuthorized(false);
+        }
+      }
+    };
+    checkControllerRole();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto my-12 bg-slate-900 border border-slate-800 rounded-xl text-center space-y-6 shadow-2xl">
+        <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-white tracking-tight">
+            Controller Authorization Required
+          </h2>
+          <p className="text-slate-400 text-sm">
+            Access to the Controller Console is restricted to authorized Department Controllers and Administrative Leadership.
+          </p>
+        </div>
+        <div>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-500/20"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 // Admin Route Wrapper Component for Role-Based Access Control
 const AdminRoute = ({ children }: ProtectedRouteProps) => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -51,8 +126,12 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
           role?: { name: string };
         }>("/users/me");
         if (isMounted) {
+          const roleName = user.role?.name?.toLowerCase().trim();
           const hasAdminRole =
-            user.role_id === 1 || user.role?.name?.toLowerCase() === "admin";
+            user.role_id === 1 ||
+            roleName === "admin" ||
+            roleName === "super admin" ||
+            roleName === "superadmin";
           setIsAdmin(hasAdminRole);
         }
       } catch (err) {
@@ -137,6 +216,14 @@ export default function AppRoutes() {
             <AdminRoute>
               <Admin />
             </AdminRoute>
+          }
+        />
+        <Route
+          path="controller"
+          element={
+            <ControllerRoute>
+              <Controller />
+            </ControllerRoute>
           }
         />
         <Route path="settings" element={<Settings />} />

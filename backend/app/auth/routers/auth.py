@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.auth.schemas.auth import (
+    LoginOTPRequest,
     RegistrationResponse,
+    ResetPasswordRequest,
+    SendOTPRequest,
+    SendOTPResponse,
     TokenRefreshRequest,
     TokenResponse,
     UserLogin,
@@ -35,6 +39,34 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     service = AuthService(db)
     tokens = await service.authenticate_user(credentials)
     return APIResponse(message="Login successful", data=tokens)
+
+
+@router.post("/send-otp", response_model=APIResponse[SendOTPResponse])
+async def send_otp(payload: SendOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Send an authorized 6-digit OTP to a college @sbjit.edu.in email address."""
+    service = AuthService(db)
+    result = await service.send_otp(payload)
+    return APIResponse(message=result.message, data=result)
+
+
+@router.post("/login-otp", response_model=APIResponse[TokenResponse])
+async def login_otp(payload: LoginOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Authenticate or auto-provision college user via verified OTP."""
+    service = AuthService(db)
+    tokens = await service.authenticate_otp(payload)
+    return APIResponse(message="OTP authentication successful", data=tokens)
+
+
+@router.post("/reset-password", response_model=APIResponse[None])
+async def reset_password(
+    payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    """Reset account password using verified email OTP."""
+    service = AuthService(db)
+    await service.reset_password_with_otp(payload)
+    return APIResponse(
+        message="Password reset successfully. You can now login with your new password."
+    )
 
 
 @router.post("/refresh", response_model=APIResponse[TokenResponse])

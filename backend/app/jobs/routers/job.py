@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies.auth import get_current_user
+from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
 from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
@@ -30,6 +30,13 @@ from app.jobs.services.referral import ReferralService
 from app.users.models.user import User
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
+
+
+def _is_user_admin(user: User) -> bool:
+    return user.role_id == 1 or (
+        getattr(user, "role", None) is not None
+        and user.role.name.lower().strip() in ("admin", "super admin", "superadmin")
+    )
 
 
 # --- Companies Endpoints ---
@@ -136,10 +143,14 @@ async def create_referral(
 )
 async def create_job(
     payload: JobPostingCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        RoleRequired(
+            ["TPO", "Controller", "Admin", "Super Admin", "Central Admin", "Management"]
+        )
+    ),
     db: AsyncSession = Depends(get_db),
 ):
-    """Post a new job or internship opportunity."""
+    """Post a new job or internship opportunity (TPO, Controller, Admin only)."""
     service = JobService(db)
     job = await service.create_job(current_user.id, payload)
     return APIResponse(message="Job posting created successfully", data=job)
@@ -196,7 +207,7 @@ async def update_job(
 ):
     """Update an existing job posting."""
     service = JobService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     job = await service.update_job(
         job_id=job_id, user_id=current_user.id, job_in=payload, is_admin=is_admin
     )
@@ -211,7 +222,7 @@ async def delete_job(
 ):
     """Delete a job posting."""
     service = JobService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     await service.delete_job(job_id=job_id, user_id=current_user.id, is_admin=is_admin)
     return APIResponse(message="Job posting deleted successfully", data={"id": job_id})
 
@@ -224,7 +235,7 @@ async def delete_job(
 async def apply_for_job(
     job_id: int,
     payload: ApplicationCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(RoleRequired(["Student", "Alumni"])),
     db: AsyncSession = Depends(get_db),
 ):
     """Submit an application for a job posting."""
@@ -247,7 +258,7 @@ async def read_job_applications(
 ):
     """Retrieve all applicants for a job posting (Recruiter/Poster or Admin)."""
     service = ApplicationService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     applications = await service.get_job_applications(
         job_posting_id=job_id,
         user_id=current_user.id,
@@ -269,7 +280,7 @@ async def update_application_status(
 ):
     """Update application status (e.g., PENDING -> REVIEWING -> ACCEPTED / REJECTED)."""
     service = ApplicationService(db)
-    is_admin = getattr(current_user, "role", "") == "ADMIN"
+    is_admin = _is_user_admin(current_user)
     application = await service.update_application_status(
         application_id=application_id,
         user_id=current_user.id,

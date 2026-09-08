@@ -8,6 +8,7 @@ import {
   Flame,
 } from "lucide-react";
 import { analyticsService, TrendingPost } from "../../services/analytics";
+import { formatDate } from "../../utils/date";
 
 interface TrendingPostsWidgetProps {
   initialPosts?: TrendingPost[];
@@ -122,13 +123,10 @@ export default function TrendingPostsWidget({
                       </span>
                       <span className="text-[10px] text-slate-500 ml-2">
                         {post.created_at
-                          ? new Date(post.created_at).toLocaleDateString(
-                              undefined,
-                              {
-                                month: "short",
-                                day: "numeric",
-                              },
-                            )
+                          ? formatDate(post.created_at, {
+                              month: "short",
+                              day: "numeric",
+                            })
                           : ""}
                       </span>
                     </div>

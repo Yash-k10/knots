@@ -31,19 +31,29 @@ class TestConnectionService(unittest.IsolatedAsyncioTestCase):
             id=11, requester_id=1, addressee_id=2, status=ConnectionStatus.PENDING
         )
         self.service.repository.create.return_value = mock_conn
+        self.service.repository.get.return_value = mock_conn
 
-        res = await self.service.request_connection(1, 2)
-        self.assertEqual(res.id, 11)
-        self.assertEqual(res.status, ConnectionStatus.PENDING)
+        with unittest.mock.patch(
+            "app.profiles.repository.profile.ProfileRepository.get_by_user_id",
+            new_callable=AsyncMock,
+        ) as mock_get_prof, unittest.mock.patch(
+            "app.notifications.services.notification.NotificationService.create_notification",
+            new_callable=AsyncMock,
+        ):
+            mock_get_prof.return_value = None
+            res = await self.service.request_connection(1, 2)
+            self.assertEqual(res.id, 11)
+            self.assertEqual(res.status, ConnectionStatus.PENDING)
 
     async def test_accept_connection(self):
         mock_conn = Connection(
             id=15, requester_id=2, addressee_id=1, status=ConnectionStatus.PENDING
         )
-        self.service.repository.get.return_value = mock_conn
-        self.service.repository.update.return_value = Connection(
+        accepted_conn = Connection(
             id=15, requester_id=2, addressee_id=1, status=ConnectionStatus.ACCEPTED
         )
+        self.service.repository.get.side_effect = [mock_conn, accepted_conn]
+        self.service.repository.update.return_value = accepted_conn
 
         res = await self.service.accept_connection(15, user_id=1)
         self.assertEqual(res.status, ConnectionStatus.ACCEPTED)

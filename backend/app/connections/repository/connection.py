@@ -1,32 +1,60 @@
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.connections.models.connection import Connection, ConnectionStatus
 from app.core.repository import BaseRepository
+from app.users.models.user import User
 
 
 class ConnectionRepository(BaseRepository[Connection]):
     def __init__(self, db: AsyncSession):
         super().__init__(Connection, db)
 
+    async def get(self, id: int) -> Connection | None:
+        stmt = (
+            select(self.model)
+            .where(self.model.id == id)
+            .options(
+                selectinload(self.model.requester).selectinload(User.profile),
+                selectinload(self.model.addressee).selectinload(User.profile),
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+
     async def get_user_connections(self, user_id: int) -> list[Connection]:
-        stmt = select(self.model).where(
-            and_(
-                or_(
-                    self.model.requester_id == user_id,
-                    self.model.addressee_id == user_id,
-                ),
-                self.model.status == ConnectionStatus.ACCEPTED,
+        stmt = (
+            select(self.model)
+            .where(
+                and_(
+                    or_(
+                        self.model.requester_id == user_id,
+                        self.model.addressee_id == user_id,
+                    ),
+                    self.model.status == ConnectionStatus.ACCEPTED,
+                )
+            )
+            .options(
+                selectinload(self.model.requester).selectinload(User.profile),
+                selectinload(self.model.addressee).selectinload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
     async def get_pending_requests(self, user_id: int) -> list[Connection]:
-        stmt = select(self.model).where(
-            and_(
-                self.model.addressee_id == user_id,
-                self.model.status == ConnectionStatus.PENDING,
+        stmt = (
+            select(self.model)
+            .where(
+                and_(
+                    self.model.addressee_id == user_id,
+                    self.model.status == ConnectionStatus.PENDING,
+                )
+            )
+            .options(
+                selectinload(self.model.requester).selectinload(User.profile),
+                selectinload(self.model.addressee).selectinload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
@@ -61,10 +89,17 @@ class ConnectionRepository(BaseRepository[Connection]):
         return connected_ids
 
     async def get_sent_pending_requests(self, user_id: int) -> list[Connection]:
-        stmt = select(self.model).where(
-            and_(
-                self.model.requester_id == user_id,
-                self.model.status == ConnectionStatus.PENDING,
+        stmt = (
+            select(self.model)
+            .where(
+                and_(
+                    self.model.requester_id == user_id,
+                    self.model.status == ConnectionStatus.PENDING,
+                )
+            )
+            .options(
+                selectinload(self.model.requester).selectinload(User.profile),
+                selectinload(self.model.addressee).selectinload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
