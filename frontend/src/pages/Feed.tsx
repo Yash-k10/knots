@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   Heart,
   MessageSquare,
@@ -999,12 +1000,15 @@ export default function Feed() {
             >
               {/* Card Header: Author Profile Info */}
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
+                <Link
+                  to={post.author?.id ? `/profile/${post.author.id}` : "/profile"}
+                  className="flex items-center gap-3 group/author cursor-pointer"
+                >
                   {getMediaUrl(post.author?.profile?.profile_picture) ? (
                     <img
                       src={getMediaUrl(post.author?.profile?.profile_picture)}
                       alt="Author Avatar"
-                      className="h-10 w-10 rounded-full object-cover border border-[#EAE4F7] shadow-sm"
+                      className="h-10 w-10 rounded-full object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
                     />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
@@ -1013,7 +1017,7 @@ export default function Feed() {
                   )}
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-bold text-[#1E2746] hover:text-[#4B63D2] transition-colors cursor-pointer flex items-center gap-1.5">
+                      <h4 className="text-sm font-bold text-[#1E2746] group-hover/author:text-[#4B63D2] transition-colors flex items-center gap-1.5">
                         <span>
                           {post.author?.profile?.first_name || post.author?.profile?.last_name
                             ? `${post.author.profile.first_name || ""} ${post.author.profile.last_name || ""}`.trim()
@@ -1051,7 +1055,7 @@ export default function Feed() {
                       {getVisibilityIcon(post.visibility)}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* Super Admin / Admin / Author Delete Control */}
                 {(isSuperAdminOrAdmin || post.author_id === currentUser?.id) && (
@@ -1205,9 +1209,16 @@ export default function Feed() {
                             className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-bold text-[#4B63D2]">
+                              <Link
+                                to={
+                                  comment.author_id
+                                    ? `/profile/${comment.author_id}`
+                                    : "/profile"
+                                }
+                                className="font-bold text-[#4B63D2] hover:underline"
+                              >
                                 {getEmailPrefix(comment.author?.email)}
-                              </span>
+                              </Link>
                               <div className="flex items-center gap-2">
                                 <span className="text-[#9188BE] text-[10px]">
                                   {formatTimeAgo(comment.created_at)}
