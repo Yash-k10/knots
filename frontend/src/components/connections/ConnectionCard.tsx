@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { UserPlus, Check, X, MessageSquare, Users, RotateCcw } from 'lucide-react';
 import { getMediaUrl } from '../../services/api';
 
@@ -11,11 +12,13 @@ interface ConnectionCardProps {
   subtitle: string;
   mutualCount?: number;
   reason?: string;
+  isAccepted?: boolean;
   onAccept?: (id: number) => void;
   onReject?: (id: number) => void;
   onWithdraw?: (id: number) => void;
   onConnect?: (userId: number) => void;
   onMessage?: (userId: number) => void;
+  onTieBack?: (userId: number) => void;
 }
 
 export default function ConnectionCard({
@@ -28,11 +31,13 @@ export default function ConnectionCard({
   subtitle,
   mutualCount,
   reason,
+  isAccepted,
   onAccept,
   onReject,
   onWithdraw,
   onConnect,
   onMessage,
+  onTieBack,
 }: ConnectionCardProps) {
   // Generate a vibrant gradient background based on targetId or email
   const getGradientStyle = (seed: string | number) => {
@@ -57,7 +62,7 @@ export default function ConnectionCard({
     <div className="group relative bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 text-center space-y-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
       <div>
         {/* Avatar Container */}
-        <div className="relative mx-auto h-20 w-20 flex items-center justify-center mb-3">
+        <Link to={`/profile/${targetId}`} className="block relative mx-auto h-20 w-20 cursor-pointer mb-3">
           {resolvedAvatar ? (
             <img
               src={resolvedAvatar}
@@ -72,13 +77,15 @@ export default function ConnectionCard({
               {avatarLetter}
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Text Info */}
         <div className="space-y-1">
-          <h4 className="text-base font-bold text-[#1E2746] truncate px-2 transition-colors group-hover:text-[#4B63D2]" title={email || displayName}>
-            {displayName}
-          </h4>
+          <Link to={`/profile/${targetId}`} className="block">
+            <h4 className="text-base font-bold text-[#1E2746] truncate px-2 transition-colors group-hover:text-[#4B63D2]" title={email || displayName}>
+              {displayName}
+            </h4>
+          </Link>
           <p className={`text-xs font-semibold tracking-wide ${
             type === 'request' ? 'text-[#4B63D2]' :
             type === 'connection' ? 'text-emerald-600' :
@@ -109,20 +116,34 @@ export default function ConnectionCard({
       {/* Action Buttons */}
       <div className="pt-3 border-t border-[#EAE4F7] mt-2">
         {type === 'request' && (
-          <div className="flex gap-2.5">
-            <button
-              onClick={() => onAccept && onAccept(id)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] active:scale-95 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
-            >
-              <Check className="w-4 h-4" /> Accept
-            </button>
-            <button
-              onClick={() => onReject && onReject(id)}
-              className="flex-1 flex items-center justify-center gap-1.5 bg-[#FAF9FD] hover:bg-rose-50 hover:text-rose-600 active:scale-95 py-2.5 rounded-xl text-xs font-bold text-[#5851A4] transition-all border border-[#EAE4F7] cursor-pointer"
-            >
-              <X className="w-4 h-4" /> Reject
-            </button>
-          </div>
+          isAccepted ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2 rounded-xl">
+                <Check className="w-4 h-4 text-emerald-600" /> Tie Accepted
+              </div>
+              <button
+                onClick={() => onTieBack && onTieBack(targetId)}
+                className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:opacity-90 active:scale-95 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-[#4B63D2]/25 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" /> Tie Back
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => onAccept && onAccept(id)}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] active:scale-95 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm cursor-pointer"
+              >
+                <Check className="w-4 h-4" /> Accept
+              </button>
+              <button
+                onClick={() => onReject && onReject(id)}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#FAF9FD] hover:bg-rose-50 hover:text-rose-600 active:scale-95 py-2.5 rounded-xl text-xs font-bold text-[#5851A4] transition-all border border-[#EAE4F7] cursor-pointer"
+              >
+                <X className="w-4 h-4" /> Reject
+              </button>
+            </div>
+          )
         )}
 
         {type === 'sent' && (

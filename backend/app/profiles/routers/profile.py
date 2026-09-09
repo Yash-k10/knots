@@ -146,6 +146,45 @@ async def upload_profile_picture(
     return APIResponse(message="Profile picture uploaded successfully", data=profile)
 
 
+CERT_UPLOAD_DIR = "static/certificates"
+
+
+@router.post("/me/certificate", response_model=APIResponse[dict])
+async def upload_certificate_file(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload a certificate document/image for the currently logged in user."""
+    os.makedirs(CERT_UPLOAD_DIR, exist_ok=True)
+
+    allowed_extensions = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".pdf",
+        ".doc",
+        ".docx",
+    }
+    file_ext = os.path.splitext(file.filename or "certificate.pdf")[1].lower()
+    if file_ext not in allowed_extensions:
+        raise ValidationError(
+            "Invalid file type. Only images, PDF, and Word documents are allowed."
+        )
+
+    filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(CERT_UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    file_url = f"/static/certificates/{filename}"
+    return APIResponse(
+        message="Certificate uploaded successfully", data={"file_url": file_url}
+    )
+
+
 # --- Education Endpoints ---
 
 

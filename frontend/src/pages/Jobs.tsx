@@ -504,13 +504,15 @@ export default function Jobs() {
             </p>
           </div>
 
-          <button
-            onClick={() => setActiveTab("post")}
-            className="flex items-center gap-2 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md shadow-[#4B63D2]/20 text-xs sm:text-sm cursor-pointer shrink-0 active:scale-95"
-          >
-            <PlusCircle className="w-4 h-4 text-[#FFD21A]" />
-            <span>Post Opportunity</span>
-          </button>
+          {canPostJob && (
+            <button
+              onClick={() => setActiveTab("post")}
+              className="flex items-center gap-2 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-2.5 rounded-2xl transition-all shadow-md shadow-[#4B63D2]/20 text-xs sm:text-sm cursor-pointer shrink-0 active:scale-95"
+            >
+              <PlusCircle className="w-4 h-4 text-[#FFD21A]" />
+              <span>Post Opportunity</span>
+            </button>
+          )}
         </div>
 
         {/* Tab Navigation */}

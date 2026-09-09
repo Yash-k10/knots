@@ -64,6 +64,7 @@ export interface EmploymentHistoryUpdate {
 export interface Certification {
   name: string;
   issuer: string;
+  certificate_url?: string | null;
 }
 
 export interface Project {
@@ -134,6 +135,16 @@ export const profileService = {
     const formData = new FormData();
     formData.append("file", file);
     return apiRequest<ProfileResponse>("/profiles/me/picture", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  // Upload certificate file
+  uploadCertificate: async (file: File): Promise<{ file_url: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiRequest<{ file_url: string }>("/profiles/me/certificate", {
       method: "POST",
       body: formData,
     });

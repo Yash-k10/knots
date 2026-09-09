@@ -89,8 +89,8 @@ export default function EducationSection({
 
     if (gpa.trim() !== "") {
       const gpaVal = parseFloat(gpa);
-      if (isNaN(gpaVal) || gpaVal < 0 || gpaVal > 4.0) {
-        errors.gpa = "GPA must be a valid number between 0.0 and 4.0.";
+      if (isNaN(gpaVal) || gpaVal < 0 || gpaVal > 10.0) {
+        errors.gpa = "GPA must be a valid number between 0.0 and 10.0.";
       }
     }
 
@@ -242,14 +242,14 @@ export default function EducationSection({
 
             <div>
               <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                GPA (Optional, Out of 4.0)
+                GPA (Optional, Out of 10.0)
               </label>
               <input
                 type="text"
                 value={gpa}
                 onChange={(e) => setGpa(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
-                placeholder="e.g. 3.85"
+                placeholder="e.g. 8.85"
               />
               {formErrors.gpa && (
                 <p className="text-rose-600 text-xs mt-1 font-bold">{formErrors.gpa}</p>
