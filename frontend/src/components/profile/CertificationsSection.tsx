@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, Award, X, Save } from "lucide-react";
+import { Plus, Trash2, Edit2, Award, X, Save, Upload, ExternalLink, FileText, Loader2 } from "lucide-react";
 import {
   profileService,
   Certification,
   ProfileResponse,
 } from "../../services/profile";
+import { getMediaUrl } from "../../services/api";
 
 interface CertificationsSectionProps {
   profile: ProfileResponse;
@@ -21,6 +22,7 @@ export default function CertificationsSection({
 }: CertificationsSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   // Local State representing the certifications array
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -28,6 +30,7 @@ export default function CertificationsSection({
   // Single Entry Form State
   const [name, setName] = useState("");
   const [issuer, setIssuer] = useState("");
+  const [certificateUrl, setCertificateUrl] = useState("");
 
   // Form index for editing an existing item in the array (-1 for adding new)
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -48,8 +51,24 @@ export default function CertificationsSection({
   const resetForm = () => {
     setName("");
     setIssuer("");
+    setCertificateUrl("");
     setEditIndex(null);
     setFormErrors({});
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingFile(true);
+    try {
+      const res = await profileService.uploadCertificate(file);
+      setCertificateUrl(res.file_url);
+    } catch (err: any) {
+      onError(err.message || "Failed to upload certificate file.");
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   const startEditEntry = (index: number) => {
@@ -57,6 +76,7 @@ export default function CertificationsSection({
     const cert = certifications[index];
     setName(cert.name);
     setIssuer(cert.issuer);
+    setCertificateUrl(cert.certificate_url || "");
     setEditIndex(index);
   };
 
@@ -80,6 +100,7 @@ export default function CertificationsSection({
     const newEntry: Certification = {
       name: name.trim(),
       issuer: issuer.trim(),
+      certificate_url: certificateUrl.trim() || undefined,
     };
 
     if (editIndex !== null) {
@@ -186,6 +207,34 @@ export default function CertificationsSection({
                   </p>
                 )}
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Upload Certificate Document / Badge (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 px-3 py-2 bg-white border border-[#D5CBEE] hover:border-[#4B63D2] rounded-xl text-xs font-bold text-[#5851A4] cursor-pointer transition shadow-sm">
+                    {isUploadingFile ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-[#4B63D2]" />
+                    ) : (
+                      <Upload className="h-4 w-4 text-[#4B63D2]" />
+                    )}
+                    <span>{isUploadingFile ? "Uploading..." : "Choose File (PDF/Image/DOCX)"}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={isUploadingFile}
+                    />
+                  </label>
+                  {certificateUrl && (
+                    <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                      <FileText className="h-3.5 w-3.5" /> File Attached
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-2 justify-end">
@@ -284,6 +333,18 @@ export default function CertificationsSection({
                     {cert.name}
                   </h4>
                   <p className="text-[#5851A4] text-xs font-semibold">{cert.issuer}</p>
+                  {cert.certificate_url && (
+                    <a
+                      href={getMediaUrl(cert.certificate_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 bg-white border border-[#EAE4F7] hover:border-[#4B63D2] text-[#4B63D2] font-bold text-[11px] rounded-xl transition shadow-sm"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>View Certificate Document</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </div>
             ))

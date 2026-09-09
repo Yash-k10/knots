@@ -328,13 +328,16 @@ export default function TiesRecommendations() {
                 className="pt-3 first:pt-0 flex items-center justify-between gap-3 group"
               >
                 {/* Avatar & User Info */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <Link
+                  to={`/profile/${profile.id}`}
+                  className="flex items-center gap-3 min-w-0 flex-1 group/rec cursor-pointer"
+                >
                   <div className="relative shrink-0">
                     {avatar ? (
                       <img
                         src={avatar}
                         alt={displayName}
-                        className="h-10 w-10 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm"
+                        className="h-10 w-10 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/rec:border-[#4B63D2] transition-colors"
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white font-black text-sm shadow-sm">
@@ -359,7 +362,7 @@ export default function TiesRecommendations() {
                   <div className="min-w-0 flex-1">
                     {/* Name + Infinity Distinction Badge */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <h4 className="text-xs font-bold text-[#1E2746] truncate group-hover:text-[#4B63D2] transition-colors">
+                      <h4 className="text-xs font-bold text-[#1E2746] truncate group-hover/rec:text-[#4B63D2] transition-colors">
                         {displayName}
                       </h4>
 
@@ -389,7 +392,7 @@ export default function TiesRecommendations() {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* "Tie" Action Button */}
                 <div>

@@ -114,15 +114,16 @@ export default function Connections() {
     fetchData();
   }, []);
 
+  const [acceptedRequestIds, setAcceptedRequestIds] = useState<Record<number, boolean>>({});
+
   const handleTabChange = (tab: 'requests' | 'sent' | 'connections' | 'discover') => {
     setActiveTab(tab);
     setSearchQuery('');
   };
 
   const handleAccept = async (id: number) => {
-    // Instantly remove from Pending Requests UI
-    setRequests((prev) => prev.filter((r) => r.id !== id));
-    setActionSuccess('Tie request accepted successfully!');
+    setAcceptedRequestIds((prev) => ({ ...prev, [id]: true }));
+    setActionSuccess('Tie request accepted! You can now send a Tie Back.');
     try {
       await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
     } catch (err: any) {
@@ -476,8 +477,10 @@ export default function Connections() {
                     name={name}
                     profilePicture={targetUser?.profile?.profile_picture}
                     subtitle="Wants to connect"
+                    isAccepted={!!acceptedRequestIds[req.id]}
                     onAccept={handleAccept}
                     onReject={handleReject}
+                    onTieBack={handleConnect}
                   />
                 );
               })

@@ -180,15 +180,36 @@ class ResumeGeneratorService:
 
         contact_items = []
         if user_email:
-            contact_items.append(f"✉  {user_email}")
-        contact_items.append("📞  +91 9876543210")
-        contact_items.append(f"in  {clean_handle}")
-        contact_items.append(f"🐙  {clean_handle}")
+            contact_items.append(f"Email: {user_email}")
+        contact_items.append("Phone: +91 9876543210")
+        contact_items.append(f"LinkedIn: linkedin.com/in/{clean_handle}")
+        contact_items.append(f"GitHub: github.com/{clean_handle}")
 
-        contact_run = contact_p.add_run("    |    ".join(contact_items))
+        contact_run = contact_p.add_run("   |   ".join(contact_items))
         contact_run.font.name = "Calibri"
         contact_run.font.size = Pt(9.5)
         contact_run.font.color.rgb = TEXT_MUTED
+
+        # -------------------------------------------------------------
+        # OBJECTIVE SECTION
+        # -------------------------------------------------------------
+        add_section_header(doc, "Objective")
+        obj_p = doc.add_paragraph()
+        obj_p.paragraph_format.space_before = Pt(4)
+        obj_p.paragraph_format.space_after = Pt(4)
+        bio_text = (profile_data.get("bio") or "").strip()
+        if bio_text:
+            objective_str = bio_text
+        else:
+            objective_str = (
+                f"Motivated and detail-oriented student specializing in {department}. "
+                "Eager to leverage technical skills, academic projects, and software engineering knowledge "
+                "to contribute effectively to innovative technology teams."
+            )
+        obj_run = obj_p.add_run(objective_str)
+        obj_run.font.name = "Calibri"
+        obj_run.font.size = Pt(9.5)
+        obj_run.font.color.rgb = TEXT_DARK
 
         # -------------------------------------------------------------
         # 2. WORK EXPERIENCE

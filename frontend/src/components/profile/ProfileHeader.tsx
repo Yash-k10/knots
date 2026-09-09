@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Building2,
   GraduationCap,
@@ -51,6 +51,14 @@ export default function ProfileHeader({
   const [graduationYear, setGraduationYear] = useState<number | string>(
     profile.graduation_year || "",
   );
+
+  useEffect(() => {
+    setFirstName(profile.first_name || "");
+    setLastName(profile.last_name || "");
+    setBio(profile.bio || "");
+    setDepartment(profile.department || "");
+    setGraduationYear(profile.graduation_year || "");
+  }, [profile]);
 
   const handleGenerateResume = async () => {
     setIsDownloadingResume(true);
@@ -233,10 +241,18 @@ export default function ProfileHeader({
               isOwnProfile={isOwnProfile}
             />
             <div className="space-y-3">
-              <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
-                {profile.first_name || profile.last_name
-                  ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
-                  : "Add Your Name"}
+              <h2 className="text-3xl font-black text-[#1E2746] tracking-tight flex items-center justify-center md:justify-start gap-2">
+                <span>
+                  {profile.first_name || profile.last_name
+                    ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+                    : "Add Your Name"}
+                </span>
+                <img
+                  src="/infinity-badge.png"
+                  className="h-6 w-6 object-contain inline-block drop-shadow-sm"
+                  alt="Infinity Badge"
+                  title="Verified Campus Distinction / Leadership Position"
+                />
               </h2>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[#5851A4] text-sm">
