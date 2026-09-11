@@ -1,4 +1,6 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundError
 from app.profiles.models.education import Education
@@ -26,9 +28,18 @@ class ProfileService:
         if not profile:
             return profile
 
-        # 1. Fetch skill endorsements
-        from sqlalchemy import select
+        # Fetch user details for email & role_name if available
+        from app.users.models.user import User
 
+        user_stmt = select(User).options(selectinload(User.role)).where(User.id == profile.user_id)
+        user_res = await self.profile_repo.db.execute(user_stmt)
+        user_obj = user_res.scalars().first()
+        if user_obj:
+            profile.email = user_obj.email
+            if user_obj.role:
+                profile.role_name = user_obj.role.name
+
+        # 1. Fetch skill endorsements
         from app.profiles.models.skill_endorsement import SkillEndorsement
 
         stmt = (
@@ -97,15 +108,23 @@ class ProfileService:
     async def update_profile(self, user_id: int, profile_in: ProfileUpdate) -> Profile:
         """Create or update a profile for a given user."""
         profile = await self.profile_repo.get_by_user_id(user_id)
+        data = profile_in.model_dump(exclude_unset=True)
+
+        # Handle updating user email if provided
+        new_email = data.pop("email", None)
+        if new_email:
+            from app.users.models.user import User
+            user_stmt = select(User).where(User.id == user_id)
+            user_obj = (await self.profile_repo.db.execute(user_stmt)).scalars().first()
+            if user_obj:
+                user_obj.email = new_email.strip()
+
         if not profile:
-            data = profile_in.model_dump(exclude_unset=True)
             data["user_id"] = user_id
             await self.profile_repo.create(data)
             return await self.get_profile_by_user_id(user_id)
 
-        await self.profile_repo.update(
-            profile, profile_in.model_dump(exclude_unset=True)
-        )
+        await self.profile_repo.update(profile, data)
         return await self.get_profile_by_user_id(user_id)
 
     async def list_profiles(

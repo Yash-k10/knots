@@ -51,6 +51,17 @@ export default function ProfileHeader({
   const [graduationYear, setGraduationYear] = useState<number | string>(
     profile.graduation_year || "",
   );
+  const [email, setEmail] = useState(profile.email || "");
+  const [phoneNumber, setPhoneNumber] = useState(profile.phone_number || "");
+  const [githubUrl, setGithubUrl] = useState(profile.github_url || "");
+  const [leetcodeUrl, setLeetcodeUrl] = useState(profile.leetcode_url || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedin_url || "");
+  const [tenthPercentage, setTenthPercentage] = useState(
+    profile.tenth_percentage?.toString() || ""
+  );
+  const [twelfthDiplomaPercentage, setTwelfthDiplomaPercentage] = useState(
+    profile.twelfth_diploma_percentage?.toString() || ""
+  );
 
   useEffect(() => {
     setFirstName(profile.first_name || "");
@@ -58,6 +69,13 @@ export default function ProfileHeader({
     setBio(profile.bio || "");
     setDepartment(profile.department || "");
     setGraduationYear(profile.graduation_year || "");
+    setEmail(profile.email || "");
+    setPhoneNumber(profile.phone_number || "");
+    setGithubUrl(profile.github_url || "");
+    setLeetcodeUrl(profile.leetcode_url || "");
+    setLinkedinUrl(profile.linkedin_url || "");
+    setTenthPercentage(profile.tenth_percentage?.toString() || "");
+    setTwelfthDiplomaPercentage(profile.twelfth_diploma_percentage?.toString() || "");
   }, [profile]);
 
   const handleGenerateResume = async () => {
@@ -77,6 +95,13 @@ export default function ProfileHeader({
     setBio(profile.bio || "");
     setDepartment(profile.department || "");
     setGraduationYear(profile.graduation_year || "");
+    setEmail(profile.email || "");
+    setPhoneNumber(profile.phone_number || "");
+    setGithubUrl(profile.github_url || "");
+    setLeetcodeUrl(profile.leetcode_url || "");
+    setLinkedinUrl(profile.linkedin_url || "");
+    setTenthPercentage(profile.tenth_percentage?.toString() || "");
+    setTwelfthDiplomaPercentage(profile.twelfth_diploma_percentage?.toString() || "");
     setIsEditing(false);
   };
 
@@ -97,6 +122,9 @@ export default function ProfileHeader({
       return;
     }
 
+    const tenthPctNum = tenthPercentage ? parseFloat(tenthPercentage) : null;
+    const twelfthPctNum = twelfthDiplomaPercentage ? parseFloat(twelfthDiplomaPercentage) : null;
+
     setIsSaving(true);
     try {
       const updated = await profileService.updateProfile({
@@ -105,6 +133,13 @@ export default function ProfileHeader({
         bio: bio.trim() || null,
         department: department.trim() || null,
         graduation_year: gradYearNum,
+        email: email.trim() || null,
+        phone_number: phoneNumber.trim() || null,
+        github_url: githubUrl.trim() || null,
+        leetcode_url: leetcodeUrl.trim() || null,
+        linkedin_url: linkedinUrl.trim() || null,
+        tenth_percentage: tenthPctNum,
+        twelfth_diploma_percentage: twelfthPctNum,
       });
       onUpdate(updated);
       setIsEditing(false);
@@ -118,6 +153,10 @@ export default function ProfileHeader({
   // Derive initials
   const initials =
     `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
+
+  const isAlumni = profile.role_name?.toLowerCase() === "alumni";
+  const yearBadgeLabel = isAlumni ? "Batch" : "Class of";
+  const displayYear = isAlumni && profile.graduation_year ? profile.graduation_year - 4 : profile.graduation_year;
 
   return (
     <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 md:p-8 shadow-sm">
@@ -182,16 +221,110 @@ export default function ProfileHeader({
               </div>
               <div>
                 <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                  Graduation Year
+                  {isAlumni ? "Enrollment / Batch Year" : "Graduation Year"}
                 </label>
                 <input
                   type="number"
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
                   className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
-                  placeholder="e.g. 2027"
+                  placeholder="e.g. 2023"
                   min={1990}
                   max={2035}
+                />
+              </div>
+
+              {/* Editable Contact & Personal Links */}
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. candidate@domain.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. +91 9876543210"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  GitHub Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="https://github.com/username"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  LinkedIn Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="https://linkedin.com/in/username"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  LeetCode Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={leetcodeUrl}
+                  onChange={(e) => setLeetcodeUrl(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="https://leetcode.com/u/username"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  10th Percentage <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={tenthPercentage}
+                  onChange={(e) => setTenthPercentage(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. 88.5"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  12th / Diploma Percentage <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={twelfthDiplomaPercentage}
+                  onChange={(e) => setTwelfthDiplomaPercentage(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. 85.0"
+                  required
                 />
               </div>
             </div>
@@ -262,10 +395,10 @@ export default function ProfileHeader({
                     {profile.department}
                   </span>
                 )}
-                {profile.graduation_year && (
+                {displayYear && (
                   <span className="flex items-center gap-1.5 font-bold">
                     <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
-                    Class of {profile.graduation_year}
+                    {yearBadgeLabel} {displayYear}
                   </span>
                 )}
                 {profile.connection_count !== undefined && (
@@ -279,8 +412,47 @@ export default function ProfileHeader({
                 )}
                 {!profile.department && !profile.graduation_year && (
                   <span className="text-[#9188BE] italic font-medium">
-                    No department or grad year specified
+                    No department or batch year specified
                   </span>
+                )}
+              </div>
+
+              {/* Display Social / Contact Info Chips if available */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs">
+                {profile.email && (
+                  <span className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] rounded-lg text-[#1E2746] font-medium">
+                    📧 {profile.email}
+                  </span>
+                )}
+                {profile.github_url && (
+                  <a
+                    href={profile.github_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
+                  >
+                    GitHub ↗
+                  </a>
+                )}
+                {profile.linkedin_url && (
+                  <a
+                    href={profile.linkedin_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
+                  >
+                    LinkedIn ↗
+                  </a>
+                )}
+                {profile.leetcode_url && (
+                  <a
+                    href={profile.leetcode_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
+                  >
+                    LeetCode ↗
+                  </a>
                 )}
               </div>
 

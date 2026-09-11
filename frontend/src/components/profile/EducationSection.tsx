@@ -35,22 +35,28 @@ export default function EducationSection({
   const [institutionName, setInstitutionName] = useState("");
   const [degree, setDegree] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [endMonth, setEndMonth] = useState(""); // YYYY-MM
   const [gpa, setGpa] = useState("");
+  const [percentage, setPercentage] = useState("");
   const [description, setDescription] = useState("");
 
   // Inline Form Validation Errors
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Convert YYYY-MM-DD to YYYY-MM for month picker input
+  const toMonthInputValue = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "";
+    return dateStr.substring(0, 7);
+  };
 
   // Reset form to clear state
   const resetForm = () => {
     setInstitutionName("");
     setDegree("");
     setFieldOfStudy("");
-    setStartDate("");
-    setEndDate("");
+    setEndMonth("");
     setGpa("");
+    setPercentage("");
     setDescription("");
     setFormErrors({});
     setIsAdding(false);
@@ -63,10 +69,23 @@ export default function EducationSection({
     setInstitutionName(edu.institution_name);
     setDegree(edu.degree);
     setFieldOfStudy(edu.field_of_study || "");
-    setStartDate(edu.start_date);
-    setEndDate(edu.end_date || "");
+    setEndMonth(toMonthInputValue(edu.end_date) || toMonthInputValue(edu.start_date));
     setGpa(edu.gpa !== null && edu.gpa !== undefined ? edu.gpa.toString() : "");
+    setPercentage(edu.percentage !== null && edu.percentage !== undefined ? edu.percentage.toString() : "");
     setDescription(edu.description || "");
+  };
+
+  const quickPreset = (type: "10th" | "12th" | "Diploma") => {
+    if (type === "10th") {
+      setDegree("10th Standard (SSC)");
+      setFieldOfStudy("General Academics");
+    } else if (type === "12th") {
+      setDegree("12th Standard (HSC)");
+      setFieldOfStudy("Science / Commerce / Arts");
+    } else if (type === "Diploma") {
+      setDegree("Diploma");
+      setFieldOfStudy("Engineering / Technical");
+    }
   };
 
   // Handle local validation
@@ -79,18 +98,21 @@ export default function EducationSection({
     if (!degree.trim()) {
       errors.degree = "Degree is required.";
     }
-    if (!startDate) {
-      errors.startDate = "Start Date is required.";
-    }
-
-    if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
-      errors.endDate = "End Date cannot be earlier than Start Date.";
+    if (!endMonth) {
+      errors.endMonth = "Month/Year is required.";
     }
 
     if (gpa.trim() !== "") {
       const gpaVal = parseFloat(gpa);
       if (isNaN(gpaVal) || gpaVal < 0 || gpaVal > 10.0) {
         errors.gpa = "GPA must be a valid number between 0.0 and 10.0.";
+      }
+    }
+
+    if (percentage.trim() !== "") {
+      const pctVal = parseFloat(percentage);
+      if (isNaN(pctVal) || pctVal < 0 || pctVal > 100.0) {
+        errors.percentage = "Percentage must be a valid number between 0.0 and 100.0.";
       }
     }
 
@@ -109,9 +131,10 @@ export default function EducationSection({
       institution_name: institutionName.trim(),
       degree: degree.trim(),
       field_of_study: fieldOfStudy.trim() || null,
-      start_date: startDate,
-      end_date: endDate || null,
+      start_date: `${endMonth}-01`,
+      end_date: `${endMonth}-28`,
       gpa: gpa.trim() !== "" ? parseFloat(gpa) : null,
+      percentage: percentage.trim() !== "" ? parseFloat(percentage) : null,
       description: description.trim() || null,
     };
 
@@ -152,9 +175,10 @@ export default function EducationSection({
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatMonthDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -186,9 +210,35 @@ export default function EducationSection({
           onSubmit={handleSave}
           className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-5 space-y-4 animate-in fade-in duration-200"
         >
-          <h4 className="text-sm font-bold text-[#1E2746] uppercase tracking-wider">
-            {editingId !== null ? "Edit Education Entry" : "Add New Education"}
-          </h4>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h4 className="text-sm font-bold text-[#1E2746] uppercase tracking-wider">
+              {editingId !== null ? "Edit Education Entry" : "Add New Education"}
+            </h4>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="font-bold text-[#5851A4]">Quick Presets:</span>
+              <button
+                type="button"
+                onClick={() => quickPreset("10th")}
+                className="px-2 py-0.5 bg-white border border-[#D5CBEE] rounded text-[11px] font-bold text-[#4B63D2] hover:bg-[#4B63D2] hover:text-white transition"
+              >
+                10th (SSC)
+              </button>
+              <button
+                type="button"
+                onClick={() => quickPreset("12th")}
+                className="px-2 py-0.5 bg-white border border-[#D5CBEE] rounded text-[11px] font-bold text-[#4B63D2] hover:bg-[#4B63D2] hover:text-white transition"
+              >
+                12th (HSC)
+              </button>
+              <button
+                type="button"
+                onClick={() => quickPreset("Diploma")}
+                className="px-2 py-0.5 bg-white border border-[#D5CBEE] rounded text-[11px] font-bold text-[#4B63D2] hover:bg-[#4B63D2] hover:text-white transition"
+              >
+                Diploma
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -200,7 +250,7 @@ export default function EducationSection({
                 value={institutionName}
                 onChange={(e) => setInstitutionName(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
-                placeholder="e.g. Stanford University"
+                placeholder="e.g. St. Xavier's High School / S.B. Jain Institute"
                 required
               />
               {formErrors.institutionName && (
@@ -212,14 +262,14 @@ export default function EducationSection({
 
             <div>
               <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                Degree <span className="text-rose-500">*</span>
+                Degree / Grade Level <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={degree}
                 onChange={(e) => setDegree(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
-                placeholder="e.g. Bachelor of Science"
+                placeholder="e.g. 10th Standard / 12th Standard / B.Tech"
                 required
               />
               {formErrors.degree && (
@@ -229,15 +279,34 @@ export default function EducationSection({
 
             <div>
               <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                Field of Study
+                Field of Study / Stream
               </label>
               <input
                 type="text"
                 value={fieldOfStudy}
                 onChange={(e) => setFieldOfStudy(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
-                placeholder="e.g. Computer Science"
+                placeholder="e.g. Science / Computer Science"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                Percentage Score (%) <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={percentage}
+                onChange={(e) => setPercentage(e.target.value)}
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition text-sm font-medium"
+                placeholder="e.g. 88.50"
+              />
+              {formErrors.percentage && (
+                <p className="text-rose-600 text-xs mt-1 font-bold">{formErrors.percentage}</p>
+              )}
             </div>
 
             <div>
@@ -256,37 +325,20 @@ export default function EducationSection({
               )}
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                Start Date <span className="text-rose-500">*</span>
+                Month/Year <span className="text-rose-500">*</span>
               </label>
               <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                type="month"
+                value={endMonth}
+                onChange={(e) => setEndMonth(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
                 required
               />
-              {formErrors.startDate && (
+              {formErrors.endMonth && (
                 <p className="text-rose-600 text-xs mt-1 font-bold">
-                  {formErrors.startDate}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                End Date (or Expected)
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
-              />
-              {formErrors.endDate && (
-                <p className="text-rose-600 text-xs mt-1 font-bold">
-                  {formErrors.endDate}
+                  {formErrors.endMonth}
                 </p>
               )}
             </div>
@@ -380,12 +432,16 @@ export default function EducationSection({
                   <div className="flex flex-wrap items-center gap-3 text-xs text-[#5851A4]/80 font-medium">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-[#4B63D2]" />
-                      <span>{formatDate(edu.start_date)}</span>
-                      <span>–</span>
-                      <span>
-                        {edu.end_date ? formatDate(edu.end_date) : "Present"}
-                      </span>
+                      <span>{edu.end_date ? formatMonthDate(edu.end_date) : formatMonthDate(edu.start_date)}</span>
                     </div>
+                    {edu.percentage !== null && edu.percentage !== undefined && (
+                      <>
+                        <span className="text-[#D5CBEE]">•</span>
+                        <span className="text-[#4B63D2] font-bold bg-[#4B63D2]/10 px-2 py-0.5 rounded">
+                          Percentage: {edu.percentage}%
+                        </span>
+                      </>
+                    )}
                     {edu.gpa !== null && edu.gpa !== undefined && (
                       <>
                         <span className="text-[#D5CBEE]">•</span>

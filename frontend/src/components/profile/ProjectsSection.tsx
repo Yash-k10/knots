@@ -37,6 +37,7 @@ export default function ProjectsSection({
 
   // Single Entry Form State
   const [title, setTitle] = useState("");
+  const [projectUrl, setProjectUrl] = useState("");
   const [highlights, setHighlights] = useState<string[]>([]);
   const [techStack, setTechStack] = useState<string[]>([]);
 
@@ -67,6 +68,7 @@ export default function ProjectsSection({
 
   const resetForm = () => {
     setTitle("");
+    setProjectUrl("");
     setHighlights([]);
     setTechStack([]);
     setNewHighlightText("");
@@ -81,6 +83,7 @@ export default function ProjectsSection({
     setFormErrors({});
     const proj = projects[index];
     setTitle(proj.title);
+    setProjectUrl(proj.project_url || "");
     setHighlights(proj.highlights || []);
     setTechStack(proj.tech_stack || []);
     setEditIndex(index);
@@ -205,6 +208,7 @@ export default function ProjectsSection({
 
     const newEntry: Project = {
       title: title.trim(),
+      project_url: projectUrl.trim() || undefined,
       highlights: highlights,
       tech_stack: techStack.length > 0 ? techStack : undefined,
     };
@@ -239,7 +243,7 @@ export default function ProjectsSection({
     } catch (err: any) {
       onError(err.message || "Failed to save projects.");
     } finally {
-setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
@@ -272,23 +276,37 @@ setIsSaving(false);
               {editIndex !== null ? "Edit Project details" : "Add New Project"}
             </h4>
 
-            <div>
-              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                Project Title <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Automated Attendance Tracker"
-                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
-                required
-              />
-              {formErrors.title && (
-                <p className="text-rose-600 text-[10px] mt-1 font-bold">
-                  {formErrors.title}
-                </p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Project Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Automated Attendance Tracker"
+                  className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
+                  required
+                />
+                {formErrors.title && (
+                  <p className="text-rose-600 text-[10px] mt-1 font-bold">
+                    {formErrors.title}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  GitHub Repo / Project Link URL
+                </label>
+                <input
+                  type="url"
+                  value={projectUrl}
+                  onChange={(e) => setProjectUrl(e.target.value)}
+                  placeholder="https://github.com/user/project-repo"
+                  className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium"
+                />
+              </div>
             </div>
 
             {/* Bullet points editor for project highlights */}
@@ -465,9 +483,21 @@ setIsSaving(false);
                   className="bg-white border border-[#EAE4F7] rounded-xl p-4 text-xs space-y-3 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
-                    <h5 className="font-bold text-[#1E2746] text-sm leading-snug">
-                      {proj.title}
-                    </h5>
+                    <div>
+                      <h5 className="font-bold text-[#1E2746] text-sm leading-snug">
+                        {proj.title}
+                      </h5>
+                      {proj.project_url && (
+                        <a
+                          href={proj.project_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] font-bold text-[#4B63D2] hover:underline"
+                        >
+                          Link: {proj.project_url}
+                        </a>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       <button
                         type="button"
@@ -546,9 +576,22 @@ setIsSaving(false);
                   <Code className="h-5 w-5" />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <h4 className="font-bold text-[#1E2746] text-base leading-tight">
-                    {proj.title}
-                  </h4>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <h4 className="font-bold text-[#1E2746] text-base leading-tight">
+                      {proj.title}
+                    </h4>
+                    {proj.project_url && (
+                      <a
+                        href={proj.project_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-bold text-[#4B63D2] hover:underline bg-white border border-[#EAE4F7] px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1"
+                      >
+                        <span>Link:</span>
+                        <span className="truncate max-w-[200px]">{proj.project_url}</span>
+                      </a>
+                    )}
+                  </div>
 
                   <ul className="list-disc pl-4 space-y-1">
                     {(proj.highlights || []).map((bullet, bIdx) => (

@@ -1,4 +1,5 @@
 import io
+import os
 from datetime import date
 from typing import Any
 import docx
@@ -6,10 +7,33 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
+import docx.opc.constants
+import docx.oxml.shared
 
 PRIMARY_COLOR = RGBColor(0, 136, 168)  # Cyan/Teal heading color from template (#0088A8)
 TEXT_DARK = RGBColor(20, 24, 33)  # Deep black/navy text color (#141821)
 TEXT_MUTED = RGBColor(70, 80, 95)  # Muted subtext color
+
+def add_hyperlink(paragraph, text, url):
+    """Adds a clickable hyperlink to a paragraph."""
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    hyperlink = docx.oxml.shared.OxmlElement('w:hyperlink')
+    hyperlink.set(docx.oxml.shared.qn('r:id'), r_id)
+    new_run = docx.oxml.shared.OxmlElement('w:r')
+    rPr = docx.oxml.shared.OxmlElement('w:rPr')
+    c = docx.oxml.shared.OxmlElement('w:color')
+    c.set(docx.oxml.shared.qn('w:val'), '0000EE')
+    rPr.append(c)
+    u = docx.oxml.shared.OxmlElement('w:u')
+    u.set(docx.oxml.shared.qn('w:val'), 'single')
+    rPr.append(u)
+    new_run.append(rPr)
+    new_run.text = text
+    hyperlink.append(new_run)
+    r = paragraph.add_run()
+    r._r.append(hyperlink)
+    return hyperlink
 
 
 def format_date_range(start_date: Any, end_date: Any) -> str:
@@ -166,7 +190,7 @@ class ResumeGeneratorService:
         name_run.font.bold = True
         name_run.font.color.rgb = TEXT_DARK
 
-        # Contact line
+        # Contact line with icons
         contact_p = doc.add_paragraph()
         contact_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         contact_p.paragraph_format.space_before = Pt(0)
@@ -178,17 +202,47 @@ class ResumeGeneratorService:
                 user_email.split("@")[0].lower() if user_email else "candidate"
             )
 
-        contact_items = []
-        if user_email:
-            contact_items.append(f"Email: {user_email}")
-        contact_items.append("Phone: +91 9876543210")
-        contact_items.append(f"LinkedIn: linkedin.com/in/{clean_handle}")
-        contact_items.append(f"GitHub: github.com/{clean_handle}")
+        email_val = profile_data.get("email") or user_email
+        phone_val = profile_data.get("phone_number") or "+91 9876543210"
+        linkedin_val = profile_data.get("linkedin_url") or f"linkedin.com/in/{clean_handle}"
+        github_val = profile_data.get("github_url") or f"github.com/{clean_handle}"
+        leetcode_val = profile_data.get("leetcode_url")
 
-        contact_run = contact_p.add_run("   |   ".join(contact_items))
-        contact_run.font.name = "Calibri"
-        contact_run.font.size = Pt(9.5)
-        contact_run.font.color.rgb = TEXT_MUTED
+        assets_dir = os.path.join(os.path.dirname(__file__), "..", "assets")
+        email_icon_path = os.path.join(assets_dir, "email_icon.png")
+        phone_icon_path = os.path.join(assets_dir, "phone_icon.jpg")
+        linkedin_icon_path = os.path.join(assets_dir, "linkedin_icon.png")
+        github_icon_path = os.path.join(assets_dir, "github_icon.jpg")
+
+        items_to_add = [
+            ("phone", phone_val, phone_icon_path),
+            ("email", email_val, email_icon_path),
+            ("linkedin", linkedin_val, linkedin_icon_path),
+            ("github", github_val, github_icon_path),
+        ]
+        if leetcode_val:
+            items_to_add.append(("leetcode", leetcode_val, None))
+
+        for idx, (kind, val, icon_path) in enumerate(items_to_add):
+            if idx > 0:
+                sep_run = contact_p.add_run("   |   ")
+                sep_run.font.name = "Calibri"
+                sep_run.font.size = Pt(9.5)
+                sep_run.font.color.rgb = TEXT_MUTED
+
+            if icon_path and os.path.exists(icon_path):
+                try:
+                    img_run = contact_p.add_run()
+                    img_run.add_picture(icon_path, width=Pt(10), height=Pt(10))
+                    sp_run = contact_p.add_run(" ")
+                    sp_run.font.size = Pt(9.5)
+                except Exception:
+                    pass
+
+            text_run = contact_p.add_run(val)
+            text_run.font.name = "Calibri"
+            text_run.font.size = Pt(9.5)
+            text_run.font.color.rgb = TEXT_MUTED
 
         # -------------------------------------------------------------
         # OBJECTIVE SECTION
@@ -202,7 +256,7 @@ class ResumeGeneratorService:
             objective_str = bio_text
         else:
             objective_str = (
-                f"Motivated and detail-oriented student specializing in {department}. "
+                f"Motivated and detail-oriented candidate specializing in {department}. "
                 "Eager to leverage technical skills, academic projects, and software engineering knowledge "
                 "to contribute effectively to innovative technology teams."
             )
@@ -266,6 +320,8 @@ class ResumeGeneratorService:
         # -------------------------------------------------------------
         education_list = profile_data.get("education") or []
         add_section_header(doc, "Education")
+        role_name = profile_data.get("role_name") or ""
+
         if education_list:
             for edu in education_list:
                 inst = (
@@ -275,17 +331,20 @@ class ResumeGeneratorService:
                 degree = edu.get("degree", "").strip() or "Bachelor of Technology"
                 field = edu.get("field_of_study", "").strip()
                 gpa = edu.get("gpa")
+                pct = edu.get("percentage")
                 date_str = format_date_range(edu.get("start_date"), edu.get("end_date"))
 
                 degree_full = f"{degree} in {field}" if field else degree
-                if gpa:
+                if pct is not None:
+                    degree_full += f" - {pct}%"
+                elif gpa is not None:
                     degree_full += f" - {gpa} GPA"
 
                 # Line 1: Institution (Bold)
                 add_two_column_line(
                     doc, inst, "", is_bold_left=True, space_before=4, space_after=1
                 )
-                # Line 2: Degree, GPA, Date Range
+                # Line 2: Degree, Marks, Date Range
                 add_two_column_line(
                     doc,
                     degree_full,
@@ -308,7 +367,9 @@ class ResumeGeneratorService:
             # Fallback based on profile department and grad year
             inst = "S.B. Jain Institute of Technology, Management & Research, Nagpur"
             degree_full = f"Bachelor of Technology in {department}"
-            grad_str = f"Class of {grad_year}" if grad_year else "2023 - 2027"
+            is_alumni = role_name.lower() == "alumni"
+            year_label = f"Batch {grad_year - 4 if grad_year else ''}" if is_alumni else f"Class of {grad_year}"
+            grad_str = year_label if grad_year else "2023 - 2027"
             add_two_column_line(
                 doc, inst, "", is_bold_left=True, space_before=4, space_after=1
             )
@@ -325,6 +386,18 @@ class ResumeGeneratorService:
                 "Relevant Coursework: Data Structures, Object-Oriented Programming, Database Systems, Web Technologies.",
             )
 
+        tenth_pct = profile_data.get("tenth_percentage")
+        twelfth_pct = profile_data.get("twelfth_diploma_percentage")
+        if tenth_pct is not None or twelfth_pct is not None:
+            # Add line for 10th and 12th percentage
+            add_two_column_line(
+                doc, "Prior Education", "", is_bold_left=True, space_before=4, space_after=1
+            )
+            if twelfth_pct is not None:
+                add_bullet_point(doc, f"12th / Diploma: {twelfth_pct}%")
+            if tenth_pct is not None:
+                add_bullet_point(doc, f"10th Standard: {tenth_pct}%")
+
         # -------------------------------------------------------------
         # 4. PROJECTS
         # -------------------------------------------------------------
@@ -338,6 +411,7 @@ class ResumeGeneratorService:
                 tech_stack = proj.get("tech_stack") or []
                 highlights = proj.get("highlights") or []
                 p_desc = proj.get("description") or ""
+                p_url = proj.get("project_url") or proj.get("github_url") or proj.get("url")
 
                 # Project Title (Bold)
                 p_para = doc.add_paragraph()
@@ -349,6 +423,18 @@ class ResumeGeneratorService:
                 p_run.font.size = Pt(10)
                 p_run.font.bold = True
                 p_run.font.color.rgb = TEXT_DARK
+
+                if p_url:
+                    link_p = doc.add_paragraph(style="List Bullet")
+                    link_p.paragraph_format.space_before = Pt(1)
+                    link_p.paragraph_format.space_after = Pt(1.5)
+                    link_p.paragraph_format.left_indent = Inches(0.25)
+                    bold_run = link_p.add_run("Link: ")
+                    bold_run.font.name = "Calibri"
+                    bold_run.font.size = Pt(9.5)
+                    bold_run.font.bold = True
+                    bold_run.font.color.rgb = TEXT_DARK
+                    add_hyperlink(link_p, p_url, p_url)
 
                 if highlights:
                     for h in highlights:

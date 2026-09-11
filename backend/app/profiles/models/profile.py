@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Column, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -20,6 +20,12 @@ class Profile(Base):
     profile_picture = Column(String(255), nullable=True)
     certifications = Column(JSON, nullable=True)  # List of certifications
     projects = Column(JSON, nullable=True)  # List of projects
+    github_url = Column(String(255), nullable=True)
+    leetcode_url = Column(String(255), nullable=True)
+    linkedin_url = Column(String(255), nullable=True)
+    phone_number = Column(String(50), nullable=True)
+    tenth_percentage = Column(Float, nullable=True)
+    twelfth_diploma_percentage = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="profile")
     employment_history = relationship(

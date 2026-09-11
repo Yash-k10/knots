@@ -15,6 +15,7 @@ class Education(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=True)  # Null if currently studying
     gpa = Column(Float, nullable=True)  # GPA field
+    percentage = Column(Float, nullable=True)  # Percentage score field
     description = Column(Text, nullable=True)
 
     profile = relationship("Profile", back_populates="education")

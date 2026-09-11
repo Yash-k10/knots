@@ -9,6 +9,7 @@ export interface EducationResponse {
   start_date: string; // YYYY-MM-DD
   end_date: string | null; // YYYY-MM-DD
   gpa: number | null;
+  percentage?: number | null;
   description: string | null;
 }
 
@@ -19,6 +20,7 @@ export interface EducationCreate {
   start_date: string; // YYYY-MM-DD
   end_date?: string | null; // YYYY-MM-DD
   gpa?: number | null;
+  percentage?: number | null;
   description?: string | null;
 }
 
@@ -29,6 +31,7 @@ export interface EducationUpdate {
   start_date?: string; // YYYY-MM-DD
   end_date?: string | null; // YYYY-MM-DD
   gpa?: number | null;
+  percentage?: number | null;
   description?: string | null;
 }
 
@@ -71,6 +74,7 @@ export interface Project {
   title: string;
   highlights: string[];
   tech_stack?: string[];
+  project_url?: string | null;
 }
 
 export interface SkillEndorsement {
@@ -93,6 +97,14 @@ export interface ProfileResponse {
   profile_picture: string | null;
   certifications?: Certification[] | null;
   projects?: Project[] | null;
+  email?: string | null;
+  github_url?: string | null;
+  leetcode_url?: string | null;
+  linkedin_url?: string | null;
+  phone_number?: string | null;
+  tenth_percentage?: number | null;
+  twelfth_diploma_percentage?: number | null;
+  role_name?: string | null;
   education: EducationResponse[];
   employment_history: EmploymentHistoryResponse[];
   endorsements: SkillEndorsement[];
@@ -109,6 +121,13 @@ export interface ProfileUpdate {
   profile_picture?: string | null;
   certifications?: Certification[] | null;
   projects?: Project[] | null;
+  email?: string | null;
+  github_url?: string | null;
+  leetcode_url?: string | null;
+  linkedin_url?: string | null;
+  phone_number?: string | null;
+  tenth_percentage?: number | null;
+  twelfth_diploma_percentage?: number | null;
 }
 
 export const profileService = {

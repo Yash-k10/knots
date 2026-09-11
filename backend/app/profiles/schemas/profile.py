@@ -12,6 +12,7 @@ class EducationBase(BaseModel):
     start_date: date
     end_date: date | None = None
     gpa: float | None = None
+    percentage: float | None = None
     description: str | None = None
 
 
@@ -26,6 +27,7 @@ class EducationUpdate(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     gpa: float | None = None
+    percentage: float | None = None
     description: str | None = None
 
 
@@ -79,6 +81,13 @@ class ProfileBase(BaseModel):
     profile_picture: str | None = None
     certifications: list[dict[str, Any]] | None = None
     projects: list[dict[str, Any]] | None = None
+    email: str | None = None
+    github_url: str | None = None
+    leetcode_url: str | None = None
+    linkedin_url: str | None = None
+    phone_number: str | None = None
+    tenth_percentage: float | None = None
+    twelfth_diploma_percentage: float | None = None
 
 
 class ProfileUpdate(ProfileBase):
@@ -99,6 +108,7 @@ class SkillEndorsementInfo(BaseModel):
 class ProfileResponse(ProfileBase):
     id: int
     user_id: int
+    role_name: str | None = None
     education: list[EducationResponse] = []
     employment_history: list[EmploymentHistoryResponse] = []
     endorsements: list[SkillEndorsementInfo] = []
