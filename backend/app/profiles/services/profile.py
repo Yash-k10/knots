@@ -31,7 +31,11 @@ class ProfileService:
         # Fetch user details for email & role_name if available
         from app.users.models.user import User
 
-        user_stmt = select(User).options(selectinload(User.role)).where(User.id == profile.user_id)
+        user_stmt = (
+            select(User)
+            .options(selectinload(User.role))
+            .where(User.id == profile.user_id)
+        )
         user_res = await self.profile_repo.db.execute(user_stmt)
         user_obj = user_res.scalars().first()
         if user_obj:
@@ -114,6 +118,7 @@ class ProfileService:
         new_email = data.pop("email", None)
         if new_email:
             from app.users.models.user import User
+
             user_stmt = select(User).where(User.id == user_id)
             user_obj = (await self.profile_repo.db.execute(user_stmt)).scalars().first()
             if user_obj:

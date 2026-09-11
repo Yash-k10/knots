@@ -14,19 +14,22 @@ PRIMARY_COLOR = RGBColor(0, 136, 168)  # Cyan/Teal heading color from template (
 TEXT_DARK = RGBColor(20, 24, 33)  # Deep black/navy text color (#141821)
 TEXT_MUTED = RGBColor(70, 80, 95)  # Muted subtext color
 
+
 def add_hyperlink(paragraph, text, url):
     """Adds a clickable hyperlink to a paragraph."""
     part = paragraph.part
-    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
-    hyperlink = docx.oxml.shared.OxmlElement('w:hyperlink')
-    hyperlink.set(docx.oxml.shared.qn('r:id'), r_id)
-    new_run = docx.oxml.shared.OxmlElement('w:r')
-    rPr = docx.oxml.shared.OxmlElement('w:rPr')
-    c = docx.oxml.shared.OxmlElement('w:color')
-    c.set(docx.oxml.shared.qn('w:val'), '0000EE')
+    r_id = part.relate_to(
+        url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True
+    )
+    hyperlink = docx.oxml.shared.OxmlElement("w:hyperlink")
+    hyperlink.set(docx.oxml.shared.qn("r:id"), r_id)
+    new_run = docx.oxml.shared.OxmlElement("w:r")
+    rPr = docx.oxml.shared.OxmlElement("w:rPr")
+    c = docx.oxml.shared.OxmlElement("w:color")
+    c.set(docx.oxml.shared.qn("w:val"), "0000EE")
     rPr.append(c)
-    u = docx.oxml.shared.OxmlElement('w:u')
-    u.set(docx.oxml.shared.qn('w:val'), 'single')
+    u = docx.oxml.shared.OxmlElement("w:u")
+    u.set(docx.oxml.shared.qn("w:val"), "single")
     rPr.append(u)
     new_run.append(rPr)
     new_run.text = text
@@ -204,7 +207,9 @@ class ResumeGeneratorService:
 
         email_val = profile_data.get("email") or user_email
         phone_val = profile_data.get("phone_number") or "+91 9876543210"
-        linkedin_val = profile_data.get("linkedin_url") or f"linkedin.com/in/{clean_handle}"
+        linkedin_val = (
+            profile_data.get("linkedin_url") or f"linkedin.com/in/{clean_handle}"
+        )
         github_val = profile_data.get("github_url") or f"github.com/{clean_handle}"
         leetcode_val = profile_data.get("leetcode_url")
 
@@ -368,7 +373,11 @@ class ResumeGeneratorService:
             inst = "S.B. Jain Institute of Technology, Management & Research, Nagpur"
             degree_full = f"Bachelor of Technology in {department}"
             is_alumni = role_name.lower() == "alumni"
-            year_label = f"Batch {grad_year - 4 if grad_year else ''}" if is_alumni else f"Class of {grad_year}"
+            year_label = (
+                f"Batch {grad_year - 4 if grad_year else ''}"
+                if is_alumni
+                else f"Class of {grad_year}"
+            )
             grad_str = year_label if grad_year else "2023 - 2027"
             add_two_column_line(
                 doc, inst, "", is_bold_left=True, space_before=4, space_after=1
@@ -391,7 +400,12 @@ class ResumeGeneratorService:
         if tenth_pct is not None or twelfth_pct is not None:
             # Add line for 10th and 12th percentage
             add_two_column_line(
-                doc, "Prior Education", "", is_bold_left=True, space_before=4, space_after=1
+                doc,
+                "Prior Education",
+                "",
+                is_bold_left=True,
+                space_before=4,
+                space_after=1,
             )
             if twelfth_pct is not None:
                 add_bullet_point(doc, f"12th / Diploma: {twelfth_pct}%")
@@ -411,7 +425,9 @@ class ResumeGeneratorService:
                 tech_stack = proj.get("tech_stack") or []
                 highlights = proj.get("highlights") or []
                 p_desc = proj.get("description") or ""
-                p_url = proj.get("project_url") or proj.get("github_url") or proj.get("url")
+                p_url = (
+                    proj.get("project_url") or proj.get("github_url") or proj.get("url")
+                )
 
                 # Project Title (Bold)
                 p_para = doc.add_paragraph()
