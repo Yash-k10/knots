@@ -35,7 +35,8 @@ export default function EducationSection({
   const [institutionName, setInstitutionName] = useState("");
   const [degree, setDegree] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
-  const [endMonth, setEndMonth] = useState(""); // YYYY-MM
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [gpa, setGpa] = useState("");
   const [percentage, setPercentage] = useState("");
   const [description, setDescription] = useState("");
@@ -43,18 +44,13 @@ export default function EducationSection({
   // Inline Form Validation Errors
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Convert YYYY-MM-DD to YYYY-MM for month picker input
-  const toMonthInputValue = (dateStr: string | null | undefined): string => {
-    if (!dateStr) return "";
-    return dateStr.substring(0, 7);
-  };
-
   // Reset form to clear state
   const resetForm = () => {
     setInstitutionName("");
     setDegree("");
     setFieldOfStudy("");
-    setEndMonth("");
+    setStartDate("");
+    setEndDate("");
     setGpa("");
     setPercentage("");
     setDescription("");
@@ -69,7 +65,8 @@ export default function EducationSection({
     setInstitutionName(edu.institution_name);
     setDegree(edu.degree);
     setFieldOfStudy(edu.field_of_study || "");
-    setEndMonth(toMonthInputValue(edu.end_date) || toMonthInputValue(edu.start_date));
+    setStartDate(edu.start_date || "");
+    setEndDate(edu.end_date || "");
     setGpa(edu.gpa !== null && edu.gpa !== undefined ? edu.gpa.toString() : "");
     setPercentage(edu.percentage !== null && edu.percentage !== undefined ? edu.percentage.toString() : "");
     setDescription(edu.description || "");
@@ -98,8 +95,11 @@ export default function EducationSection({
     if (!degree.trim()) {
       errors.degree = "Degree is required.";
     }
-    if (!endMonth) {
-      errors.endMonth = "Month/Year is required.";
+    if (!startDate) {
+      errors.startDate = "Start Date is required.";
+    }
+    if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
+      errors.endDate = "End Date cannot be earlier than Start Date.";
     }
 
     if (gpa.trim() !== "") {
@@ -131,8 +131,8 @@ export default function EducationSection({
       institution_name: institutionName.trim(),
       degree: degree.trim(),
       field_of_study: fieldOfStudy.trim() || null,
-      start_date: `${endMonth}-01`,
-      end_date: `${endMonth}-28`,
+      start_date: startDate,
+      end_date: endDate || null,
       gpa: gpa.trim() !== "" ? parseFloat(gpa) : null,
       percentage: percentage.trim() !== "" ? parseFloat(percentage) : null,
       description: description.trim() || null,
@@ -175,7 +175,7 @@ export default function EducationSection({
     }
   };
 
-  const formatMonthDate = (dateStr: string) => {
+  const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
@@ -325,20 +325,37 @@ export default function EducationSection({
               )}
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                Month/Year <span className="text-rose-500">*</span>
+                Start Date <span className="text-rose-500">*</span>
               </label>
               <input
-                type="month"
-                value={endMonth}
-                onChange={(e) => setEndMonth(e.target.value)}
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
                 required
               />
-              {formErrors.endMonth && (
+              {formErrors.startDate && (
                 <p className="text-rose-600 text-xs mt-1 font-bold">
-                  {formErrors.endMonth}
+                  {formErrors.startDate}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                End Date (or Expected)
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl px-4 py-2 text-[#1E2746] focus:outline-none transition text-sm font-medium"
+              />
+              {formErrors.endDate && (
+                <p className="text-rose-600 text-xs mt-1 font-bold">
+                  {formErrors.endDate}
                 </p>
               )}
             </div>
@@ -432,7 +449,11 @@ export default function EducationSection({
                   <div className="flex flex-wrap items-center gap-3 text-xs text-[#5851A4]/80 font-medium">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-[#4B63D2]" />
-                      <span>{edu.end_date ? formatMonthDate(edu.end_date) : formatMonthDate(edu.start_date)}</span>
+                      <span>{formatDate(edu.start_date)}</span>
+                      <span>–</span>
+                      <span>
+                        {edu.end_date ? formatDate(edu.end_date) : "Present"}
+                      </span>
                     </div>
                     {edu.percentage !== null && edu.percentage !== undefined && (
                       <>
