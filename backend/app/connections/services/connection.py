@@ -46,7 +46,10 @@ class ConnectionService:
             requester_id, addressee_id
         )
         if existing:
-            if existing.status == ConnectionStatus.PENDING and existing.addressee_id == requester_id:
+            if (
+                existing.status == ConnectionStatus.PENDING
+                and existing.addressee_id == requester_id
+            ):
                 # The other party already sent a request; accepting creates mutual connection
                 return await self.accept_connection(existing.id, requester_id)
             elif existing.status == ConnectionStatus.REJECTED:

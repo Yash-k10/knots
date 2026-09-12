@@ -91,9 +91,7 @@ register_middlewares(app)
 register_exception_handlers(app)
 
 # Mount static files directory to serve uploads (like profile pictures, post attachments, certificates)
-STATIC_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "static")
-)
+STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static"))
 os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, "posts"), exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, "profiles"), exist_ok=True)

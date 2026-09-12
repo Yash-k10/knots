@@ -30,9 +30,7 @@ UPLOAD_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "profiles")
 )
 CERT_UPLOAD_DIR = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "..", "static", "certificates"
-    )
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "certificates")
 )
 
 

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError
 from app.posts.models.comment import Comment
 from app.posts.models.like import Like
 from app.posts.models.post import Post, PostVisibility
