@@ -128,6 +128,7 @@ export default function Feed() {
   const [error, setError] = useState<string | null>(null);
 
   const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+  const [failedAvatars, setFailedAvatars] = useState<Record<number, boolean>>({});
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{
@@ -1072,12 +1073,19 @@ export default function Feed() {
                         }
                         className="flex items-center gap-3 group/author cursor-pointer"
                       >
-                        {getMediaUrl(post.author?.profile?.profile_picture) ? (
+                        {getMediaUrl(post.author?.profile?.profile_picture) &&
+                        !failedAvatars[post.id] ? (
                           <img
                             src={getMediaUrl(
                               post.author?.profile?.profile_picture
                             )}
                             alt="Author Avatar"
+                            onError={() =>
+                              setFailedAvatars((prev) => ({
+                                ...prev,
+                                [post.id]: true,
+                              }))
+                            }
                             className="h-11 w-11 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
                           />
                         ) : (
