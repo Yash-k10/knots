@@ -26,7 +26,14 @@ from app.users.models.user import User
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
-UPLOAD_DIR = "static/profiles"
+UPLOAD_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "static", "profiles")
+)
+CERT_UPLOAD_DIR = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__), "..", "..", "static", "certificates"
+    )
+)
 
 
 @router.get("", response_model=APIResponse[list[ProfileResponse]])
@@ -144,9 +151,6 @@ async def upload_profile_picture(
     )
 
     return APIResponse(message="Profile picture uploaded successfully", data=profile)
-
-
-CERT_UPLOAD_DIR = "static/certificates"
 
 
 @router.post("/me/certificate", response_model=APIResponse[dict])

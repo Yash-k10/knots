@@ -76,14 +76,18 @@ async def create_post(
     return APIResponse(message="Post created successfully", data=post)
 
 
+UPLOAD_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "static", "posts")
+)
+
+
 @router.post("/upload-image", response_model=APIResponse[str])
 async def upload_post_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
     """Upload an image or document attachment for a post and return the relative static URL."""
-    upload_dir = "static/posts"
-    os.makedirs(upload_dir, exist_ok=True)
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
     allowed_extensions = {
         ".jpg",
@@ -108,7 +112,7 @@ async def upload_post_image(
         )
 
     filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(upload_dir, filename)
+    file_path = os.path.join(UPLOAD_DIR, filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

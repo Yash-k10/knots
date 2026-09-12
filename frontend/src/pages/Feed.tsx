@@ -50,21 +50,23 @@ const getFileExtension = (url: string): string => {
 };
 
 const renderContentWithLinks = (content: string) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  if (!content) return null;
+  const urlRegex = /((?:https?:\/\/|www\.)[^\s]+)/gi;
   const parts = content.split(urlRegex);
 
   return parts.map((part, index) => {
     if (part.match(urlRegex)) {
+      const href = part.startsWith("http") ? part : `https://${part}`;
       return (
         <a
           key={index}
-          href={part}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-[#4B63D2] font-bold hover:underline break-all inline-flex items-center gap-1 bg-[#4B63D2]/10 px-2 py-0.5 rounded-lg my-0.5"
+          className="text-[#4B63D2] font-bold hover:underline break-all inline-flex items-center gap-1 bg-[#4B63D2]/10 hover:bg-[#4B63D2]/20 px-2 py-0.5 rounded-lg my-0.5 transition-colors cursor-pointer"
         >
-          <Globe className="w-3.5 h-3.5 inline" />
+          <Globe className="w-3.5 h-3.5 inline shrink-0" />
           <span>{part}</span>
         </a>
       );
@@ -885,7 +887,13 @@ export default function Feed() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={submittingPost || !newPostContent.trim()}
+            disabled={
+              submittingPost ||
+              (!newPostContent.trim() &&
+                !externalLinkUrl.trim() &&
+                !selectedImage &&
+                !attachedDoc)
+            }
             className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] disabled:opacity-50 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#4B63D2]/25 cursor-pointer active:scale-95"
           >
             {submittingPost ? (
@@ -1102,16 +1110,17 @@ export default function Feed() {
                         </span>
                       </div>
                     </div>
-                    <a
-                      href={getMediaUrl(post.image_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
-                      className="px-3.5 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-sm transition-all shrink-0 flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>Download</span>
-                    </a>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={getMediaUrl(post.image_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>View / Download</span>
+                      </a>
+                    </div>
                   </div>
                 ) : !failedImages[post.id] ? (
                   <div
@@ -1134,14 +1143,26 @@ export default function Feed() {
                     </div>
                   </div>
                 ) : (
-                  <div className="my-3 p-4 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center gap-3 text-[#5851A4]">
-                    <div className="w-10 h-10 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2] shrink-0 font-bold text-xs">
-                      📄
+                  <div className="my-3 p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-3 text-[#5851A4]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2] shrink-0 font-bold text-xs">
+                        📎
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#1E2746] truncate">
+                          {getFileName(post.image_url)}
+                        </p>
+                        <p className="text-[11px] text-[#5851A4]">Attachment Preview</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-[#1E2746]">Post Attachment</p>
-                      <p className="text-[11px] text-[#5851A4]">Media preview unavailable</p>
-                    </div>
+                    <a
+                      href={getMediaUrl(post.image_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-[#4B63D2]/10 hover:bg-[#4B63D2]/20 text-[#4B63D2] text-xs font-bold rounded-lg transition-all"
+                    >
+                      Open Link
+                    </a>
                   </div>
                 )
               )}

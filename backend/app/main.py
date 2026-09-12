@@ -90,9 +90,15 @@ register_middlewares(app)
 # Register Exception Handlers (Standardizing all error responses)
 register_exception_handlers(app)
 
-# Mount static files directory to serve uploads (like profile pictures)
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files directory to serve uploads (like profile pictures, post attachments, certificates)
+STATIC_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "static")
+)
+os.makedirs(STATIC_DIR, exist_ok=True)
+os.makedirs(os.path.join(STATIC_DIR, "posts"), exist_ok=True)
+os.makedirs(os.path.join(STATIC_DIR, "profiles"), exist_ok=True)
+os.makedirs(os.path.join(STATIC_DIR, "certificates"), exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Mount versioned API routes under /api/v1
 app.include_router(v1_router, prefix="/api/v1")

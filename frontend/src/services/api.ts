@@ -129,7 +129,10 @@ export async function apiRequest<T = any>(
 
   if (!response.ok || json.success === false) {
     const errorMessage =
-      json.error?.message || json.message || "Something went wrong";
+      json.error?.message ||
+      json.detail ||
+      json.message ||
+      "Something went wrong";
     const errorCode = json.error?.code || "HTTP_ERROR";
     const errorDetails = json.error?.details;
     throw new ApiError(errorMessage, response.status, errorCode, errorDetails);

@@ -163,7 +163,18 @@ export default function Connections() {
       setActionSuccess('Connection request sent successfully!');
       fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to send connection request');
+      const msg = err.message || '';
+      if (
+        msg.toLowerCase().includes('already exists') ||
+        msg.toLowerCase().includes('already pending')
+      ) {
+        setSuggestions((prev) => prev.filter((s) => s.user_id !== userId));
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        setActionSuccess('Connection request is already active or pending!');
+        fetchData();
+      } else {
+        setError(msg || 'Failed to send connection request');
+      }
     }
   };
 
