@@ -99,7 +99,6 @@ export default function Register() {
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
-  const [demoOtpNotice, setDemoOtpNotice] = useState<string | null>(null);
 
   // Status States
   const [loading, setLoading] = useState(false);
@@ -159,11 +158,7 @@ export default function Register() {
 
     setSendingOtp(true);
     try {
-      const res = await apiRequest<{
-        message: string;
-        email: string;
-        demo_otp?: string;
-      }>("/auth/send-otp", {
+      await apiRequest("/auth/send-otp", {
         method: "POST",
         body: JSON.stringify({
           email: trimmedEmail,
@@ -744,7 +739,6 @@ export default function Register() {
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setOtpSent(false);
-                  setDemoOtpNotice(null);
                 }}
                 placeholder="yourname@sbjit.edu.in"
                 className={`w-full rounded-xl pl-10 pr-24 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition-all text-xs font-medium disabled:opacity-50 ${
