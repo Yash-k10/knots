@@ -1,6 +1,6 @@
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.connections.models.connection import Connection, ConnectionStatus
 from app.core.repository import BaseRepository
@@ -16,8 +16,8 @@ class ConnectionRepository(BaseRepository[Connection]):
             select(self.model)
             .where(self.model.id == id)
             .options(
-                selectinload(self.model.requester).selectinload(User.profile),
-                selectinload(self.model.addressee).selectinload(User.profile),
+                joinedload(self.model.requester).joinedload(User.profile),
+                joinedload(self.model.addressee).joinedload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
@@ -36,12 +36,12 @@ class ConnectionRepository(BaseRepository[Connection]):
                 )
             )
             .options(
-                selectinload(self.model.requester).selectinload(User.profile),
-                selectinload(self.model.addressee).selectinload(User.profile),
+                joinedload(self.model.requester).joinedload(User.profile),
+                joinedload(self.model.addressee).joinedload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_pending_requests(self, user_id: int) -> list[Connection]:
         stmt = (
@@ -53,12 +53,12 @@ class ConnectionRepository(BaseRepository[Connection]):
                 )
             )
             .options(
-                selectinload(self.model.requester).selectinload(User.profile),
-                selectinload(self.model.addressee).selectinload(User.profile),
+                joinedload(self.model.requester).joinedload(User.profile),
+                joinedload(self.model.addressee).joinedload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_connection_between_users(
         self, user1_id: int, user2_id: int
@@ -98,12 +98,12 @@ class ConnectionRepository(BaseRepository[Connection]):
                 )
             )
             .options(
-                selectinload(self.model.requester).selectinload(User.profile),
-                selectinload(self.model.addressee).selectinload(User.profile),
+                joinedload(self.model.requester).joinedload(User.profile),
+                joinedload(self.model.addressee).joinedload(User.profile),
             )
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        return list(result.scalars().unique().all())
 
     async def get_all_accepted_connections(self) -> list[Connection]:
         stmt = select(self.model).where(self.model.status == ConnectionStatus.ACCEPTED)

@@ -190,7 +190,19 @@ class ConnectionService:
     async def get_connection_suggestions(
         self, user_id: int, limit: int = 10
     ) -> list[dict[str, any]]:
-        my_connected_ids = await self.repository.get_user_connected_user_ids(user_id)
+        from collections import defaultdict
+        from sqlalchemy import and_, or_
+        from sqlalchemy.orm import joinedload
+        from app.users.models.role import Role
+
+        # Fetch all connections once to build in-memory graph (1 query instead of 50+ N+1 queries)
+        all_conns = await self.repository.get_all_accepted_connections()
+        user_conns_map = defaultdict(set)
+        for conn in all_conns:
+            user_conns_map[conn.requester_id].add(conn.addressee_id)
+            user_conns_map[conn.addressee_id].add(conn.requester_id)
+
+        my_connected_ids = user_conns_map.get(user_id, set())
 
         # Get existing requests (sent or received)
         pending_incoming = await self.repository.get_pending_requests(user_id)
@@ -202,14 +214,11 @@ class ConnectionService:
         for req in pending_sent:
             excluded_user_ids.add(req.addressee_id)
 
-        # Fetch candidate users (exclude current user, connected users, pending requests, and Super Admin)
-        from sqlalchemy import and_, or_
-        from app.users.models.role import Role
-
+        # Fetch candidate users with profile loaded via single JOIN
         stmt = (
             select(User)
             .outerjoin(Role, User.role_id == Role.id)
-            .options(selectinload(User.profile))
+            .options(joinedload(User.profile))
             .where(
                 and_(
                     User.id.not_in(excluded_user_ids),
@@ -219,12 +228,12 @@ class ConnectionService:
             .limit(50)
         )
         result = await self.db.execute(stmt)
-        candidates = result.scalars().all()
+        candidates = result.scalars().unique().all()
 
         suggestions = []
         for candidate in candidates:
             cand_id = candidate.id
-            cand_conns = await self.repository.get_user_connected_user_ids(cand_id)
+            cand_conns = user_conns_map.get(cand_id, set())
             mutual_ids = my_connected_ids.intersection(cand_conns)
             mutual_count = len(mutual_ids)
 

@@ -9,11 +9,11 @@ from app.core.config import settings
 # For asyncpg connection pool we can set pooling attributes here
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True if settings.ENVIRONMENT == "development" else False,
+    echo=False,
     future=True,
     pool_size=20,
     max_overflow=10,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
     pool_recycle=300,
     connect_args={
         "statement_cache_size": 0,
