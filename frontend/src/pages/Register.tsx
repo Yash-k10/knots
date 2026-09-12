@@ -173,10 +173,7 @@ export default function Register() {
 
       setOtpSent(true);
       setOtpCountdown(60);
-      if (res.demo_otp) {
-        setDemoOtpNotice(res.demo_otp);
-        setOtp(res.demo_otp); // Pre-fill in dev mode
-      }
+      setOtp(""); // Require user to check their email inbox and enter the received code
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -797,25 +794,11 @@ export default function Register() {
                     maxLength={6}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    placeholder="123456"
+                    placeholder="Enter 6-digit code"
                     className="w-full bg-white border border-[#D5CBEE] rounded-xl pl-10 pr-4 py-2 text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] text-sm font-mono font-bold tracking-widest text-center"
                     required
                   />
                 </div>
-
-                {demoOtpNotice && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2 text-[11px] text-emerald-800 flex items-center justify-between font-medium">
-                    <span>
-                      Demo OTP Code:{" "}
-                      <strong className="font-mono font-bold text-emerald-950">
-                        {demoOtpNotice}
-                      </strong>
-                    </span>
-                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                      Auto-filled
-                    </span>
-                  </div>
-                )}
               </div>
             )}
           </div>

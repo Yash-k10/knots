@@ -11,11 +11,14 @@ class UserRepository(BaseRepository[User]):
         super().__init__(User, db)
 
     async def get(self, id: int) -> User | None:
-        """Fetch user by ID with role relationship loaded."""
+        """Fetch user by ID with role and profile relationships loaded."""
         stmt = (
             select(self.model)
             .filter(self.model.id == id)
-            .options(selectinload(self.model.role))
+            .options(
+                selectinload(self.model.role),
+                selectinload(self.model.profile),
+            )
         )
         result = await self.db.execute(stmt)
         return result.scalars().first()

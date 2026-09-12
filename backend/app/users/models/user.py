@@ -19,4 +19,6 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     role = relationship("Role", back_populates="users")
-    profile = relationship("Profile", back_populates="user", uselist=False)
+    profile = relationship(
+        "Profile", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )

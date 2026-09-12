@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.auth.schemas.auth import (
+    GoogleLoginRequest,
     LoginOTPRequest,
     RegistrationResponse,
     ResetPasswordRequest,
@@ -39,6 +40,14 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     service = AuthService(db)
     tokens = await service.authenticate_user(credentials)
     return APIResponse(message="Login successful", data=tokens)
+
+
+@router.post("/google", response_model=APIResponse[TokenResponse])
+async def google_login(payload: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    """Authenticate or auto-provision college user via verified Google OAuth token."""
+    service = AuthService(db)
+    tokens = await service.authenticate_google_token(payload.token)
+    return APIResponse(message="Google login successful", data=tokens)
 
 
 @router.post("/send-otp", response_model=APIResponse[SendOTPResponse])

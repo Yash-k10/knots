@@ -1,14 +1,42 @@
+from datetime import datetime, timedelta, timezone
 import unittest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.admin.models.audit import AuditLog  # noqa: F401
+from app.admin.models.flagged_post import FlaggedPost  # noqa: F401
+from app.ai.models.ai_log import AILog  # noqa: F401
+from app.analytics.models.post_engagement import PostEngagement  # noqa: F401
+from app.analytics.models.profile_view import ProfileView  # noqa: F401
+from app.clubs.models.club import Club  # noqa: F401
+from app.clubs.models.club_member import ClubMember  # noqa: F401
+from app.connections.models.connection import Connection  # noqa: F401
 from app.core.database import Base, get_db
 from app.core.security import create_access_token, hash_password
+from app.events.models.event import Event  # noqa: F401
+from app.events.models.event_category import EventCategory  # noqa: F401
+from app.events.models.rsvp import RSVP  # noqa: F401
+from app.jobs.models.application import Application  # noqa: F401
+from app.jobs.models.company import Company
+from app.jobs.models.job_posting import JobPosting  # noqa: F401
+from app.jobs.models.referral import Referral  # noqa: F401
 from app.main import app
+from app.messaging.models.conversation import Conversation  # noqa: F401
+from app.messaging.models.message import Message  # noqa: F401
+from app.messaging.models.read_receipt import ReadReceipt  # noqa: F401
+from app.notifications.models.notification import Notification  # noqa: F401
+from app.notifications.models import (
+    notification_preference as _np,  # noqa: F401
+)
+from app.posts.models.comment import Comment  # noqa: F401
+from app.posts.models.like import Like  # noqa: F401
+from app.posts.models.post import Post  # noqa: F401
+from app.profiles.models.education import Education  # noqa: F401
+from app.profiles.models.employment_history import EmploymentHistory  # noqa: F401
+from app.profiles.models.profile import Profile
+from app.profiles.models.skill_endorsement import SkillEndorsement  # noqa: F401
 from app.users.models.role import Role
 from app.users.models.user import User
-from app.profiles.models.profile import Profile
-from app.jobs.models.company import Company
 
 
 class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
@@ -256,13 +284,16 @@ class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
             # 6. EVENTS & CLUBS ENDPOINTS
             # -------------------------------------------------------------
             # Create an Event by Admin
+            future_event_date = (
+                datetime.now(timezone.utc) + timedelta(days=7)
+            ).isoformat()
             event_create = await client.post(
                 "/api/v1/events",
                 headers=self.headers_admin,
                 json={
                     "title": "Annual Hackathon 2026",
                     "description": "Join the biggest student coding event.",
-                    "start_datetime": "2026-09-01T10:00:00Z",
+                    "start_datetime": future_event_date,
                     "location": "Main Auditorium",
                 },
             )

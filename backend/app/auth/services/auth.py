@@ -1,5 +1,7 @@
 from datetime import date
+import logging
 import random
+import secrets
 import time
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +20,12 @@ from app.auth.schemas.auth import (
     UserRegister,
 )
 from app.core import security
+from app.core.config import settings
+from app.core.email import send_otp_email
 from app.core.security_keys import verify_security_key
 from app.core.exceptions import (
     AuthenticationError,
+    AuthorizationError,
     ConflictError,
     NotFoundError,
     ValidationError,
@@ -30,6 +35,8 @@ from app.profiles.models.employment_history import EmploymentHistory
 from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
+
+logger = logging.getLogger(__name__)
 
 # In-memory OTP storage: email -> {"otp": str, "expires_at": float, "purpose": str}
 OTP_STORE: dict[str, dict] = {}
@@ -61,6 +68,93 @@ class AuthService:
 
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
+    async def authenticate_google_token(self, token: str) -> TokenResponse:
+        """Verify Google ID token cryptographically, enforce college domain (@sbjit.edu.in), and issue JWT tokens."""
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token
+
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+        except Exception as e:
+            logger.warning(f"Google token verification failed: {e}")
+            raise AuthenticationError(
+                message="Invalid or expired Google authentication credentials."
+            )
+
+        email = idinfo.get("email", "").strip().lower()
+        if not email:
+            raise AuthenticationError(
+                message="Unable to retrieve email from Google token."
+            )
+
+        # Enforce authorized college domain (@sbjit.edu.in)
+        allowed_domains = settings.ALLOWED_EMAIL_DOMAINS
+        if not any(
+            email.endswith(domain.strip().lower()) for domain in allowed_domains
+        ):
+            raise AuthorizationError(
+                message="Access restricted: Only official college email addresses (@sbjit.edu.in) are permitted to sign in."
+            )
+
+        first_name = idinfo.get("given_name", "")
+        last_name = idinfo.get("family_name", "")
+        avatar_url = idinfo.get("picture", "")
+
+        # Check if user already exists
+        user = await self.repository.get_by_email(email)
+        if not user:
+            # Query default Student role
+            role_stmt = select(Role).filter(func.lower(Role.name) == "student")
+            role_res = await self.db.execute(role_stmt)
+            role = role_res.scalars().first()
+            if not role:
+                fallback_stmt = select(Role).limit(1)
+                fallback_res = await self.db.execute(fallback_stmt)
+                role = fallback_res.scalars().first()
+
+            role_id = role.id if role else 2
+
+            # Auto-provision user account
+            random_pw = secrets.token_urlsafe(16)
+            hashed_password = security.hash_password(random_pw)
+            user = await self.repository.create(
+                {
+                    "email": email,
+                    "hashed_password": hashed_password,
+                    "role_id": role_id,
+                    "is_active": True,
+                    "is_verified": True,
+                }
+            )
+
+            # Auto-provision initial profile with Google profile photo and name
+            profile = Profile(
+                user_id=user.id,
+                first_name=first_name or "Student",
+                last_name=last_name or "",
+                profile_picture=avatar_url or None,
+                department="Engineering",
+                bio="Student at SBJIT.",
+            )
+            self.db.add(profile)
+            await self.db.flush()
+        else:
+            if not user.is_active:
+                raise AuthenticationError(message="Account is inactive or suspended.")
+            if not user.is_verified:
+                user.is_verified = True
+                self.db.add(user)
+                await self.db.flush()
+
+        access_token = security.create_access_token(subject=user.id)
+        refresh_token = security.create_refresh_token(subject=user.id)
+
+        return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
     async def send_otp(self, payload: SendOTPRequest) -> SendOTPResponse:
         """Generate a 6-digit OTP for the college email address and store it with 10-minute expiry."""
         normalized_email = payload.email.strip().lower()
@@ -86,15 +180,17 @@ class AuthService:
             "purpose": payload.purpose,
         }
 
-        print(
-            f"\n[AUTH OTP DISPATCH] Email: {normalized_email} | Purpose: {payload.purpose} | OTP: {otp_code}\n"
+        # Dispatch real email via SMTP (gracefully logged in dev mode if SMTP unconfigured)
+        send_otp_email(
+            recipient_email=normalized_email,
+            otp_code=otp_code,
+            purpose=payload.purpose,
         )
 
         return SendOTPResponse(
             message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
             email=normalized_email,
             expires_in_seconds=600,
-            demo_otp=otp_code,
         )
 
     async def authenticate_otp(self, payload: LoginOTPRequest) -> TokenResponse:

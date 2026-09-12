@@ -31,7 +31,9 @@ class PostService:
         """Create a new post."""
         data = payload.model_dump()
         data["author_id"] = author_id
-        return await self.post_repo.create(data)
+        post = await self.post_repo.create(data)
+        detailed_post = await self.post_repo.get_with_details(post.id)
+        return detailed_post or post
 
     async def get_post(self, post_id: int) -> Post:
         """Fetch a single post or raise NotFoundError."""
@@ -164,9 +166,12 @@ class PostService:
 
         update_data = payload.model_dump(exclude_unset=True)
         if not update_data:
-            return post
+            detailed = await self.post_repo.get_with_details(post.id)
+            return detailed or post
 
-        return await self.post_repo.update(post, update_data)
+        updated = await self.post_repo.update(post, update_data)
+        detailed = await self.post_repo.get_with_details(updated.id)
+        return detailed or updated
 
     async def delete_post(
         self, post_id: int, user_id: int, user_role: str | None = None

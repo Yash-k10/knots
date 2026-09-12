@@ -77,6 +77,9 @@ class UserService:
     async def delete_user(self, user_id: int) -> User:
         """Remove user by ID."""
         user = await self.get_user(user_id)
+        if user.profile:
+            await self.repository.db.delete(user.profile)
+            await self.repository.db.flush()
         return await self.repository.remove(user.id)
 
     async def get_all_roles(self) -> list[Role]:

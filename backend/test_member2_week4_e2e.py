@@ -182,7 +182,7 @@ class TestMember2Week4E2E(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(resp_404_post.status_code, 404)
 
     async def test_job_posting_admin_rbac_and_lifecycle(self):
-        # Student 1 creates a job posting
+        # Student 1 should be forbidden from creating a job posting (RBAC check)
         job_payload = {
             "title": "Backend Python Developer",
             "description": "Looking for a skilled FastAPI developer to join our team.",
@@ -193,13 +193,19 @@ class TestMember2Week4E2E(unittest.IsolatedAsyncioTestCase):
             "salary_range": "10-15 LPA",
             "required_skills": ["Python", "FastAPI", "SQLAlchemy"],
         }
-        create_resp = await self.client.post(
+        forbidden_create = await self.client.post(
             "/api/v1/jobs", json=job_payload, headers=self.student1_headers
+        )
+        self.assertEqual(forbidden_create.status_code, 403)
+
+        # Admin creates a job posting
+        create_resp = await self.client.post(
+            "/api/v1/jobs", json=job_payload, headers=self.admin_headers
         )
         self.assertEqual(create_resp.status_code, 201)
         job_id = create_resp.json()["data"]["id"]
 
-        # Student 2 should NOT be able to edit Student 1's job
+        # Student 2 should NOT be able to edit the job
         update_payload = {"title": "Hacked Title"}
         forbidden_resp = await self.client.put(
             f"/api/v1/jobs/{job_id}",

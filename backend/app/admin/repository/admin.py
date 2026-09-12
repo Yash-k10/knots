@@ -67,8 +67,10 @@ class FlaggedPostRepository(BaseRepository[FlaggedPost]):
         result = await self.db.execute(
             select(FlaggedPost)
             .options(
-                selectinload(FlaggedPost.flagger),
-                selectinload(FlaggedPost.post).selectinload(Post.author),
+                selectinload(FlaggedPost.flagger).selectinload(User.profile),
+                selectinload(FlaggedPost.post)
+                .selectinload(Post.author)
+                .selectinload(User.profile),
                 selectinload(FlaggedPost.post).selectinload(Post.comments),
                 selectinload(FlaggedPost.post).selectinload(Post.likes),
             )
@@ -83,8 +85,10 @@ class FlaggedPostRepository(BaseRepository[FlaggedPost]):
         result = await self.db.execute(
             select(FlaggedPost)
             .options(
-                selectinload(FlaggedPost.flagger),
-                selectinload(FlaggedPost.post).selectinload(Post.author),
+                selectinload(FlaggedPost.flagger).selectinload(User.profile),
+                selectinload(FlaggedPost.post)
+                .selectinload(Post.author)
+                .selectinload(User.profile),
                 selectinload(FlaggedPost.post).selectinload(Post.comments),
                 selectinload(FlaggedPost.post).selectinload(Post.likes),
             )

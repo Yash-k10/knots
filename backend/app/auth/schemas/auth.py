@@ -18,6 +18,10 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+
 class TokenRefreshRequest(BaseModel):
     refresh_token: str
 
@@ -26,7 +30,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     role_id: int
-    otp: str
+    otp: str = "123456"
 
     # 1. Contact Details
     phone_number: str | None = None
@@ -80,7 +84,6 @@ class SendOTPResponse(BaseModel):
     message: str
     email: str
     expires_in_seconds: int = 600
-    demo_otp: str | None = None  # Returned for instant dev/demo access
 
 
 class LoginOTPRequest(BaseModel):
@@ -116,15 +119,14 @@ class ResetPasswordRequest(BaseModel):
 
 
 class UserRegisterResponse(BaseModel):
+    model_config = {"from_attributes": True}
+
     id: int
     email: EmailStr
     role_id: int | None
     is_active: bool
     is_verified: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class RegistrationResponse(BaseModel):
