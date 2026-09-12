@@ -9,7 +9,6 @@ import {
   Sparkles,
   Globe,
   Users as UsersIcon,
-  Lock,
   Image,
   X,
   GraduationCap,
@@ -18,6 +17,12 @@ import {
   FileText,
   Link as LinkIcon,
   Maximize2,
+  Share2,
+  Download,
+  Eye,
+  FileSpreadsheet,
+  CheckCircle2,
+  FileCheck,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
 import TiesRecommendations from "../components/feed/TiesRecommendations";
@@ -144,10 +149,21 @@ export default function Feed() {
   const [newPostVisibility, setNewPostVisibility] = useState("PUBLIC");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [attachedDoc, setAttachedDoc] = useState<{ name: string; size: string; file: File } | null>(null);
+  const [attachedDoc, setAttachedDoc] = useState<{
+    name: string;
+    size: string;
+    file: File;
+  } | null>(null);
   const [externalLinkUrl, setExternalLinkUrl] = useState<string>("");
   const [showLinkInput, setShowLinkInput] = useState<boolean>(false);
-  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(
+    null
+  );
+  const [activePdfModalUrl, setActivePdfModalUrl] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+  const [copiedPostId, setCopiedPostId] = useState<number | null>(null);
   const [submittingPost, setSubmittingPost] = useState(false);
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,12 +174,12 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 10;
 
-  // Filter tab state ("ALL", "PUBLIC", "STUDENTS_ONLY", "STUDENTS_AND_ALUMNI")
+  // Filter tab state ("ALL", "PUBLIC", "STUDENTS_ONLY", "STUDENTS_AND_ALUMNI", "DOCS", "MEDIA")
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
   // Comments and Inputs State indexed by postId
   const [expandedPosts, setExpandedPosts] = useState<Record<number, boolean>>(
-    {},
+    {}
   );
   const [commentsByPost, setCommentsByPost] = useState<
     Record<number, CommentResponse[]>
@@ -172,7 +188,7 @@ export default function Feed() {
     Record<number, boolean>
   >({});
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>(
-    {},
+    {}
   );
   const [submittingCommentByPost, setSubmittingCommentByPost] = useState<
     Record<number, boolean>
@@ -199,7 +215,7 @@ export default function Feed() {
 
     try {
       const response = await apiRequest<PostResponse[]>(
-        `/posts/feed?skip=${currentSkip}&limit=${LIMIT}`,
+        `/posts/feed?skip=${currentSkip}&limit=${LIMIT}`
       );
 
       if (reset) {
@@ -284,6 +300,15 @@ export default function Feed() {
     }
   };
 
+  const handleSharePost = (post: PostResponse) => {
+    const shareUrl = `${window.location.origin}/feed#post-${post.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl);
+      setCopiedPostId(post.id);
+      setTimeout(() => setCopiedPostId(null), 2500);
+    }
+  };
+
   useEffect(() => {
     fetchFeed(true);
     fetchCurrentUser();
@@ -298,6 +323,7 @@ export default function Feed() {
         return;
       }
       setSelectedImage(file);
+      setAttachedDoc(null);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -332,7 +358,9 @@ export default function Feed() {
       } else if (selectedImage) {
         contentToSubmit = `Shared a photo`;
       } else {
-        alert("Please write a post message, upload a file, or add a link before sharing.");
+        alert(
+          "Please write a post message, upload a file, or add a link before sharing."
+        );
         return;
       }
     }
@@ -390,7 +418,7 @@ export default function Feed() {
           fetchFeed(false);
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     observer.observe(target);
@@ -402,7 +430,7 @@ export default function Feed() {
   // Like / Unlike action
   const handleLikeToggle = async (
     postId: number,
-    isCurrentlyLiked: boolean,
+    isCurrentlyLiked: boolean
   ) => {
     // Optimistic Update
     setPosts((prevPosts) =>
@@ -417,7 +445,7 @@ export default function Feed() {
           };
         }
         return post;
-      }),
+      })
     );
 
     try {
@@ -427,11 +455,10 @@ export default function Feed() {
         await apiRequest(`/posts/${postId}/like`, { method: "POST" });
       }
     } catch (err: any) {
-      // If error is 409 (already liked) or 404 (already unliked), keep the optimistic state
       if (err?.status === 409 || err?.status === 404) {
         return;
       }
-      // Revert if API fails unexpectedly
+      // Revert on unexpected failure
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
           if (post.id === postId) {
@@ -444,7 +471,7 @@ export default function Feed() {
             };
           }
           return post;
-        }),
+        })
       );
     }
   };
@@ -458,7 +485,7 @@ export default function Feed() {
       setLoadingCommentsByPost((prev) => ({ ...prev, [postId]: true }));
       try {
         const comments = await apiRequest<CommentResponse[]>(
-          `/posts/${postId}/comments`,
+          `/posts/${postId}/comments`
         );
         setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
       } catch (err) {
@@ -482,7 +509,7 @@ export default function Feed() {
         {
           method: "POST",
           body: JSON.stringify({ content }),
-        },
+        }
       );
 
       setCommentsByPost((prev) => ({
@@ -498,7 +525,7 @@ export default function Feed() {
             return { ...post, comments_count: post.comments_count + 1 };
           }
           return post;
-        }),
+        })
       );
     } catch (err: any) {
       alert(err.message || "Failed to submit comment.");
@@ -541,13 +568,13 @@ export default function Feed() {
     );
   };
 
-  const getVisibilityIcon = (visibility: string) => {
+  const getVisibilityBadge = (visibility: string) => {
     switch (visibility) {
       case "STUDENTS_ONLY":
         return (
           <span
             title="Visible to students only"
-            className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full"
           >
             <GraduationCap className="w-3 h-3 text-emerald-600" />
             <span>Students Only</span>
@@ -557,7 +584,7 @@ export default function Feed() {
         return (
           <span
             title="Visible to students and alumni"
-            className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-2.5 py-0.5 rounded-full"
           >
             <UsersIcon className="w-3 h-3 text-purple-600" />
             <span>Students & Alumni</span>
@@ -567,27 +594,17 @@ export default function Feed() {
         return (
           <span
             title="Visible to connections only"
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full"
           >
             <UsersIcon className="w-3 h-3 text-slate-500" />
             <span>Connections</span>
           </span>
         );
-      case "PRIVATE":
-        return (
-          <span
-            title="Private: visible to you only"
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full"
-          >
-            <Lock className="w-3 h-3 text-slate-500" />
-            <span>Private</span>
-          </span>
-        );
       default:
         return (
           <span
-            title="For Everyone: visible to all campus accounts"
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-full"
+            title="Visible to everyone"
+            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-0.5 rounded-full"
           >
             <Globe className="w-3 h-3 text-[#4B63D2]" />
             <span>Everyone</span>
@@ -599,742 +616,834 @@ export default function Feed() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
-        {/* Left / Center: Main Feed Stream */}
+        {/* Main Feed Stream */}
         <div className="lg:col-span-8 space-y-6">
-
           {/* Title Header Card */}
-          <div className="relative overflow-hidden bg-white border border-[#EAE4F7] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-40 h-40 bg-gradient-to-br from-[#C8B6E2]/20 via-[#4B63D2]/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+          <div className="relative overflow-hidden bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-7 shadow-sm">
+            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-gradient-to-br from-[#C8B6E2]/20 via-[#4B63D2]/10 to-transparent rounded-full blur-2xl pointer-events-none" />
             <div className="space-y-1 relative z-10">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 bg-[#4B63D2]/10 rounded-xl text-[#4B63D2]">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-[#4B63D2]/10 rounded-2xl text-[#4B63D2] shadow-sm">
                   <Sparkles className="w-5 h-5" />
                 </span>
-                <h2 className="text-2xl font-black text-[#1E2746] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
                   Campus Discussions Feed
                 </h2>
               </div>
-              <p className="text-[#5851A4] text-sm max-w-xl font-medium">
-                Join the conversation! Share updates, view posts, and interact with
-                students, alumni, faculty, and management.
+              <p className="text-[#5851A4] text-xs sm:text-sm max-w-xl font-medium pt-0.5">
+                Share updates, ask doubts, discuss projects, and connect across the SBJIT campus network.
               </p>
             </div>
           </div>
 
-
-      {/* Create Post Form Card */}
-      <form
-        onSubmit={handleCreatePost}
-        className="bg-white border border-[#EAE4F7] rounded-3xl p-5 md:p-6 space-y-4 hover:border-[#C8B6E2] transition-all duration-300 shadow-sm"
-      >
-        <div className="flex gap-4 items-start">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20 shrink-0">
-            {getInitials(currentUser?.email)}
-          </div>
-          <div className="flex-1 space-y-3">
-            <textarea
-              placeholder={
-                currentUser
-                  ? `What's on your mind, ${getEmailPrefix(currentUser.email)}?`
-                  : "What's on your mind?"
-              }
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              rows={3}
-              className="w-full bg-[#FAF9FD] border border-[#EAE4F7] focus:bg-white rounded-2xl p-3 resize-none text-[#1E2746] text-sm placeholder-[#9188BE] focus:ring-2 focus:ring-[#4B63D2]/20 focus:border-[#4B63D2] focus:outline-none min-h-[70px] transition-all"
-            />
-
-            {/* Selected Image Preview */}
-            {imagePreview && (
-              <div className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] aspect-video max-h-[300px]">
-                <img
-                  src={imagePreview}
-                  alt="Attachment preview"
-                  className="w-full h-full object-cover"
+          {/* Create Post Form Card */}
+          <form
+            onSubmit={handleCreatePost}
+            className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 shadow-sm"
+          >
+            <div className="flex gap-3.5 items-start">
+              <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20 shrink-0">
+                {getInitials(currentUser?.email)}
+              </div>
+              <div className="flex-1 space-y-3">
+                <textarea
+                  placeholder={
+                    currentUser
+                      ? `What's happening on campus, ${getEmailPrefix(
+                          currentUser.email
+                        )}?`
+                      : "What's on your mind? Share a post, note, or project link..."
+                  }
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  rows={3}
+                  className="w-full bg-[#FAF9FD] border border-[#EAE4F7] focus:bg-white rounded-2xl p-3.5 resize-none text-[#1E2746] text-xs sm:text-sm placeholder-[#9188BE] focus:ring-2 focus:ring-[#4B63D2]/20 focus:border-[#4B63D2] focus:outline-none min-h-[75px] transition-all font-medium"
                 />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 p-1.5 bg-[#1E2746]/80 hover:bg-[#1E2746] rounded-full text-white transition-all shadow-md"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
 
-            {/* Attached Document Preview Pill */}
-            {attachedDoc && (
-              <div className="flex items-center justify-between p-2.5 bg-indigo-50/60 border border-indigo-200 rounded-xl text-xs font-bold text-[#4B63D2]">
-                <div className="flex items-center gap-2 truncate">
-                  <FileText className="w-4 h-4 text-[#4B63D2] shrink-0" />
-                  <span className="truncate">{attachedDoc.name} ({attachedDoc.size})</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAttachedDoc(null)}
-                  className="p-1 hover:bg-indigo-100 rounded-full text-[#5851A4] transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* External Link Input Field */}
-            {showLinkInput && (
-              <div className="flex items-center gap-2 p-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs animate-in fade-in duration-150">
-                <LinkIcon className="w-4 h-4 text-[#4B63D2] shrink-0 ml-1" />
-                <input
-                  type="url"
-                  placeholder="Paste external link URL (e.g., https://github.com/...)"
-                  value={externalLinkUrl}
-                  onChange={(e) => setExternalLinkUrl(e.target.value)}
-                  className="flex-1 bg-transparent text-[#1E2746] placeholder-[#9188BE] font-medium focus:outline-none text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowLinkInput(false);
-                    setExternalLinkUrl("");
-                  }}
-                  className="p-1 text-[#9188BE] hover:text-[#1E2746] cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Divider and Actions Panel */}
-        <div className="border-t border-[#EAE4F7] pt-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 relative flex-wrap">
-            {/* Image Upload Input & Button */}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 text-[#5851A4] hover:text-[#4B63D2] font-semibold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
-            >
-              <Image className="w-4 h-4 text-[#4B63D2]" />
-              <span>Photo</span>
-            </button>
-
-            {/* Document Upload Input & Button (.pdf, .doc, .docx) */}
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className="hidden"
-              ref={docInputRef}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                  setAttachedDoc({ name: file.name, size: `${sizeMb} MB`, file });
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => docInputRef.current?.click()}
-              className="flex items-center gap-2 text-[#5851A4] hover:text-[#4B63D2] font-semibold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
-            >
-              <FileText className="w-4 h-4 text-emerald-600" />
-              <span>PDF / DOCX</span>
-            </button>
-
-            {/* External Link Button */}
-            <button
-              type="button"
-              onClick={() => setShowLinkInput(!showLinkInput)}
-              className="flex items-center gap-2 text-[#5851A4] hover:text-[#4B63D2] font-semibold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
-            >
-              <LinkIcon className="w-4 h-4 text-purple-600" />
-              <span>Link</span>
-            </button>
-
-            {/* Visibility Selector */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() =>
-                  setShowVisibilityDropdown(!showVisibilityDropdown)
-                }
-                className="flex items-center gap-2 text-[#5851A4] hover:text-[#1E2746] font-semibold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] border border-transparent hover:border-[#EAE4F7] transition-all cursor-pointer"
-              >
-                {newPostVisibility === "PUBLIC" && (
-                  <Globe className="w-4 h-4 text-[#4B63D2]" />
-                )}
-                {newPostVisibility === "STUDENTS_ONLY" && (
-                  <GraduationCap className="w-4 h-4 text-emerald-600" />
-                )}
-                {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
-                  <UsersIcon className="w-4 h-4 text-purple-600" />
-                )}
-                <span>
-                  {newPostVisibility === "PUBLIC" && "For Everyone"}
-                  {newPostVisibility === "STUDENTS_ONLY" && "Students Only"}
-                  {newPostVisibility === "STUDENTS_AND_ALUMNI" && "Students & Alumni"}
-                </span>
-              </button>
-
-              {showVisibilityDropdown && (
-                <>
-                  {/* Backdrop to close dropdown */}
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowVisibilityDropdown(false)}
-                  />
-                  <div className="absolute left-0 mt-2 w-72 bg-white border border-[#EAE4F7] rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD]">
-                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#9188BE]">
-                      Who can see this post?
-                    </div>
-
-                    {/* Option 1: For Everyone */}
+                {/* Selected Image Preview */}
+                {imagePreview && (
+                  <div className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] aspect-video max-h-[280px] shadow-sm animate-in zoom-in-95 duration-200">
+                    <img
+                      src={imagePreview}
+                      alt="Attachment preview"
+                      className="w-full h-full object-cover"
+                    />
                     <button
                       type="button"
-                      onClick={() => {
-                        setNewPostVisibility("PUBLIC");
-                        setShowVisibilityDropdown(false);
-                      }}
-                      className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                        newPostVisibility === "PUBLIC" ? "bg-[#FAF9FD]" : ""
-                      }`}
+                      onClick={handleRemoveImage}
+                      className="absolute top-2.5 right-2.5 p-1.5 bg-[#1E2746]/80 hover:bg-[#1E2746] rounded-full text-white transition-all shadow-md cursor-pointer"
                     >
-                      <div className="p-2 rounded-xl bg-blue-50 text-[#4B63D2] shrink-0 mt-0.5">
-                        <Globe className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#1E2746]">
-                            For Everyone
-                          </span>
-                          {newPostVisibility === "PUBLIC" && (
-                            <Check className="w-3.5 h-3.5 text-[#4B63D2]" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                          Anyone across campus (students to management)
-                        </p>
-                      </div>
-                    </button>
-
-                    {/* Option 2: Students Only */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewPostVisibility("STUDENTS_ONLY");
-                        setShowVisibilityDropdown(false);
-                      }}
-                      className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                        newPostVisibility === "STUDENTS_ONLY" ? "bg-[#FAF9FD]" : ""
-                      }`}
-                    >
-                      <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
-                        <GraduationCap className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#1E2746]">
-                            For Students Only
-                          </span>
-                          {newPostVisibility === "STUDENTS_ONLY" && (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                          Only student accounts will be able to see this post
-                        </p>
-                      </div>
-                    </button>
-
-                    {/* Option 3: Students & Alumni */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewPostVisibility("STUDENTS_AND_ALUMNI");
-                        setShowVisibilityDropdown(false);
-                      }}
-                      className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                        newPostVisibility === "STUDENTS_AND_ALUMNI" ? "bg-[#FAF9FD]" : ""
-                      }`}
-                    >
-                      <div className="p-2 rounded-xl bg-purple-50 text-purple-600 shrink-0 mt-0.5">
-                        <UsersIcon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#1E2746]">
-                            For Students & Alumni
-                          </span>
-                          {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
-                            <Check className="w-3.5 h-3.5 text-purple-600" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                          Only students and alumni accounts will be able to see this post
-                        </p>
-                      </div>
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
-                </>
-              )}
+                )}
+
+                {/* Attached Document Preview Pill */}
+                {attachedDoc && (
+                  <div className="flex items-center justify-between p-3 bg-[#4B63D2]/5 border border-[#4B63D2]/20 rounded-2xl text-xs font-bold text-[#4B63D2] animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2.5 truncate">
+                      <FileCheck className="w-4 h-4 text-[#4B63D2] shrink-0" />
+                      <span className="truncate">
+                        {attachedDoc.name}{" "}
+                        <span className="text-[#9188BE] font-normal">
+                          ({attachedDoc.size})
+                        </span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAttachedDoc(null)}
+                      className="p-1 hover:bg-[#4B63D2]/10 rounded-full text-[#5851A4] transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* External Link Input Field */}
+                {showLinkInput && (
+                  <div className="flex items-center gap-2 p-2.5 bg-[#FAF9FD] border border-[#D5CBEE] rounded-2xl text-xs animate-in fade-in slide-in-from-top-1 duration-150 shadow-xs">
+                    <LinkIcon className="w-4 h-4 text-[#4B63D2] shrink-0 ml-1" />
+                    <input
+                      type="url"
+                      placeholder="Paste external link URL (e.g., https://github.com/project-repo)"
+                      value={externalLinkUrl}
+                      onChange={(e) => setExternalLinkUrl(e.target.value)}
+                      className="flex-1 bg-transparent text-[#1E2746] placeholder-[#9188BE] font-semibold focus:outline-none text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLinkInput(false);
+                        setExternalLinkUrl("");
+                      }}
+                      className="p-1 text-[#9188BE] hover:text-[#1E2746] cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={
-              submittingPost ||
-              (!newPostContent.trim() &&
-                !externalLinkUrl.trim() &&
-                !selectedImage &&
-                !attachedDoc)
-            }
-            className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] disabled:opacity-50 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#4B63D2]/25 cursor-pointer active:scale-95"
-          >
-            {submittingPost ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Sharing...</span>
-              </>
-            ) : (
-              <span>Share</span>
-            )}
-          </button>
-        </div>
-      </form>
-
-      {/* Feed Visibility Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <button
-          type="button"
-          onClick={() => setActiveFilter("ALL")}
-          className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-            activeFilter === "ALL"
-              ? "bg-[#4B63D2] text-white shadow-sm"
-              : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
-          }`}
-        >
-          All Updates
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveFilter("PUBLIC")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-            activeFilter === "PUBLIC"
-              ? "bg-[#4B63D2] text-white shadow-sm"
-              : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>Everyone</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveFilter("STUDENTS_ONLY")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-            activeFilter === "STUDENTS_ONLY"
-              ? "bg-emerald-600 text-white shadow-sm"
-              : "bg-white text-emerald-700 border border-emerald-200/80 hover:bg-emerald-50"
-          }`}
-        >
-          <GraduationCap className="w-3.5 h-3.5" />
-          <span>Students Only</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveFilter("STUDENTS_AND_ALUMNI")}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-            activeFilter === "STUDENTS_AND_ALUMNI"
-              ? "bg-purple-600 text-white shadow-sm"
-              : "bg-white text-purple-700 border border-purple-200/80 hover:bg-purple-50"
-          }`}
-        >
-          <UsersIcon className="w-3.5 h-3.5" />
-          <span>Students & Alumni</span>
-        </button>
-      </div>
-
-      {/* Main feed list */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-8 h-8 text-[#4B63D2] animate-spin" />
-          <p className="text-[#5851A4] text-sm font-medium">Gathering latest updates...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-rose-50 border border-rose-200 rounded-3xl p-6 text-center space-y-3">
-          <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-          <h3 className="text-[#1E2746] font-bold text-base">
-            Error Loading Feed
-          </h3>
-          <p className="text-[#5851A4] text-sm max-w-md mx-auto">{error}</p>
-          <button
-            onClick={() => fetchFeed(true)}
-            className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition-all"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-4 shadow-sm">
-          <MessageSquare className="w-12 h-12 text-[#B9B1D9] mx-auto" />
-          <h3 className="text-[#1E2746] font-bold text-lg">No posts yet</h3>
-          <p className="text-[#5851A4] text-sm max-w-md mx-auto font-medium">
-            The campus discussions are quiet. Be the first to start a
-            conversation and share an update with your peers!
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {posts
-            .filter((post) => {
-              if (activeFilter === "ALL") return true;
-              if (activeFilter === "PUBLIC")
-                return post.visibility === "PUBLIC" || !post.visibility;
-              if (activeFilter === "STUDENTS_ONLY")
-                return post.visibility === "STUDENTS_ONLY";
-              if (activeFilter === "STUDENTS_AND_ALUMNI")
-                return post.visibility === "STUDENTS_AND_ALUMNI";
-              return true;
-            })
-            .map((post) => (
-            <article
-              key={post.id}
-              className="bg-white border border-[#EAE4F7] rounded-3xl p-5 md:p-6 space-y-4 hover:border-[#C8B6E2] transition-all duration-300 hover:shadow-md shadow-sm"
-            >
-              {/* Card Header: Author Profile Info */}
-              <div className="flex items-start justify-between gap-2">
-                <Link
-                  to={post.author?.id ? `/profile/${post.author.id}` : "/profile"}
-                  className="flex items-center gap-3 group/author cursor-pointer"
+            {/* Divider and Actions Panel */}
+            <div className="border-t border-[#EAE4F7] pt-3.5 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {/* Image Upload Button */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
                 >
-                  {getMediaUrl(post.author?.profile?.profile_picture) ? (
-                    <img
-                      src={getMediaUrl(post.author?.profile?.profile_picture)}
-                      alt="Author Avatar"
-                      className="h-10 w-10 rounded-full object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
-                      {getInitials(post.author?.email)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-bold text-[#1E2746] group-hover/author:text-[#4B63D2] transition-colors flex items-center gap-1.5">
-                        <span>
-                          {post.author?.profile?.first_name || post.author?.profile?.last_name
-                            ? `${post.author.profile.first_name || ""} ${post.author.profile.last_name || ""}`.trim()
-                            : getEmailPrefix(post.author?.email)}
-                        </span>
-                        {hasInfinityBadge(post.author?.email) && (
-                          <img
-                            src="/infinity-badge.png"
-                            className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
-                            alt="Infinity Badge"
-                            title="Verified Campus Distinction / Leadership Position"
-                          />
-                        )}
-                      </h4>
-                      <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
-                        post.author?.email?.includes("alumni")
-                          ? "bg-purple-50 border border-purple-200 text-purple-700"
-                          : post.author?.email?.includes("prof")
-                          ? "bg-blue-50 border border-blue-200 text-blue-700"
-                          : "bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#5851A4]"
-                      }`}>
-                        {post.author?.email?.includes("alumni")
-                          ? "Alumni"
-                          : post.author?.email?.includes("prof")
-                          ? "Faculty"
-                          : "Member"}
-                      </span>
-                    </div>
+                  <Image className="w-4 h-4 text-[#4B63D2]" />
+                  <span>Photo</span>
+                </button>
 
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className="text-xs text-[#5851A4]/80 font-medium">
-                        {formatTimeAgo(post.created_at)}
-                      </p>
-                      <span className="text-[#C8B6E2] text-[10px]">•</span>
-                      {getVisibilityIcon(post.visibility)}
-                    </div>
-                  </div>
-                </Link>
-
-                {/* Super Admin / Admin / Author Delete Control */}
-                {(isSuperAdminOrAdmin || post.author_id === currentUser?.id) && (
-                  <button
-                    onClick={() => handleDeletePost(post.id)}
-                    title={
-                      isSuperAdmin
-                        ? "Super Admin: Permanently delete post"
-                        : isSuperAdminOrAdmin && post.author_id !== currentUser?.id
-                        ? "Admin: Remove post"
-                        : "Delete your post"
+                {/* Document Upload Button (.pdf, .doc, .docx) */}
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
+                  className="hidden"
+                  ref={docInputRef}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                      setAttachedDoc({
+                        name: file.name,
+                        size: `${sizeMb} MB`,
+                        file,
+                      });
+                      setSelectedImage(null);
+                      setImagePreview(null);
                     }
-                    className="p-1.5 rounded-xl text-[#9188BE] hover:text-rose-600 hover:bg-rose-50 transition-all flex items-center gap-1 text-xs shrink-0 group"
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
+                >
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span>PDF / Notes</span>
+                </button>
+
+                {/* External Link Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowLinkInput(!showLinkInput)}
+                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
+                >
+                  <LinkIcon className="w-4 h-4 text-purple-600" />
+                  <span>Add Link</span>
+                </button>
+
+                {/* Visibility Selector */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowVisibilityDropdown(!showVisibilityDropdown)
+                    }
+                    className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#1E2746] font-bold text-xs py-2 px-3 rounded-xl bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] transition-all cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    {isSuperAdmin && (
-                      <span className="hidden sm:inline text-[11px] font-bold text-rose-500">
-                        Remove
-                      </span>
+                    {newPostVisibility === "PUBLIC" && (
+                      <Globe className="w-3.5 h-3.5 text-[#4B63D2]" />
                     )}
-                  </button>
-                )}
-              </div>
-
-              {/* Card Body: Post Text Content with clickable link rendering */}
-              <div className="text-[#1E2746] text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                {renderContentWithLinks(post.content)}
-              </div>
-
-              {/* Card Body: Attachment (Image, PDF/DOCX Document, or Fallback Preview) */}
-              {post.image_url && (
-                isDocumentUrl(post.image_url) ? (
-                  <div className="my-3 p-4 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all group">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider">
-                        {getFileExtension(post.image_url)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1E2746] truncate group-hover:text-[#4B63D2] transition-colors">
-                          {getFileName(post.image_url)}
-                        </p>
-                        <span className="text-[10px] font-semibold text-[#5851A4]">
-                          Document Attachment • Click to View / Download
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a
-                        href={getMediaUrl(post.image_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3.5 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>View / Download</span>
-                      </a>
-                    </div>
-                  </div>
-                ) : !failedImages[post.id] ? (
-                  <div
-                    onClick={() => setActiveLightboxImage(getMediaUrl(post.image_url) ?? null)}
-                    className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD]/40 my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
-                  >
-                    <img
-                      src={getMediaUrl(post.image_url)}
-                      alt="Post attachment"
-                      className="w-auto max-w-full max-h-[550px] object-contain rounded-xl shadow-sm"
-                      loading="lazy"
-                      onError={() => {
-                        setFailedImages((prev) => ({ ...prev, [post.id]: true }));
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-none">
-                      <span className="opacity-0 group-hover:opacity-100 bg-slate-900/80 text-white text-[11px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
-                        <Maximize2 className="w-3.5 h-3.5" /> Click to view full size
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="my-3 p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-3 text-[#5851A4]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2] shrink-0 font-bold text-xs">
-                        📎
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#1E2746] truncate">
-                          {getFileName(post.image_url)}
-                        </p>
-                        <p className="text-[11px] text-[#5851A4]">Attachment Preview</p>
-                      </div>
-                    </div>
-                    <a
-                      href={getMediaUrl(post.image_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-[#4B63D2]/10 hover:bg-[#4B63D2]/20 text-[#4B63D2] text-xs font-bold rounded-lg transition-all"
-                    >
-                      Open Link
-                    </a>
-                  </div>
-                )
-              )}
-
-              {/* Card Actions: Likes and Comments triggers */}
-              <div className="flex items-center justify-between border-t border-[#EAE4F7] pt-4 text-xs font-semibold">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleLikeToggle(post.id, post.is_liked)}
-                    className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] ${
-                      post.is_liked
-                        ? "text-rose-500 font-bold"
-                        : "text-[#5851A4] hover:text-[#1E2746]"
-                    }`}
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${post.is_liked ? "fill-current" : ""}`}
-                    />
+                    {newPostVisibility === "STUDENTS_ONLY" && (
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                    )}
+                    {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
+                      <UsersIcon className="w-3.5 h-3.5 text-purple-600" />
+                    )}
                     <span>
-                      {post.likes_count}{" "}
-                      {post.likes_count === 1 ? "Like" : "Likes"}
+                      {newPostVisibility === "PUBLIC" && "Everyone"}
+                      {newPostVisibility === "STUDENTS_ONLY" && "Students Only"}
+                      {newPostVisibility === "STUDENTS_AND_ALUMNI" &&
+                        "Students & Alumni"}
                     </span>
                   </button>
 
-                  <button
-                    onClick={() => toggleComments(post.id)}
-                    className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] ${
-                      expandedPosts[post.id]
-                        ? "text-[#4B63D2] font-bold"
-                        : "text-[#5851A4] hover:text-[#1E2746]"
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>
-                      {post.comments_count}{" "}
-                      {post.comments_count === 1 ? "Comment" : "Comments"}
-                    </span>
-                  </button>
-                </div>
-              </div>
+                  {showVisibilityDropdown && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowVisibilityDropdown(false)}
+                      />
+                      <div className="absolute left-0 mt-2 w-72 bg-white border border-[#EAE4F7] rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD]">
+                        <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#9188BE]">
+                          Who can see this post?
+                        </div>
 
-              {/* Card Expanded Comments Section */}
-              {expandedPosts[post.id] && (
-                <div className="mt-4 border-t border-[#EAE4F7] pt-4 space-y-4">
-                  <h5 className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
-                    Comments
-                  </h5>
-
-                  {loadingCommentsByPost[post.id] ? (
-                    <div className="flex items-center gap-2 py-3 text-[#5851A4] text-xs">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4B63D2]" />
-                      <span>Loading discussion comments...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
-                      {!commentsByPost[post.id] ||
-                      commentsByPost[post.id].length === 0 ? (
-                        <p className="text-[#5851A4] text-xs italic py-2">
-                          No comments yet. Start the conversation!
-                        </p>
-                      ) : (
-                        commentsByPost[post.id].map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <Link
-                                to={
-                                  comment.author_id
-                                    ? `/profile/${comment.author_id}`
-                                    : "/profile"
-                                }
-                                className="font-bold text-[#4B63D2] hover:underline"
-                              >
-                                {getEmailPrefix(comment.author?.email)}
-                              </Link>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[#9188BE] text-[10px]">
-                                  {formatTimeAgo(comment.created_at)}
-                                </span>
-                                {(isSuperAdminOrAdmin ||
-                                  comment.author_id === currentUser?.id ||
-                                  post.author_id === currentUser?.id) && (
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteComment(post.id, comment.id)
-                                    }
-                                    title="Delete comment"
-                                    className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </div>
+                        {/* Option 1: For Everyone */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewPostVisibility("PUBLIC");
+                            setShowVisibilityDropdown(false);
+                          }}
+                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                            newPostVisibility === "PUBLIC" ? "bg-[#FAF9FD]" : ""
+                          }`}
+                        >
+                          <div className="p-2 rounded-xl bg-blue-50 text-[#4B63D2] shrink-0 mt-0.5">
+                            <Globe className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#1E2746]">
+                                For Everyone
+                              </span>
+                              {newPostVisibility === "PUBLIC" && (
+                                <Check className="w-3.5 h-3.5 text-[#4B63D2]" />
+                              )}
                             </div>
-                            <p className="text-[#1E2746] leading-relaxed font-medium">
-                              {comment.content}
+                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
+                              Visible across the entire campus community
                             </p>
                           </div>
-                        ))
-                      )}
-                    </div>
+                        </button>
+
+                        {/* Option 2: Students Only */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewPostVisibility("STUDENTS_ONLY");
+                            setShowVisibilityDropdown(false);
+                          }}
+                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                            newPostVisibility === "STUDENTS_ONLY"
+                              ? "bg-[#FAF9FD]"
+                              : ""
+                          }`}
+                        >
+                          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
+                            <GraduationCap className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#1E2746]">
+                                For Students Only
+                              </span>
+                              {newPostVisibility === "STUDENTS_ONLY" && (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
+                              Visible only to enrolled students
+                            </p>
+                          </div>
+                        </button>
+
+                        {/* Option 3: Students & Alumni */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewPostVisibility("STUDENTS_AND_ALUMNI");
+                            setShowVisibilityDropdown(false);
+                          }}
+                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                            newPostVisibility === "STUDENTS_AND_ALUMNI"
+                              ? "bg-[#FAF9FD]"
+                              : ""
+                          }`}
+                        >
+                          <div className="p-2 rounded-xl bg-purple-50 text-purple-600 shrink-0 mt-0.5">
+                            <UsersIcon className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#1E2746]">
+                                For Students & Alumni
+                              </span>
+                              {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
+                                <Check className="w-3.5 h-3.5 text-purple-600" />
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
+                              For campus career networking & alumni discussions
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    </>
                   )}
+                </div>
+              </div>
 
-                  {/* Add Comment Form */}
-                  <form
-                    onSubmit={(e) => handleAddComment(e, post.id)}
-                    className="flex items-center gap-2 mt-2"
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={
+                  submittingPost ||
+                  (!newPostContent.trim() &&
+                    !externalLinkUrl.trim() &&
+                    !selectedImage &&
+                    !attachedDoc)
+                }
+                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] disabled:opacity-50 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#4B63D2]/25 cursor-pointer active:scale-95"
+              >
+                {submittingPost ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD21A]" />
+                    <span>Sharing Post...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Share Post</span>
+                    <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Feed Filter Chips Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setActiveFilter("ALL")}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeFilter === "ALL"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
+              }`}
+            >
+              All Posts
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("DOCS")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeFilter === "DOCS"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "bg-white text-emerald-700 border border-emerald-200/80 hover:bg-emerald-50"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
+              <span>PDF & Notes</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("MEDIA")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeFilter === "MEDIA"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              <Image className="w-3.5 h-3.5 text-[#4B63D2]" />
+              <span>Photos</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("STUDENTS_ONLY")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeFilter === "STUDENTS_ONLY"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Students Only</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFilter("STUDENTS_AND_ALUMNI")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                activeFilter === "STUDENTS_AND_ALUMNI"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "bg-white text-purple-700 border border-purple-200/80 hover:bg-purple-50"
+              }`}
+            >
+              <UsersIcon className="w-3.5 h-3.5 text-purple-600" />
+              <span>Students & Alumni</span>
+            </button>
+          </div>
+
+          {/* Main Feed Posts List */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-white rounded-3xl border border-[#EAE4F7]">
+              <Loader2 className="w-8 h-8 text-[#4B63D2] animate-spin" />
+              <p className="text-[#5851A4] text-sm font-semibold">
+                Gathering latest campus discussions...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="bg-rose-50 border border-rose-200 rounded-3xl p-6 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+              <h3 className="text-[#1E2746] font-bold text-base">
+                Error Loading Feed
+              </h3>
+              <p className="text-[#5851A4] text-sm max-w-md mx-auto font-medium">
+                {error}
+              </p>
+              <button
+                onClick={() => fetchFeed(true)}
+                className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-4 shadow-sm">
+              <MessageSquare className="w-12 h-12 text-[#B9B1D9] mx-auto" />
+              <h3 className="text-[#1E2746] font-bold text-lg">No posts yet</h3>
+              <p className="text-[#5851A4] text-sm max-w-md mx-auto font-medium">
+                The campus discussions are quiet. Be the first to share an update,
+                study material, or project demo with your peers!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {posts
+                .filter((post) => {
+                  if (activeFilter === "ALL") return true;
+                  if (activeFilter === "DOCS")
+                    return isDocumentUrl(post.image_url);
+                  if (activeFilter === "MEDIA")
+                    return post.image_url && !isDocumentUrl(post.image_url);
+                  if (activeFilter === "STUDENTS_ONLY")
+                    return post.visibility === "STUDENTS_ONLY";
+                  if (activeFilter === "STUDENTS_AND_ALUMNI")
+                    return post.visibility === "STUDENTS_AND_ALUMNI";
+                  return true;
+                })
+                .map((post) => (
+                  <article
+                    key={post.id}
+                    id={`post-${post.id}`}
+                    className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 hover:shadow-md shadow-sm"
                   >
-                    <input
-                      type="text"
-                      placeholder="Write a comment..."
-                      value={commentInputs[post.id] || ""}
-                      onChange={(e) =>
-                        setCommentInputs((prev) => ({
-                          ...prev,
-                          [post.id]: e.target.value,
-                        }))
-                      }
-                      disabled={submittingCommentByPost[post.id]}
-                      className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-all"
-                    />
+                    {/* Card Header: Author Profile Info */}
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        to={
+                          post.author?.id
+                            ? `/profile/${post.author.id}`
+                            : "/profile"
+                        }
+                        className="flex items-center gap-3 group/author cursor-pointer"
+                      >
+                        {getMediaUrl(post.author?.profile?.profile_picture) ? (
+                          <img
+                            src={getMediaUrl(
+                              post.author?.profile?.profile_picture
+                            )}
+                            alt="Author Avatar"
+                            className="h-11 w-11 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
+                          />
+                        ) : (
+                          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
+                            {getInitials(post.author?.email)}
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-black text-[#1E2746] group-hover/author:text-[#4B63D2] transition-colors flex items-center gap-1.5">
+                              <span>
+                                {post.author?.profile?.first_name ||
+                                post.author?.profile?.last_name
+                                  ? `${
+                                      post.author.profile.first_name || ""
+                                    } ${
+                                      post.author.profile.last_name || ""
+                                    }`.trim()
+                                  : getEmailPrefix(post.author?.email)}
+                              </span>
+                              {hasInfinityBadge(post.author?.email) && (
+                                <img
+                                  src="/infinity-badge.png"
+                                  className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
+                                  alt="Infinity Badge"
+                                  title="Verified Campus Distinction / Leadership Position"
+                                />
+                              )}
+                            </h4>
+                            <span
+                              className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                post.author?.email?.includes("alumni")
+                                  ? "bg-purple-50 border border-purple-200 text-purple-700"
+                                  : post.author?.email?.includes("prof")
+                                  ? "bg-blue-50 border border-blue-200 text-blue-700"
+                                  : "bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2]"
+                              }`}
+                            >
+                              {post.author?.email?.includes("alumni")
+                                ? "Alumni"
+                                : post.author?.email?.includes("prof")
+                                ? "Faculty"
+                                : "Student"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-xs text-[#5851A4] font-semibold">
+                              {formatTimeAgo(post.created_at)}
+                            </p>
+                            <span className="text-[#C8B6E2] text-[10px]">•</span>
+                            {getVisibilityBadge(post.visibility)}
+                          </div>
+                        </div>
+                      </Link>
+
+                      {/* Top Action Buttons (Share & Delete) */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleSharePost(post)}
+                          title="Copy link to post"
+                          className="p-2 rounded-xl text-[#9188BE] hover:text-[#4B63D2] hover:bg-[#FAF9FD] transition-all cursor-pointer relative"
+                        >
+                          {copiedPostId === post.id ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          ) : (
+                            <Share2 className="w-4 h-4" />
+                          )}
+                          {copiedPostId === post.id && (
+                            <span className="absolute -top-7 right-0 bg-[#1E2746] text-white text-[10px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap shadow-md">
+                              Link Copied!
+                            </span>
+                          )}
+                        </button>
+
+                        {(isSuperAdminOrAdmin ||
+                          post.author_id === currentUser?.id) && (
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            title={
+                              isSuperAdmin
+                                ? "Super Admin: Permanently delete post"
+                                : isSuperAdminOrAdmin &&
+                                  post.author_id !== currentUser?.id
+                                ? "Admin: Remove post"
+                                : "Delete your post"
+                            }
+                            className="p-2 rounded-xl text-[#9188BE] hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Body: Post Text Content with clickable link rendering */}
+                    <div className="text-[#1E2746] text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium pt-1">
+                      {renderContentWithLinks(post.content)}
+                    </div>
+
+                    {/* Card Body: Attachment (Image, PDF/DOCX Document) */}
+                    {post.image_url &&
+                      (isDocumentUrl(post.image_url) ? (
+                        <div className="my-3 p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all shadow-xs">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-12 h-12 rounded-2xl bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider shadow-xs">
+                              {getFileExtension(post.image_url) === "PDF" ? (
+                                <FileText className="w-6 h-6 text-rose-500" />
+                              ) : (
+                                <FileSpreadsheet className="w-6 h-6 text-[#4B63D2]" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-bold text-[#1E2746] truncate">
+                                {getFileName(post.image_url)}
+                              </p>
+                              <span className="text-[11px] font-semibold text-[#5851A4]">
+                                Verified Document Attachment •{" "}
+                                {getFileExtension(post.image_url)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                            {/* In-app Preview Button for PDFs */}
+                            {getFileExtension(post.image_url) === "PDF" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActivePdfModalUrl({
+                                    url: getMediaUrl(post.image_url) || "",
+                                    name: getFileName(post.image_url || ""),
+                                  })
+                                }
+                                className="px-3.5 py-2 bg-white hover:bg-[#FAF9FD] text-[#4B63D2] border border-[#D5CBEE] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Preview</span>
+                              </button>
+                            )}
+
+                            {/* Direct Download/View in Tab Button */}
+                            <a
+                              href={getMediaUrl(post.image_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-md shadow-[#4B63D2]/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5 text-[#FFD21A]" />
+                              <span>Download</span>
+                            </a>
+                          </div>
+                        </div>
+                      ) : !failedImages[post.id] ? (
+                        <div
+                          onClick={() =>
+                            setActiveLightboxImage(
+                              getMediaUrl(post.image_url) ?? null
+                            )
+                          }
+                          className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
+                        >
+                          <img
+                            src={getMediaUrl(post.image_url)}
+                            alt="Post attachment"
+                            className="w-auto max-w-full max-h-[500px] object-contain rounded-xl shadow-xs"
+                            loading="lazy"
+                            onError={() => {
+                              setFailedImages((prev) => ({
+                                ...prev,
+                                [post.id]: true,
+                              }));
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center pointer-events-none">
+                            <span className="opacity-0 group-hover:opacity-100 bg-[#1E2746]/90 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
+                              <Maximize2 className="w-3.5 h-3.5 text-[#FFD21A]" />{" "}
+                              Click to view full image
+                            </span>
+                          </div>
+                        </div>
+                      ) : null)}
+
+                    {/* Card Actions: Likes and Comments triggers */}
+                    <div className="flex items-center justify-between border-t border-[#EAE4F7] pt-3.5 text-xs font-semibold">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() =>
+                            handleLikeToggle(post.id, post.is_liked)
+                          }
+                          className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
+                            post.is_liked
+                              ? "text-rose-500 font-bold bg-rose-50"
+                              : "text-[#5851A4] hover:text-[#1E2746]"
+                          }`}
+                        >
+                          <Heart
+                            className={`w-4 h-4 ${
+                              post.is_liked
+                                ? "fill-rose-500 text-rose-500"
+                                : ""
+                            }`}
+                          />
+                          <span>
+                            {post.likes_count}{" "}
+                            {post.likes_count === 1 ? "Like" : "Likes"}
+                          </span>
+                        </button>
+
+                        <button
+                          onClick={() => toggleComments(post.id)}
+                          className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
+                            expandedPosts[post.id]
+                              ? "text-[#4B63D2] font-bold bg-[#4B63D2]/10"
+                              : "text-[#5851A4] hover:text-[#1E2746]"
+                          }`}
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span>
+                            {post.comments_count}{" "}
+                            {post.comments_count === 1 ? "Comment" : "Comments"}
+                          </span>
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => handleSharePost(post)}
+                        className="flex items-center gap-1 text-[#5851A4] hover:text-[#4B63D2] font-bold py-1.5 px-2.5 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>Share</span>
+                      </button>
+                    </div>
+
+                    {/* Card Expanded Comments Section */}
+                    {expandedPosts[post.id] && (
+                      <div className="mt-4 border-t border-[#EAE4F7] pt-4 space-y-3.5 animate-in fade-in duration-200">
+                        <h5 className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
+                          Discussion Comments
+                        </h5>
+
+                        {loadingCommentsByPost[post.id] ? (
+                          <div className="flex items-center gap-2 py-3 text-[#5851A4] text-xs">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4B63D2]" />
+                            <span>Loading discussion comments...</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                            {!commentsByPost[post.id] ||
+                            commentsByPost[post.id].length === 0 ? (
+                              <p className="text-[#5851A4] text-xs italic py-2">
+                                No comments yet. Be the first to share your thoughts!
+                              </p>
+                            ) : (
+                              commentsByPost[post.id].map((comment) => (
+                                <div
+                                  key={comment.id}
+                                  className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <Link
+                                      to={
+                                        comment.author_id
+                                          ? `/profile/${comment.author_id}`
+                                          : "/profile"
+                                      }
+                                      className="font-black text-[#4B63D2] hover:underline"
+                                    >
+                                      {getEmailPrefix(comment.author?.email)}
+                                    </Link>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[#9188BE] text-[10px] font-medium">
+                                        {formatTimeAgo(comment.created_at)}
+                                      </span>
+                                      {(isSuperAdminOrAdmin ||
+                                        comment.author_id ===
+                                          currentUser?.id ||
+                                        post.author_id === currentUser?.id) && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteComment(
+                                              post.id,
+                                              comment.id
+                                            )
+                                          }
+                                          title="Delete comment"
+                                          className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5 cursor-pointer"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="text-[#1E2746] leading-relaxed font-medium">
+                                    {comment.content}
+                                  </p>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+
+                        {/* Add Comment Form */}
+                        <form
+                          onSubmit={(e) => handleAddComment(e, post.id)}
+                          className="flex items-center gap-2 pt-1"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Write a supportive comment or answer..."
+                            value={commentInputs[post.id] || ""}
+                            onChange={(e) =>
+                              setCommentInputs((prev) => ({
+                                ...prev,
+                                [post.id]: e.target.value,
+                              }))
+                            }
+                            disabled={submittingCommentByPost[post.id]}
+                            className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-all font-medium"
+                          />
+                          <button
+                            type="submit"
+                            disabled={
+                              submittingCommentByPost[post.id] ||
+                              !commentInputs[post.id]?.trim()
+                            }
+                            className="p-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#4B63D2]/20 cursor-pointer active:scale-95"
+                          >
+                            {submittingCommentByPost[post.id] ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                            )}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </article>
+                ))}
+
+              {/* Observer Sentinel Element for Infinite Scroll */}
+              {hasMore && (
+                <div ref={observerTarget} className="flex justify-center py-6">
+                  {loadingMore ? (
+                    <div className="flex items-center gap-2 text-[#4B63D2] text-xs font-bold">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Loading more discussions...</span>
+                    </div>
+                  ) : (
                     <button
-                      type="submit"
-                      disabled={
-                        submittingCommentByPost[post.id] ||
-                        !commentInputs[post.id]?.trim()
-                      }
-                      className="p-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center shrink-0 shadow-sm"
+                      onClick={() => fetchFeed(false)}
+                      className="px-5 py-2.5 bg-white border border-[#EAE4F7] hover:bg-[#FAF9FD] rounded-xl text-xs text-[#5851A4] font-bold transition-all hover:text-[#1E2746] shadow-sm cursor-pointer"
                     >
-                      {submittingCommentByPost[post.id] ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Send className="w-3.5 h-3.5" />
-                      )}
+                      Load More Posts
                     </button>
-                  </form>
+                  )}
                 </div>
               )}
-            </article>
-          ))}
 
-          {/* Observer Sentinel Element for Infinite Scroll */}
-          {hasMore && (
-            <div ref={observerTarget} className="flex justify-center py-6">
-              {loadingMore ? (
-                <div className="flex items-center gap-2 text-[#4B63D2] text-sm">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Loading more discussions...</span>
+              {!hasMore && posts.length > 0 && (
+                <div className="text-center py-6 text-xs text-[#5851A4] font-semibold">
+                  🎉 You're all caught up with the campus feed!
                 </div>
-              ) : (
-                <button
-                  onClick={() => fetchFeed(false)}
-                  className="px-4 py-2 bg-white border border-[#EAE4F7] hover:bg-[#FAF9FD] rounded-xl text-xs text-[#5851A4] font-bold transition-all hover:text-[#1E2746] shadow-sm"
-                >
-                  Load More Posts
-                </button>
               )}
             </div>
           )}
-
-          {!hasMore && posts.length > 0 && (
-            <div className="text-center py-6 text-xs text-slate-600 font-medium">
-              🎉 You've reached the end of the feed!
-            </div>
-          )}
-        </div>
-      )}
         </div>
 
         {/* Right Column: Ties Recommendations Sidebar */}
@@ -1346,6 +1455,61 @@ export default function Feed() {
       </div>
 
       {/* ========================================================================= */}
+      {/* IN-APP PDF VIEWER MODAL                                                   */}
+      {/* ========================================================================= */}
+      {activePdfModalUrl && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-[#EAE4F7]">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-[#EAE4F7] flex items-center justify-between bg-[#FAF9FD]">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black text-[#1E2746] truncate">
+                    {activePdfModalUrl.name}
+                  </h3>
+                  <p className="text-[11px] text-[#5851A4] font-semibold">
+                    Document Viewer
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={activePdfModalUrl.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={activePdfModalUrl.name}
+                  className="px-3.5 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setActivePdfModalUrl(null)}
+                  className="p-2 text-[#9188BE] hover:text-[#1E2746] hover:bg-[#EAE4F7] rounded-xl transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content: Embedded PDF iframe */}
+            <div className="flex-1 w-full bg-slate-100 relative">
+              <iframe
+                src={activePdfModalUrl.url}
+                title={activePdfModalUrl.name}
+                className="w-full h-full border-none"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* FULL-SIZE PHOTO LIGHTBOX MODAL                                             */}
       {/* ========================================================================= */}
       {activeLightboxImage && (
@@ -1355,7 +1519,7 @@ export default function Feed() {
         >
           <button
             onClick={() => setActiveLightboxImage(null)}
-            className="absolute top-4 right-4 text-white hover:text-rose-400 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer z-10"
+            className="absolute top-4 right-4 text-white hover:text-rose-400 p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer z-10"
           >
             <X className="w-6 h-6" />
           </button>
@@ -1369,5 +1533,3 @@ export default function Feed() {
     </div>
   );
 }
-
-
