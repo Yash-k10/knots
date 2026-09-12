@@ -46,15 +46,30 @@ class ConnectionService:
             requester_id, addressee_id
         )
         if existing:
-            raise ValueError("Connection or request already exists")
-
-        conn = await self.repository.create(
-            {
-                "requester_id": requester_id,
-                "addressee_id": addressee_id,
-                "status": ConnectionStatus.PENDING,
-            }
-        )
+            if existing.status == ConnectionStatus.PENDING and existing.addressee_id == requester_id:
+                # The other party already sent a request; accepting creates mutual connection
+                return await self.accept_connection(existing.id, requester_id)
+            elif existing.status == ConnectionStatus.REJECTED:
+                # Reopen previously rejected connection request
+                await self.repository.update(
+                    existing,
+                    {
+                        "requester_id": requester_id,
+                        "addressee_id": addressee_id,
+                        "status": ConnectionStatus.PENDING,
+                    },
+                )
+                conn = existing
+            else:
+                raise ValueError("Connection or request already exists")
+        else:
+            conn = await self.repository.create(
+                {
+                    "requester_id": requester_id,
+                    "addressee_id": addressee_id,
+                    "status": ConnectionStatus.PENDING,
+                }
+            )
 
         try:
             from app.notifications.services.notification import NotificationService
