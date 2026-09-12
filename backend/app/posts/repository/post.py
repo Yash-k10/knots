@@ -55,8 +55,24 @@ class PostRepository(BaseRepository[Post]):
         # Admin / Super Admin can view all posts
         if role_str in ("admin", "super admin", "superadmin"):
             pass
-        elif role_str == "student":
-            # Student sees PUBLIC, STUDENTS_ONLY, STUDENTS_AND_ALUMNI, or their own posts
+        elif role_str == "alumni":
+            # Alumni sees PUBLIC, STUDENTS_AND_ALUMNI, or their own posts
+            allowed_visibilities = [
+                PostVisibility.PUBLIC,
+                PostVisibility.STUDENTS_AND_ALUMNI,
+                PostVisibility.STUDENTS_ONLY,
+            ]
+            if current_user_id:
+                stmt = stmt.where(
+                    or_(
+                        Post.visibility.in_(allowed_visibilities),
+                        Post.author_id == current_user_id,
+                    )
+                )
+            else:
+                stmt = stmt.where(Post.visibility.in_(allowed_visibilities))
+        else:
+            # Students, Faculty, and all campus members see all campus posts (PUBLIC, STUDENTS_ONLY, STUDENTS_AND_ALUMNI)
             allowed_visibilities = [
                 PostVisibility.PUBLIC,
                 PostVisibility.STUDENTS_ONLY,
@@ -71,32 +87,6 @@ class PostRepository(BaseRepository[Post]):
                 )
             else:
                 stmt = stmt.where(Post.visibility.in_(allowed_visibilities))
-        elif role_str == "alumni":
-            # Alumni sees PUBLIC, STUDENTS_AND_ALUMNI, or their own posts
-            allowed_visibilities = [
-                PostVisibility.PUBLIC,
-                PostVisibility.STUDENTS_AND_ALUMNI,
-            ]
-            if current_user_id:
-                stmt = stmt.where(
-                    or_(
-                        Post.visibility.in_(allowed_visibilities),
-                        Post.author_id == current_user_id,
-                    )
-                )
-            else:
-                stmt = stmt.where(Post.visibility.in_(allowed_visibilities))
-        else:
-            # Faculty, Recruiter, guest, or others see PUBLIC or their own posts
-            if current_user_id:
-                stmt = stmt.where(
-                    or_(
-                        Post.visibility == PostVisibility.PUBLIC,
-                        Post.author_id == current_user_id,
-                    )
-                )
-            else:
-                stmt = stmt.where(Post.visibility == PostVisibility.PUBLIC)
 
         result = await self.db.execute(stmt)
         return list(result.scalars().unique().all())

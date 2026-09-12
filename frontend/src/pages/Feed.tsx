@@ -412,7 +412,7 @@ export default function Feed() {
             ...post,
             is_liked: !isCurrentlyLiked,
             likes_count: isCurrentlyLiked
-              ? post.likes_count - 1
+              ? Math.max(0, post.likes_count - 1)
               : post.likes_count + 1,
           };
         }
@@ -426,8 +426,12 @@ export default function Feed() {
       } else {
         await apiRequest(`/posts/${postId}/like`, { method: "POST" });
       }
-    } catch (err) {
-      // Revert if API fails
+    } catch (err: any) {
+      // If error is 409 (already liked) or 404 (already unliked), keep the optimistic state
+      if (err?.status === 409 || err?.status === 404) {
+        return;
+      }
+      // Revert if API fails unexpectedly
       setPosts((prevPosts) =>
         prevPosts.map((post) => {
           if (post.id === postId) {
@@ -436,13 +440,12 @@ export default function Feed() {
               is_liked: isCurrentlyLiked,
               likes_count: isCurrentlyLiked
                 ? post.likes_count + 1
-                : post.likes_count - 1,
+                : Math.max(0, post.likes_count - 1),
             };
           }
           return post;
         }),
       );
-      alert("Could not update like. Please try again.");
     }
   };
 
