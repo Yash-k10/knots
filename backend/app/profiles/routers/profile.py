@@ -27,11 +27,11 @@ from app.users.models.user import User
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
 UPLOAD_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "static", "profiles")
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "profiles")
 )
 CERT_UPLOAD_DIR = os.path.abspath(
     os.path.join(
-        os.path.dirname(__file__), "..", "..", "static", "certificates"
+        os.path.dirname(__file__), "..", "..", "..", "static", "certificates"
     )
 )
 
