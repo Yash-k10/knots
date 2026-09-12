@@ -202,7 +202,7 @@ async def websocket_chat_endpoint(
                     {"type": "error", "message": f"Unknown event type: '{event_type}'"}
                 )
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, ConnectionResetError, asyncio.CancelledError):
         manager.disconnect(websocket, user_id)
         logger.info(f"WebSocket disconnected for user_id={user_id}")
     except Exception as e:

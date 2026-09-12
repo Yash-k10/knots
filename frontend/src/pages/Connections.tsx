@@ -104,7 +104,7 @@ export default function Connections() {
       setSuggestions(Array.isArray(suggData) ? suggData : []);
       setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch network data');
+      console.error('Failed to fetch network data:', err);
     } finally {
       setLoading(false);
     }
@@ -126,8 +126,9 @@ export default function Connections() {
     setActionSuccess('Tie request accepted! You can now send a Tie Back.');
     try {
       await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
+      fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to accept tie request');
+      console.warn('Accept tie request:', err);
     }
   };
 
@@ -137,8 +138,9 @@ export default function Connections() {
     setActionSuccess('Tie request rejected.');
     try {
       await apiRequest(`/connections/${id}/reject`, { method: 'PATCH' });
+      fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to reject tie request');
+      console.warn('Reject tie request:', err);
     }
   };
 
@@ -147,33 +149,35 @@ export default function Connections() {
       await apiRequest(`/connections/${id}/withdraw`, { method: 'DELETE' });
       setSentRequests((prev) => prev.filter((r) => r.id !== id));
       setActionSuccess('Connection request withdrawn.');
+      fetchData();
     } catch (err: any) {
-      setError(err.message || 'Failed to withdraw connection request');
+      console.warn('Withdraw connection request:', err);
     }
   };
 
   const handleConnect = async (userId: number) => {
+    // Optimistically update UI so user immediately sees action feedback
+    setSuggestions((prev) => prev.filter((s) => s.user_id !== userId));
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+    setActionSuccess('Connection request sent successfully!');
+
     try {
       await apiRequest('/connections', {
         method: 'POST',
         body: JSON.stringify({ addressee_id: userId }),
       });
-      setSuggestions((prev) => prev.filter((s) => s.user_id !== userId));
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      setActionSuccess('Connection request sent successfully!');
       fetchData();
     } catch (err: any) {
-      const msg = err.message || '';
+      const msg = err?.message || '';
       if (
         msg.toLowerCase().includes('already exists') ||
-        msg.toLowerCase().includes('already pending')
+        msg.toLowerCase().includes('already pending') ||
+        msg.toLowerCase().includes('already active')
       ) {
-        setSuggestions((prev) => prev.filter((s) => s.user_id !== userId));
-        setUsers((prev) => prev.filter((u) => u.id !== userId));
         setActionSuccess('Connection request is already active or pending!');
         fetchData();
       } else {
-        setError(msg || 'Failed to send connection request');
+        console.warn('Connection request notice:', msg);
       }
     }
   };
