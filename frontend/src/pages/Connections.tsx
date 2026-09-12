@@ -123,7 +123,7 @@ export default function Connections() {
 
   const handleAccept = async (id: number) => {
     setAcceptedRequestIds((prev) => ({ ...prev, [id]: true }));
-    setActionSuccess('Tie request accepted! You can now send a Tie Back.');
+    setActionSuccess('Tie request accepted! You are now connected.');
     try {
       await apiRequest(`/connections/${id}/accept`, { method: 'PATCH' });
       fetchData();
