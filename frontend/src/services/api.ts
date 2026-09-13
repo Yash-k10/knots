@@ -1,4 +1,13 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const DEFAULT_API_URL = isLocal
+  ? "http://localhost:8000/api/v1"
+  : "https://knots-backend-6snz.onrender.com/api/v1";
+
+const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 export const BACKEND_URL = API_URL.replace(/\/api\/v1\/?$/, "");
 
 export function getMediaUrl(path: string | null | undefined): string | undefined {

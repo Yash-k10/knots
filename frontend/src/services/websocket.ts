@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "./api";
 import { Message } from "./messaging";
 
 export interface NotificationData {
@@ -59,9 +60,9 @@ export class MessagingWebSocket {
       return;
     }
 
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = import.meta.env.VITE_API_HOST || "localhost:8000";
-    const wsUrl = `${wsProtocol}//${host}/api/v1/ws/chat?token=${encodeURIComponent(this.token)}`;
+    const wsProtocol = BACKEND_URL.startsWith("https") ? "wss:" : "ws:";
+    const cleanHost = BACKEND_URL.replace(/^https?:\/\//, "");
+    const wsUrl = `${wsProtocol}//${cleanHost}/api/v1/ws/chat?token=${encodeURIComponent(this.token)}`;
 
     try {
       this.socket = new WebSocket(wsUrl);
