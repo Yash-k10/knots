@@ -408,8 +408,14 @@ export default function Events() {
           role?: { name: string };
         }>("/users/me");
         setCurrentUser(data);
+        const rName = data.role?.name?.toLowerCase().trim() || "";
+        if (rName === "student" || rName === "") {
+          // Initialize all clubs as joined for students
+          setJoinedClubIds(new Set([1, 2, 3, 4, 5, 6, 7]));
+        }
       } catch (err) {
-        // Fallback
+        // Fallback default
+        setJoinedClubIds(new Set([1, 2, 3, 4, 5, 6, 7]));
       }
     };
     fetchUser();
@@ -430,6 +436,12 @@ export default function Events() {
               }
             });
             return merged;
+          });
+          // Also add any new club IDs to joined set for students
+          setJoinedClubIds((prev) => {
+            const next = new Set(prev);
+            liveClubs.forEach((c) => next.add(c.id));
+            return next;
           });
         }
       } catch (err) {

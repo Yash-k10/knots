@@ -25,6 +25,20 @@ ROLES_DATA = {
         "create_events",
         "manage_clubs",
     ],
+    "Central Admin": [
+        "admin_access",
+        "read_posts",
+        "create_posts",
+        "delete_posts",
+        "delete_any_post",
+        "delete_any_comment",
+        "moderate_content",
+        "manage_users",
+        "manage_roles",
+        "post_jobs",
+        "create_events",
+        "manage_clubs",
+    ],
     "Admin": [
         "admin_access",
         "read_posts",
@@ -51,17 +65,60 @@ ROLES_DATA = {
         "comment_posts",
         "like_posts",
         "connect_users",
-        "post_jobs",
     ],
-    "Recruiter": ["read_posts", "post_jobs"],
     "Faculty": [
         "read_posts",
         "create_posts",
         "comment_posts",
         "like_posts",
         "connect_users",
+    ],
+    "HOD": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "connect_users",
+        "manage_department",
+    ],
+    "Controller": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "delete_posts",
         "create_events",
+        "manage_applications",
+    ],
+    "TPO": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
         "post_jobs",
+        "manage_applications",
+        "manage_placements",
+    ],
+    "Dean": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "connect_users",
+    ],
+    "Principal": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "connect_users",
+    ],
+    "CEO": [
+        "read_posts",
+        "create_posts",
+        "comment_posts",
+        "like_posts",
+        "connect_users",
     ],
     "Management": [
         "admin_access",
@@ -75,15 +132,6 @@ ROLES_DATA = {
         "post_jobs",
         "create_events",
         "manage_clubs",
-    ],
-    "Controller": [
-        "read_posts",
-        "create_posts",
-        "comment_posts",
-        "like_posts",
-        "create_events",
-        "manage_clubs",
-        "post_jobs",
     ],
 }
 
@@ -200,9 +248,230 @@ async def promote_user_to_superadmin(email: str, password: str = "password123"):
             user.is_active = True
             user.is_verified = True
             await db.commit()
-            print(
-                f"Successfully promoted existing user '{user.email}' (ID: {user.id}) to Super Admin!"
-            )
+DEMO_USERS = [
+    {
+        "email": "student.demo@sbjit.edu.in",
+        "role": "Student",
+        "first_name": "Aarav",
+        "last_name": "Sharma",
+        "bio": "Third-year Computer Science student passionate about full-stack engineering and cloud systems.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "student@sbjit.edu.in",
+        "role": "Student",
+        "first_name": "Aarav",
+        "last_name": "Sharma",
+        "bio": "Third-year Computer Science student passionate about full-stack engineering and cloud systems.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "faculty.demo@sbjit.edu.in",
+        "role": "Faculty",
+        "first_name": "Dr. Rajesh",
+        "last_name": "Verma",
+        "bio": "Associate Professor in CSE specializing in Distributed Systems and Network Security.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "faculty@sbjit.edu.in",
+        "role": "Faculty",
+        "first_name": "Dr. Rajesh",
+        "last_name": "Verma",
+        "bio": "Associate Professor in CSE specializing in Distributed Systems and Network Security.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "hod.demo@sbjit.edu.in",
+        "role": "HOD",
+        "first_name": "Dr. Arvind",
+        "last_name": "Sharma",
+        "bio": "Professor & Head of Department, Computer Science & Engineering.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "hod@sbjit.edu.in",
+        "role": "HOD",
+        "first_name": "Dr. Arvind",
+        "last_name": "Sharma",
+        "bio": "Professor & Head of Department, Computer Science & Engineering.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "alumni.demo@sbjit.edu.in",
+        "role": "Alumni",
+        "first_name": "Priya",
+        "last_name": "Verma",
+        "bio": "Batch of 2023 Alumna, currently Software Engineer II at Microsoft Azure Core.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "alumni@sbjit.edu.in",
+        "role": "Alumni",
+        "first_name": "Priya",
+        "last_name": "Verma",
+        "bio": "Batch of 2023 Alumna, currently Software Engineer II at Microsoft Azure Core.",
+        "department": "Computer Science",
+    },
+    {
+        "email": "controller.demo@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Sanjay",
+        "last_name": "Deshmukh",
+        "bio": "Department Controller overseeing applications pipeline, audit compliance, and campus event permissions.",
+        "department": "Administration",
+    },
+    {
+        "email": "controller@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Sanjay",
+        "last_name": "Deshmukh",
+        "bio": "Department Controller overseeing applications pipeline, audit compliance, and campus event permissions.",
+        "department": "Administration",
+    },
+    {
+        "email": "centraladmin.demo@sbjit.edu.in",
+        "role": "Central Admin",
+        "first_name": "Vikas",
+        "last_name": "Mehta",
+        "bio": "Central Platform Administrator managing institutional users, roles, and security governance.",
+        "department": "Administration",
+    },
+    {
+        "email": "admin@sbjit.edu.in",
+        "role": "Central Admin",
+        "first_name": "Vikas",
+        "last_name": "Mehta",
+        "bio": "Central Platform Administrator managing institutional users, roles, and security governance.",
+        "department": "Administration",
+    },
+    {
+        "email": "superadmin.demo@sbjit.edu.in",
+        "role": "Super Admin",
+        "first_name": "Super",
+        "last_name": "Admin",
+        "bio": "Platform Super Administrator with master controls.",
+        "department": "Administration",
+    },
+    {
+        "email": "tpo.demo@sbjit.edu.in",
+        "role": "TPO",
+        "first_name": "Prof. Aniket",
+        "last_name": "Kulkarni",
+        "bio": "Head of Training & Placement Office managing corporate recruiter drives and candidate placement pipelines.",
+        "department": "Training & Placement Cell",
+    },
+    {
+        "email": "tpo@sbjit.edu.in",
+        "role": "TPO",
+        "first_name": "Prof. Aniket",
+        "last_name": "Kulkarni",
+        "bio": "Head of Training & Placement Office managing corporate recruiter drives and candidate placement pipelines.",
+        "department": "Training & Placement Cell",
+    },
+    {
+        "email": "dean.demo@sbjit.edu.in",
+        "role": "Dean",
+        "first_name": "Dr. Meenakshi",
+        "last_name": "Rao",
+        "bio": "Dean of Academic Affairs overseeing curriculum, research grants, and departmental excellence.",
+        "department": "Academic Affairs",
+    },
+    {
+        "email": "dean@sbjit.edu.in",
+        "role": "Dean",
+        "first_name": "Dr. Meenakshi",
+        "last_name": "Rao",
+        "bio": "Dean of Academic Affairs overseeing curriculum, research grants, and departmental excellence.",
+        "department": "Academic Affairs",
+    },
+    {
+        "email": "principal.demo@sbjit.edu.in",
+        "role": "Principal",
+        "first_name": "Dr. Narendra",
+        "last_name": "Choudhary",
+        "bio": "Principal of SBJIT directing institutional governance and strategic development.",
+        "department": "Executive Leadership",
+    },
+    {
+        "email": "principal@sbjit.edu.in",
+        "role": "Principal",
+        "first_name": "Dr. Narendra",
+        "last_name": "Choudhary",
+        "bio": "Principal of SBJIT directing institutional governance and strategic development.",
+        "department": "Executive Leadership",
+    },
+    {
+        "email": "ceo.demo@sbjit.edu.in",
+        "role": "CEO",
+        "first_name": "Shri. Ramesh",
+        "last_name": "Singhania",
+        "bio": "Chief Executive Officer guiding institutional expansion, vision, and strategic campus roadmap.",
+        "department": "Board of Governors",
+    },
+    {
+        "email": "ceo@sbjit.edu.in",
+        "role": "CEO",
+        "first_name": "Shri. Ramesh",
+        "last_name": "Singhania",
+        "bio": "Chief Executive Officer guiding institutional expansion, vision, and strategic campus roadmap.",
+        "department": "Board of Governors",
+    },
+]
+
+
+async def seed_demo_users():
+    print("Seeding pre-configured Demo Accounts for all 10 roles...")
+    password = "password123"
+    async with SessionLocal() as db:
+        for item in DEMO_USERS:
+            clean_email = item["email"].strip().lower()
+            role_name = item["role"]
+
+            role_stmt = select(Role).filter(Role.name == role_name)
+            role_res = await db.execute(role_stmt)
+            role_obj = role_res.scalars().first()
+
+            if not role_obj:
+                print(f"Role {role_name} not found, creating...")
+                role_obj = Role(
+                    name=role_name, permissions=ROLES_DATA.get(role_name, [])
+                )
+                db.add(role_obj)
+                await db.flush()
+
+            user_stmt = select(User).filter(User.email.ilike(clean_email))
+            user_res = await db.execute(user_stmt)
+            existing_user = user_res.scalars().first()
+
+            if not existing_user:
+                print(f"Creating demo user: {clean_email} ({role_name})...")
+                new_user = User(
+                    email=clean_email,
+                    hashed_password=hash_password(password),
+                    role_id=role_obj.id,
+                    is_active=True,
+                    is_verified=True,
+                )
+                db.add(new_user)
+                await db.flush()
+
+                profile = Profile(
+                    user_id=new_user.id,
+                    first_name=item["first_name"],
+                    last_name=item["last_name"],
+                    bio=item["bio"],
+                    department=item["department"],
+                )
+                db.add(profile)
+            else:
+                existing_user.role_id = role_obj.id
+                existing_user.is_active = True
+                existing_user.is_verified = True
+                existing_user.hashed_password = hash_password(password)
+
+        await db.commit()
+    print("All 10 Demo Accounts seeded successfully.")
 
 
 async def main():
@@ -218,6 +487,7 @@ async def main():
     else:
         await seed_roles()
         await seed_categories()
+        await seed_demo_users()
         print("All database seeding tasks completed successfully.")
 
 

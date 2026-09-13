@@ -9,6 +9,7 @@ class UserSearchResult(BaseModel):
     last_name: Optional[str] = None
     department: Optional[str] = None
     profile_picture: Optional[str] = None
+    role_name: Optional[str] = None
 
     class Config:
         from_attributes = True

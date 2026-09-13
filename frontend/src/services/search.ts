@@ -7,6 +7,7 @@ export interface UserSearchResult {
   last_name?: string;
   department?: string;
   profile_picture?: string;
+  role_name?: string;
 }
 
 export interface PostSearchResult {

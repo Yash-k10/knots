@@ -32,11 +32,25 @@ class CommentCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
 
 
+# ── Shared Author Profile Schema ─────────────────────────────────────────────
+
+
+class AuthorProfile(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+    department: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class CommentAuthor(BaseModel):
     """Compact author info embedded in comment responses."""
 
     id: int
     email: str
+    profile: AuthorProfile | None = None
 
     class Config:
         from_attributes = True
@@ -73,15 +87,6 @@ class LikeResponse(BaseModel):
 
 
 # ── Post Response Schemas ────────────────────────────────────────────────────
-
-
-class AuthorProfile(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    profile_picture: str | None = None
-
-    class Config:
-        from_attributes = True
 
 
 class PostAuthor(BaseModel):

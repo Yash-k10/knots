@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Sparkles,
   Check,
+  ChevronLeft,
 } from "lucide-react";
 import {
   fetchConversations,
@@ -125,6 +126,73 @@ const EMOJI_CATEGORIES = [
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🎉", "💡"];
 
 type ChatFilter = "all" | "direct" | "group";
+
+export const COMMUNICATION_HIERARCHY: Record<string, string[]> = {
+  student: ["faculty", "alumni"],
+  faculty: ["student", "students", "hod", "controller", "alumni"],
+  hod: ["faculty", "controller", "alumni", "tpo", "dean"],
+  controller: ["faculty", "hod", "alumni"],
+  alumni: ["student", "students", "faculty", "controller", "tpo"],
+  tpo: [
+    "central admin",
+    "admin",
+    "super admin",
+    "superadmin",
+    "management",
+    "dean",
+    "principal",
+    "alumni",
+    "hod",
+  ],
+  dean: ["hod", "tpo", "principal", "ceo"],
+  principal: ["tpo", "dean", "ceo"],
+  ceo: ["principal"],
+  "central admin": [
+    "tpo",
+    "dean",
+    "principal",
+    "controller",
+    "hod",
+    "faculty",
+    "alumni",
+    "student",
+    "students",
+    "admin",
+    "super admin",
+    "superadmin",
+    "ceo",
+  ],
+  admin: [
+    "tpo",
+    "dean",
+    "principal",
+    "controller",
+    "hod",
+    "faculty",
+    "alumni",
+    "student",
+    "students",
+    "central admin",
+    "super admin",
+    "superadmin",
+    "ceo",
+  ],
+  "super admin": ["*"],
+  superadmin: ["*"],
+  management: ["*"],
+};
+
+export const canMessageUser = (
+  senderRole?: string,
+  recipientRole?: string,
+): boolean => {
+  if (!senderRole || !recipientRole) return false;
+  const sRole = senderRole.toLowerCase().trim();
+  const rRole = recipientRole.toLowerCase().trim();
+  const allowed = COMMUNICATION_HIERARCHY[sRole] || [];
+  if (allowed.includes("*")) return true;
+  return allowed.includes(rRole);
+};
 
 export default function Messaging() {
   const location = useLocation();
@@ -541,20 +609,25 @@ export default function Messaging() {
     });
   }, [conversations, searchQuery, chatFilter, currentUser]);
 
-  // Filtered Campus Directory in Modal
+  // Filtered Campus Directory in Modal (Strict Communication Hierarchy)
   const filteredCampusUsers = useMemo(() => {
+    const senderRole = currentUser?.role?.name || "Student";
+
     return campusUsers.filter((u) => {
       const matchesSearch = u.email
         .toLowerCase()
         .includes(userSearchQuery.toLowerCase());
-      const roleName = u.role?.name || "Member";
+      const roleName = u.role?.name || "Student";
       const matchesRole =
         selectedUserRoleFilter === "ALL" ||
         roleName.toLowerCase() === selectedUserRoleFilter.toLowerCase();
 
-      return matchesSearch && matchesRole;
+      // Enforce strict communication hierarchy for direct messaging
+      const isHierarchyPermitted = canMessageUser(senderRole, roleName);
+
+      return matchesSearch && matchesRole && isHierarchyPermitted;
     });
-  }, [campusUsers, userSearchQuery, selectedUserRoleFilter]);
+  }, [campusUsers, userSearchQuery, selectedUserRoleFilter, currentUser]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const activeConvInfo = activeConv ? getDirectChatInfo(activeConv) : null;
@@ -589,11 +662,15 @@ export default function Messaging() {
   };
 
   return (
-    <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[720px] shadow-sm">
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[calc(100vh-140px)] min-h-[580px] shadow-sm">
       {/* ========================================================================= */}
       {/* 1. SIDEBAR CONVERSATIONS LIST (WhatsApp Style)                            */}
       {/* ========================================================================= */}
-      <div className="w-84 sm:w-96 border-r border-[#EAE4F7] bg-[#FAF9FD] flex flex-col shrink-0">
+      <div
+        className={`w-full md:w-84 lg:w-96 border-r border-[#EAE4F7] bg-[#FAF9FD] flex flex-col shrink-0 ${
+          activeConvId !== null ? "hidden md:flex" : "flex"
+        }`}
+      >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-[#EAE4F7] flex justify-between items-center bg-white">
           <div className="flex items-center gap-2.5">
@@ -767,14 +844,26 @@ export default function Messaging() {
       {/* ========================================================================= */}
       {/* 2. ACTIVE CHAT THREAD WINDOW                                              */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col bg-white relative">
+      <div
+        className={`flex-1 flex flex-col bg-white relative ${
+          activeConvId === null ? "hidden md:flex" : "flex"
+        }`}
+      >
         {activeConv && activeConvInfo ? (
           <>
             {/* Chat Thread Header */}
-            <div className="h-16 border-b border-[#EAE4F7] px-6 flex items-center justify-between bg-white shadow-sm z-10">
-              <div className="flex items-center gap-3">
+            <div className="h-16 border-b border-[#EAE4F7] px-4 sm:px-6 flex items-center justify-between bg-white shadow-sm z-10">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveConvId(null)}
+                  className="md:hidden p-1.5 -ml-1 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-colors"
+                  title="Back to conversations"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
                 <div
-                  className={`h-10 w-10 rounded-2xl flex items-center justify-center font-bold text-xs shadow-sm ${
+                  className={`h-10 w-10 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 shadow-sm ${
                     activeConvInfo.isGroup
                       ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
                       : "bg-[#EAE4F7] text-[#4B63D2] border border-[#D5CBEE]"
@@ -786,26 +875,26 @@ export default function Messaging() {
                     activeConvInfo.initials
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-black text-[#1E2746] capitalize">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <h4 className="text-xs sm:text-sm font-black text-[#1E2746] capitalize truncate">
                       {activeConvInfo.title}
                     </h4>
                     <span
-                      className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getRoleBadgeStyle(
+                      className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0 ${getRoleBadgeStyle(
                         activeConvInfo.role,
                       )}`}
                     >
                       {activeConvInfo.role}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#5851A4] font-medium truncate max-w-sm">
+                  <p className="text-[10px] sm:text-[11px] text-[#5851A4] font-medium truncate max-w-[180px] sm:max-w-sm">
                     {activeConvInfo.subtitle}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Active
@@ -1050,6 +1139,12 @@ export default function Messaging() {
                 placeholder={`Message ${activeConvInfo.title}...`}
                 value={inputContent}
                 onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
                 className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
               />
 

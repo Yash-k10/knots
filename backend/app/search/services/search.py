@@ -57,9 +57,10 @@ class SearchService:
                         Profile.last_name.ilike(search_pattern),
                         Profile.department.ilike(search_pattern),
                         Profile.bio.ilike(search_pattern),
+                        Role.name.ilike(search_pattern),
                     ),
                 )
-                .options(selectinload(User.profile))
+                .options(selectinload(User.profile), selectinload(User.role))
                 .limit(limit)
             )
             res = await self.db.execute(stmt)
@@ -70,6 +71,7 @@ class SearchService:
                 lname = u.profile.last_name if u.profile else None
                 dept = u.profile.department if u.profile else None
                 pic = u.profile.profile_picture if u.profile else None
+                rname = u.role.name if u.role else "Student"
 
                 users_list.append(
                     UserSearchResult(
@@ -79,6 +81,7 @@ class SearchService:
                         last_name=lname,
                         department=dept,
                         profile_picture=pic,
+                        role_name=rname,
                     )
                 )
 

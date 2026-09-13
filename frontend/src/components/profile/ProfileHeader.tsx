@@ -417,41 +417,54 @@ export default function ProfileHeader({
                 )}
               </div>
 
-              {/* Display Social / Contact Info Chips if available */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs">
+              {/* Display Social / Contact Info Chips */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1.5 text-xs">
                 {profile.email && (
-                  <span className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] rounded-lg text-[#1E2746] font-medium">
-                    📧 {profile.email}
-                  </span>
+                  <a
+                    href={`mailto:${profile.email}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl text-[#1E2746] font-semibold transition hover:bg-[#F0EEFA]"
+                    title={`Email ${profile.email}`}
+                  >
+                    <span>📧</span>
+                    <span>{profile.email}</span>
+                  </a>
                 )}
                 {profile.github_url && (
                   <a
-                    href={profile.github_url}
+                    href={profile.github_url.startsWith("http") ? profile.github_url : `https://${profile.github_url}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#24292e] rounded-xl text-[#24292e] font-bold transition hover:bg-slate-100 shadow-xs"
+                    title="View GitHub Profile"
                   >
-                    GitHub ↗
-                  </a>
-                )}
-                {profile.linkedin_url && (
-                  <a
-                    href={profile.linkedin_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
-                  >
-                    LinkedIn ↗
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                    </svg>
+                    <span>GitHub ↗</span>
                   </a>
                 )}
                 {profile.leetcode_url && (
                   <a
-                    href={profile.leetcode_url}
+                    href={profile.leetcode_url.startsWith("http") ? profile.leetcode_url : `https://${profile.leetcode_url}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-2.5 py-1 bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#4B63D2] rounded-lg text-[#4B63D2] font-bold transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF9E6] border border-[#FFE8A3] hover:border-[#FFA116] rounded-xl text-[#B37400] font-bold transition hover:bg-[#FFF3CC] shadow-xs"
+                    title="View LeetCode Profile"
                   >
-                    LeetCode ↗
+                    <span className="font-mono font-black text-xs text-[#FFA116]">LC</span>
+                    <span>LeetCode ↗</span>
+                  </a>
+                )}
+                {profile.linkedin_url && (
+                  <a
+                    href={profile.linkedin_url.startsWith("http") ? profile.linkedin_url : `https://${profile.linkedin_url}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EBF3FF] border border-[#BFDBFE] hover:border-[#0A66C2] rounded-xl text-[#0A66C2] font-bold transition hover:bg-[#DBEAFE] shadow-xs"
+                    title="View LinkedIn Profile"
+                  >
+                    <span className="font-bold text-xs">in</span>
+                    <span>LinkedIn ↗</span>
                   </a>
                 )}
               </div>
@@ -468,27 +481,29 @@ export default function ProfileHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-center md:self-start mt-4 md:mt-0">
-            <button
-              onClick={handleGenerateResume}
-              disabled={isDownloadingResume}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold text-sm transition shadow-md shadow-[#4B63D2]/25 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden"
-              title="Generate and download personalized ATS-friendly Word DOCX resume"
-            >
-              {isDownloadingResume ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
-                  <span>Generating DOCX...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 text-[#FFD21A] group-hover:rotate-12 transition-transform" />
-                  <span>Generate Resume</span>
-                  <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white ml-0.5">
-                    DOCX
-                  </span>
-                </>
-              )}
-            </button>
+            {isOwnProfile && (
+              <button
+                onClick={handleGenerateResume}
+                disabled={isDownloadingResume}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold text-sm transition shadow-md shadow-[#4B63D2]/25 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group relative overflow-hidden"
+                title="Generate and download personalized ATS-friendly Word DOCX resume"
+              >
+                {isDownloadingResume ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
+                    <span>Generating DOCX...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 text-[#FFD21A] group-hover:rotate-12 transition-transform" />
+                    <span>Generate Resume</span>
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white ml-0.5">
+                      DOCX
+                    </span>
+                  </>
+                )}
+              </button>
+            )}
 
             {isOwnProfile && (
               <button

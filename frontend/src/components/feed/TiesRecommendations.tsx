@@ -33,21 +33,22 @@ export default function TiesRecommendations() {
   const [profiles, setProfiles] = useState<TieProfile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [failedAvatars, setFailedAvatars] = useState<Record<number, boolean>>({});
 
   // Fetch real suggestions and users from API
   useEffect(() => {
     const fetchTies = async () => {
       setLoading(true);
       try {
-        const [suggestionsData, _usersData, sentRequests, myConnections] =
+        const [suggestionsData, sentRequests, myConnections, me] =
           await Promise.all([
             apiRequest<any[]>("/connections/suggestions").catch(() => []),
-            apiRequest<any[]>("/users").catch(() => []),
             apiRequest<any[]>("/connections/me/sent-requests").catch(() => []),
             apiRequest<any[]>("/connections/me").catch(() => []),
+            apiRequest<any>("/users/me").catch(() => null),
           ]);
 
-
+        const myId = me?.id;
         const sentTargetIds = new Set(
           (Array.isArray(sentRequests) ? sentRequests : []).map(
             (r: any) => r.addressee_id,
@@ -55,145 +56,61 @@ export default function TiesRecommendations() {
         );
         const connectedUserIds = new Set(
           (Array.isArray(myConnections) ? myConnections : []).map(
-            (c: any) => c.requester_id || c.addressee_id,
+            (c: any) =>
+              c.requester_id === myId ? c.addressee_id : c.requester_id,
           ),
         );
 
-        // Fallback curated campus recommendations across 4 divisions with rich avatars
-        const defaultPool: TieProfile[] = [
-          {
-            id: 101,
-            email: "prof.sharma@sbjit.edu.in",
-            first_name: "Dr. Rajesh",
-            last_name: "Sharma",
-            profile_picture:
-              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-            role_name: "Faculty",
-            department: "Computer Science & Engineering",
-            position_title: "Head of CSE & AI Research",
-            has_infinity_badge: true, // Special distinguished position
-            mutual_ties: 14,
-            tie_status: "none",
-          },
-          {
-            id: 102,
-            email: "priya.verma@sbjit.edu.in",
-            first_name: "Priya",
-            last_name: "Verma",
-            profile_picture:
-              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-            role_name: "Alumni",
-            department: "AIML (Batch of 2024)",
-            position_title: "AI Engineer @ Microsoft",
-            has_infinity_badge: true, // Distinguished Alumni position
-            mutual_ties: 9,
-            tie_status: "none",
-          },
-          {
-            id: 103,
-            email: "rohit.aiml23@sbjit.edu.in",
-            first_name: "Rohit",
-            last_name: "Deshmukh",
-            profile_picture:
-              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
-            role_name: "Student",
-            department: "AIML (3rd Year)",
-            position_title: "Lead Organizer, GDSC SBJIT",
-            has_infinity_badge: true, // Student Lead position
-            mutual_ties: 12,
-            tie_status: "none",
-          },
-          {
-            id: 104,
-            email: "dean.academics@sbjit.edu.in",
-            first_name: "Dr. Ananya",
-            last_name: "Mukherjee",
-            profile_picture:
-              "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-            role_name: "Management",
-            department: "Academic Affairs",
-            position_title: "Dean of Academics & Innovation",
-            has_infinity_badge: true, // Management distinction
-            mutual_ties: 22,
-            tie_status: "none",
-          },
-          {
-            id: 105,
-            email: "tanvi.kulkarni@sbjit.edu.in",
-            first_name: "Tanvi",
-            last_name: "Kulkarni",
-            profile_picture:
-              "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-            role_name: "Student",
-            department: "Data Science (4th Year)",
-            position_title: "Open Source Contributor",
-            has_infinity_badge: false,
-            mutual_ties: 6,
-            tie_status: "none",
-          },
-          {
-            id: 106,
-            email: "prof.patil@sbjit.edu.in",
-            first_name: "Prof. Sanjay",
-            last_name: "Patil",
-            profile_picture:
-              "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-            role_name: "Faculty",
-            department: "Information Technology",
-            position_title: "Senior Assistant Professor",
-            has_infinity_badge: false,
-            mutual_ties: 5,
-            tie_status: "none",
-          },
-          {
-            id: 107,
-            email: "aman.alumni@sbjit.edu.in",
-            first_name: "Aman",
-            last_name: "Gupta",
-            profile_picture:
-              "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
-            role_name: "Alumni",
-            department: "Computer Tech (2023)",
-            position_title: "Product Lead @ FinTech",
-            has_infinity_badge: false,
-            mutual_ties: 4,
-            tie_status: "none",
-          },
-        ];
-
-        // Merge live users & suggestions
-        const merged: TieProfile[] = [...defaultPool];
+        const realProfiles: TieProfile[] = [];
 
         if (Array.isArray(suggestionsData) && suggestionsData.length > 0) {
           suggestionsData.forEach((s) => {
-            if (!merged.some((m) => m.id === s.user_id)) {
-              const emailHandle = s.email.split("@")[0];
+            const uid = s.user_id || s.id;
+            if (uid && uid !== myId && !realProfiles.some((m) => m.id === uid)) {
+              const emailHandle = s.email ? s.email.split("@")[0] : "user";
+              const rawRole = s.role_name || (s.email?.includes("prof")
+                ? "Faculty"
+                : s.email?.includes("dean") || s.email?.includes("admin")
+                ? "Management"
+                : s.email?.includes("alumni")
+                ? "Alumni"
+                : "Student");
+              const normalizedRole =
+                rawRole === "Faculty" ||
+                rawRole === "Alumni" ||
+                rawRole === "Management" ||
+                rawRole === "Admin"
+                  ? rawRole
+                  : "Student";
+
               const isLead =
                 s.score > 25 ||
-                s.email.includes("admin") ||
-                s.email.includes("prof") ||
-                s.email.includes("dean");
+                normalizedRole === "Faculty" ||
+                normalizedRole === "Management" ||
+                normalizedRole === "Alumni" ||
+                Boolean(s.has_infinity_badge);
 
-              merged.unshift({
-                id: s.user_id,
+              realProfiles.push({
+                id: uid,
                 email: s.email,
-                first_name: s.first_name || emailHandle.split(".")[0],
-                last_name: s.last_name || "",
-                profile_picture: s.profile_picture || null,
-                role_name: s.email.includes("prof")
-                  ? "Faculty"
-                  : s.email.includes("dean") || s.email.includes("admin")
-                  ? "Management"
-                  : s.email.includes("alumni")
-                  ? "Alumni"
-                  : "Student",
-                department: s.department || "Campus Network",
-                position_title: s.recommendation_reason || "Campus Member",
+                first_name:
+                  s.first_name ||
+                  s.profile?.first_name ||
+                  emailHandle.split(".")[0],
+                last_name: s.last_name || s.profile?.last_name || "",
+                profile_picture:
+                  s.profile_picture || s.profile?.profile_picture || null,
+                role_name: normalizedRole,
+                department:
+                  s.department || s.profile?.department || "Campus Network",
+                position_title:
+                  s.recommendation_reason ||
+                  (s.department ? `${s.department} Member` : "Campus Member"),
                 has_infinity_badge: isLead,
-                mutual_ties: s.mutual_count || 3,
-                tie_status: connectedUserIds.has(s.user_id)
+                mutual_ties: s.mutual_count || 0,
+                tie_status: connectedUserIds.has(uid)
                   ? "tied"
-                  : sentTargetIds.has(s.user_id)
+                  : sentTargetIds.has(uid)
                   ? "pending"
                   : "none",
               });
@@ -201,7 +118,7 @@ export default function TiesRecommendations() {
           });
         }
 
-        setProfiles(merged);
+        setProfiles(realProfiles);
       } catch (err) {
         console.error("Failed to fetch ties suggestions:", err);
       } finally {
@@ -340,10 +257,16 @@ export default function TiesRecommendations() {
                   className="flex items-center gap-3 min-w-0 flex-1 group/rec cursor-pointer"
                 >
                   <div className="relative shrink-0">
-                    {avatar ? (
+                    {avatar && !failedAvatars[profile.id] ? (
                       <img
                         src={avatar}
                         alt={displayName}
+                        onError={() =>
+                          setFailedAvatars((prev) => ({
+                            ...prev,
+                            [profile.id]: true,
+                          }))
+                        }
                         className="h-10 w-10 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/rec:border-[#4B63D2] transition-colors"
                       />
                     ) : (

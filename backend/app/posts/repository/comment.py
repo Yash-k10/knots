@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.repository import BaseRepository
 from app.posts.models.comment import Comment
+from app.users.models.user import User
 
 
 class CommentRepository(BaseRepository[Comment]):
@@ -15,10 +16,10 @@ class CommentRepository(BaseRepository[Comment]):
     async def get_by_post(
         self, post_id: int, skip: int = 0, limit: int = 50
     ) -> list[Comment]:
-        """Fetch comments for a post, oldest first, with author info."""
+        """Fetch comments for a post, oldest first, with author and profile info."""
         result = await self.db.execute(
             select(Comment)
-            .options(selectinload(Comment.author))
+            .options(selectinload(Comment.author).selectinload(User.profile))
             .filter(Comment.post_id == post_id)
             .order_by(Comment.created_at.asc())
             .offset(skip)

@@ -85,6 +85,7 @@ export interface AuthorProfile {
   first_name?: string | null;
   last_name?: string | null;
   profile_picture?: string | null;
+  department?: string | null;
 }
 
 export interface PostAuthor {
@@ -96,6 +97,7 @@ export interface PostAuthor {
 export interface CommentAuthor {
   id: number;
   email: string;
+  profile?: AuthorProfile | null;
 }
 
 export interface CommentResponse {
@@ -195,6 +197,7 @@ export default function Feed() {
   const [submittingCommentByPost, setSubmittingCommentByPost] = useState<
     Record<number, boolean>
   >({});
+  const [likingPostIds, setLikingPostIds] = useState<Record<number, boolean>>({});
 
   const observerTarget = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
@@ -472,11 +475,14 @@ export default function Feed() {
     };
   }, [hasMore, loadingMore, loading, skip]);
 
-  // Like / Unlike action
+  // Like / Unlike action with debounce protection
   const handleLikeToggle = async (
     postId: number,
     isCurrentlyLiked: boolean
   ) => {
+    if (likingPostIds[postId]) return;
+    setLikingPostIds((prev) => ({ ...prev, [postId]: true }));
+
     // Optimistic Update
     setPosts((prevPosts) =>
       prevPosts.map((post) => {
@@ -518,6 +524,8 @@ export default function Feed() {
           return post;
         })
       );
+    } finally {
+      setLikingPostIds((prev) => ({ ...prev, [postId]: false }));
     }
   };
 
@@ -1027,30 +1035,6 @@ export default function Feed() {
               <Image className="w-3.5 h-3.5 text-[#4B63D2]" />
               <span>Photos</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("STUDENTS_ONLY")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                activeFilter === "STUDENTS_ONLY"
-                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Students Only</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("STUDENTS_AND_ALUMNI")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                activeFilter === "STUDENTS_AND_ALUMNI"
-                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                  : "bg-white text-purple-700 border border-purple-200/80 hover:bg-purple-50"
-              }`}
-            >
-              <UsersIcon className="w-3.5 h-3.5 text-purple-600" />
-              <span>Students & Alumni</span>
-            </button>
           </div>
 
           {/* Real-time New Posts Discovery Banner (LinkedIn Style) */}
@@ -1194,10 +1178,18 @@ export default function Feed() {
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <p className="text-xs text-[#5851A4] font-semibold">
                               {formatTimeAgo(post.created_at)}
                             </p>
+                            {post.author?.profile?.department && (
+                              <>
+                                <span className="text-[#C8B6E2] text-[10px]">•</span>
+                                <span className="text-xs text-[#5851A4] font-medium">
+                                  {post.author.profile.department}
+                                </span>
+                              </>
+                            )}
                             <span className="text-[#C8B6E2] text-[10px]">•</span>
                             {getVisibilityBadge(post.visibility)}
                           </div>
@@ -1313,7 +1305,7 @@ export default function Feed() {
                           <img
                             src={getMediaUrl(post.image_url)}
                             alt="Post attachment"
-                            className="w-auto max-w-full max-h-[500px] object-contain rounded-xl shadow-xs"
+                            className="w-auto max-w-full max-h-[360px] sm:max-h-[400px] object-contain rounded-xl shadow-xs"
                             loading="lazy"
                             onError={() => {
                               setFailedImages((prev) => ({
@@ -1414,9 +1406,38 @@ export default function Feed() {
                                           ? `/profile/${comment.author_id}`
                                           : "/profile"
                                       }
-                                      className="font-black text-[#4B63D2] hover:underline"
+                                      className="flex items-center gap-2 font-black text-[#4B63D2] hover:underline"
                                     >
-                                      {getEmailPrefix(comment.author?.email)}
+                                      {getMediaUrl(
+                                        comment.author?.profile?.profile_picture
+                                      ) ? (
+                                        <img
+                                          src={getMediaUrl(
+                                            comment.author?.profile
+                                              ?.profile_picture
+                                          )}
+                                          alt="Commenter Avatar"
+                                          className="h-5 w-5 rounded-full object-cover border border-[#EAE4F7]"
+                                        />
+                                      ) : (
+                                        <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white text-[10px] font-bold">
+                                          {getInitials(comment.author?.email)}
+                                        </div>
+                                      )}
+                                      <span>
+                                        {comment.author?.profile?.first_name ||
+                                        comment.author?.profile?.last_name
+                                          ? `${
+                                              comment.author.profile
+                                                .first_name || ""
+                                            } ${
+                                              comment.author.profile
+                                                .last_name || ""
+                                            }`.trim()
+                                          : getEmailPrefix(
+                                              comment.author?.email
+                                            )}
+                                      </span>
                                     </Link>
                                     <div className="flex items-center gap-2">
                                       <span className="text-[#9188BE] text-[10px] font-medium">

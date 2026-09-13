@@ -8,12 +8,18 @@ import {
   Calendar,
   MessageSquare,
   Bell,
-  ShieldAlert,
+  GraduationCap,
+  Layers,
+  FileCheck2,
+  Award,
+  BarChart3,
+  BookOpen,
+  Building,
+  UserCog,
   Settings,
   LogOut,
   Menu,
   X,
-  Sliders,
 } from "lucide-react";
 
 import { wsClient } from "../../services/websocket";
@@ -45,6 +51,7 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
@@ -81,13 +88,31 @@ export default function DashboardLayout() {
     };
     fetchUnreadCount();
 
+    // Fetch unread messages count from API
+    const fetchUnreadMessagesCount = async () => {
+      try {
+        const res = await apiRequest<{ total_unread: number }>(
+          "/messages/unread/count",
+        );
+        setUnreadMessages(res.total_unread || 0);
+      } catch (err) {
+        // Fallback default
+      }
+    };
+    fetchUnreadMessagesCount();
+
     // Subscribe to real-time WebSocket notification pushes
-    const unsubscribe = wsClient.onNotification((data) => {
+    const unsubscribeNotif = wsClient.onNotification((data) => {
       if (typeof data.unread_count === "number") {
         setUnreadNotifications(data.unread_count);
       } else {
         setUnreadNotifications((prev) => prev + 1);
       }
+    });
+
+    // Subscribe to real-time WebSocket direct message pushes
+    const unsubscribeMsg = wsClient.onMessage(() => {
+      setUnreadMessages((prev) => prev + 1);
     });
 
     // Handle local notification read events
@@ -99,15 +124,22 @@ export default function DashboardLayout() {
       setUnreadNotifications(0);
     };
 
+    const handleMessagesRead = () => {
+      fetchUnreadMessagesCount();
+    };
+
     window.addEventListener("notification-read", handleNotificationRead);
     window.addEventListener("notification-read-all", handleNotificationReadAll);
     window.addEventListener("refresh-unread-count", fetchUnreadCount);
+    window.addEventListener("refresh-unread-messages", handleMessagesRead);
 
     return () => {
-      unsubscribe();
+      unsubscribeNotif();
+      unsubscribeMsg();
       window.removeEventListener("notification-read", handleNotificationRead);
       window.removeEventListener("notification-read-all", handleNotificationReadAll);
       window.removeEventListener("refresh-unread-count", fetchUnreadCount);
+      window.removeEventListener("refresh-unread-messages", handleMessagesRead);
     };
   }, []);
 
@@ -119,32 +151,148 @@ export default function DashboardLayout() {
     navigate("/login");
   };
 
+  interface NavLinkItem {
+    name: string;
+    path: string;
+    icon: any;
+    badge?: number;
+  }
+
+  const roleName = user?.role?.name?.toLowerCase().trim() || "";
   const isAdmin =
-    user?.role_id === 1 || user?.role?.name?.toLowerCase() === "admin";
-  const isController =
-    user?.role_id === 4 || user?.role?.name?.toLowerCase() === "controller";
+    user?.role_id === 1 ||
+    roleName === "admin" ||
+    roleName === "super admin" ||
+    roleName === "superadmin" ||
+    roleName === "central admin";
 
-  const navLinks = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard },
-    { name: "Feed", path: "/feed", icon: Rss },
-    { name: "Ties", path: "/connections", icon: Users },
-    { name: "Opportunities", path: "/jobs", icon: Briefcase },
-    { name: "Events", path: "/events", icon: Calendar },
-    { name: "Messages", path: "/messaging", icon: MessageSquare },
-
-    {
+  const getRoleNavLinks = (): NavLinkItem[] => {
+    const baseNotifications: NavLinkItem = {
       name: "Notifications",
       path: "/notifications",
       icon: Bell,
       badge: unreadNotifications,
-    },
-    ...(isController
-      ? [{ name: "Controller", path: "/controller", icon: Sliders }]
-      : []),
-    ...(isAdmin
-      ? [{ name: "Admin", path: "/admin", icon: ShieldAlert, adminOnly: true }]
-      : []),
-  ];
+    };
+    const baseMessages: NavLinkItem = {
+      name: "Messages",
+      path: "/messaging",
+      icon: MessageSquare,
+      badge: unreadMessages,
+    };
+    const baseEvents: NavLinkItem = {
+      name: "Events",
+      path: "/events",
+      icon: Calendar,
+    };
+
+    switch (roleName) {
+      case "student":
+      case "alumni":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "faculty":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Students", path: "/students", icon: GraduationCap },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "hod":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Department", path: "/department", icon: Layers },
+          { name: "Reports", path: "/reports", icon: BarChart3 },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "controller":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Department", path: "/department", icon: Layers },
+          { name: "Applications", path: "/applications", icon: FileCheck2 },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "central admin":
+      case "admin":
+      case "super admin":
+      case "superadmin":
+      case "management":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Users", path: "/admin", icon: UserCog },
+          { name: "Departments", path: "/department", icon: Layers },
+          { name: "Reports", path: "/reports", icon: BarChart3 },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "tpo":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Students", path: "/students", icon: GraduationCap },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase },
+          { name: "Applications", path: "/applications", icon: FileCheck2 },
+          { name: "Placements", path: "/placements", icon: Award },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "dean":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          {
+            name: "Academic Overview",
+            path: "/academic-overview",
+            icon: BookOpen,
+          },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      case "principal":
+      case "ceo":
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Institution", path: "/institution", icon: Building },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+      default:
+        return [
+          { name: "Dashboard", path: "/", icon: LayoutDashboard },
+          { name: "Feed", path: "/feed", icon: Rss },
+          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
+        ];
+    }
+  };
+
+  const navLinks = getRoleNavLinks();
 
   const fullName =
     `${user?.profile?.first_name || ""} ${user?.profile?.last_name || ""}`.trim() ||
@@ -176,12 +324,12 @@ export default function DashboardLayout() {
           </div>
 
           {/* 2. Global Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-xs lg:max-w-sm mx-2">
+          <div className="hidden md:flex flex-1 min-w-[260px] max-w-sm lg:max-w-md mx-2 lg:mx-4">
             <GlobalSearchBar />
           </div>
 
           {/* 3. Navigation Page Links (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto py-1">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto py-1 shrink-0">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.path;
@@ -189,7 +337,7 @@ export default function DashboardLayout() {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  className={`relative flex items-center gap-1 xl:gap-1.5 px-2.5 xl:px-3 py-2 rounded-xl text-[11px] xl:text-xs font-bold transition-all duration-200 ${
                     isActive
                       ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/25"
                       : "text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746]"

@@ -59,6 +59,7 @@ class ConnectionSuggestionResponse(BaseModel):
     mutual_count: int = 0
     recommendation_reason: str = "Suggested connection"
     score: int = 10
+    role_name: str | None = "Student"
     profile: ConnectionUserProfileSummary | None = None
 
     class Config:

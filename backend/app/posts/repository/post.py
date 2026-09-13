@@ -20,7 +20,9 @@ class PostRepository(BaseRepository[Post]):
             select(Post)
             .options(
                 selectinload(Post.author).selectinload(User.profile),
-                selectinload(Post.comments).selectinload(Comment.author),
+                selectinload(Post.comments)
+                .selectinload(Comment.author)
+                .selectinload(User.profile),
                 selectinload(Post.likes),
             )
             .filter(Post.id == post_id)

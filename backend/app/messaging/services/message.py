@@ -17,11 +17,126 @@ from app.messaging.schemas.message import (
 )
 
 
+COMMUNICATION_HIERARCHY: dict[str, set[str]] = {
+    "student": {"faculty", "alumni"},
+    "faculty": {"student", "students", "hod", "controller", "alumni"},
+    "hod": {"faculty", "controller", "alumni", "tpo", "dean"},
+    "controller": {"faculty", "hod", "alumni"},
+    "alumni": {"student", "students", "faculty", "controller", "tpo"},
+    "tpo": {
+        "central admin",
+        "admin",
+        "super admin",
+        "superadmin",
+        "management",
+        "dean",
+        "principal",
+        "alumni",
+        "hod",
+    },
+    "dean": {"hod", "tpo", "principal", "ceo"},
+    "principal": {"tpo", "dean", "ceo"},
+    "ceo": {"principal"},
+    "central admin": {
+        "tpo",
+        "dean",
+        "principal",
+        "controller",
+        "hod",
+        "faculty",
+        "alumni",
+        "student",
+        "students",
+        "admin",
+        "super admin",
+        "superadmin",
+        "ceo",
+    },
+    "admin": {
+        "tpo",
+        "dean",
+        "principal",
+        "controller",
+        "hod",
+        "faculty",
+        "alumni",
+        "student",
+        "students",
+        "central admin",
+        "super admin",
+        "superadmin",
+        "ceo",
+    },
+    "super admin": {"*"},
+    "superadmin": {"*"},
+    "management": {"*"},
+}
+
+
+def validate_communication_hierarchy(
+    sender_role: str | None, recipient_role: str | None
+) -> bool:
+    """Validate if sender role is authorized to communicate with recipient role."""
+    if not sender_role or not recipient_role:
+        return False
+    s_role = sender_role.strip().lower()
+    r_role = recipient_role.strip().lower()
+
+    allowed = COMMUNICATION_HIERARCHY.get(s_role, set())
+    if "*" in allowed:
+        return True
+    return r_role in allowed
+
+
 class MessagingService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.message_repo = MessageRepository(db)
         self.conversation_repo = ConversationRepository(db)
+
+    async def _check_hierarchy_permission(
+        self, sender_id: int, receiver_id: int
+    ) -> None:
+        """Check if sender can initiate communication with receiver based on hierarchy."""
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        from app.users.models.user import User
+
+        sender_res = await self.db.execute(
+            select(User).options(selectinload(User.role)).where(User.id == sender_id)
+        )
+        receiver_res = await self.db.execute(
+            select(User).options(selectinload(User.role)).where(User.id == receiver_id)
+        )
+
+        sender_user = sender_res.scalars().first() if hasattr(sender_res, "scalars") else None
+        receiver_user = receiver_res.scalars().first() if hasattr(receiver_res, "scalars") else None
+
+        if not receiver_user:
+            raise NotFoundError("Recipient not found")
+
+        sender_role_name = (
+            getattr(sender_user.role, "name", None)
+            if sender_user and getattr(sender_user, "role", None)
+            else "Student"
+        )
+        receiver_role_name = (
+            getattr(receiver_user.role, "name", None)
+            if receiver_user and getattr(receiver_user, "role", None)
+            else "Student"
+        )
+
+        # Stealth check: Block direct messages to Super Admin from regular users
+        is_sender_sa = sender_role_name.lower() in ("super admin", "superadmin")
+        is_receiver_sa = receiver_role_name.lower() in ("super admin", "superadmin")
+        if is_receiver_sa and not is_sender_sa:
+            raise NotFoundError("Recipient not found")
+
+        # Hierarchy validation
+        if not validate_communication_hierarchy(sender_role_name, receiver_role_name):
+            raise AuthorizationError(
+                f"Communication hierarchy restriction: {sender_role_name} cannot communicate directly with {receiver_role_name}"
+            )
 
     async def send_message(self, sender_id: int, msg_in: MessageCreate) -> Message:
         """Send a message to a conversation or direct recipient."""
@@ -46,46 +161,7 @@ class MessagingService:
             if sender_id == receiver_id:
                 raise ValidationError("Cannot send a direct message to yourself")
 
-            # Stealth check: Block direct messages to Super Admin from regular users
-            try:
-                from sqlalchemy import select
-                from sqlalchemy.orm import selectinload
-                from app.users.models.user import User
-
-                recv_res = await self.db.execute(
-                    select(User)
-                    .options(selectinload(User.role))
-                    .where(User.id == receiver_id)
-                )
-                if hasattr(recv_res, "scalars"):
-                    receiver_user = recv_res.scalars().first()
-                    sender_res = await self.db.execute(
-                        select(User)
-                        .options(selectinload(User.role))
-                        .where(User.id == sender_id)
-                    )
-                    sender_user = (
-                        sender_res.scalars().first()
-                        if hasattr(sender_res, "scalars")
-                        else None
-                    )
-
-                    is_sender_sa = (
-                        sender_user
-                        and getattr(sender_user, "role", None)
-                        and getattr(sender_user.role, "name", None) == "Super Admin"
-                    )
-                    if (
-                        receiver_user
-                        and getattr(receiver_user, "role", None)
-                        and getattr(receiver_user.role, "name", None) == "Super Admin"
-                        and not is_sender_sa
-                    ):
-                        raise NotFoundError("Recipient not found")
-            except NotFoundError:
-                raise
-            except Exception:
-                pass
+            await self._check_hierarchy_permission(sender_id, receiver_id)
 
             # Get or create direct conversation
             conv = await self.conversation_repo.get_or_create_direct_conversation(
@@ -114,6 +190,8 @@ class MessagingService:
         """Get or initialize a direct 1-on-1 conversation with populated details."""
         if user1_id == user2_id:
             raise ValidationError("Cannot create a direct conversation with yourself")
+
+        await self._check_hierarchy_permission(user1_id, user2_id)
 
         conv = await self.conversation_repo.get_or_create_direct_conversation(
             user1_id, user2_id

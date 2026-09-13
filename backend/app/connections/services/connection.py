@@ -221,7 +221,7 @@ class ConnectionService:
         stmt = (
             select(User)
             .outerjoin(Role, User.role_id == Role.id)
-            .options(joinedload(User.profile))
+            .options(joinedload(User.profile), joinedload(User.role))
             .where(
                 and_(
                     User.id.not_in(excluded_user_ids),
@@ -257,6 +257,7 @@ class ConnectionService:
                 candidate.profile.profile_picture if candidate.profile else None
             )
             dept = candidate.profile.department if candidate.profile else None
+            role_name = candidate.role.name if candidate.role else "Student"
 
             if not first_name or first_name.strip().lower() == "user":
                 email_handle = candidate.email.split("@")[0]
@@ -275,15 +276,16 @@ class ConnectionService:
                     "first_name": first_name,
                     "last_name": last_name,
                     "profile_picture": profile_pic,
-                    "department": dept or "Student",
+                    "department": dept or role_name,
                     "mutual_count": mutual_count,
                     "recommendation_reason": reason,
                     "score": score,
+                    "role_name": role_name,
                     "profile": {
                         "first_name": first_name,
                         "last_name": last_name,
                         "profile_picture": profile_pic,
-                        "department": dept or "Student",
+                        "department": dept or role_name,
                     },
                 }
             )

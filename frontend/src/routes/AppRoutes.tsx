@@ -23,6 +23,14 @@ import Admin from "../pages/Admin";
 import Controller from "../pages/Controller";
 import Settings from "../pages/Settings";
 
+// Role-Specific Dedicated Pages
+import Students from "../pages/Students";
+import DepartmentPage from "../pages/DepartmentPage";
+import ApplicationsPage from "../pages/ApplicationsPage";
+import PlacementsPage from "../pages/PlacementsPage";
+import ReportsPage from "../pages/ReportsPage";
+import InstitutionOverview from "../pages/InstitutionOverview";
+
 // Protected Route Wrapper Component
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -206,10 +214,19 @@ export default function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="profile/:userId" element={<Profile />} />
         <Route path="connections" element={<Connections />} />
+        <Route path="students" element={<Students />} />
+        <Route path="department" element={<DepartmentPage />} />
+        <Route path="departments" element={<DepartmentPage />} />
+        <Route path="applications" element={<ApplicationsPage />} />
+        <Route path="placements" element={<PlacementsPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="institution" element={<InstitutionOverview />} />
+        <Route path="academic-overview" element={<InstitutionOverview />} />
         <Route path="jobs" element={<Jobs />} />
         <Route path="events" element={<Events />} />
         <Route path="messaging" element={<Messaging />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="users" element={<Admin />} />
         <Route
           path="admin"
           element={
