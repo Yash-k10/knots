@@ -23,6 +23,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   FileCheck,
+  ArrowUp,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
 import TiesRecommendations from "../components/feed/TiesRecommendations";
@@ -197,12 +198,55 @@ export default function Feed() {
 
   const observerTarget = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
+  const [newIncomingPosts, setNewIncomingPosts] = useState<PostResponse[]>([]);
 
   // Periodic interval to update relative timestamps live every 30s
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 30000);
     return () => clearInterval(timer);
   }, []);
+
+  // Background polling for real-time post discovery across users (LinkedIn Style)
+  useEffect(() => {
+    if (posts.length === 0) return;
+
+    const pollTimer = setInterval(async () => {
+      try {
+        const latest = await apiRequest<PostResponse[]>(
+          "/posts/feed?skip=0&limit=5"
+        );
+        if (Array.isArray(latest) && latest.length > 0) {
+          const currentTopId = posts[0]?.id || 0;
+          const freshPosts = latest.filter(
+            (p) =>
+              p.id > currentTopId &&
+              !posts.some((existing) => existing.id === p.id)
+          );
+          if (freshPosts.length > 0) {
+            setNewIncomingPosts(freshPosts);
+          }
+        }
+      } catch (err) {
+        // Silently skip poll error
+      }
+    }, 12000);
+
+    return () => clearInterval(pollTimer);
+  }, [posts]);
+
+  const handleApplyNewPosts = () => {
+    if (newIncomingPosts.length > 0) {
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const uniqueIncoming = newIncomingPosts.filter(
+          (p) => !existingIds.has(p.id)
+        );
+        return [...uniqueIncoming, ...prev];
+      });
+      setNewIncomingPosts([]);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   // Fetch initial feed posts
   const fetchFeed = async (reset = false) => {
@@ -1008,6 +1052,24 @@ export default function Feed() {
               <span>Students & Alumni</span>
             </button>
           </div>
+
+          {/* Real-time New Posts Discovery Banner (LinkedIn Style) */}
+          {newIncomingPosts.length > 0 && (
+            <div className="flex justify-center sticky top-20 z-20 py-2">
+              <button
+                type="button"
+                onClick={handleApplyNewPosts}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#5851A4] to-[#4B63D2] text-white rounded-full font-bold text-xs shadow-xl shadow-[#4B63D2]/30 hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer animate-bounce"
+              >
+                <ArrowUp className="w-4 h-4 text-emerald-300" />
+                <span>
+                  {newIncomingPosts.length} new{" "}
+                  {newIncomingPosts.length === 1 ? "post" : "posts"} in campus
+                  feed • Click to view
+                </span>
+              </button>
+            </div>
+          )}
 
           {/* Main Feed Posts List */}
           {loading ? (

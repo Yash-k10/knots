@@ -59,14 +59,15 @@ export default function TiesRecommendations() {
           ),
         );
 
-        // Fallback curated campus recommendations across 4 divisions
+        // Fallback curated campus recommendations across 4 divisions with rich avatars
         const defaultPool: TieProfile[] = [
           {
             id: 101,
             email: "prof.sharma@sbjit.edu.in",
             first_name: "Dr. Rajesh",
             last_name: "Sharma",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
             role_name: "Faculty",
             department: "Computer Science & Engineering",
             position_title: "Head of CSE & AI Research",
@@ -79,7 +80,8 @@ export default function TiesRecommendations() {
             email: "priya.verma@sbjit.edu.in",
             first_name: "Priya",
             last_name: "Verma",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
             role_name: "Alumni",
             department: "AIML (Batch of 2024)",
             position_title: "AI Engineer @ Microsoft",
@@ -92,7 +94,8 @@ export default function TiesRecommendations() {
             email: "rohit.aiml23@sbjit.edu.in",
             first_name: "Rohit",
             last_name: "Deshmukh",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
             role_name: "Student",
             department: "AIML (3rd Year)",
             position_title: "Lead Organizer, GDSC SBJIT",
@@ -105,7 +108,8 @@ export default function TiesRecommendations() {
             email: "dean.academics@sbjit.edu.in",
             first_name: "Dr. Ananya",
             last_name: "Mukherjee",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
             role_name: "Management",
             department: "Academic Affairs",
             position_title: "Dean of Academics & Innovation",
@@ -118,7 +122,8 @@ export default function TiesRecommendations() {
             email: "tanvi.kulkarni@sbjit.edu.in",
             first_name: "Tanvi",
             last_name: "Kulkarni",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
             role_name: "Student",
             department: "Data Science (4th Year)",
             position_title: "Open Source Contributor",
@@ -131,7 +136,8 @@ export default function TiesRecommendations() {
             email: "prof.patil@sbjit.edu.in",
             first_name: "Prof. Sanjay",
             last_name: "Patil",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
             role_name: "Faculty",
             department: "Information Technology",
             position_title: "Senior Assistant Professor",
@@ -144,7 +150,8 @@ export default function TiesRecommendations() {
             email: "aman.alumni@sbjit.edu.in",
             first_name: "Aman",
             last_name: "Gupta",
-            profile_picture: null,
+            profile_picture:
+              "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
             role_name: "Alumni",
             department: "Computer Tech (2023)",
             position_title: "Product Lead @ FinTech",
