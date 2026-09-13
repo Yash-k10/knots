@@ -44,18 +44,67 @@ export interface ContentRecommendation {
   reason: string;
 }
 
+export interface BulletRewrite {
+  original: string;
+  improved: string;
+  reason: string;
+}
+
 export interface ResumeAnalysisResult {
-  score?: number;
+  score: number;
+  rating?: string;
+  target_role?: string;
+  dimensions?: {
+    overall: number;
+    ats_compatibility: number;
+    impact_metrics: number;
+    tech_stack_depth: number;
+  };
+  detected_skills?: Record<string, string[]>;
+  detected_skills_count?: number;
+  missing_high_impact_keywords?: string[];
+  bullet_rewrites?: BulletRewrite[];
   feedback?: string[];
   strengths?: string[];
-  suggested_improvements?: string[];
+  suggestions?: string[];
   [key: string]: any;
 }
 
+export interface RoadmapMilestone {
+  phase: string;
+  title: string;
+  duration: string;
+  description: string;
+  key_topics?: string[];
+  project?: {
+    title: string;
+    description: string;
+    tech_stack: string;
+  };
+  interview_focus?: string;
+}
+
 export interface CareerRoadmapResult {
-  target_role?: string;
-  milestones?: { title: string; description: string; duration?: string }[];
+  target_role: string;
+  experience_level?: string;
+  role_overview?: {
+    title: string;
+    market_demand: string;
+    salary_range: string;
+    estimated_duration: string;
+  };
+  skill_gap_analysis?: {
+    matching_skills: string[];
+    skills_to_acquire: string[];
+    readiness_percentage: number;
+  };
+  milestones?: RoadmapMilestone[];
   recommended_skills?: string[];
+  interview_prep?: {
+    system_design: string[];
+    dsa_focus: string[];
+    behavioral: string[];
+  };
   [key: string]: any;
 }
 
@@ -78,22 +127,30 @@ export const aiService = {
     );
   },
 
-  async analyzeResume(resumeText: string): Promise<ResumeAnalysisResult> {
+  async analyzeResume(
+    resumeText: string,
+    targetRole = "Software Developer",
+  ): Promise<ResumeAnalysisResult> {
     return apiRequest<ResumeAnalysisResult>("/ai/analyze-resume", {
       method: "POST",
-      body: JSON.stringify({ resume_text: resumeText }),
+      body: JSON.stringify({
+        resume_text: resumeText,
+        target_role: targetRole,
+      }),
     });
   },
 
   async generateRoadmap(
     targetRole: string,
     currentSkills: string[],
+    experienceLevel = "Mid-Level",
   ): Promise<CareerRoadmapResult> {
     return apiRequest<CareerRoadmapResult>("/ai/roadmap", {
       method: "POST",
       body: JSON.stringify({
         target_role: targetRole,
         current_skills: currentSkills,
+        experience_level: experienceLevel,
       }),
     });
   },

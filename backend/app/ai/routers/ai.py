@@ -22,27 +22,35 @@ router = APIRouter(prefix="/ai", tags=["AI Integration"])
 
 class ResumeRequest(BaseModel):
     resume_text: str
+    target_role: str | None = "Software Developer"
 
 
 class RoadmapRequest(BaseModel):
     target_role: str
     current_skills: list[str]
+    experience_level: str | None = "Mid-Level"
 
 
 @router.post("/analyze-resume", response_model=APIResponse[dict])
 async def analyze_resume(payload: ResumeRequest):
-    """Analyze resume text and return optimization feedback (Placeholder)."""
+    """Analyze software engineering resume text, compute ATS metrics & provide STAR bullet rewrites."""
     service = AIResumeService()
-    result = await service.analyze_resume(payload.resume_text)
-    return APIResponse(message="Resume analysis completed (sandbox)", data=result)
+    result = await service.analyze_resume(
+        payload.resume_text, target_role=payload.target_role or "Software Developer"
+    )
+    return APIResponse(message="Resume analysis completed successfully", data=result)
 
 
 @router.post("/roadmap", response_model=APIResponse[dict])
 async def generate_roadmap(payload: RoadmapRequest):
-    """Generate skill learning step roadmap (Placeholder)."""
+    """Generate software engineering milestone blueprints, project specs, and interview prep guides."""
     service = CareerRoadmapService()
-    result = await service.generate_roadmap(payload.target_role, payload.current_skills)
-    return APIResponse(message="Roadmap generated successfully (sandbox)", data=result)
+    result = await service.generate_roadmap(
+        payload.target_role,
+        payload.current_skills,
+        experience_level=payload.experience_level or "Mid-Level",
+    )
+    return APIResponse(message="Career roadmap generated successfully", data=result)
 
 
 @router.get(

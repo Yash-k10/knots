@@ -1,28 +1,30 @@
 import { useState, useEffect } from "react";
 import {
-  TrendingUp,
-  Award,
-  Eye,
-  Heart,
-  MessageCircle,
   Flame,
+  MessageSquare,
+  Heart,
+  TrendingUp,
+  User as UserIcon,
 } from "lucide-react";
-import { analyticsService, TrendingPost } from "../../services/analytics";
-import { formatDate } from "../../utils/date";
+import {
+  analyticsService,
+  TrendingPost,
+} from "../../services/analytics";
 
 interface TrendingPostsWidgetProps {
   initialPosts?: TrendingPost[];
 }
 
 export default function TrendingPostsWidget({
-  initialPosts,
+  initialPosts = [],
 }: TrendingPostsWidgetProps) {
-  const [posts, setPosts] = useState<TrendingPost[]>(initialPosts || []);
+  const [posts, setPosts] = useState<TrendingPost[]>(initialPosts);
   const [days, setDays] = useState<number>(7);
-  const [isLoading, setIsLoading] = useState<boolean>(!initialPosts);
+  const [isLoading, setIsLoading] = useState<boolean>(initialPosts.length === 0);
 
   useEffect(() => {
-    if (initialPosts && days === 7) {
+    // If we have initial posts and days is 7, use them
+    if (initialPosts.length > 0 && days === 7) {
       setPosts(initialPosts);
       setIsLoading(false);
       return;
@@ -40,7 +42,7 @@ export default function TrendingPostsWidget({
         }
       })
       .catch((err) => {
-        console.error("Failed to load trending posts:", err);
+        console.error("Failed to fetch trending posts:", err);
         if (isMounted) setIsLoading(false);
       });
 
@@ -49,38 +51,34 @@ export default function TrendingPostsWidget({
     };
   }, [days, initialPosts]);
 
-  const maxScore = Math.max(...posts.map((p) => p.score), 1);
-
   return (
-    <div className="bg-slate-950/60 border border-slate-900 hover:border-slate-800/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md transition duration-300 flex flex-col justify-between">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] via-transparent to-transparent pointer-events-none" />
-
+    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-3xl p-6 shadow-sm relative overflow-hidden transition duration-300 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2.5 bg-amber-500/10 text-amber-500 rounded-2xl border border-amber-500/20">
             <Flame className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">
+            <h3 className="text-lg font-black text-black tracking-tight">
               Trending Discussions
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#5851A4] font-medium">
               Highest scoring posts across the community
             </p>
           </div>
         </div>
 
         {/* Range Selector */}
-        <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80">
+        <div className="flex items-center gap-1.5 bg-[#FAF9FD] p-1 rounded-2xl border border-[#EAE4F7]">
           {[7, 30].map((d) => (
             <button
               key={d}
               onClick={() => setDays(d)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                 days === d
-                  ? "bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/20"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-amber-500 text-white shadow-sm shadow-amber-500/30 font-bold"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-white"
               }`}
             >
               {d}D
@@ -97,77 +95,71 @@ export default function TrendingPostsWidget({
           </div>
         ) : posts.length > 0 ? (
           posts.map((post, idx) => {
-            const scorePercent = Math.min(
-              Math.round((post.score / maxScore) * 100),
-              100,
-            );
             return (
               <div
-                key={post.post_id || idx}
-                className="bg-slate-900/40 border border-slate-800/60 hover:border-slate-700/80 rounded-xl p-4 transition duration-200 relative group overflow-hidden"
+                key={post.post_id}
+                className="group p-3.5 bg-[#FAF9FD] hover:bg-[#F3EEFF] border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl transition duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                {/* Visual score progress bar in background */}
-                <div
-                  className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-amber-500/40 to-indigo-500/40 transition-all duration-500"
-                  style={{ width: `${scorePercent}%` }}
-                />
-
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-full bg-indigo-600/20 text-indigo-300 flex items-center justify-center font-bold text-xs border border-indigo-500/30">
-                      {post.author_name ? post.author_name.charAt(0) : "U"}
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-white">
-                        {post.author_name || "Anonymous"}
-                      </span>
-                      <span className="text-[10px] text-slate-500 ml-2">
-                        {post.created_at
-                          ? formatDate(post.created_at, {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : ""}
-                      </span>
-                    </div>
+                {/* Left: Rank & Author & Snippet */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div
+                    className={`h-7 w-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
+                      idx === 0
+                        ? "bg-amber-500 text-white shadow-sm shadow-amber-500/30"
+                        : idx === 1
+                          ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                          : idx === 2
+                            ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                            : "bg-white text-[#5851A4] border border-[#EAE4F7]"
+                    }`}
+                  >
+                    #{idx + 1}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    <Award className="h-3 w-3" />
-                    {post.score} pts
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-bold text-black flex items-center gap-1 truncate">
+                        <UserIcon className="h-3.5 w-3.5 text-[#5851A4] shrink-0" />
+                        {post.author_name || "Campus Member"}
+                      </span>
+                      <span className="text-[10px] text-[#5851A4] font-medium">
+                        • {new Date(post.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5851A4] font-medium line-clamp-1 group-hover:text-[#1E2746] transition">
+                      {post.content}
+                    </p>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-2 my-1.5 font-medium">
-                  {post.content}
-                </p>
-
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-800/40">
-                  <div className="flex gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3 text-indigo-400" /> {post.views}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Heart className="h-3 w-3 text-emerald-400" />{" "}
+                {/* Right: Metrics & Score Gauge */}
+                <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pl-10 sm:pl-0">
+                  <div className="flex items-center gap-3 text-xs text-[#5851A4]">
+                    <span className="flex items-center gap-1 font-semibold">
+                      <Heart className="h-3.5 w-3.5 text-rose-500" />
                       {post.likes}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3 text-pink-400" />{" "}
+                    <span className="flex items-center gap-1 font-semibold">
+                      <MessageSquare className="h-3.5 w-3.5 text-indigo-500" />
                       {post.comments}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-semibold group-hover:text-indigo-400 transition">
-                    #{idx + 1} Trending
-                  </span>
+
+                  <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl">
+                    <TrendingUp className="h-3 w-3 text-amber-600" />
+                    <span className="text-xs font-black text-amber-700">
+                      {post.score} pts
+                    </span>
+                  </div>
                 </div>
               </div>
             );
           })
         ) : (
-          <div className="text-center py-10 border border-dashed border-slate-800 rounded-xl">
-            <TrendingUp className="h-8 w-8 text-slate-700 mx-auto mb-2" />
-            <p className="text-slate-500 text-xs italic">
-              No trending conversations recorded for this period.
+          <div className="flex flex-col items-center justify-center py-12 border border-dashed border-[#EAE4F7] rounded-2xl bg-[#FAF9FD]">
+            <Flame className="h-8 w-8 text-[#9188BE] mb-2" />
+            <p className="text-[#5851A4] text-xs font-medium italic">
+              No trending discussions yet.
             </p>
           </div>
         )}

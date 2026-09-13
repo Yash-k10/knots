@@ -7,7 +7,7 @@ interface PlatformEngagementDonutProps {
   summary: PlatformEngagementSummary | null;
 }
 
-const COLORS = ["#4B63D2", "#5851A4", "#FFD21A", "#C8B6E2"];
+const COLORS = ["#4B63D2", "#5851A4", "#FFD21A", "#10B981"];
 
 export default function PlatformEngagementDonut({
   summary,
@@ -30,25 +30,23 @@ export default function PlatformEngagementDonut({
   const hasData = total > 0 || data.some((item) => item.value > 0);
 
   return (
-    <div className="bg-slate-950/60 border border-slate-900 hover:border-slate-800/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md transition duration-300 flex flex-col justify-between">
-      <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none" />
-
+    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-3xl p-6 shadow-sm relative overflow-hidden transition duration-300 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2.5 bg-[#4B63D2]/10 text-[#4B63D2] rounded-2xl border border-[#4B63D2]/20">
             <PieIcon className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">
+            <h3 className="text-lg font-black text-black tracking-tight">
               Platform Engagement
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#5851A4] font-medium">
               Distribution of community interaction events
             </p>
           </div>
         </div>
-        <div className="bg-slate-900/80 border border-slate-800 px-3 py-1 rounded-xl text-xs font-bold text-slate-300">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] px-3 py-1 rounded-xl text-xs font-black text-black">
           {total.toLocaleString()} Actions
         </div>
       </div>
@@ -71,7 +69,7 @@ export default function PlatformEngagementDonut({
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    stroke="#12172C"
+                    stroke="#FFFFFF"
                     strokeWidth={2}
                   />
                 ))}
@@ -80,19 +78,23 @@ export default function PlatformEngagementDonut({
                 content={({ active, payload }: any) => {
                   if (active && payload && payload.length) {
                     const item = payload[0];
-                    const pct =
+                    const percent =
                       total > 0
-                        ? ((Number(item.value) / total) * 100).toFixed(1)
-                        : 0;
+                        ? ((item.value / total) * 100).toFixed(1)
+                        : "0.0";
                     return (
-                      <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl px-4 py-2.5 shadow-2xl backdrop-blur-md">
-                        <p className="text-xs font-bold text-white">
+                      <div className="bg-white border border-[#EAE4F7] rounded-2xl p-3 shadow-xl">
+                        <p className="text-xs font-bold text-[#5851A4]">
                           {item.name}
                         </p>
-                        <p className="text-sm font-extrabold text-indigo-400 mt-0.5">
-                          {item.value}{" "}
-                          <span className="text-slate-400 text-xs">
-                            ({pct}%)
+                        <p className="text-base font-black text-black mt-0.5 flex items-center gap-1.5">
+                          <span
+                            className="h-2 w-2 rounded-full inline-block"
+                            style={{ backgroundColor: item.payload.color }}
+                          />
+                          {item.value.toLocaleString()}{" "}
+                          <span className="text-xs font-normal text-[#5851A4]">
+                            ({percent}%)
                           </span>
                         </p>
                       </div>
@@ -104,37 +106,42 @@ export default function PlatformEngagementDonut({
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full border border-dashed border-slate-800 rounded-xl w-full">
-            <Activity className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-slate-500 text-xs italic">
-              No engagement data recorded yet.
+          <div className="flex flex-col items-center justify-center h-full border border-dashed border-[#EAE4F7] rounded-2xl bg-[#FAF9FD]">
+            <Activity className="h-8 w-8 text-[#9188BE] mb-2" />
+            <p className="text-[#5851A4] text-xs font-medium italic">
+              No platform engagement recorded yet.
             </p>
           </div>
         )}
       </div>
 
-      {/* Legend & Breakdown */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 relative z-10">
-        {data.map((item) => {
-          const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+      {/* Legend Breakdown Grid */}
+      <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-[#EAE4F7] relative z-10">
+        {data.map((item, idx) => {
+          const percent =
+            total > 0 ? ((item.value / total) * 100).toFixed(0) : "0";
           return (
             <div
-              key={item.name}
-              className="bg-slate-900/50 border border-slate-800/60 rounded-xl p-2.5 text-center"
+              key={idx}
+              className="flex items-center justify-between p-2 rounded-xl bg-[#FAF9FD] border border-[#EAE4F7]"
             >
-              <div className="flex items-center justify-center gap-1.5 mb-1">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="h-2 w-2 rounded-full inline-block"
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {item.name.split(" ")[0]}
+                <span className="text-xs font-bold text-[#1E2746] truncate">
+                  {item.name}
                 </span>
               </div>
-              <p className="text-sm font-extrabold text-white">{item.value}</p>
-              <span className="text-[9px] text-slate-500 font-semibold">
-                {pct}% share
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="text-xs font-black text-black">
+                  {item.value}
+                </span>
+                <span className="text-[10px] text-[#5851A4]">
+                  ({percent}%)
+                </span>
+              </div>
             </div>
           );
         })}

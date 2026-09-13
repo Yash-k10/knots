@@ -86,7 +86,7 @@ def add_section_header(doc: docx.Document, title: str):
     # Bottom border rule in XML
     pPr = p._p.get_or_add_pPr()
     pBdr = parse_xml(
-        f'<w:pBdr {nsdecls("w")}>'
+        f"<w:pBdr {nsdecls('w')}>"
         f'<w:bottom w:val="single" w:sz="6" w:space="2" w:color="000000"/>'
         f"</w:pBdr>"
     )

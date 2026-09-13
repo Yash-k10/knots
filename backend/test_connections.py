@@ -33,12 +33,15 @@ class TestConnectionService(unittest.IsolatedAsyncioTestCase):
         self.service.repository.create.return_value = mock_conn
         self.service.repository.get.return_value = mock_conn
 
-        with unittest.mock.patch(
-            "app.profiles.repository.profile.ProfileRepository.get_by_user_id",
-            new_callable=AsyncMock,
-        ) as mock_get_prof, unittest.mock.patch(
-            "app.notifications.services.notification.NotificationService.create_notification",
-            new_callable=AsyncMock,
+        with (
+            unittest.mock.patch(
+                "app.profiles.repository.profile.ProfileRepository.get_by_user_id",
+                new_callable=AsyncMock,
+            ) as mock_get_prof,
+            unittest.mock.patch(
+                "app.notifications.services.notification.NotificationService.create_notification",
+                new_callable=AsyncMock,
+            ),
         ):
             mock_get_prof.return_value = None
             res = await self.service.request_connection(1, 2)

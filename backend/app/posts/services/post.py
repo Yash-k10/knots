@@ -270,7 +270,8 @@ class PostService:
                 type="comment",
             )
 
-        return comment
+        loaded_comment = await self.comment_repo.get_by_id_with_author(comment.id)
+        return loaded_comment or comment
 
     async def get_comments(
         self, post_id: int, skip: int = 0, limit: int = 50

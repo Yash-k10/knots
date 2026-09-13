@@ -13,6 +13,15 @@ class CommentRepository(BaseRepository[Comment]):
     def __init__(self, db: AsyncSession):
         super().__init__(Comment, db)
 
+    async def get_by_id_with_author(self, comment_id: int) -> Comment | None:
+        """Fetch a single comment with its author (+ profile)."""
+        result = await self.db.execute(
+            select(Comment)
+            .options(selectinload(Comment.author).selectinload(User.profile))
+            .filter(Comment.id == comment_id)
+        )
+        return result.scalars().first()
+
     async def get_by_post(
         self, post_id: int, skip: int = 0, limit: int = 50
     ) -> list[Comment]:

@@ -19,51 +19,622 @@ from app.users.models.user import User
 
 
 class AIResumeService:
-    """Service to parse, critique, and optimize student resumes using LLMs."""
+    """High-level Software Engineering Resume Analyzer, ATS Scorer & STAR Impact Optimizer."""
 
-    async def analyze_resume(self, resume_text: str) -> dict:
+    # Software Engineering Skills Taxonomy
+    SWE_SKILLS_TAXONOMY = {
+        "Languages": [
+            "Python",
+            "JavaScript",
+            "TypeScript",
+            "Java",
+            "C++",
+            "C#",
+            "Go",
+            "Golang",
+            "Rust",
+            "SQL",
+            "HTML5",
+            "CSS3",
+            "PHP",
+            "Ruby",
+            "Kotlin",
+            "Swift",
+            "Bash",
+            "Shell",
+        ],
+        "Frameworks & Web": [
+            "React",
+            "Next.js",
+            "Vue",
+            "Angular",
+            "Node.js",
+            "Express",
+            "FastAPI",
+            "Django",
+            "Flask",
+            "Spring Boot",
+            "ASP.NET",
+            "TailwindCSS",
+            "Redux",
+            "GraphQL",
+            "REST",
+            "RESTful",
+        ],
+        "Databases & Caching": [
+            "PostgreSQL",
+            "MySQL",
+            "MongoDB",
+            "Redis",
+            "Elasticsearch",
+            "SQLite",
+            "DynamoDB",
+            "Cassandra",
+            "Kafka",
+            "RabbitMQ",
+            "Prisma",
+            "SQLAlchemy",
+        ],
+        "Cloud & DevOps": [
+            "AWS",
+            "GCP",
+            "Google Cloud",
+            "Azure",
+            "Docker",
+            "Kubernetes",
+            "CI/CD",
+            "GitHub Actions",
+            "GitLab CI",
+            "Terraform",
+            "Linux",
+            "Nginx",
+            "Prometheus",
+            "Grafana",
+            "Microservices",
+        ],
+        "Engineering Best Practices": [
+            "Unit Testing",
+            "Integration Testing",
+            "Pytest",
+            "Jest",
+            "TDD",
+            "System Design",
+            "Agile",
+            "Scrum",
+            "Git",
+            "Design Patterns",
+            "Data Structures",
+            "Algorithms",
+            "OOP",
+        ],
+    }
+
+    ACTION_VERBS = [
+        "architected",
+        "engineered",
+        "developed",
+        "designed",
+        "implemented",
+        "optimized",
+        "reduced",
+        "scaled",
+        "automated",
+        "refactored",
+        "deployed",
+        "spearheaded",
+        "accelerated",
+        "decreased",
+        "increased",
+        "built",
+        "integrated",
+        "streamlined",
+        "configured",
+        "mentored",
+    ]
+
+    async def analyze_resume(
+        self, resume_text: str, target_role: str = "Software Developer"
+    ) -> dict:
+        import re
+
+        clean_text = resume_text or ""
+        lower_text = clean_text.lower()
+        word_count = len(clean_text.split())
+
+        # 1. Detect Skills
+        detected_skills: dict[str, list[str]] = {}
+        all_detected: list[str] = []
+        for category, skills in self.SWE_SKILLS_TAXONOMY.items():
+            found = [
+                s
+                for s in skills
+                if re.search(r"\b" + re.escape(s.lower()) + r"\b", lower_text)
+            ]
+            if found:
+                detected_skills[category] = found
+                all_detected.extend(found)
+
+        # 2. Detect Action Verbs & Metrics
+        found_verbs = [
+            v.capitalize()
+            for v in self.ACTION_VERBS
+            if re.search(r"\b" + v + r"\b", lower_text)
+        ]
+        metric_matches = re.findall(
+            r"(\d+%\s*|\d+x\s*|\$\d+[\w]*|\d+\s*(?:ms|seconds|users|requests|rps|qps|dau|mau|k|m|gb|tb))",
+            clean_text,
+            re.IGNORECASE,
+        )
+
+        # 3. Detect Sections
+        has_experience = bool(
+            re.search(
+                r"\b(experience|employment|work history|internship)\b", lower_text
+            )
+        )
+        has_projects = bool(
+            re.search(
+                r"\b(projects|technical projects|portfolio|open source)\b", lower_text
+            )
+        )
+        has_skills = bool(
+            re.search(r"\b(skills|technical skills|technologies|tools)\b", lower_text)
+        )
+        has_education = bool(
+            re.search(
+                r"\b(education|university|college|b\.tech|degree|bachelor)\b",
+                lower_text,
+            )
+        )
+
+        # 4. Compute High-Level Dimensional Scores (0 - 100)
+        # Tech Stack Match (breadth across categories)
+        cat_count = len(detected_skills.keys())
+        tech_score = min(100, int((len(all_detected) * 4) + (cat_count * 10)))
+
+        # Impact & Metrics Score (STAR method)
+        metric_count = len(metric_matches)
+        impact_score = min(100, int((metric_count * 18) + (len(found_verbs) * 4)))
+
+        # ATS Readability Score
+        section_pts = (
+            int(has_experience)
+            + int(has_projects)
+            + int(has_skills)
+            + int(has_education)
+        ) * 20
+        length_pts = (
+            20 if (150 <= word_count <= 800) else (10 if word_count > 50 else 5)
+        )
+        ats_score = min(100, section_pts + length_pts)
+
+        # Weighted Overall Score
+        overall_score = min(
+            98,
+            max(
+                45,
+                int((tech_score * 0.35) + (impact_score * 0.35) + (ats_score * 0.30)),
+            ),
+        )
+
+        # 5. Role-Tailored Missing Keywords
+        target_role_lower = target_role.lower()
+        recommended_missing = []
+        if (
+            "backend" in target_role_lower
+            or "full" in target_role_lower
+            or "software" in target_role_lower
+        ):
+            key_candidates = [
+                "Docker",
+                "PostgreSQL",
+                "Redis",
+                "CI/CD",
+                "FastAPI",
+                "Microservices",
+                "Unit Testing",
+                "Kubernetes",
+            ]
+            recommended_missing = [k for k in key_candidates if k not in all_detected][
+                :5
+            ]
+        elif "frontend" in target_role_lower or "web" in target_role_lower:
+            key_candidates = [
+                "TypeScript",
+                "Next.js",
+                "TailwindCSS",
+                "Redux",
+                "Jest",
+                "GraphQL",
+                "Responsive Design",
+            ]
+            recommended_missing = [k for k in key_candidates if k not in all_detected][
+                :5
+            ]
+        elif (
+            "ai" in target_role_lower
+            or "data" in target_role_lower
+            or "ml" in target_role_lower
+        ):
+            key_candidates = [
+                "PyTorch",
+                "TensorFlow",
+                "Pandas",
+                "Scikit-Learn",
+                "PostgreSQL",
+                "Docker",
+                "MLOps",
+            ]
+            recommended_missing = [k for k in key_candidates if k not in all_detected][
+                :5
+            ]
+        else:
+            key_candidates = [
+                "Docker",
+                "Git",
+                "REST APIs",
+                "SQL",
+                "Unit Testing",
+                "System Design",
+            ]
+            recommended_missing = [k for k in key_candidates if k not in all_detected][
+                :5
+            ]
+
+        # 6. High-Impact Bullet Rewrites (STAR Format transformations)
+        bullet_rewrites = [
+            {
+                "original": "Built backend APIs for user management and authentication.",
+                "improved": "Architected secure RESTful auth microservices using FastAPI, JWT, and PostgreSQL, reducing login endpoint latency by 35% across 10,000+ active users.",
+                "reason": "Quantifies scale, latency improvements, and explicitly highlights technical tools (JWT, PostgreSQL, FastAPI).",
+            },
+            {
+                "original": "Worked on frontend pages and improved design with React.",
+                "improved": "Engineered modular React & TypeScript components with TanStack Query caching, boosting Lighthouse performance score from 68 to 94 and cutting bundle size by 28%.",
+                "reason": "Replaces generic description with concrete engineering metrics (Lighthouse score, bundle size reduction, TypeScript).",
+            },
+            {
+                "original": "Deployed application to server and handled bug fixes.",
+                "improved": "Automated zero-downtime deployment pipelines using Docker and GitHub Actions to AWS ECS, accelerating release velocity from weekly to multiple daily deployments.",
+                "reason": "Demonstrates modern DevOps proficiency (Docker, CI/CD, AWS ECS) and business velocity impact.",
+            },
+        ]
+
+        # 7. Strengths & Critical Improvements
+        strengths = []
+        if len(all_detected) >= 5:
+            strengths.append(
+                f"Demonstrates strong technical repertoire across {len(all_detected)} core software technologies."
+            )
+        if metric_count >= 2:
+            strengths.append(
+                "Contains quantified metrics demonstrating measurable engineering impact."
+            )
+        if len(found_verbs) >= 4:
+            strengths.append(
+                f"Effective use of active technical verbs ({', '.join(found_verbs[:4])})."
+            )
+        if has_projects and has_experience:
+            strengths.append(
+                "Clear structural balance between hands-on project portfolio and engineering experience."
+            )
+        if not strengths:
+            strengths.append(
+                "Good baseline technical foundation ready for professional ATS enhancement."
+            )
+
+        improvements = []
+        if metric_count < 3:
+            improvements.append(
+                "Quantify bullet points with STAR metrics (e.g. latency reduced by X%, query throughput increased by Y, supported Z users)."
+            )
+        if (
+            "Docker" not in all_detected
+            and "Kubernetes" not in all_detected
+            and "CI/CD" not in all_detected
+        ):
+            improvements.append(
+                "Highlight containerization and deployment skills (e.g., Docker, GitHub Actions CI/CD) to meet modern SWE industry benchmarks."
+            )
+        if (
+            "Unit Testing" not in all_detected
+            and "Pytest" not in all_detected
+            and "Jest" not in all_detected
+        ):
+            improvements.append(
+                "Explicitly state testing & code quality practices (e.g. Pytest, Jest, automated integration tests, >80% code coverage)."
+            )
+        if word_count < 150:
+            improvements.append(
+                "Expand on architectural design decisions, database schema optimizations, and distributed challenges solved in projects."
+            )
+
+        rating = (
+            "Excellent"
+            if overall_score >= 85
+            else ("Strong" if overall_score >= 70 else "Needs Optimization")
+        )
+
         return {
-            "score": 85,
-            "feedback": "Resume parsing is currently in sandbox mode.",
-            "suggestions": [
-                "Add more metrics to experience",
-                "Incorporate skill keywords",
-            ],
+            "score": overall_score,
+            "rating": rating,
+            "target_role": target_role,
+            "dimensions": {
+                "overall": overall_score,
+                "ats_compatibility": ats_score,
+                "impact_metrics": impact_score,
+                "tech_stack_depth": tech_score,
+            },
+            "detected_skills": detected_skills,
+            "detected_skills_count": len(all_detected),
+            "missing_high_impact_keywords": recommended_missing,
+            "bullet_rewrites": bullet_rewrites,
+            "feedback": improvements,
+            "strengths": strengths,
+            "suggestions": improvements,
         }
 
 
-class AIClubRecommendationService:
-    """Service to recommend campus clubs to users based on interest vectors."""
-
-    async def get_recommended_clubs(self, user_id: int) -> list[int]:
-        return []
-
-
-class AIModerationService:
-    """Service to moderate text content (posts, comments) to filter abuse/profanity."""
-
-    async def moderate_content(self, text: str) -> bool:
-        return True
-
-
-class AIAlumniMatcher:
-    """Service to match students with alumni mentors based on career trajectories."""
-
-    async def find_mentors(self, student_id: int) -> list[dict]:
-        return []
-
-
 class CareerRoadmapService:
-    """Service to generate step-by-step career roadmaps mapping skills gaps to roles."""
+    """High-level Software Developer Career Roadmap & Milestone Blueprint Generator."""
+
+    ROLE_ROADMAPS = {
+        "full-stack": {
+            "title": "Full-Stack Software Engineer",
+            "market_demand": "Very High (Top 3 tech hiring priority)",
+            "salary_range": "$95k - $145k / ₹12L - ₹28L",
+            "estimated_weeks": 20,
+            "required_core_skills": [
+                "TypeScript",
+                "React",
+                "Node.js",
+                "Python",
+                "PostgreSQL",
+                "Docker",
+                "Redis",
+                "CI/CD",
+            ],
+            "milestones": [
+                {
+                    "phase": "Phase 1: Advanced Language Internals & Full-Stack Core",
+                    "title": "Deep TypeScript & Modern Asynchronous Architectures",
+                    "duration": "Weeks 1 - 5",
+                    "description": "Master advanced TypeScript generics, event-loop concurrency, REST/GraphQL API design, and SQL relational schema normalization.",
+                    "key_topics": [
+                        "TypeScript Strict Typing & Generics",
+                        "FastAPI / Node.js Microservices",
+                        "PostgreSQL Query Optimization & Indexing",
+                        "Authentication (JWT / OAuth2 / RBAC)",
+                    ],
+                    "project": {
+                        "title": "Production-Ready Multi-Tenant Auth & API Gateway",
+                        "description": "Build an asynchronous API gateway with role-based access control, rate limiting with Redis token buckets, and automated database migrations.",
+                        "tech_stack": "FastAPI, PostgreSQL, Redis, Docker, Pytest",
+                    },
+                    "interview_focus": "Data Structures (Hash Maps, Trees, Graphs), SQL vs NoSQL trade-offs, Asynchronous execution model.",
+                },
+                {
+                    "phase": "Phase 2: Scalable Frontend Architecture & State Orchestration",
+                    "title": "Modern React 18, Next.js App Router & Client Performance",
+                    "duration": "Weeks 6 - 10",
+                    "description": "Engineer high-performance client applications with server-side rendering, optimistic UI mutations, and state management.",
+                    "key_topics": [
+                        "Next.js App Router & Server Components",
+                        "TanStack Query & Optimistic Updates",
+                        "Responsive UI Systems (Tailwind / Radix)",
+                        "Lighthouse 95+ Core Web Vitals Optimization",
+                    ],
+                    "project": {
+                        "title": "Real-Time Collaborative Dashboard with Live Streams",
+                        "description": "Develop a real-time reactive interface with WebSocket feeds, interactive analytics charts, and optimistic drag-and-drop kanban boards.",
+                        "tech_stack": "Next.js, TypeScript, TailwindCSS, WebSockets, Recharts",
+                    },
+                    "interview_focus": "Frontend System Design (Virtualization, Debouncing, State normalization), DOM rendering pipeline, Component composition.",
+                },
+                {
+                    "phase": "Phase 3: Distributed Systems, Caching & Cloud CI/CD",
+                    "title": "Containerization, Cloud Infrastructure & Asynchronous Queues",
+                    "duration": "Weeks 11 - 15",
+                    "description": "Transition from monolithic setups to containerized, distributed architectures with background worker queues and automated pipelines.",
+                    "key_topics": [
+                        "Docker Multi-Stage Builds",
+                        "Redis Caching Strategies & Pub/Sub",
+                        "Celery / BullMQ Background Task Queues",
+                        "GitHub Actions CI/CD to AWS ECS / Cloud Run",
+                    ],
+                    "project": {
+                        "title": "Distributed Media Processing & Notification Engine",
+                        "description": "Construct an asynchronous pipeline that processes media uploads, extracts metadata, coordinates email/SMS notifications, and guarantees idempotency.",
+                        "tech_stack": "Docker, AWS S3, Redis Queues, Celery, GitHub Actions",
+                    },
+                    "interview_focus": "System Design: Scalable Notification Service, Cache invalidation strategies, Idempotency keys.",
+                },
+                {
+                    "phase": "Phase 4: Capstone, Production Observability & Technical Leadership",
+                    "title": "End-to-End Enterprise SaaS & High-Availability Architecture",
+                    "duration": "Weeks 16 - 20",
+                    "description": "Deploy a complete SaaS product with telemetry (Prometheus/Grafana), automated E2E testing suites, and load testing.",
+                    "key_topics": [
+                        "Prometheus & Grafana Observability",
+                        "Playwright End-to-End Testing",
+                        "System Load Testing (k6 / Locust)",
+                        "Technical Architecture Documentation",
+                    ],
+                    "project": {
+                        "title": "Enterprise Cloud Collaboration & Team Operations Platform",
+                        "description": "Complete production portfolio product supporting 1,000+ concurrent requests, automated health checks, error budgets, and full CI/CD deployment.",
+                        "tech_stack": "Full Stack Monorepo, Kubernetes / AWS, Prometheus, Playwright",
+                    },
+                    "interview_focus": "Mock Technical Interviews: End-to-End System Design (e.g. Design Uber / Slack), Behavioral STAR scenarios.",
+                },
+            ],
+            "interview_prep": {
+                "system_design": [
+                    "Design a Rate Limiter",
+                    "Design a Distributed URL Shortener",
+                    "Design a Real-Time Chat System",
+                    "Design an E-Commerce Checkout with Stripe",
+                ],
+                "dsa_focus": [
+                    "Array & Sliding Window",
+                    "Graph BFS/DFS & Topo Sort",
+                    "Dynamic Programming Fundamentals",
+                    "Heap & Priority Queues",
+                ],
+                "behavioral": [
+                    "Handling a High-Severity Production Incident",
+                    "Navigating Architectural Disagreements",
+                    "Mentoring Junior Developers",
+                ],
+            },
+        },
+        "backend": {
+            "title": "Backend Systems & Cloud Engineer",
+            "market_demand": "Very High",
+            "salary_range": "$105k - $160k / ₹14L - ₹32L",
+            "estimated_weeks": 20,
+            "required_core_skills": [
+                "Python",
+                "Go",
+                "PostgreSQL",
+                "Redis",
+                "Kafka",
+                "Docker",
+                "Kubernetes",
+                "System Design",
+            ],
+            "milestones": [
+                {
+                    "phase": "Phase 1: Advanced Backend Fundamentals & Database Engineering",
+                    "title": "High-Throughput APIs, Connection Pooling & Index Tuning",
+                    "duration": "Weeks 1 - 5",
+                    "description": "Master low-level database execution plans, ACID transactions, isolation levels, and non-blocking asynchronous APIs.",
+                    "key_topics": [
+                        "AsyncIO & Concurrency Primitives",
+                        "PostgreSQL EXPLAIN ANALYZE & B-Tree Indexing",
+                        "Connection Pooling & Deadlock Resolution",
+                        "gRPC & Protocol Buffers",
+                    ],
+                    "project": {
+                        "title": "High-Throughput Financial Ledger API Engine",
+                        "description": "Engineered transactional ledger API supporting double-entry bookkeeping, ACID atomicity, and sub-10ms response times.",
+                        "tech_stack": "FastAPI / Go, PostgreSQL, Asyncpg, Pytest",
+                    },
+                    "interview_focus": "Database locking, Transaction isolation, Concurrency vs Parallelism.",
+                },
+                {
+                    "phase": "Phase 2: Event-Driven Architectures & Stream Processing",
+                    "title": "Kafka / RabbitMQ, Event Sourcing & CQRS",
+                    "duration": "Weeks 6 - 10",
+                    "description": "Design distributed event pipelines handling stream ingestion, consumer group balancing, and at-least-once delivery guarantees.",
+                    "key_topics": [
+                        "Apache Kafka Partitioning & Offsets",
+                        "Event Sourcing & CQRS Pattern",
+                        "Distributed Transaction Sagas",
+                        "Dead Letter Queues",
+                    ],
+                    "project": {
+                        "title": "Real-Time Telemetry & Event Ingestion Pipeline",
+                        "description": "Event-driven system ingesting 50,000 events/sec via Kafka with partitioned consumers and timescale analytics storage.",
+                        "tech_stack": "Go / Python, Kafka, Redis, TimescaleDB, Docker",
+                    },
+                    "interview_focus": "System Design: Design an Event Ingestion Pipeline, Kafka vs RabbitMQ trade-offs.",
+                },
+                {
+                    "phase": "Phase 3: Cloud Infrastructure, Kubernetes & Microservices",
+                    "title": "Service Mesh, Container Orchestration & Distributed Caching",
+                    "duration": "Weeks 11 - 15",
+                    "description": "Deploy containerized services across Kubernetes clusters with Istio service mesh, distributed tracing, and Redis clustering.",
+                    "key_topics": [
+                        "Kubernetes Deployments & Services",
+                        "Distributed Tracing (OpenTelemetry)",
+                        "Circuit Breakers & Exponential Backoff",
+                        "Redis Sentinel & Sharding",
+                    ],
+                    "project": {
+                        "title": "Resilient Microservices Cluster with Chaos Engineering",
+                        "description": "Deploy 4 interconnected microservices with distributed OpenTelemetry tracing and automated failover recovery.",
+                        "tech_stack": "Kubernetes, Docker, OpenTelemetry, Jaeger, Redis",
+                    },
+                    "interview_focus": "Distributed consensus (Raft/Paxos), CAP theorem, Cache stampede mitigation.",
+                },
+                {
+                    "phase": "Phase 4: High-Scale Capstone & Senior System Design",
+                    "title": "Production Scale & Reliability Engineering",
+                    "duration": "Weeks 16 - 20",
+                    "description": "Build and load-test a geo-distributed service to withstand node failure and traffic spikes.",
+                    "key_topics": [
+                        "Geo-Distributed Database Replication",
+                        "Load Testing with k6 (100k RPM)",
+                        "Rate Limiting & DDoS Defense",
+                        "Architecture Decision Records (ADRs)",
+                    ],
+                    "project": {
+                        "title": "Global Rate Limiter & Webhook Dispatch Platform",
+                        "description": "Production platform delivering reliable webhooks with exponential retries, signature verification, and latency analytics.",
+                        "tech_stack": "Go/Python, AWS Lambda, DynamoDB, Redis Cluster",
+                    },
+                    "interview_focus": "Staff/Senior System Design interviews (Design YouTube / Google Drive / Payment Gateway).",
+                },
+            ],
+            "interview_prep": {
+                "system_design": [
+                    "Design a Distributed Unique ID Generator (Snowflake)",
+                    "Design a Key-Value Store",
+                    "Design a Distributed Message Broker",
+                    "Design a Video Streaming Backend",
+                ],
+                "dsa_focus": [
+                    "Graphs & Dijkstra/MST",
+                    "Trie & String Matching",
+                    "LRU Cache Implementation",
+                    "Bit Manipulation & Memory Limits",
+                ],
+                "behavioral": [
+                    "Handling Data Inconsistencies in Production",
+                    "Designing for Backward Compatibility",
+                ],
+            },
+        },
+    }
 
     async def generate_roadmap(
-        self, target_role: str, current_skills: list[str]
+        self,
+        target_role: str,
+        current_skills: list[str],
+        experience_level: str = "Mid-Level",
     ) -> dict:
+        clean_role = (target_role or "Software Developer").strip()
+        role_key = "backend" if "backend" in clean_role.lower() else "full-stack"
+        template = self.ROLE_ROADMAPS.get(role_key, self.ROLE_ROADMAPS["full-stack"])
+
+        user_skills_lower = {s.strip().lower() for s in current_skills if s.strip()}
+        required_skills = template["required_core_skills"]
+
+        matching = [s for s in required_skills if s.lower() in user_skills_lower]
+        missing = [s for s in required_skills if s.lower() not in user_skills_lower]
+
+        milestones = template["milestones"]
+
         return {
-            "role": target_role,
-            "steps": [
-                "Scaffolded learning path placeholder. AI engine pending integration."
-            ],
+            "target_role": clean_role,
+            "experience_level": experience_level,
+            "role_overview": {
+                "title": template["title"],
+                "market_demand": template["market_demand"],
+                "salary_range": template["salary_range"],
+                "estimated_duration": f"{template['estimated_weeks']} Weeks",
+            },
+            "skill_gap_analysis": {
+                "matching_skills": matching,
+                "skills_to_acquire": missing,
+                "readiness_percentage": int(
+                    (len(matching) / max(len(required_skills), 1)) * 100
+                ),
+            },
+            "milestones": milestones,
+            "recommended_skills": missing if missing else required_skills[:4],
+            "interview_prep": template["interview_prep"],
         }
 
 

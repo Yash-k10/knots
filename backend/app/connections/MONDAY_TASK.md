@@ -14,6 +14,7 @@
   from app.users.models.user import User
   from app.auth.dependencies.auth import get_current_user
 
+
   @router.get("/my-connections")
   async def get_connections(current_user: User = Depends(get_current_user)):
       # current_user contains the fully loaded User model

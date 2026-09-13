@@ -19,7 +19,6 @@ from app.users.models.user import User
 
 
 class SearchService:
-
     def __init__(self, db: AsyncSession):
         self.db = db
 

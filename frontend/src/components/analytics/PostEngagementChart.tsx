@@ -32,35 +32,33 @@ export default function PostEngagementChart({
   }));
 
   return (
-    <div className="bg-slate-950/60 border border-slate-900 hover:border-slate-800/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md transition duration-300 flex flex-col justify-between">
-      <div className="absolute inset-0 bg-gradient-to-tl from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none" />
-
+    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-3xl p-6 shadow-sm relative overflow-hidden transition duration-300 flex flex-col justify-between">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2.5 bg-[#4B63D2]/10 text-[#4B63D2] rounded-2xl border border-[#4B63D2]/20">
             <Activity className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">
+            <h3 className="text-lg font-black text-black tracking-tight">
               Post Engagement
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#5851A4] font-medium">
               Performance breakdown across your recent posts
             </p>
           </div>
         </div>
 
         {/* Metric Filter Badges */}
-        <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80">
+        <div className="flex items-center gap-1.5 bg-[#FAF9FD] p-1 rounded-2xl border border-[#EAE4F7]">
           {(["all", "views", "likes", "comments"] as const).map((metric) => (
             <button
               key={metric}
               onClick={() => setActiveMetric(metric)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all duration-200 ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer ${
                 activeMetric === metric
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-white"
               }`}
             >
               {metric}
@@ -71,53 +69,53 @@ export default function PostEngagementChart({
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-4 gap-3 mb-6 relative z-10">
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-center">
-          <div className="p-1.5 bg-indigo-500/10 rounded-lg text-indigo-400 w-fit mx-auto mb-1">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 text-center">
+          <div className="p-1.5 bg-[#4B63D2]/10 rounded-xl text-[#4B63D2] w-fit mx-auto mb-1">
             <Eye className="h-4 w-4" />
           </div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+          <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
             Views
           </span>
-          <p className="text-base font-extrabold text-white mt-0.5">
+          <p className="text-base font-black text-black mt-0.5">
             {totalViews}
           </p>
         </div>
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-center">
-          <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400 w-fit mx-auto mb-1">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 text-center">
+          <div className="p-1.5 bg-emerald-500/10 rounded-xl text-emerald-600 w-fit mx-auto mb-1">
             <Heart className="h-4 w-4" />
           </div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+          <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
             Likes
           </span>
-          <p className="text-base font-extrabold text-white mt-0.5">
+          <p className="text-base font-black text-black mt-0.5">
             {totalLikes}
           </p>
         </div>
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-center">
-          <div className="p-1.5 bg-pink-500/10 rounded-lg text-pink-400 w-fit mx-auto mb-1">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 text-center">
+          <div className="p-1.5 bg-pink-500/10 rounded-xl text-pink-500 w-fit mx-auto mb-1">
             <MessageCircle className="h-4 w-4" />
           </div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+          <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
             Comments
           </span>
-          <p className="text-base font-extrabold text-white mt-0.5">
+          <p className="text-base font-black text-black mt-0.5">
             {totalComments}
           </p>
         </div>
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 text-center">
-          <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-400 w-fit mx-auto mb-1">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 text-center">
+          <div className="p-1.5 bg-indigo-500/10 rounded-xl text-indigo-600 w-fit mx-auto mb-1">
             <Activity className="h-4 w-4" />
           </div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+          <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
             Rate
           </span>
-          <p className="text-base font-extrabold text-white mt-0.5">
+          <p className="text-base font-black text-black mt-0.5">
             {engagementRate}%
           </p>
         </div>
       </div>
 
-      {/* Recharts Bar Chart */}
+      {/* Chart Section */}
       <div className="h-[250px] w-full relative z-10">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -127,18 +125,18 @@ export default function PostEngagementChart({
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#273258"
+                stroke="#EAE4F7"
                 vertical={false}
               />
               <XAxis
                 dataKey="name"
-                stroke="#B9B1D9"
+                stroke="#5851A4"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#364373" }}
+                axisLine={{ stroke: "#EAE4F7" }}
               />
               <YAxis
-                stroke="#B9B1D9"
+                stroke="#5851A4"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -147,28 +145,35 @@ export default function PostEngagementChart({
               <Tooltip
                 content={({ active, payload, label }: any) => {
                   if (active && payload && payload.length) {
-                    const postInfo = payload[0].payload;
+                    const post = chartData.find((p) => p.name === label);
                     return (
-                      <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md max-w-xs">
-                        <p className="text-xs font-bold text-white">{label}</p>
-                        <p className="text-[11px] text-slate-400 line-clamp-1 mb-2">
-                          {postInfo.snippet}
+                      <div className="bg-white border border-[#EAE4F7] rounded-2xl p-3.5 shadow-xl max-w-xs">
+                        <p className="text-xs font-black text-black">
+                          {label}
                         </p>
-                        <div className="space-y-1 text-xs">
-                          {payload.map((item: any) => (
+                        {post?.snippet && (
+                          <p className="text-[11px] text-[#5851A4] italic line-clamp-2 mt-1 mb-2 font-medium">
+                            "{post.snippet}"
+                          </p>
+                        )}
+                        <div className="space-y-1">
+                          {payload.map((entry: any, index: number) => (
                             <div
-                              key={item.name}
-                              className="flex items-center justify-between gap-4"
+                              key={`item-${index}`}
+                              className="flex items-center justify-between text-xs gap-4"
                             >
-                              <span className="text-slate-300 flex items-center gap-1.5">
+                              <span
+                                className="font-semibold flex items-center gap-1.5"
+                                style={{ color: entry.color }}
+                              >
                                 <span
                                   className="h-2 w-2 rounded-full inline-block"
-                                  style={{ backgroundColor: item.color }}
+                                  style={{ backgroundColor: entry.color }}
                                 />
-                                {item.name}:
+                                {entry.name}:
                               </span>
-                              <span className="font-extrabold text-white">
-                                {item.value}
+                              <span className="font-black text-black">
+                                {entry.value}
                               </span>
                             </div>
                           ))}
@@ -180,40 +185,43 @@ export default function PostEngagementChart({
                 }}
               />
               <Legend
-                wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
-                iconType="circle"
+                wrapperStyle={{
+                  paddingTop: "10px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                }}
               />
               {(activeMetric === "all" || activeMetric === "views") && (
                 <Bar
                   dataKey="Views"
                   fill="#4B63D2"
-                  radius={[4, 4, 0, 0]}
-                  barSize={16}
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={30}
                 />
               )}
               {(activeMetric === "all" || activeMetric === "likes") && (
                 <Bar
                   dataKey="Likes"
-                  fill="#5851A4"
-                  radius={[4, 4, 0, 0]}
-                  barSize={16}
+                  fill="#10B981"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={30}
                 />
               )}
               {(activeMetric === "all" || activeMetric === "comments") && (
                 <Bar
                   dataKey="Comments"
-                  fill="#FFD21A"
-                  radius={[4, 4, 0, 0]}
-                  barSize={16}
+                  fill="#EC4899"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={30}
                 />
               )}
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full border border-dashed border-slate-800 rounded-xl">
-            <Activity className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-slate-500 text-xs italic">
-              No engagement data available yet.
+          <div className="flex flex-col items-center justify-center h-full border border-dashed border-[#EAE4F7] rounded-2xl bg-[#FAF9FD]">
+            <Activity className="h-8 w-8 text-[#9188BE] mb-2" />
+            <p className="text-[#5851A4] text-xs font-medium italic">
+              No post activity recorded yet.
             </p>
           </div>
         )}

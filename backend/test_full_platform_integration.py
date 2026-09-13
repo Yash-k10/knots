@@ -56,7 +56,8 @@ class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
             # Seed standard roles
             self.admin_role = Role(id=1, name="Admin")
             self.student_role = Role(id=2, name="Student")
-            db.add_all([self.admin_role, self.student_role])
+            self.alumni_role = Role(id=4, name="Alumni")
+            db.add_all([self.admin_role, self.student_role, self.alumni_role])
             await db.commit()
 
             # Seed Company for jobs
@@ -84,24 +85,24 @@ class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
                 graduation_year=2026,
             )
 
-            # Seed Test User 2 (Student)
+            # Seed Test User 2 (Alumni)
             self.user2 = User(
                 id=2,
-                email="student2@sbjit.edu.in",
+                email="alumni1@sbjit.edu.in",
                 hashed_password=hash_password("password123"),
-                role_id=2,
+                role_id=4,
                 is_active=True,
             )
-            self.user2.role = self.student_role
+            self.user2.role = self.alumni_role
             self.profile2 = Profile(
                 id=2,
                 user_id=2,
                 first_name="Jordan",
                 last_name="Lee",
-                bio="Data Science student",
+                bio="Data Science alumnus",
                 department="Data Science",
                 skills=["Python", "SQL", "Machine Learning"],
-                graduation_year=2026,
+                graduation_year=2024,
             )
 
             # Seed Test User 3 (Admin)
@@ -144,7 +145,6 @@ class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
         """End-to-end multi-module API integration test verifying all core routes together."""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-
             # -------------------------------------------------------------
             # 1. AUTH & USER ENDPOINTS
             # -------------------------------------------------------------

@@ -83,21 +83,19 @@ export default function ProfileViewsChart({
   });
 
   return (
-    <div className="bg-slate-950/60 border border-slate-900 hover:border-slate-800/80 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md transition duration-300">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none" />
-
+    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-3xl p-6 shadow-sm relative overflow-hidden transition duration-300">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-10">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 bg-[#4B63D2]/10 text-[#4B63D2] rounded-2xl border border-[#4B63D2]/20">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
+              <h3 className="text-lg font-black text-black tracking-tight">
                 Profile Views
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#5851A4] font-medium">
                 Unique visits to your profile over time
               </p>
             </div>
@@ -105,15 +103,15 @@ export default function ProfileViewsChart({
         </div>
 
         {/* Range Selector */}
-        <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800/80">
+        <div className="flex items-center gap-1.5 bg-[#FAF9FD] p-1 rounded-2xl border border-[#EAE4F7]">
           {[7, 14, 30].map((d) => (
             <button
               key={d}
               onClick={() => setDays(d)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-200 ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
                 days === d
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-white"
               }`}
             >
               {d}D
@@ -124,38 +122,38 @@ export default function ProfileViewsChart({
 
       {/* Stats Summary Badges */}
       <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 flex items-center justify-between">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+            <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
               Total Views
             </span>
-            <p className="text-lg font-extrabold text-white mt-0.5">
+            <p className="text-lg font-black text-black mt-0.5">
               {totalViews}
             </p>
           </div>
-          <Eye className="h-4 w-4 text-indigo-400 opacity-80" />
+          <Eye className="h-4 w-4 text-[#4B63D2] opacity-80" />
         </div>
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 flex items-center justify-between">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+            <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
               Daily Avg
             </span>
-            <p className="text-lg font-extrabold text-white mt-0.5">
+            <p className="text-lg font-black text-black mt-0.5">
               {dailyAverage}
             </p>
           </div>
-          <Calendar className="h-4 w-4 text-emerald-400 opacity-80" />
+          <Calendar className="h-4 w-4 text-emerald-600 opacity-80" />
         </div>
-        <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-3 flex items-center justify-between">
+        <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+            <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">
               Peak Day
             </span>
-            <p className="text-lg font-extrabold text-white mt-0.5">
+            <p className="text-lg font-black text-black mt-0.5">
               {peakItem.views > 0 ? peakItem.views : "-"}
             </p>
           </div>
-          <ArrowUpRight className="h-4 w-4 text-amber-400 opacity-80" />
+          <ArrowUpRight className="h-4 w-4 text-amber-500 opacity-80" />
         </div>
       </div>
 
@@ -163,7 +161,7 @@ export default function ProfileViewsChart({
       <div className="h-[250px] w-full relative z-10">
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500" />
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#4B63D2]" />
           </div>
         ) : formattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -179,8 +177,8 @@ export default function ProfileViewsChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#4B63D2" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#5851A4" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#4B63D2" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#4B63D2" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient
                   id="profileViewsStroke"
@@ -189,24 +187,24 @@ export default function ProfileViewsChart({
                   x2="1"
                   y2="0"
                 >
-                  <stop offset="0%" stopColor="#C8B6E2" />
+                  <stop offset="0%" stopColor="#5851A4" />
                   <stop offset="100%" stopColor="#4B63D2" />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#273258"
+                stroke="#EAE4F7"
                 vertical={false}
               />
               <XAxis
                 dataKey="label"
-                stroke="#B9B1D9"
+                stroke="#5851A4"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#364373" }}
+                axisLine={{ stroke: "#EAE4F7" }}
               />
               <YAxis
-                stroke="#B9B1D9"
+                stroke="#5851A4"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -217,12 +215,12 @@ export default function ProfileViewsChart({
                   if (active && payload && payload.length) {
                     const dataPoint = payload[0].payload;
                     return (
-                      <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl px-4 py-2.5 shadow-2xl backdrop-blur-md">
-                        <p className="text-xs font-semibold text-slate-300">
+                      <div className="bg-white border border-[#EAE4F7] rounded-2xl px-4 py-2.5 shadow-xl">
+                        <p className="text-xs font-bold text-[#5851A4]">
                           {dataPoint.fullDate}
                         </p>
-                        <p className="text-base font-extrabold text-white mt-1 flex items-center gap-1.5">
-                          <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 inline-block" />
+                        <p className="text-base font-black text-black mt-1 flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full bg-[#4B63D2] inline-block" />
                           {dataPoint.views}{" "}
                           {dataPoint.views === 1 ? "view" : "views"}
                         </p>
@@ -241,17 +239,17 @@ export default function ProfileViewsChart({
                 fill="url(#profileViewsGradient)"
                 activeDot={{
                   r: 6,
-                  fill: "#C8B6E2",
-                  stroke: "#12172C",
+                  fill: "#4B63D2",
+                  stroke: "#FFFFFF",
                   strokeWidth: 2,
                 }}
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full border border-dashed border-slate-800 rounded-xl">
-            <Eye className="h-8 w-8 text-slate-700 mb-2" />
-            <p className="text-slate-500 text-xs italic">
+          <div className="flex flex-col items-center justify-center h-full border border-dashed border-[#EAE4F7] rounded-2xl bg-[#FAF9FD]">
+            <Eye className="h-8 w-8 text-[#9188BE] mb-2" />
+            <p className="text-[#5851A4] text-xs font-medium italic">
               No profile views recorded yet.
             </p>
           </div>
