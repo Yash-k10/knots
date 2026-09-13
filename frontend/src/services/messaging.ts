@@ -129,3 +129,19 @@ export async function fetchCampusUsers(
 ): Promise<CampusUser[]> {
   return apiRequest<CampusUser[]>(`/users?skip=${skip}&limit=${limit}`);
 }
+
+export async function uploadChatAttachment(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiRequest<string>("/messages/upload", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function deleteChatMessage(messageId: number): Promise<void> {
+  return apiRequest<void>(`/messages/${messageId}`, {
+    method: "DELETE",
+  });
+}
+

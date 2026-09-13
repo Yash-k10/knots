@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -14,6 +14,19 @@ import {
   Sparkles,
   Check,
   ChevronLeft,
+  Mic,
+  MicOff,
+  Paperclip,
+  Play,
+  Pause,
+  Reply,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Download,
+  ExternalLink,
+  Share2,
+  AlertCircle,
 } from "lucide-react";
 import {
   fetchConversations,
@@ -23,11 +36,13 @@ import {
   createGroupConversation,
   markConversationAsRead,
   fetchCampusUsers,
+  uploadChatAttachment,
+  deleteChatMessage,
   Conversation,
   Message,
   CampusUser,
 } from "../services/messaging";
-import { apiRequest } from "../services/api";
+import { apiRequest, getMediaUrl } from "../services/api";
 import { wsClient } from "../services/websocket";
 import {
   parseDate,
@@ -194,8 +209,107 @@ export const canMessageUser = (
   return allowed.includes(rRole);
 };
 
+// --- Custom Audio Voice Note Player Component ---
+function VoiceNotePlayer({
+  src,
+  isSentByMe,
+}: {
+  src: string;
+  isSentByMe: boolean;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const fullUrl = getMediaUrl(src);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().catch((err) => console.error("Play error:", err));
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration || 0);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setCurrentTime(val);
+    if (audioRef.current) {
+      audioRef.current.currentTime = val;
+    }
+  };
+
+  const formatSeconds = (sec: number) => {
+    if (isNaN(sec)) return "0:00";
+    const mins = Math.floor(sec / 60);
+    const secs = Math.floor(sec % 60);
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-2.5 p-2 rounded-xl my-1 min-w-[220px] max-w-xs ${
+        isSentByMe ? "bg-white/15 text-white" : "bg-[#FAF9FD] text-[#1E2746] border border-[#EAE4F7]"
+      }`}
+    >
+      <audio
+        ref={audioRef}
+        src={fullUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={() => setIsPlaying(false)}
+        preload="metadata"
+      />
+      <button
+        type="button"
+        onClick={togglePlay}
+        className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform active:scale-95 ${
+          isSentByMe
+            ? "bg-white text-[#4B63D2] hover:bg-white/90"
+            : "bg-[#4B63D2] text-white hover:bg-[#3E53BE]"
+        }`}
+      >
+        {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.1}
+          value={currentTime}
+          onChange={handleSeek}
+          className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-[#FFD21A] bg-black/20"
+        />
+        <div className="flex justify-between text-[10px] opacity-80 mt-0.5 font-medium">
+          <span>{formatSeconds(currentTime)}</span>
+          <span>{formatSeconds(duration)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Messaging() {
   const location = useLocation();
+  const navigate = useNavigate();
   const targetUserId = (location.state as { targetUserId?: number })
     ?.targetUserId;
 
@@ -226,7 +340,24 @@ export default function Messaging() {
   >({});
   const [hoveredMessageId, setHoveredMessageId] = useState<number | null>(null);
 
-  // 4. New Chat Modal States (Direct & Group)
+  // 4. In-Chat Search & Reply States
+  const [isSearchInChatOpen, setIsSearchInChatOpen] = useState(false);
+  const [inChatSearchQuery, setInChatSearchQuery] = useState("");
+  const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
+
+  // 5. Voice Note Recording States
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<any>(null);
+
+  // 6. File Upload State & Lightbox
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [selectedLightboxImage, setSelectedLightboxImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 7. New Chat Modal States (Direct & Group)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"direct" | "group">("direct");
   const [campusUsers, setCampusUsers] = useState<CampusUser[]>([]);
@@ -308,7 +439,6 @@ export default function Messaging() {
           (c) => c.id === incoming.conversation_id,
         );
         if (!exists) {
-          // Re-fetch conversation list to populate full object
           loadConversations();
           return prevConvs;
         }
@@ -351,8 +481,10 @@ export default function Messaging() {
 
   // Auto scroll chat to bottom when messages update
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typingUsers]);
+    if (!inChatSearchQuery) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, typingUsers, inChatSearchQuery]);
 
   const loadConversations = async () => {
     try {
@@ -372,6 +504,9 @@ export default function Messaging() {
   const selectConversation = async (convId: number) => {
     setActiveConvId(convId);
     setIsLoadingMsgs(true);
+    setReplyingToMessage(null);
+    setIsSearchInChatOpen(false);
+    setInChatSearchQuery("");
     try {
       const msgs = await fetchConversationMessages(convId);
       const enriched = msgs.map((m) => ({
@@ -392,13 +527,19 @@ export default function Messaging() {
     }
   };
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputContent.trim() || activeConvId === null || !currentUser) return;
+  const sendMessageContent = async (rawContent: string) => {
+    if (!rawContent.trim() || activeConvId === null || !currentUser) return;
 
-    const text = inputContent.trim();
-    setInputContent("");
-    setShowEmojiPicker(false);
+    let finalContent = rawContent.trim();
+    if (replyingToMessage) {
+      const replySender =
+        replyingToMessage.sender_id === currentUser.id
+          ? "You"
+          : activeConv?.participants?.find((p) => p.user_id === replyingToMessage.sender_id)?.user?.email?.split("@")[0] || "User";
+      const snippet = replyingToMessage.content.slice(0, 60).replace(/\n/g, " ");
+      finalContent = `[Replying to @${replySender}: "${snippet}"]\n${finalContent}`;
+      setReplyingToMessage(null);
+    }
 
     // Optimistic local message
     const tempId = Date.now();
@@ -406,22 +547,20 @@ export default function Messaging() {
       id: tempId,
       conversation_id: activeConvId,
       sender_id: currentUser.id,
-      content: text,
+      content: finalContent,
       is_read: false,
       created_at: new Date().toISOString(),
       status: "sending",
     };
 
     setMessages((prev) => [...prev, optimisticMsg]);
-
-    // Broadcast stop typing
     wsClient.sendTyping(activeConvId, false);
 
     // Try WebSocket send first, fallback to REST
-    const sentWs = wsClient.sendChatMessage(text, activeConvId);
+    const sentWs = wsClient.sendChatMessage(finalContent, activeConvId);
     if (!sentWs) {
       try {
-        const restMsg = await sendRestMessage(text, activeConvId);
+        const restMsg = await sendRestMessage(finalContent, activeConvId);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === tempId
@@ -429,7 +568,6 @@ export default function Messaging() {
               : m,
           ),
         );
-        // Refresh sidebar
         setConversations((prev) =>
           prev.map((c) =>
             c.id === activeConvId
@@ -449,6 +587,15 @@ export default function Messaging() {
         );
       }, 400);
     }
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputContent.trim()) return;
+    const text = inputContent;
+    setInputContent("");
+    setShowEmojiPicker(false);
+    await sendMessageContent(text);
   };
 
   const handleInputChange = (val: string) => {
@@ -481,6 +628,109 @@ export default function Messaging() {
     });
   };
 
+  const handleDeleteMessage = async (msgId: number) => {
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await deleteChatMessage(msgId);
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+      alert("Could not delete message. Please try again.");
+    }
+  };
+
+  // --- Voice Note Recording Handlers ---
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecordingVoice(true);
+      setRecordingSeconds(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Audio recording permission denied or not supported:", err);
+      alert("Microphone access is required to record voice notes.");
+    }
+  };
+
+  const stopAndSendVoiceRecording = async () => {
+    if (!mediaRecorderRef.current || !isRecordingVoice) return;
+
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+
+    mediaRecorderRef.current.onstop = async () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const audioFile = new File([audioBlob], `voice_note_${Date.now()}.webm`, {
+        type: "audio/webm",
+      });
+
+      mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+
+      try {
+        setIsUploadingAttachment(true);
+        const attachmentUrl = await uploadChatAttachment(audioFile);
+        await sendMessageContent(`[Voice Note] ${attachmentUrl}`);
+      } catch (err) {
+        console.error("Failed to upload voice note:", err);
+        alert("Failed to send voice note. Please try again.");
+      } finally {
+        setIsUploadingAttachment(false);
+      }
+    };
+
+    mediaRecorderRef.current.stop();
+    setIsRecordingVoice(false);
+  };
+
+  const cancelVoiceRecording = () => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecordingVoice(false);
+    setRecordingSeconds(0);
+    audioChunksRef.current = [];
+  };
+
+  // --- File & Image Attachment Upload Handlers ---
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || activeConvId === null) return;
+
+    try {
+      setIsUploadingAttachment(true);
+      const attachmentUrl = await uploadChatAttachment(file);
+      const isImage = file.type.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
+
+      if (isImage) {
+        await sendMessageContent(`[Image] ${attachmentUrl}|${file.name}`);
+      } else {
+        const sizeKb = Math.round(file.size / 1024);
+        await sendMessageContent(`[Document] ${attachmentUrl}|${file.name}|${sizeKb} KB`);
+      }
+    } catch (err) {
+      console.error("Attachment upload failed:", err);
+      alert("Failed to upload attachment. Please try again.");
+    } finally {
+      setIsUploadingAttachment(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   // Open New Chat Modal & load campus directory
   const handleOpenNewChatModal = async () => {
     setIsModalOpen(true);
@@ -491,7 +741,6 @@ export default function Messaging() {
     setIsLoadingUsers(true);
     try {
       const users = await fetchCampusUsers(0, 100);
-      // Filter out current user from candidate list
       const otherUsers = users.filter((u) => u.id !== currentUser?.id);
       setCampusUsers(otherUsers);
     } catch (err) {
@@ -506,7 +755,6 @@ export default function Messaging() {
     try {
       const conv = await getOrCreateDirectConversation(targetId);
       setIsModalOpen(false);
-      // Add to conversations list if not present
       setConversations((prev) => {
         if (prev.some((c) => c.id === conv.id)) {
           return prev;
@@ -622,15 +870,21 @@ export default function Messaging() {
         selectedUserRoleFilter === "ALL" ||
         roleName.toLowerCase() === selectedUserRoleFilter.toLowerCase();
 
-      // Enforce strict communication hierarchy for direct messaging
       const isHierarchyPermitted = canMessageUser(senderRole, roleName);
-
       return matchesSearch && matchesRole && isHierarchyPermitted;
     });
   }, [campusUsers, userSearchQuery, selectedUserRoleFilter, currentUser]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const activeConvInfo = activeConv ? getDirectChatInfo(activeConv) : null;
+
+  // Filtered Messages in Active Chat when in-chat search is active
+  const filteredMessages = useMemo(() => {
+    if (!inChatSearchQuery.trim()) return messages;
+    return messages.filter((m) =>
+      m.content.toLowerCase().includes(inChatSearchQuery.toLowerCase().trim()),
+    );
+  }, [messages, inChatSearchQuery]);
 
   // Delivery status badge
   const renderDeliveryStatus = (msg: Message) => {
@@ -661,8 +915,185 @@ export default function Messaging() {
     }
   };
 
+  // --- Rich Message Body Content Renderer ---
+  const renderMessageContent = (content: string, isSentByMe: boolean) => {
+    // 1. Quoted Reply Header check
+    let replySnippet: { author: string; text: string } | null = null;
+    let mainBody = content;
+
+    const replyMatch = content.match(/^\[Replying to @(.*?):\s*"(.*?)"\]\n([\s\S]*)$/);
+    if (replyMatch) {
+      replySnippet = {
+        author: replyMatch[1],
+        text: replyMatch[2],
+      };
+      mainBody = replyMatch[3];
+    }
+
+    // 2. Shared Post Card Check
+    const postShareMatch = mainBody.match(/^\[Shared Post #(\d+) by (.*?)\]:\s*"(.*?)"\n\nView post:\s*(\/feed#post-\d+)$/);
+    if (postShareMatch) {
+      const postId = postShareMatch[1];
+      const author = postShareMatch[2];
+      const snippet = postShareMatch[3];
+
+      return (
+        <div>
+          {replySnippet && (
+            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
+              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
+            }`}>
+              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
+            </div>
+          )}
+
+          <div className="bg-white text-[#1E2746] rounded-2xl border border-[#D5CBEE] p-3 shadow-md my-1 space-y-2 max-w-sm">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-1.5">
+              <span className="text-[10px] font-black uppercase text-[#4B63D2] flex items-center gap-1">
+                <Share2 className="w-3 h-3" /> Shared Feed Post
+              </span>
+              <span className="text-[10px] font-bold text-[#5851A4]">
+                by {author}
+              </span>
+            </div>
+            <p className="text-xs text-[#1E2746] italic line-clamp-3">
+              "{snippet}"
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate(`/feed#post-${postId}`)}
+              className="w-full py-1.5 px-3 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <span>View Post in Feed</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. Voice Note Check
+    const voiceNoteMatch = mainBody.match(/^\[Voice Note\]\s*(.+)$/);
+    if (voiceNoteMatch) {
+      return (
+        <div>
+          {replySnippet && (
+            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
+              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
+            }`}>
+              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
+            </div>
+          )}
+          <VoiceNotePlayer src={voiceNoteMatch[1]} isSentByMe={isSentByMe} />
+        </div>
+      );
+    }
+
+    // 4. Image Attachment Check
+    const imageMatch = mainBody.match(/^\[Image\]\s*(.+?)(?:\|(.*))?$/);
+    if (imageMatch) {
+      const imgUrl = getMediaUrl(imageMatch[1]);
+      const imgName = imageMatch[2] || "Image Attachment";
+
+      return (
+        <div>
+          {replySnippet && (
+            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
+              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
+            }`}>
+              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
+            </div>
+          )}
+          <div className="rounded-xl overflow-hidden border border-black/10 my-1 max-w-xs group relative cursor-pointer" onClick={() => setSelectedLightboxImage(imgUrl || null)}>
+            <img
+              src={imgUrl}
+              alt={imgName}
+              className="w-full h-auto max-h-60 object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+              <span className="text-xs font-bold bg-black/60 px-3 py-1 rounded-full flex items-center gap-1">
+                <ImageIcon className="w-3.5 h-3.5" /> View Full Image
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 5. Document Attachment Check
+    const docMatch = mainBody.match(/^\[Document\]\s*(.+?)(?:\|(.*?))?(?:\|(.*?))?$/);
+    if (docMatch) {
+      const docUrl = getMediaUrl(docMatch[1]);
+      const docName = docMatch[2] || "Document";
+      const docSize = docMatch[3] || "";
+
+      return (
+        <div>
+          {replySnippet && (
+            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
+              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
+            }`}>
+              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
+            </div>
+          )}
+          <div
+            className={`flex items-center justify-between gap-3 p-3 rounded-2xl my-1 max-w-sm ${
+              isSentByMe ? "bg-white/15 text-white border border-white/20" : "bg-[#FAF9FD] text-[#1E2746] border border-[#EAE4F7]"
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-9 w-9 rounded-xl bg-[#4B63D2]/20 flex items-center justify-center text-[#4B63D2] shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold truncate">{docName}</p>
+                {docSize && <p className="text-[10px] opacity-75">{docSize}</p>}
+              </div>
+            </div>
+            <a
+              href={docUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download={docName}
+              className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0 transition-transform active:scale-95 ${
+                isSentByMe ? "bg-white text-[#4B63D2] hover:bg-white/90" : "bg-[#4B63D2] text-white hover:bg-[#3E53BE]"
+              }`}
+            >
+              <Download className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // 6. Regular Text Message
+    return (
+      <div>
+        {replySnippet && (
+          <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
+            isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
+          }`}>
+            <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
+          </div>
+        )}
+        <p className="whitespace-pre-wrap leading-relaxed font-medium">
+          {mainBody}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[calc(100vh-140px)] min-h-[580px] shadow-sm">
+      {/* Hidden File Input for Attachments */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       {/* ========================================================================= */}
       {/* 1. SIDEBAR CONVERSATIONS LIST (WhatsApp Style)                            */}
       {/* ========================================================================= */}
@@ -722,7 +1153,7 @@ export default function Messaging() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9188BE] hover:text-[#1E2746] text-[10px] font-bold"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9188BE] hover:text-[#1E2746] text-[10px] font-bold cursor-pointer"
               >
                 Clear
               </button>
@@ -894,13 +1325,66 @@ export default function Messaging() {
                 </div>
               </div>
 
+              {/* Chat Action Header buttons (Search In-Thread, Active Status) */}
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsSearchInChatOpen((prev) => !prev)}
+                  className={`p-2 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                    isSearchInChatOpen ? "bg-[#FAF9FD] text-[#4B63D2]" : ""
+                  }`}
+                  title="Search in this conversation"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+
                 <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Active
                 </span>
               </div>
             </div>
+
+            {/* In-Thread Search Bar Dropdown */}
+            {isSearchInChatOpen && (
+              <div className="bg-[#FAF9FD] border-b border-[#EAE4F7] px-4 py-2 flex items-center justify-between gap-3 animate-in slide-in-from-top-2 duration-150">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Search keywords in this thread (e.g. SIH, internship, project)..."
+                    value={inChatSearchQuery}
+                    onChange={(e) => setInChatSearchQuery(e.target.value)}
+                    className="w-full bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl pl-9 pr-8 py-1.5 text-xs font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none"
+                  />
+                  {inChatSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setInChatSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9188BE] hover:text-[#1E2746] text-[10px] font-bold cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {inChatSearchQuery && (
+                  <span className="text-[11px] font-bold text-[#5851A4] shrink-0">
+                    {filteredMessages.length} match(es)
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearchInChatOpen(false);
+                    setInChatSearchQuery("");
+                  }}
+                  className="p-1 rounded-lg text-[#9188BE] hover:text-[#1E2746] hover:bg-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* Message History Feed */}
             <div className="flex-1 p-6 space-y-3.5 overflow-y-auto bg-[#F8F6FD] relative">
@@ -909,26 +1393,28 @@ export default function Messaging() {
                   <div className="h-5 w-5 border-2 border-[#4B63D2] border-t-transparent rounded-full animate-spin" />
                   <span>Loading message thread...</span>
                 </div>
-              ) : messages.length === 0 ? (
+              ) : filteredMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-3 text-[#5851A4]">
                   <div className="h-12 w-12 rounded-2xl bg-white border border-[#EAE4F7] flex items-center justify-center shadow-sm text-[#4B63D2]">
                     <Sparkles className="w-6 h-6" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#1E2746]">
-                      No messages yet
+                      {inChatSearchQuery ? "No matching messages found" : "No messages yet"}
                     </h4>
                     <p className="text-xs text-[#5851A4] max-w-xs mt-1">
-                      Say hello to {activeConvInfo.title} to start the
-                      conversation!
+                      {inChatSearchQuery
+                        ? "Try searching with a different keyword."
+                        : `Say hello to ${activeConvInfo.title} to start the conversation!`}
                     </p>
                   </div>
                 </div>
               ) : (
-                messages.map((msg, idx) => {
-                  const isSentByMe =
-                    currentUser && msg.sender_id === currentUser.id;
-                  const prevMsg = messages[idx - 1];
+                filteredMessages.map((msg, idx) => {
+                  const isSentByMe = Boolean(
+                    currentUser && msg.sender_id === currentUser.id,
+                  );
+                  const prevMsg = filteredMessages[idx - 1];
                   const currentDateDivider = formatDateDivider(msg.created_at);
                   const prevDateDivider = prevMsg
                     ? formatDateDivider(prevMsg.created_at)
@@ -980,14 +1466,15 @@ export default function Messaging() {
                         )}
 
                         <div className="relative max-w-md">
-                          {/* Quick Emoji Reaction Bar (Hover) */}
+                          {/* Hover Message Action Bar (Reply, Delete, Quick Reactions) */}
                           {hoveredMessageId === msg.id && (
                             <div
                               className={`absolute -top-7 ${
                                 isSentByMe ? "right-0" : "left-0"
-                              } bg-white/95 backdrop-blur border border-[#EAE4F7] rounded-full px-2 py-0.5 flex gap-1 z-20 shadow-md animate-in fade-in duration-150`}
+                              } bg-white/95 backdrop-blur border border-[#EAE4F7] rounded-full px-2 py-0.5 flex items-center gap-1 z-20 shadow-md animate-in fade-in duration-150`}
                             >
-                              {QUICK_REACTIONS.map((emoji) => (
+                              {/* Quick Reactions */}
+                              {QUICK_REACTIONS.slice(0, 4).map((emoji) => (
                                 <button
                                   key={emoji}
                                   type="button"
@@ -1000,10 +1487,37 @@ export default function Messaging() {
                                   {emoji}
                                 </button>
                               ))}
+
+                              <div className="w-[1px] h-3 bg-[#EAE4F7] mx-0.5" />
+
+                              {/* Reply Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReplyingToMessage(msg);
+                                  inputRef.current?.focus();
+                                }}
+                                className="text-[#5851A4] hover:text-[#4B63D2] p-1 rounded-full transition-colors cursor-pointer"
+                                title="Reply to message"
+                              >
+                                <Reply className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Delete Button (Only for own messages) */}
+                              {isSentByMe && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMessage(msg.id)}
+                                  className="text-[#5851A4] hover:text-rose-600 p-1 rounded-full transition-colors cursor-pointer"
+                                  title="Delete message"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           )}
 
-                          {/* Message Bubble (WhatsApp Style) */}
+                          {/* Message Bubble */}
                           <div
                             className={`p-3.5 rounded-2xl text-xs shadow-sm transition-all ${
                               isSentByMe
@@ -1018,9 +1532,7 @@ export default function Messaging() {
                               </p>
                             )}
 
-                            <p className="whitespace-pre-wrap leading-relaxed font-medium">
-                              {msg.content}
-                            </p>
+                            {renderMessageContent(msg.content, isSentByMe)}
 
                             <div
                               className={`mt-1.5 text-[9px] flex justify-end items-center gap-1.5 font-medium ${
@@ -1077,6 +1589,30 @@ export default function Messaging() {
               <div ref={chatEndRef} />
             </div>
 
+            {/* Quoted Message Preview Banner above Input */}
+            {replyingToMessage && (
+              <div className="bg-[#FAF9FD] border-t border-[#EAE4F7] px-4 py-2 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 border-l-4 border-[#4B63D2] pl-2 min-w-0">
+                  <Reply className="w-4 h-4 text-[#4B63D2] shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-bold text-[#4B63D2] truncate text-[11px]">
+                      Replying to {replyingToMessage.sender_id === currentUser?.id ? "Yourself" : "Message"}
+                    </p>
+                    <p className="text-[#5851A4] truncate text-[10px]">
+                      {replyingToMessage.content}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplyingToMessage(null)}
+                  className="p-1 text-[#9188BE] hover:text-[#1E2746] rounded-lg hover:bg-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Emoji Picker Popover */}
             {showEmojiPicker && (
               <div
@@ -1118,45 +1654,109 @@ export default function Messaging() {
             )}
 
             {/* Message Input Box */}
-            <form
-              onSubmit={handleSendMessage}
-              className="p-4 border-t border-[#EAE4F7] flex gap-2.5 items-center bg-white"
-            >
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker((prev) => !prev)}
-                className={`p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                  showEmojiPicker ? "bg-[#FAF9FD] text-[#4B63D2]" : ""
-                }`}
-                title="Choose Emoji"
-              >
-                <Smile className="w-5 h-5" />
-              </button>
+            <div className="p-3 sm:p-4 border-t border-[#EAE4F7] bg-white">
+              {isRecordingVoice ? (
+                /* Voice Recording Live Bar */
+                <div className="flex items-center justify-between gap-3 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-2.5 animate-in fade-in">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-3 w-3 rounded-full bg-rose-500 animate-ping" />
+                    <span className="text-xs font-bold text-rose-700">
+                      Recording Voice Note ({recordingSeconds}s)...
+                    </span>
+                  </div>
 
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder={`Message ${activeConvInfo.title}...`}
-                value={inputContent}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
-              />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelVoiceRecording}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-100 flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <MicOff className="w-3.5 h-3.5" />
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopAndSendVoiceRecording}
+                      disabled={isUploadingAttachment}
+                      className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#4B63D2] hover:bg-[#3E53BE] text-white flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{isUploadingAttachment ? "Sending..." : "Send Note"}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex gap-2 items-center"
+                >
+                  {/* File Attachment Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAttachment}
+                    className="p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                    title="Attach Image or Document"
+                  >
+                    {isUploadingAttachment ? (
+                      <div className="h-5 w-5 border-2 border-[#4B63D2] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Paperclip className="w-5 h-5" />
+                    )}
+                  </button>
 
-              <button
-                type="submit"
-                disabled={!inputContent.trim()}
-                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#4B63D2] disabled:opacity-40 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>Send</span>
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
+                  {/* Emoji Picker Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    className={`p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                      showEmojiPicker ? "bg-[#FAF9FD] text-[#4B63D2]" : ""
+                    }`}
+                    title="Choose Emoji"
+                  >
+                    <Smile className="w-5 h-5" />
+                  </button>
+
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={`Message ${activeConvInfo.title}...`}
+                    value={inputContent}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
+                  />
+
+                  {/* Voice Note Record Trigger Button */}
+                  {!inputContent.trim() && (
+                    <button
+                      type="button"
+                      onClick={startVoiceRecording}
+                      className="p-2.5 rounded-xl text-[#4B63D2] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                      title="Record Voice Note"
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+                  )}
+
+                  {/* Send Button */}
+                  {inputContent.trim() && (
+                    <button
+                      type="submit"
+                      className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#4B63D2] px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Send</span>
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </form>
+              )}
+            </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-4 text-[#5851A4]">
@@ -1185,7 +1785,34 @@ export default function Messaging() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. NEW CHAT / USER DIRECTORY MODAL (WhatsApp Style)                       */}
+      {/* 3. LIGHTBOX MODAL FOR IMAGES                                              */}
+      {/* ========================================================================= */}
+      {selectedLightboxImage && (
+        <div
+          className="fixed inset-0 bg-[#1E2746]/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in"
+          onClick={() => setSelectedLightboxImage(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[90vh] bg-black rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedLightboxImage}
+              alt="Full Preview"
+              className="max-h-[85vh] w-auto object-contain mx-auto"
+            />
+            <button
+              onClick={() => setSelectedLightboxImage(null)}
+              className="absolute top-3 right-3 bg-black/60 hover:bg-black text-white p-2 rounded-full cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. NEW CHAT / USER DIRECTORY MODAL (WhatsApp Style)                       */}
       {/* ========================================================================= */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#1E2746]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
@@ -1274,7 +1901,7 @@ export default function Messaging() {
                             <button
                               type="button"
                               onClick={() => toggleGroupMember(id)}
-                              className="hover:text-rose-600 ml-0.5"
+                              className="hover:text-rose-600 ml-0.5 cursor-pointer"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -1344,8 +1971,9 @@ export default function Messaging() {
                     <span>Loading campus directory...</span>
                   </div>
                 ) : filteredCampusUsers.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#5851A4] font-medium">
-                    No members match your search query.
+                  <div className="p-6 text-center text-xs text-[#5851A4] font-medium flex items-center justify-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500" />
+                    <span>No members match your search query or hierarchy permissions.</span>
                   </div>
                 ) : (
                   filteredCampusUsers.map((user) => {
@@ -1407,7 +2035,7 @@ export default function Messaging() {
                           ) : (
                             <button
                               type="button"
-                              className="text-[11px] font-bold text-[#4B63D2] hover:underline"
+                              className="text-[11px] font-bold text-[#4B63D2] hover:underline cursor-pointer"
                             >
                               Chat →
                             </button>

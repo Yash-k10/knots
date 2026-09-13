@@ -159,3 +159,16 @@ class MessageRepository(BaseRepository[Message]):
         stmt = select(func.count(self.model.id)).where(and_(*conditions))
         result = await self.db.execute(stmt)
         return result.scalar_one()
+
+    async def delete_message(self, message_id: int, user_id: int) -> bool:
+        stmt = select(self.model).where(self.model.id == message_id)
+        result = await self.db.execute(stmt)
+        msg = result.scalars().first()
+        if not msg:
+            return False
+        if msg.sender_id != user_id:
+            return False
+        await self.db.delete(msg)
+        await self.db.flush()
+        return True
+

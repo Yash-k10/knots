@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends
+import os
+import shutil
+import uuid
+
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
+from app.core.exceptions import ValidationError
 from app.core.response_models import APIResponse
 from app.messaging.repository.conversation import ConversationRepository
 from app.messaging.schemas.conversation import UnreadCountResponse
@@ -16,6 +21,82 @@ from app.messaging.websocket_manager import manager
 from app.users.models.user import User
 
 router = APIRouter(prefix="/messages", tags=["Messaging"])
+
+UPLOAD_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "messages")
+)
+
+
+@router.post("/upload", response_model=APIResponse[str])
+async def upload_chat_attachment(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload an attachment (image, voice note audio, document, PDF) for chat messages."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    allowed_extensions = {
+        # Audio / Voice notes
+        ".webm",
+        ".mp3",
+        ".wav",
+        ".ogg",
+        ".m4a",
+        ".aac",
+        # Images
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".svg",
+        # Documents & Projects
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".zip",
+        ".rar",
+        ".tar",
+        ".gz",
+        ".xls",
+        ".xlsx",
+        ".csv",
+        ".ppt",
+        ".pptx",
+        ".py",
+        ".js",
+        ".ts",
+        ".cpp",
+        ".java",
+    }
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise ValidationError(
+            "Unsupported file type for chat attachments. Please upload supported media, document, or audio files."
+        )
+
+    filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    attachment_url = f"/static/messages/{filename}"
+    return APIResponse(message="Attachment uploaded successfully", data=attachment_url)
+
+
+@router.delete("/{message_id}", response_model=APIResponse)
+async def delete_message(
+    message_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a sent message."""
+    service = MessageService(db)
+    await service.delete_message(message_id, current_user.id)
+    await db.commit()
+    return APIResponse(message="Message deleted successfully")
 
 
 @router.post("", response_model=APIResponse[MessageResponse])
@@ -99,3 +180,4 @@ async def get_unread_count(
     return APIResponse(
         message="Unread count retrieved successfully", data=unread_summary
     )
+

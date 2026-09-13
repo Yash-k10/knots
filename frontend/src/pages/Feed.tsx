@@ -24,10 +24,27 @@ import {
   CheckCircle2,
   FileCheck,
   ArrowUp,
+  Bookmark,
+  BookmarkCheck,
+  MoreVertical,
+  Edit3,
+  Lock,
+  Unlock,
+  MessageCircle,
+  SendHorizontal,
+  Search,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
 import TiesRecommendations from "../components/feed/TiesRecommendations";
 import { formatTimeAgo } from "../utils/date";
+import {
+  fetchConversations,
+  fetchCampusUsers,
+  sendMessage as sendDirectMessage,
+  getOrCreateDirectConversation,
+  Conversation,
+  CampusUser,
+} from "../services/messaging";
 
 const isDocumentUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
@@ -178,8 +195,174 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 10;
 
-  // Filter tab state ("ALL", "PUBLIC", "STUDENTS_ONLY", "STUDENTS_AND_ALUMNI", "DOCS", "MEDIA")
-  const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  // Filter tab state ("FOR_YOU", "ALL", "CONNECTIONS", "OPPORTUNITIES", "EVENTS", "DOCS", "MEDIA", "SAVED")
+  const [activeFilter, setActiveFilter] = useState<string>("FOR_YOU");
+
+  // Bookmarking / Saved Posts state
+  const [savedPostIds, setSavedPostIds] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem("knots_saved_posts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleToggleBookmark = (postId: number) => {
+    setSavedPostIds((prev) => {
+      const isSaved = prev.includes(postId);
+      const updated = isSaved
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId];
+      try {
+        localStorage.setItem("knots_saved_posts", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save post bookmark:", e);
+      }
+      return updated;
+    });
+  };
+
+  // 3-Dots Menu & Comment Locking
+  const [activePostMenuId, setActivePostMenuId] = useState<number | null>(null);
+  const [lockedCommentPostIds, setLockedCommentPostIds] = useState<
+    Record<number, boolean>
+  >({});
+
+  const handleToggleLockComments = (postId: number) => {
+    setLockedCommentPostIds((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+    setActivePostMenuId(null);
+  };
+
+  // Edit Post state
+  const [editingPost, setEditingPost] = useState<{
+    id: number;
+    content: string;
+  } | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const handleSaveEditPost = async () => {
+    if (!editingPost || !editingPost.content.trim()) return;
+    setIsSavingEdit(true);
+    try {
+      const updated = await apiRequest<PostResponse>(
+        `/posts/${editingPost.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ content: editingPost.content.trim() }),
+        }
+      );
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === editingPost.id
+            ? { ...p, content: updated.content, updated_at: updated.updated_at }
+            : p
+        )
+      );
+      setEditingPost(null);
+    } catch (err: any) {
+      alert(err.message || "Failed to update post.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // Send in Chat state & handlers
+  const [shareToChatPost, setShareToChatPost] = useState<PostResponse | null>(
+    null
+  );
+  const [chatConversations, setChatConversations] = useState<Conversation[]>(
+    []
+  );
+  const [chatCampusUsers, setChatCampusUsers] = useState<CampusUser[]>([]);
+  const [isLoadingChatRecipients, setIsLoadingChatRecipients] = useState(false);
+  const [chatRecipientSearch, setChatRecipientSearch] = useState("");
+  const [sendingToChatId, setSendingToChatId] = useState<number | null>(null);
+  const [chatShareToast, setChatShareToast] = useState<string | null>(null);
+
+  const handleOpenSendToChat = async (post: PostResponse) => {
+    setShareToChatPost(post);
+    setChatRecipientSearch("");
+    setIsLoadingChatRecipients(true);
+    try {
+      const [convs, users] = await Promise.all([
+        fetchConversations(0, 30).catch(() => []),
+        fetchCampusUsers(0, 50).catch(() => []),
+      ]);
+      setChatConversations(convs);
+      setChatCampusUsers(users.filter((u) => u.id !== currentUser?.id));
+    } catch (err) {
+      console.error("Failed to load chat recipients:", err);
+    } finally {
+      setIsLoadingChatRecipients(false);
+    }
+  };
+
+  const handleSendPostToConversation = async (conversationId: number) => {
+    if (!shareToChatPost) return;
+    setSendingToChatId(conversationId);
+    try {
+      const snippet =
+        shareToChatPost.content.length > 120
+          ? `${shareToChatPost.content.slice(0, 120)}...`
+          : shareToChatPost.content;
+      const authorName =
+        shareToChatPost.author?.profile?.first_name ||
+        shareToChatPost.author?.email.split("@")[0] ||
+        "Campus Member";
+      const messageContent = `[Shared Post #${shareToChatPost.id} by ${authorName}]: "${snippet}"\n\nView post: /feed#post-${shareToChatPost.id}`;
+      await sendDirectMessage(messageContent, conversationId);
+      setChatShareToast("Post shared to chat successfully!");
+      setTimeout(() => setChatShareToast(null), 3000);
+      setShareToChatPost(null);
+    } catch (err: any) {
+      alert(err.message || "Failed to share post to conversation.");
+    } finally {
+      setSendingToChatId(null);
+    }
+  };
+
+  const handleSendPostToUser = async (userId: number) => {
+    if (!shareToChatPost) return;
+    setSendingToChatId(userId);
+    try {
+      const conv = await getOrCreateDirectConversation(userId);
+      const snippet =
+        shareToChatPost.content.length > 120
+          ? `${shareToChatPost.content.slice(0, 120)}...`
+          : shareToChatPost.content;
+      const authorName =
+        shareToChatPost.author?.profile?.first_name ||
+        shareToChatPost.author?.email.split("@")[0] ||
+        "Campus Member";
+      const messageContent = `[Shared Post #${shareToChatPost.id} by ${authorName}]: "${snippet}"\n\nView post: /feed#post-${shareToChatPost.id}`;
+      await sendDirectMessage(messageContent, conv.id);
+      setChatShareToast("Post shared to chat successfully!");
+      setTimeout(() => setChatShareToast(null), 3000);
+      setShareToChatPost(null);
+    } catch (err: any) {
+      alert(err.message || "Failed to share post to user.");
+    } finally {
+      setSendingToChatId(null);
+    }
+  };
+
+  // Close post menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        activePostMenuId !== null &&
+        !(e.target as HTMLElement).closest(".post-menu-container")
+      ) {
+        setActivePostMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [activePostMenuId]);
 
   // Comments and Inputs State indexed by postId
   const [expandedPosts, setExpandedPosts] = useState<Record<number, boolean>>(
@@ -1000,41 +1183,35 @@ export default function Feed() {
 
           {/* Feed Filter Chips Bar */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setActiveFilter("ALL")}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                activeFilter === "ALL"
-                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
-              }`}
-            >
-              All Posts
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("DOCS")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                activeFilter === "DOCS"
-                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                  : "bg-white text-emerald-700 border border-emerald-200/80 hover:bg-emerald-50"
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5 text-emerald-600" />
-              <span>PDF & Notes</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveFilter("MEDIA")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                activeFilter === "MEDIA"
-                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
-              }`}
-            >
-              <Image className="w-3.5 h-3.5 text-[#4B63D2]" />
-              <span>Photos</span>
-            </button>
+            {[
+              { id: "FOR_YOU", label: "🌟 For You", badge: "Smart" },
+              { id: "CONNECTIONS", label: "👥 Connections" },
+              { id: "OPPORTUNITIES", label: "💼 Opportunities & Projects" },
+              { id: "EVENTS", label: "🏛️ Events & Notices" },
+              { id: "DOCS", label: "📄 PDF & Notes" },
+              { id: "MEDIA", label: "🖼️ Photos" },
+              {
+                id: "SAVED",
+                label: `🔖 Saved (${savedPostIds.length})`,
+              },
+              { id: "ALL", label: "🌐 All Posts" },
+            ].map((tab) => {
+              const isActive = activeFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveFilter(tab.id)}
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    isActive
+                      ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                      : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Real-time New Posts Discovery Banner (LinkedIn Style) */}
@@ -1092,422 +1269,590 @@ export default function Feed() {
             <div className="space-y-6">
               {posts
                 .filter((post) => {
+                  const contentLower = (post.content || "").toLowerCase();
                   if (activeFilter === "ALL") return true;
                   if (activeFilter === "DOCS")
                     return isDocumentUrl(post.image_url);
                   if (activeFilter === "MEDIA")
                     return post.image_url && !isDocumentUrl(post.image_url);
-                  if (activeFilter === "STUDENTS_ONLY")
-                    return post.visibility === "STUDENTS_ONLY";
-                  if (activeFilter === "STUDENTS_AND_ALUMNI")
-                    return post.visibility === "STUDENTS_AND_ALUMNI";
+                  if (activeFilter === "SAVED")
+                    return savedPostIds.includes(post.id);
+                  if (activeFilter === "OPPORTUNITIES") {
+                    return (
+                      contentLower.includes("project") ||
+                      contentLower.includes("intern") ||
+                      contentLower.includes("job") ||
+                      contentLower.includes("hackathon") ||
+                      contentLower.includes("github") ||
+                      contentLower.includes("hiring") ||
+                      contentLower.includes("placement") ||
+                      contentLower.includes("referral") ||
+                      contentLower.includes("repo")
+                    );
+                  }
+                  if (activeFilter === "EVENTS") {
+                    return (
+                      contentLower.includes("event") ||
+                      contentLower.includes("workshop") ||
+                      contentLower.includes("webinar") ||
+                      contentLower.includes("club") ||
+                      contentLower.includes("announcement") ||
+                      contentLower.includes("notice") ||
+                      contentLower.includes("fest") ||
+                      contentLower.includes("session")
+                    );
+                  }
+                  if (activeFilter === "CONNECTIONS") {
+                    return (
+                      post.visibility === "CONNECTIONS" ||
+                      post.visibility === "STUDENTS_AND_ALUMNI" ||
+                      post.author?.email?.includes("alumni") ||
+                      post.author?.email?.includes("prof")
+                    );
+                  }
+                  // FOR_YOU returns all sorted/prioritized
                   return true;
                 })
-                .map((post) => (
-                  <article
-                    key={post.id}
-                    id={`post-${post.id}`}
-                    className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 hover:shadow-md shadow-sm"
-                  >
-                    {/* Card Header: Author Profile Info */}
-                    <div className="flex items-start justify-between gap-2">
-                      <Link
-                        to={
-                          post.author?.id
-                            ? `/profile/${post.author.id}`
-                            : "/profile"
-                        }
-                        className="flex items-center gap-3 group/author cursor-pointer"
-                      >
-                        {getMediaUrl(post.author?.profile?.profile_picture) &&
-                        !failedAvatars[post.id] ? (
-                          <img
-                            src={getMediaUrl(
-                              post.author?.profile?.profile_picture
-                            )}
-                            alt="Author Avatar"
-                            onError={() =>
-                              setFailedAvatars((prev) => ({
-                                ...prev,
-                                [post.id]: true,
-                              }))
-                            }
-                            className="h-11 w-11 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
-                          />
-                        ) : (
-                          <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
-                            {getInitials(post.author?.email)}
-                          </div>
-                        )}
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="text-sm font-black text-[#1E2746] group-hover/author:text-[#4B63D2] transition-colors flex items-center gap-1.5">
-                              <span>
-                                {post.author?.profile?.first_name ||
-                                post.author?.profile?.last_name
-                                  ? `${
-                                      post.author.profile.first_name || ""
-                                    } ${
-                                      post.author.profile.last_name || ""
-                                    }`.trim()
-                                  : getEmailPrefix(post.author?.email)}
-                              </span>
-                              {hasInfinityBadge(post.author?.email) && (
-                                <img
-                                  src="/infinity-badge.png"
-                                  className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
-                                  alt="Infinity Badge"
-                                  title="Verified Campus Distinction / Leadership Position"
-                                />
-                              )}
-                            </h4>
-                            <span
-                              className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                                post.author?.email?.includes("alumni")
-                                  ? "bg-purple-50 border border-purple-200 text-purple-700"
-                                  : post.author?.email?.includes("prof")
-                                  ? "bg-blue-50 border border-blue-200 text-blue-700"
-                                  : "bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2]"
-                              }`}
-                            >
-                              {post.author?.email?.includes("alumni")
-                                ? "Alumni"
-                                : post.author?.email?.includes("prof")
-                                ? "Faculty"
-                                : "Student"}
-                            </span>
-                          </div>
+                .map((post) => {
+                  const isSaved = savedPostIds.includes(post.id);
+                  const isCommentsLocked = !!lockedCommentPostIds[post.id];
+                  const isAuthorOrAdmin =
+                    isSuperAdminOrAdmin || post.author_id === currentUser?.id;
+                  const isMenuOpen = activePostMenuId === post.id;
 
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <p className="text-xs text-[#5851A4] font-semibold">
-                              {formatTimeAgo(post.created_at)}
-                            </p>
-                            {post.author?.profile?.department && (
-                              <>
-                                <span className="text-[#C8B6E2] text-[10px]">•</span>
-                                <span className="text-xs text-[#5851A4] font-medium">
-                                  {post.author.profile.department}
-                                </span>
-                              </>
-                            )}
-                            <span className="text-[#C8B6E2] text-[10px]">•</span>
-                            {getVisibilityBadge(post.visibility)}
-                          </div>
-                        </div>
-                      </Link>
-
-                      {/* Top Action Buttons (Share & Delete) */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleSharePost(post)}
-                          title="Copy link to post"
-                          className="p-2 rounded-xl text-[#9188BE] hover:text-[#4B63D2] hover:bg-[#FAF9FD] transition-all cursor-pointer relative"
+                  return (
+                    <article
+                      key={post.id}
+                      id={`post-${post.id}`}
+                      className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 hover:shadow-md shadow-sm"
+                    >
+                      {/* Card Header: Author Profile Info */}
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          to={
+                            post.author?.id
+                              ? `/profile/${post.author.id}`
+                              : "/profile"
+                          }
+                          className="flex items-center gap-3 group/author cursor-pointer"
                         >
-                          {copiedPostId === post.id ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          ) : (
-                            <Share2 className="w-4 h-4" />
-                          )}
-                          {copiedPostId === post.id && (
-                            <span className="absolute -top-7 right-0 bg-[#1E2746] text-white text-[10px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap shadow-md">
-                              Link Copied!
-                            </span>
-                          )}
-                        </button>
-
-                        {(isSuperAdminOrAdmin ||
-                          post.author_id === currentUser?.id) && (
-                          <button
-                            onClick={() => handleDeletePost(post.id)}
-                            title={
-                              isSuperAdmin
-                                ? "Super Admin: Permanently delete post"
-                                : isSuperAdminOrAdmin &&
-                                  post.author_id !== currentUser?.id
-                                ? "Admin: Remove post"
-                                : "Delete your post"
-                            }
-                            className="p-2 rounded-xl text-[#9188BE] hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Card Body: Post Text Content with clickable link rendering */}
-                    <div className="text-[#1E2746] text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium pt-1">
-                      {renderContentWithLinks(post.content)}
-                    </div>
-
-                    {/* Card Body: Attachment (Image, PDF/DOCX Document) */}
-                    {post.image_url &&
-                      (isDocumentUrl(post.image_url) ? (
-                        <div className="my-3 p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all shadow-xs">
-                          <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-12 h-12 rounded-2xl bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider shadow-xs">
-                              {getFileExtension(post.image_url) === "PDF" ? (
-                                <FileText className="w-6 h-6 text-rose-500" />
-                              ) : (
-                                <FileSpreadsheet className="w-6 h-6 text-[#4B63D2]" />
+                          {getMediaUrl(post.author?.profile?.profile_picture) &&
+                          !failedAvatars[post.id] ? (
+                            <img
+                              src={getMediaUrl(
+                                post.author?.profile?.profile_picture
                               )}
+                              alt="Author Avatar"
+                              onError={() =>
+                                setFailedAvatars((prev) => ({
+                                  ...prev,
+                                  [post.id]: true,
+                                }))
+                              }
+                              className="h-11 w-11 rounded-2xl object-cover border border-[#EAE4F7] shadow-sm group-hover/author:border-[#4B63D2] transition-colors"
+                            />
+                          ) : (
+                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20">
+                              {getInitials(post.author?.email)}
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-bold text-[#1E2746] truncate">
-                                {getFileName(post.image_url)}
-                              </p>
-                              <span className="text-[11px] font-semibold text-[#5851A4]">
-                                Verified Document Attachment •{" "}
-                                {getFileExtension(post.image_url)}
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-black text-[#1E2746] group-hover/author:text-[#4B63D2] transition-colors flex items-center gap-1.5">
+                                <span>
+                                  {post.author?.profile?.first_name ||
+                                  post.author?.profile?.last_name
+                                    ? `${
+                                        post.author.profile.first_name || ""
+                                      } ${
+                                        post.author.profile.last_name || ""
+                                      }`.trim()
+                                    : getEmailPrefix(post.author?.email)}
+                                </span>
+                                {hasInfinityBadge(post.author?.email) && (
+                                  <img
+                                    src="/infinity-badge.png"
+                                    className="h-4 w-4 object-contain inline-block ml-0.5 drop-shadow-sm"
+                                    alt="Infinity Badge"
+                                    title="Verified Campus Distinction / Leadership Position"
+                                  />
+                                )}
+                              </h4>
+                              <span
+                                className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                  post.author?.email?.includes("alumni")
+                                    ? "bg-purple-50 border border-purple-200 text-purple-700"
+                                    : post.author?.email?.includes("prof")
+                                    ? "bg-blue-50 border border-blue-200 text-blue-700"
+                                    : "bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2]"
+                                }`}
+                              >
+                                {post.author?.email?.includes("alumni")
+                                  ? "Alumni"
+                                  : post.author?.email?.includes("prof")
+                                  ? "Faculty"
+                                  : "Student"}
                               </span>
                             </div>
-                          </div>
 
-                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                            {/* In-app Preview Button for PDFs */}
-                            {getFileExtension(post.image_url) === "PDF" && (
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <p className="text-xs text-[#5851A4] font-semibold">
+                                {formatTimeAgo(post.created_at)}
+                              </p>
+                              {post.author?.profile?.department && (
+                                <>
+                                  <span className="text-[#C8B6E2] text-[10px]">
+                                    •
+                                  </span>
+                                  <span className="text-xs text-[#5851A4] font-medium">
+                                    {post.author.profile.department}
+                                  </span>
+                                </>
+                              )}
+                              <span className="text-[#C8B6E2] text-[10px]">•</span>
+                              {getVisibilityBadge(post.visibility)}
+                            </div>
+                          </div>
+                        </Link>
+
+                        {/* Top Action Buttons (3-Dots Menu, Share & Bookmark) */}
+                        <div className="flex items-center gap-1 relative post-menu-container">
+                          {/* 3-Dots Dropdown Trigger */}
+                          <button
+                            onClick={() =>
+                              setActivePostMenuId(isMenuOpen ? null : post.id)
+                            }
+                            title="Post Options"
+                            className="p-2 rounded-xl text-[#9188BE] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {/* 3-Dots Dropdown Menu */}
+                          {isMenuOpen && (
+                            <div className="absolute right-0 top-10 w-48 bg-white border border-[#EAE4F7] rounded-2xl shadow-xl z-30 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD]">
+                              {/* Edit Post (Author only) */}
+                              {post.author_id === currentUser?.id && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingPost({
+                                      id: post.id,
+                                      content: post.content,
+                                    });
+                                    setActivePostMenuId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#1E2746] hover:bg-[#FAF9FD] flex items-center gap-2 cursor-pointer transition-colors"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-[#4B63D2]" />
+                                  <span>Edit Post</span>
+                                </button>
+                              )}
+
+                              {/* Toggle Comments Lock (Author or Admin) */}
+                              {isAuthorOrAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleToggleLockComments(post.id)
+                                  }
+                                  className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#1E2746] hover:bg-[#FAF9FD] flex items-center gap-2 cursor-pointer transition-colors"
+                                >
+                                  {isCommentsLocked ? (
+                                    <>
+                                      <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                                      <span>Turn On Comments</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock className="w-3.5 h-3.5 text-amber-600" />
+                                      <span>Turn Off Comments</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+
+                              {/* Bookmark / Save Post */}
                               <button
                                 type="button"
-                                onClick={() =>
-                                  setActivePdfModalUrl({
-                                    url: getMediaUrl(post.image_url) || "",
-                                    name: getFileName(post.image_url || ""),
-                                  })
-                                }
-                                className="px-3.5 py-2 bg-white hover:bg-[#FAF9FD] text-[#4B63D2] border border-[#D5CBEE] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                onClick={() => {
+                                  handleToggleBookmark(post.id);
+                                  setActivePostMenuId(null);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-xs font-bold text-[#1E2746] hover:bg-[#FAF9FD] flex items-center gap-2 cursor-pointer transition-colors"
                               >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>Preview</span>
+                                {isSaved ? (
+                                  <>
+                                    <BookmarkCheck className="w-3.5 h-3.5 text-[#4B63D2]" />
+                                    <span>Remove Bookmark</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Bookmark className="w-3.5 h-3.5 text-[#5851A4]" />
+                                    <span>Save Post</span>
+                                  </>
+                                )}
                               </button>
-                            )}
 
-                            {/* Direct Download/View in Tab Button */}
-                            <a
-                              href={getMediaUrl(post.image_url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-md shadow-[#4B63D2]/20 transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Download className="w-3.5 h-3.5 text-[#FFD21A]" />
-                              <span>Download</span>
-                            </a>
-                          </div>
+                              {/* Delete Post (Author or Admin) */}
+                              {isAuthorOrAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActivePostMenuId(null);
+                                    handleDeletePost(post.id);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Delete Post</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      ) : !failedImages[post.id] ? (
-                        <div
-                          onClick={() =>
-                            setActiveLightboxImage(
-                              getMediaUrl(post.image_url) ?? null
-                            )
-                          }
-                          className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
-                        >
-                          <img
-                            src={getMediaUrl(post.image_url)}
-                            alt="Post attachment"
-                            className="w-auto max-w-full max-h-[360px] sm:max-h-[400px] object-contain rounded-xl shadow-xs"
-                            loading="lazy"
-                            onError={() => {
-                              setFailedImages((prev) => ({
-                                ...prev,
-                                [post.id]: true,
-                              }));
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center pointer-events-none">
-                            <span className="opacity-0 group-hover:opacity-100 bg-[#1E2746]/90 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
-                              <Maximize2 className="w-3.5 h-3.5 text-[#FFD21A]" />{" "}
-                              Click to view full image
-                            </span>
-                          </div>
-                        </div>
-                      ) : null)}
-
-                    {/* Card Actions: Likes and Comments triggers */}
-                    <div className="flex items-center justify-between border-t border-[#EAE4F7] pt-3.5 text-xs font-semibold">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() =>
-                            handleLikeToggle(post.id, post.is_liked)
-                          }
-                          className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
-                            post.is_liked
-                              ? "text-rose-500 font-bold bg-rose-50"
-                              : "text-[#5851A4] hover:text-[#1E2746]"
-                          }`}
-                        >
-                          <Heart
-                            className={`w-4 h-4 ${
-                              post.is_liked
-                                ? "fill-rose-500 text-rose-500"
-                                : ""
-                            }`}
-                          />
-                          <span>
-                            {post.likes_count}{" "}
-                            {post.likes_count === 1 ? "Like" : "Likes"}
-                          </span>
-                        </button>
-
-                        <button
-                          onClick={() => toggleComments(post.id)}
-                          className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
-                            expandedPosts[post.id]
-                              ? "text-[#4B63D2] font-bold bg-[#4B63D2]/10"
-                              : "text-[#5851A4] hover:text-[#1E2746]"
-                          }`}
-                        >
-                          <MessageSquare className="w-4 h-4" />
-                          <span>
-                            {post.comments_count}{" "}
-                            {post.comments_count === 1 ? "Comment" : "Comments"}
-                          </span>
-                        </button>
                       </div>
 
-                      <button
-                        onClick={() => handleSharePost(post)}
-                        className="flex items-center gap-1 text-[#5851A4] hover:text-[#4B63D2] font-bold py-1.5 px-2.5 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
-                      >
-                        <Share2 className="w-3.5 h-3.5" />
-                        <span>Share</span>
-                      </button>
-                    </div>
+                      {/* Card Body: Post Text Content with clickable link rendering */}
+                      <div className="text-[#1E2746] text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium pt-1">
+                        {renderContentWithLinks(post.content)}
+                      </div>
 
-                    {/* Card Expanded Comments Section */}
-                    {expandedPosts[post.id] && (
-                      <div className="mt-4 border-t border-[#EAE4F7] pt-4 space-y-3.5 animate-in fade-in duration-200">
-                        <h5 className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
-                          Discussion Comments
-                        </h5>
+                      {/* Card Body: Attachment (Image, PDF/DOCX Document) */}
+                      {post.image_url &&
+                        (isDocumentUrl(post.image_url) ? (
+                          <div className="my-3 p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all shadow-xs">
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <div className="w-12 h-12 rounded-2xl bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider shadow-xs">
+                                {getFileExtension(post.image_url) === "PDF" ? (
+                                  <FileText className="w-6 h-6 text-rose-500" />
+                                ) : (
+                                  <FileSpreadsheet className="w-6 h-6 text-[#4B63D2]" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm font-bold text-[#1E2746] truncate">
+                                  {getFileName(post.image_url)}
+                                </p>
+                                <span className="text-[11px] font-semibold text-[#5851A4]">
+                                  Verified Document Attachment •{" "}
+                                  {getFileExtension(post.image_url)}
+                                </span>
+                              </div>
+                            </div>
 
-                        {loadingCommentsByPost[post.id] ? (
-                          <div className="flex items-center gap-2 py-3 text-[#5851A4] text-xs">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4B63D2]" />
-                            <span>Loading discussion comments...</span>
-                          </div>
-                        ) : (
-                          <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
-                            {!commentsByPost[post.id] ||
-                            commentsByPost[post.id].length === 0 ? (
-                              <p className="text-[#5851A4] text-xs italic py-2">
-                                No comments yet. Be the first to share your thoughts!
-                              </p>
-                            ) : (
-                              commentsByPost[post.id].map((comment) => (
-                                <div
-                                  key={comment.id}
-                                  className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                              {/* In-app Preview Button for PDFs */}
+                              {getFileExtension(post.image_url) === "PDF" && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setActivePdfModalUrl({
+                                      url: getMediaUrl(post.image_url) || "",
+                                      name: getFileName(post.image_url || ""),
+                                    })
+                                  }
+                                  className="px-3.5 py-2 bg-white hover:bg-[#FAF9FD] text-[#4B63D2] border border-[#D5CBEE] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
-                                  <div className="flex items-center justify-between gap-2">
-                                    <Link
-                                      to={
-                                        comment.author_id
-                                          ? `/profile/${comment.author_id}`
-                                          : "/profile"
-                                      }
-                                      className="flex items-center gap-2 font-black text-[#4B63D2] hover:underline"
-                                    >
-                                      {getMediaUrl(
-                                        comment.author?.profile?.profile_picture
-                                      ) ? (
-                                        <img
-                                          src={getMediaUrl(
-                                            comment.author?.profile
-                                              ?.profile_picture
-                                          )}
-                                          alt="Commenter Avatar"
-                                          className="h-5 w-5 rounded-full object-cover border border-[#EAE4F7]"
-                                        />
-                                      ) : (
-                                        <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white text-[10px] font-bold">
-                                          {getInitials(comment.author?.email)}
-                                        </div>
-                                      )}
-                                      <span>
-                                        {comment.author?.profile?.first_name ||
-                                        comment.author?.profile?.last_name
-                                          ? `${
-                                              comment.author.profile
-                                                .first_name || ""
-                                            } ${
-                                              comment.author.profile
-                                                .last_name || ""
-                                            }`.trim()
-                                          : getEmailPrefix(
-                                              comment.author?.email
-                                            )}
-                                      </span>
-                                    </Link>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[#9188BE] text-[10px] font-medium">
-                                        {formatTimeAgo(comment.created_at)}
-                                      </span>
-                                      {(isSuperAdminOrAdmin ||
-                                        comment.author_id ===
-                                          currentUser?.id ||
-                                        post.author_id === currentUser?.id) && (
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteComment(
-                                              post.id,
-                                              comment.id
-                                            )
-                                          }
-                                          title="Delete comment"
-                                          className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5 cursor-pointer"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <p className="text-[#1E2746] leading-relaxed font-medium">
-                                    {comment.content}
-                                  </p>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        )}
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Preview</span>
+                                </button>
+                              )}
 
-                        {/* Add Comment Form */}
-                        <form
-                          onSubmit={(e) => handleAddComment(e, post.id)}
-                          className="flex items-center gap-2 pt-1"
-                        >
-                          <input
-                            type="text"
-                            placeholder="Write a supportive comment or answer..."
-                            value={commentInputs[post.id] || ""}
-                            onChange={(e) =>
-                              setCommentInputs((prev) => ({
-                                ...prev,
-                                [post.id]: e.target.value,
-                              }))
+                              {/* Direct Download/View in Tab Button */}
+                              <a
+                                href={getMediaUrl(post.image_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-md shadow-[#4B63D2]/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5 text-[#FFD21A]" />
+                                <span>Download</span>
+                              </a>
+                            </div>
+                          </div>
+                        ) : !failedImages[post.id] ? (
+                          <div
+                            onClick={() =>
+                              setActiveLightboxImage(
+                                getMediaUrl(post.image_url) ?? null
+                              )
                             }
-                            disabled={submittingCommentByPost[post.id]}
-                            className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-all font-medium"
-                          />
-                          <button
-                            type="submit"
-                            disabled={
-                              submittingCommentByPost[post.id] ||
-                              !commentInputs[post.id]?.trim()
-                            }
-                            className="p-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#4B63D2]/20 cursor-pointer active:scale-95"
+                            className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] my-2 cursor-pointer group hover:opacity-95 transition-all flex items-center justify-center p-1"
                           >
-                            {submittingCommentByPost[post.id] ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <img
+                              src={getMediaUrl(post.image_url)}
+                              alt="Post attachment"
+                              className="w-auto max-w-full max-h-[360px] sm:max-h-[400px] object-contain rounded-xl shadow-xs"
+                              loading="lazy"
+                              onError={() => {
+                                setFailedImages((prev) => ({
+                                  ...prev,
+                                  [post.id]: true,
+                                }));
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center pointer-events-none">
+                              <span className="opacity-0 group-hover:opacity-100 bg-[#1E2746]/90 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-lg transition-opacity flex items-center gap-1.5">
+                                <Maximize2 className="w-3.5 h-3.5 text-[#FFD21A]" />{" "}
+                                Click to view full image
+                              </span>
+                            </div>
+                          </div>
+                        ) : null)}
+
+                      {/* Card Actions: Likes, Comments, Bookmark, Send to Chat & Share */}
+                      <div className="flex items-center justify-between border-t border-[#EAE4F7] pt-3.5 text-xs font-semibold flex-wrap gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                          {/* Like Button */}
+                          <button
+                            onClick={() =>
+                              handleLikeToggle(post.id, post.is_liked)
+                            }
+                            className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
+                              post.is_liked
+                                ? "text-rose-500 font-bold bg-rose-50"
+                                : "text-[#5851A4] hover:text-[#1E2746]"
+                            }`}
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${
+                                post.is_liked
+                                  ? "fill-rose-500 text-rose-500"
+                                  : ""
+                              }`}
+                            />
+                            <span>
+                              {post.likes_count}{" "}
+                              {post.likes_count === 1 ? "Like" : "Likes"}
+                            </span>
+                          </button>
+
+                          {/* Comment Toggle Button */}
+                          <button
+                            onClick={() => toggleComments(post.id)}
+                            className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
+                              expandedPosts[post.id]
+                                ? "text-[#4B63D2] font-bold bg-[#4B63D2]/10"
+                                : "text-[#5851A4] hover:text-[#1E2746]"
+                            }`}
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            <span>
+                              {post.comments_count}{" "}
+                              {post.comments_count === 1
+                                ? "Comment"
+                                : "Comments"}
+                            </span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {/* Bookmark Button */}
+                          <button
+                            onClick={() => handleToggleBookmark(post.id)}
+                            title={isSaved ? "Saved" : "Save post"}
+                            className={`flex items-center gap-1 py-1.5 px-2.5 rounded-xl transition-all cursor-pointer ${
+                              isSaved
+                                ? "text-[#4B63D2] font-bold bg-[#4B63D2]/10"
+                                : "text-[#5851A4] hover:text-[#4B63D2] hover:bg-[#FAF9FD]"
+                            }`}
+                          >
+                            {isSaved ? (
+                              <BookmarkCheck className="w-4 h-4 fill-[#4B63D2] text-[#4B63D2]" />
                             ) : (
-                              <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                              <Bookmark className="w-4 h-4" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {isSaved ? "Saved" : "Save"}
+                            </span>
+                          </button>
+
+                          {/* Send in Chat Button */}
+                          <button
+                            onClick={() => handleOpenSendToChat(post)}
+                            title="Send post directly in Messages"
+                            className="flex items-center gap-1 text-[#5851A4] hover:text-[#4B63D2] font-bold py-1.5 px-2.5 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                          >
+                            <MessageCircle className="w-4 h-4 text-[#4B63D2]" />
+                            <span className="hidden sm:inline">
+                              Send in Chat
+                            </span>
+                          </button>
+
+                          {/* Copy Link / Share Button */}
+                          <button
+                            onClick={() => handleSharePost(post)}
+                            className="flex items-center gap-1 text-[#5851A4] hover:text-[#4B63D2] font-bold py-1.5 px-2.5 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer relative"
+                          >
+                            {copiedPostId === post.id ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            ) : (
+                              <Share2 className="w-3.5 h-3.5" />
+                            )}
+                            <span>Share</span>
+                            {copiedPostId === post.id && (
+                              <span className="absolute -top-7 right-0 bg-[#1E2746] text-white text-[10px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap shadow-md">
+                                Link Copied!
+                              </span>
                             )}
                           </button>
-                        </form>
+                        </div>
                       </div>
-                    )}
-                  </article>
-                ))}
+
+                      {/* Card Expanded Comments Section */}
+                      {expandedPosts[post.id] && (
+                        <div className="mt-4 border-t border-[#EAE4F7] pt-4 space-y-3.5 animate-in fade-in duration-200">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
+                              Discussion Comments
+                            </h5>
+                            {isCommentsLocked && (
+                              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                                <Lock className="w-3 h-3 text-amber-600" />
+                                <span>Comments Locked</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {loadingCommentsByPost[post.id] ? (
+                            <div className="flex items-center gap-2 py-3 text-[#5851A4] text-xs">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4B63D2]" />
+                              <span>Loading discussion comments...</span>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                              {!commentsByPost[post.id] ||
+                              commentsByPost[post.id].length === 0 ? (
+                                <p className="text-[#5851A4] text-xs italic py-2">
+                                  No comments yet. Be the first to share your thoughts!
+                                </p>
+                              ) : (
+                                commentsByPost[post.id].map((comment) => (
+                                  <div
+                                    key={comment.id}
+                                    className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <Link
+                                        to={
+                                          comment.author_id
+                                            ? `/profile/${comment.author_id}`
+                                            : "/profile"
+                                        }
+                                        className="flex items-center gap-2 font-black text-[#4B63D2] hover:underline"
+                                      >
+                                        {getMediaUrl(
+                                          comment.author?.profile
+                                            ?.profile_picture
+                                        ) ? (
+                                          <img
+                                            src={getMediaUrl(
+                                              comment.author?.profile
+                                                ?.profile_picture
+                                            )}
+                                            alt="Commenter Avatar"
+                                            className="h-5 w-5 rounded-full object-cover border border-[#EAE4F7]"
+                                          />
+                                        ) : (
+                                          <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white text-[10px] font-bold">
+                                            {getInitials(comment.author?.email)}
+                                          </div>
+                                        )}
+                                        <span>
+                                          {comment.author?.profile
+                                            ?.first_name ||
+                                          comment.author?.profile?.last_name
+                                            ? `${
+                                                comment.author.profile
+                                                  .first_name || ""
+                                              } ${
+                                                comment.author.profile
+                                                  .last_name || ""
+                                              }`.trim()
+                                            : getEmailPrefix(
+                                                comment.author?.email
+                                              )}
+                                        </span>
+                                      </Link>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[#9188BE] text-[10px] font-medium">
+                                          {formatTimeAgo(comment.created_at)}
+                                        </span>
+                                        {(isSuperAdminOrAdmin ||
+                                          comment.author_id ===
+                                            currentUser?.id ||
+                                          post.author_id ===
+                                            currentUser?.id) && (
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteComment(
+                                                post.id,
+                                                comment.id
+                                              )
+                                            }
+                                            title="Delete comment"
+                                            className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5 cursor-pointer"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <p className="text-[#1E2746] leading-relaxed font-medium">
+                                      {comment.content}
+                                    </p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+
+                          {/* Add Comment Form or Comments Locked Notice */}
+                          {isCommentsLocked ? (
+                            <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-2xl text-amber-800 text-xs font-semibold flex items-center gap-2">
+                              <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Comments are turned off for this post.</span>
+                            </div>
+                          ) : (
+                            <form
+                              onSubmit={(e) => handleAddComment(e, post.id)}
+                              className="flex items-center gap-2 pt-1"
+                            >
+                              <input
+                                type="text"
+                                placeholder="Write a supportive comment or answer..."
+                                value={commentInputs[post.id] || ""}
+                                onChange={(e) =>
+                                  setCommentInputs((prev) => ({
+                                    ...prev,
+                                    [post.id]: e.target.value,
+                                  }))
+                                }
+                                disabled={submittingCommentByPost[post.id]}
+                                className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-all font-medium"
+                              />
+                              <button
+                                type="submit"
+                                disabled={
+                                  submittingCommentByPost[post.id] ||
+                                  !commentInputs[post.id]?.trim()
+                                }
+                                className="p-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#4B63D2]/20 cursor-pointer active:scale-95"
+                              >
+                                {submittingCommentByPost[post.id] ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                                )}
+                              </button>
+                            </form>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
 
               {/* Observer Sentinel Element for Infinite Scroll */}
               {hasMore && (
@@ -1544,6 +1889,262 @@ export default function Feed() {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* EDIT POST MODAL                                                           */}
+      {/* ========================================================================= */}
+      {editingPost && (
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-[#4B63D2]" />
+                <h3 className="text-base font-black text-[#1E2746]">
+                  Edit Post
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingPost(null)}
+                className="p-1 rounded-xl text-[#9188BE] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <textarea
+              value={editingPost.content}
+              onChange={(e) =>
+                setEditingPost({ ...editingPost, content: e.target.value })
+              }
+              rows={5}
+              className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-2xl p-3.5 text-[#1E2746] text-xs sm:text-sm placeholder-[#9188BE] focus:ring-2 focus:ring-[#4B63D2]/20 focus:border-[#4B63D2] focus:outline-none transition-all font-medium resize-none"
+              placeholder="Edit your post content..."
+            />
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingPost(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] border border-[#EAE4F7] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingEdit || !editingPost.content.trim()}
+                onClick={handleSaveEditPost}
+                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] disabled:opacity-50 text-white font-bold text-xs py-2 px-5 rounded-xl transition-all shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 cursor-pointer"
+              >
+                {isSavingEdit ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD21A]" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Changes</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SEND IN CHAT MODAL                                                        */}
+      {/* ========================================================================= */}
+      {shareToChatPost && (
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-[#EAE4F7] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2]">
+                  <SendHorizontal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#1E2746]">
+                    Send Post in Chat
+                  </h3>
+                  <p className="text-[11px] text-[#5851A4] font-medium">
+                    Share with a classmate, alumni, faculty, or group
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShareToChatPost(null)}
+                className="p-1 rounded-xl text-[#9188BE] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Post Preview Snippet */}
+            <div className="p-3.5 mx-5 mt-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl text-xs space-y-1">
+              <span className="text-[10px] font-bold text-[#4B63D2] uppercase tracking-wider">
+                Post Preview
+              </span>
+              <p className="text-[#1E2746] font-medium line-clamp-2">
+                {shareToChatPost.content}
+              </p>
+            </div>
+
+            {/* Recipient Search & List */}
+            <div className="p-5 space-y-3 flex-1 overflow-y-auto">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
+                <input
+                  type="text"
+                  placeholder="Search conversations or campus members..."
+                  value={chatRecipientSearch}
+                  onChange={(e) => setChatRecipientSearch(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] font-medium"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#5851A4]">
+                  Recent Chats & Connections
+                </p>
+
+                {isLoadingChatRecipients ? (
+                  <div className="flex items-center justify-center py-6 gap-2 text-xs text-[#5851A4]">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#4B63D2]" />
+                    <span>Loading recipients...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                    {/* Active Conversations */}
+                    {chatConversations
+                      .filter((c) => {
+                        const name = c.is_group
+                          ? c.name || "Group"
+                          : c.participants?.find(
+                              (p) => p.user_id !== currentUser?.id
+                            )?.user?.email || "";
+                        return name
+                          .toLowerCase()
+                          .includes(chatRecipientSearch.toLowerCase());
+                      })
+                      .map((conv) => {
+                        const title = conv.is_group
+                          ? conv.name || `Group #${conv.id}`
+                          : conv.participants?.find(
+                              (p) => p.user_id !== currentUser?.id
+                            )?.user?.email.split("@")[0] ||
+                            `Chat #${conv.id}`;
+                        const isSending = sendingToChatId === conv.id;
+
+                        return (
+                          <div
+                            key={`conv-${conv.id}`}
+                            className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-[#FAF9FD] border border-transparent hover:border-[#EAE4F7] transition-all"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                {conv.is_group ? (
+                                  <UsersIcon className="w-4 h-4" />
+                                ) : (
+                                  title.substring(0, 2).toUpperCase()
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-[#1E2746] truncate capitalize">
+                                  {title}
+                                </p>
+                                <p className="text-[10px] text-[#5851A4] font-medium">
+                                  {conv.is_group
+                                    ? "Group Chat"
+                                    : "Direct Message"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isSending}
+                              onClick={() =>
+                                handleSendPostToConversation(conv.id)
+                              }
+                              className="px-3 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                              {isSending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <span>Send</span>
+                                  <Send className="w-3 h-3 text-[#FFD21A]" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                    {/* Campus Users candidates */}
+                    {chatCampusUsers
+                      .filter((u) =>
+                        u.email
+                          .toLowerCase()
+                          .includes(chatRecipientSearch.toLowerCase())
+                      )
+                      .slice(0, 10)
+                      .map((u) => {
+                        const isSending = sendingToChatId === u.id;
+                        const name = u.email
+                          .split("@")[0]
+                          .replace(/[._]/g, " ");
+
+                        return (
+                          <div
+                            key={`user-${u.id}`}
+                            className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-[#FAF9FD] border border-transparent hover:border-[#EAE4F7] transition-all"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-xl bg-[#EAE4F7] text-[#4B63D2] flex items-center justify-center font-bold text-xs shrink-0 capitalize">
+                                {name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-[#1E2746] truncate capitalize">
+                                  {name}
+                                </p>
+                                <p className="text-[10px] text-[#5851A4] font-medium truncate">
+                                  {u.email}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              disabled={isSending}
+                              onClick={() => handleSendPostToUser(u.id)}
+                              className="px-3 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                              {isSending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <span>Send</span>
+                                  <Send className="w-3 h-3 text-[#FFD21A]" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Success Toast */}
+      {chatShareToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#1E2746] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-in slide-in-from-bottom-5 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{chatShareToast}</span>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* IN-APP PDF VIEWER MODAL                                                   */}

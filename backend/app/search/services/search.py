@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import or_, select
+from sqlalchemy import cast, or_, select, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -57,6 +57,8 @@ class SearchService:
                         Profile.last_name.ilike(search_pattern),
                         Profile.department.ilike(search_pattern),
                         Profile.bio.ilike(search_pattern),
+                        cast(Profile.skills, String).ilike(search_pattern),
+                        cast(Profile.projects, String).ilike(search_pattern),
                         Role.name.ilike(search_pattern),
                     ),
                 )

@@ -96,6 +96,7 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, "posts"), exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, "profiles"), exist_ok=True)
 os.makedirs(os.path.join(STATIC_DIR, "certificates"), exist_ok=True)
+os.makedirs(os.path.join(STATIC_DIR, "messages"), exist_ok=True)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Mount versioned API routes under /api/v1

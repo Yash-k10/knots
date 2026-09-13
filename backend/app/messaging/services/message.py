@@ -302,6 +302,13 @@ class MessagingService:
 
         return await self.message_repo.mark_messages_as_read(conversation_id, user_id)
 
+    async def delete_message(self, message_id: int, user_id: int) -> bool:
+        """Delete a message authored by user."""
+        success = await self.message_repo.delete_message(message_id, user_id)
+        if not success:
+            raise NotFoundError("Message not found or you are not authorized to delete it")
+        return True
+
     async def get_unread_summary(self, user_id: int) -> UnreadCountResponse:
         """Get total unread messages count for a user."""
         total = await self.message_repo.get_unread_count(user_id)
@@ -310,3 +317,4 @@ class MessagingService:
 
 # Backwards compatibility alias
 MessageService = MessagingService
+
