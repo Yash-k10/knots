@@ -1,5 +1,5 @@
 import unittest
-from app.messaging.services.message import validate_communication_hierarchy, COMMUNICATION_HIERARCHY
+from app.messaging.services.message import validate_communication_hierarchy
 
 
 class TestCommunicationHierarchy(unittest.TestCase):

@@ -16,7 +16,6 @@ from app.messaging.schemas.message import (
     MessageResponse,
 )
 
-
 COMMUNICATION_HIERARCHY: dict[str, set[str]] = {
     "student": {"faculty", "alumni"},
     "faculty": {"student", "students", "hod", "controller", "alumni"},
@@ -109,8 +108,12 @@ class MessagingService:
             select(User).options(selectinload(User.role)).where(User.id == receiver_id)
         )
 
-        sender_user = sender_res.scalars().first() if hasattr(sender_res, "scalars") else None
-        receiver_user = receiver_res.scalars().first() if hasattr(receiver_res, "scalars") else None
+        sender_user = (
+            sender_res.scalars().first() if hasattr(sender_res, "scalars") else None
+        )
+        receiver_user = (
+            receiver_res.scalars().first() if hasattr(receiver_res, "scalars") else None
+        )
 
         if not receiver_user:
             raise NotFoundError("Recipient not found")
@@ -306,7 +309,9 @@ class MessagingService:
         """Delete a message authored by user."""
         success = await self.message_repo.delete_message(message_id, user_id)
         if not success:
-            raise NotFoundError("Message not found or you are not authorized to delete it")
+            raise NotFoundError(
+                "Message not found or you are not authorized to delete it"
+            )
         return True
 
     async def get_unread_summary(self, user_id: int) -> UnreadCountResponse:
@@ -317,4 +322,3 @@ class MessagingService:
 
 # Backwards compatibility alias
 MessageService = MessagingService
-

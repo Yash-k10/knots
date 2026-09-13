@@ -171,4 +171,3 @@ class MessageRepository(BaseRepository[Message]):
         await self.db.delete(msg)
         await self.db.flush()
         return True
-

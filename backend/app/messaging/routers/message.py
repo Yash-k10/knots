@@ -180,4 +180,3 @@ async def get_unread_count(
     return APIResponse(
         message="Unread count retrieved successfully", data=unread_summary
     )
-

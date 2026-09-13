@@ -248,6 +248,8 @@ async def promote_user_to_superadmin(email: str, password: str = "password123"):
             user.is_active = True
             user.is_verified = True
             await db.commit()
+
+
 DEMO_USERS = [
     {
         "email": "student.demo@sbjit.edu.in",

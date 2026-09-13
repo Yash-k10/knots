@@ -17,6 +17,24 @@ class TestMessagingService(unittest.IsolatedAsyncioTestCase):
         self.db.add_all = MagicMock()
         self.db.get = AsyncMock()
 
+        mock_sender_user = MagicMock()
+        mock_sender_user.role = MagicMock()
+        mock_sender_user.role.name = "Student"
+
+        mock_receiver_user = MagicMock()
+        mock_receiver_user.role = MagicMock()
+        mock_receiver_user.role.name = "Faculty"
+
+        mock_sender_res = MagicMock()
+        mock_sender_res.scalars.return_value.first.return_value = mock_sender_user
+
+        mock_receiver_res = MagicMock()
+        mock_receiver_res.scalars.return_value.first.return_value = mock_receiver_user
+
+        self.db.execute = AsyncMock(
+            side_effect=[mock_sender_res, mock_receiver_res] * 20
+        )
+
     @patch("app.messaging.services.message.MessageRepository")
     @patch("app.messaging.services.message.ConversationRepository")
     async def test_send_direct_message_creates_conversation(
