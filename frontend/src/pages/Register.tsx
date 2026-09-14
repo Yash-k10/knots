@@ -186,10 +186,9 @@ export default function Register() {
 
     setSendingOtp(true);
     try {
-      const res = await apiRequest<{
+      await apiRequest<{
         message: string;
         email: string;
-        demo_otp?: string;
       }>("/auth/send-otp", {
         method: "POST",
         body: JSON.stringify({ email: trimmedEmail }),
@@ -197,9 +196,6 @@ export default function Register() {
 
       setOtpSent(true);
       setOtpCountdown(60);
-      if (res.demo_otp) {
-        setOtp(res.demo_otp);
-      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

@@ -50,7 +50,6 @@ export default function Login() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [demoCodeNotice, setDemoCodeNotice] = useState<string | null>(null);
 
   // Field validation flags
   const [emailTouched, setEmailTouched] = useState(false);
@@ -178,10 +177,9 @@ export default function Login() {
 
     setSendingOtp(true);
     try {
-      const res = await apiRequest<{
+      await apiRequest<{
         message: string;
         email: string;
-        demo_otp?: string;
       }>("/auth/send-otp", {
         method: "POST",
         body: JSON.stringify({
@@ -193,10 +191,6 @@ export default function Login() {
       setLoginOtpSent(true);
       setLoginOtpCountdown(60);
       setSuccess("Verification code dispatched to your college inbox.");
-      if (res.demo_otp) {
-        setDemoCodeNotice(res.demo_otp);
-        setLoginOtp(res.demo_otp);
-      }
     } catch (err: any) {
       setError(err.message || "Failed to dispatch verification code.");
     } finally {
@@ -254,10 +248,9 @@ export default function Login() {
 
     setSendingOtp(true);
     try {
-      const res = await apiRequest<{
+      await apiRequest<{
         message: string;
         email: string;
-        demo_otp?: string;
       }>("/auth/send-otp", {
         method: "POST",
         body: JSON.stringify({
@@ -269,10 +262,6 @@ export default function Login() {
       setResetOtpSent(true);
       setResetOtpCountdown(60);
       setSuccess("Password reset OTP code dispatched to your inbox.");
-      if (res.demo_otp) {
-        setDemoCodeNotice(res.demo_otp);
-        setResetOtp(res.demo_otp);
-      }
     } catch (err: any) {
       setError(err.message || "Failed to dispatch reset code.");
     } finally {
@@ -744,21 +733,6 @@ export default function Login() {
               </div>
             )}
 
-            {demoCodeNotice && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-xs flex items-center justify-between">
-                <span>Demo OTP Code: <strong>{demoCodeNotice}</strong></span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (authMode === "otp") setLoginOtp(demoCodeNotice);
-                    if (authMode === "forgot") setResetOtp(demoCodeNotice);
-                  }}
-                  className="font-bold underline text-amber-900 cursor-pointer"
-                >
-                  Auto-Fill
-                </button>
-              </div>
-            )}
 
             {/* ==================================================== */}
             {/* VIEW 1: Standard Password Login Form                 */}
