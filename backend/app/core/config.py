@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: str = "kanchangaikwad.aiml23@sbjit.edu.in"
     EMAILS_FROM_NAME: str = "KNOTS Campus Hub"
 
+    # Gemini Configurations
+    GEMINI_API_KEY: str | None = None
+
     @field_validator("ALLOWED_EMAIL_DOMAINS", mode="before")
     @classmethod
     def parse_allowed_domains(cls, v: Any) -> list[str]:
