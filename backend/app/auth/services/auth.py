@@ -256,6 +256,9 @@ class AuthService:
             )
         except Exception as e:
             logger.error(f"Error during send_otp_email dispatch: {e}")
+            raise ValidationError(
+                message=f"Failed to dispatch OTP verification email to {normalized_email}. Error: {str(e)}"
+            )
 
         return SendOTPResponse(
             message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
