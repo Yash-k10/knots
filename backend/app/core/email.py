@@ -161,7 +161,10 @@ def send_otp_email(
                 logger.error(f"Port 587 delivery attempt also failed: {e_tls}")
 
         if not sent:
-            raise RuntimeError(f"All SMTP delivery channels failed. Last error: {last_error}")
+            error_msg = f"All SMTP delivery channels failed. Last error: {last_error}"
+            logger.error(f"[ERROR] {error_msg}")
+            print(f"[ERROR] {error_msg}")
+            raise RuntimeError(error_msg)
 
         return True
 
@@ -171,4 +174,4 @@ def send_otp_email(
             exc_info=True,
         )
         print(f"[ERROR] SMTP Dispatch Error for {normalized_recipient}: {e}")
-        return True
+        raise e
