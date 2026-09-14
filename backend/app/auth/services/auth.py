@@ -36,10 +36,82 @@ from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
 
+import json
+import redis
+
 logger = logging.getLogger(__name__)
 
-# In-memory OTP storage: email -> {"otp": str, "expires_at": float, "purpose": str}
+# Fallback In-memory OTP storage
 OTP_STORE: dict[str, dict] = {}
+
+
+def get_redis_client():
+    if not settings.REDIS_URL:
+        return None
+    try:
+        return redis.from_url(
+            settings.REDIS_URL, decode_responses=True, socket_timeout=3
+        )
+    except Exception as e:
+        logger.warning(f"Could not connect to Redis: {e}")
+        return None
+
+
+def save_otp(email: str, otp: str, purpose: str, expires_in: int = 600) -> None:
+    normalized_email = email.strip().lower()
+    # 1. Store in in-memory dict
+    OTP_STORE[normalized_email] = {
+        "otp": otp,
+        "expires_at": time.time() + expires_in,
+        "purpose": purpose,
+    }
+    # 2. Store in Upstash Redis (persists across workers, reloads, and restarts)
+    r = get_redis_client()
+    if r:
+        try:
+            r.set(
+                f"otp:{normalized_email}",
+                json.dumps({"otp": otp, "purpose": purpose}),
+                ex=expires_in,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to persist OTP to Redis: {e}")
+
+
+def check_and_consume_otp(email: str, candidate_otp: str) -> bool:
+    normalized_email = email.strip().lower()
+    otp_code = candidate_otp.strip()
+
+    # 1. Check Redis first
+    r = get_redis_client()
+    if r:
+        try:
+            val = r.get(f"otp:{normalized_email}")
+            if val:
+                data = json.loads(val)
+                if data.get("otp") == otp_code:
+                    r.delete(f"otp:{normalized_email}")
+                    OTP_STORE.pop(normalized_email, None)
+                    return True
+        except Exception as e:
+            logger.warning(f"Failed to verify OTP from Redis: {e}")
+
+    # 2. Fallback check in-memory
+    otp_data = OTP_STORE.get(normalized_email)
+    if otp_data and otp_data["otp"] == otp_code:
+        if time.time() <= otp_data["expires_at"]:
+            OTP_STORE.pop(normalized_email, None)
+            if r:
+                try:
+                    r.delete(f"otp:{normalized_email}")
+                except Exception:
+                    pass
+            return True
+        else:
+            OTP_STORE.pop(normalized_email, None)
+            return False
+
+    return False
 
 
 class AuthService:
@@ -171,21 +243,28 @@ class AuthService:
                 )
 
         # Generate a 6-digit cryptographic-safe random OTP
-        otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
-        expires_at = time.time() + 600  # 10 minutes
+        otp_code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
 
-        OTP_STORE[normalized_email] = {
-            "otp": otp_code,
-            "expires_at": expires_at,
-            "purpose": payload.purpose,
-        }
+        # Save in Redis & in-memory cache (valid for 10 minutes / 600s)
+        save_otp(normalized_email, otp_code, payload.purpose, expires_in=600)
 
-        # Dispatch real email via SMTP (gracefully logged in dev mode if SMTP unconfigured)
-        send_otp_email(
-            recipient_email=normalized_email,
-            otp_code=otp_code,
-            purpose=payload.purpose,
-        )
+        # Dispatch real email via SMTP in a background thread for instant responsiveness
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(
+                None,
+                send_otp_email,
+                normalized_email,
+                otp_code,
+                payload.purpose,
+            )
+        except RuntimeError:
+            send_otp_email(
+                recipient_email=normalized_email,
+                otp_code=otp_code,
+                purpose=payload.purpose,
+            )
 
         return SendOTPResponse(
             message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
@@ -196,23 +275,11 @@ class AuthService:
     async def authenticate_otp(self, payload: LoginOTPRequest) -> TokenResponse:
         """Verify OTP for college email and log user in."""
         normalized_email = payload.email.strip().lower()
-        otp_data = OTP_STORE.get(normalized_email)
 
-        if not otp_data or otp_data["otp"] != payload.otp.strip():
-            # Allow fallback universal master OTP for automated local developer testing if enabled
-            if payload.otp.strip() != "123456":
-                raise AuthenticationError(
-                    message="Invalid or incorrect OTP verification code."
-                )
-
-        if otp_data and time.time() > otp_data["expires_at"]:
-            OTP_STORE.pop(normalized_email, None)
+        if not check_and_consume_otp(normalized_email, payload.otp):
             raise AuthenticationError(
-                message="OTP verification code has expired. Please request a new code."
+                message="Invalid, incorrect, or expired OTP verification code. Please check your latest email or request a new code."
             )
-
-        # Clean up OTP after successful verification
-        OTP_STORE.pop(normalized_email, None)
 
         # Retrieve user or auto-provision
         user = await self.repository.get_by_email(normalized_email)
@@ -240,7 +307,7 @@ class AuthService:
             role_id = role.id if role else 2
 
             # Create new user record
-            random_pw = "".join([str(random.randint(0, 9)) for _ in range(12)])
+            random_pw = secrets.token_urlsafe(16)
             hashed_password = security.hash_password(random_pw)
             user = await self.repository.create(
                 {
@@ -268,18 +335,10 @@ class AuthService:
     async def reset_password_with_otp(self, payload: ResetPasswordRequest) -> None:
         """Reset user password using authorized email OTP verification."""
         normalized_email = payload.email.strip().lower()
-        otp_data = OTP_STORE.get(normalized_email)
 
-        if not otp_data or otp_data["otp"] != payload.otp.strip():
-            if payload.otp.strip() != "123456":
-                raise AuthenticationError(
-                    message="Invalid or incorrect OTP verification code."
-                )
-
-        if otp_data and time.time() > otp_data["expires_at"]:
-            OTP_STORE.pop(normalized_email, None)
+        if not check_and_consume_otp(normalized_email, payload.otp):
             raise AuthenticationError(
-                message="OTP verification code has expired. Please request a new code."
+                message="Invalid, incorrect, or expired OTP verification code. Please request a new code."
             )
 
         user = await self.repository.get_by_email(normalized_email)
@@ -297,8 +356,6 @@ class AuthService:
         user.is_verified = True
         self.db.add(user)
         await self.db.flush()
-
-        OTP_STORE.pop(normalized_email, None)
 
     async def refresh_tokens(self, refresh_token: str) -> TokenResponse:
         """Verify refresh token and issue new access & refresh tokens."""
@@ -326,21 +383,10 @@ class AuthService:
             )
 
         # Verify OTP verification code
-        otp_data = OTP_STORE.get(normalized_email)
-        if not otp_data or otp_data["otp"] != user_in.otp.strip():
-            if user_in.otp.strip() != "123456":
-                raise AuthenticationError(
-                    message="Invalid or incorrect email OTP verification code."
-                )
-
-        if otp_data and time.time() > otp_data["expires_at"]:
-            OTP_STORE.pop(normalized_email, None)
+        if not check_and_consume_otp(normalized_email, user_in.otp):
             raise AuthenticationError(
-                message="OTP verification code has expired. Please request a new code."
+                message="Invalid, incorrect, or expired email OTP verification code."
             )
-
-        # Clean up OTP after successful registration
-        OTP_STORE.pop(normalized_email, None)
 
         # Verify Security Access Key for Controller & Central Admin
         if user_in.management_role:

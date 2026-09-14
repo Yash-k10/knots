@@ -30,7 +30,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     role_id: int
-    otp: str = "123456"
+    otp: str
 
     # 1. Contact Details
     phone_number: str | None = None

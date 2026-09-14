@@ -128,17 +128,25 @@ def send_otp_email(
         msg["To"] = normalized_recipient
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(sender_email, [normalized_recipient], msg.as_string())
+        if int(settings.SMTP_PORT) == 465:
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, [normalized_recipient], msg.as_string())
+        else:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, [normalized_recipient], msg.as_string())
 
         logger.info(f"[SUCCESS] OTP email dispatched to {normalized_recipient}")
+        print(f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:{settings.SMTP_PORT}")
         return True
 
     except Exception as e:
         logger.error(
-            f"[ERROR] Failed to dispatch OTP email via SMTP to {normalized_recipient}: {e}"
+            f"[ERROR] Failed to dispatch OTP email via SMTP to {normalized_recipient}: {e}",
+            exc_info=True,
         )
+        print(f"[ERROR] SMTP Dispatch Error for {normalized_recipient}: {e}")
         # Return True so request does not crash, OTP remains stored and accessible
         return True
