@@ -35,14 +35,16 @@ class Settings(BaseSettings):
 
     # Database Settings
     DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgres_password@localhost:5432/knots"
+        "postgresql+asyncpg://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
     )
     SYNC_DATABASE_URL: str = (
-        "postgresql://postgres:postgres_password@localhost:5432/knots"
+        "postgresql://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
     )
 
     # Redis Settings
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_URL: str = (
+        "rediss://default:gQAAAAAAAnarAAIgcDI1YThkMzlhNWMwNGM0NDYyYTY4Zjg0NzlmOGVjYmU5MQ@informed-bull-161451.upstash.io:6379"
+    )
 
     # Security Settings
     SECRET_KEY: str = (
@@ -60,10 +62,10 @@ class Settings(BaseSettings):
 
     # SMTP / Email Service Settings
     SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: str = "knots.sbjit@gmail.com"
+    SMTP_PORT: int = 465
+    SMTP_USER: str | None = "kanchangaikwad.aiml23@sbjit.edu.in"
+    SMTP_PASSWORD: str | None = "duno wqxi sfkg cokb"
+    EMAILS_FROM_EMAIL: str = "kanchangaikwad.aiml23@sbjit.edu.in"
     EMAILS_FROM_NAME: str = "KNOTS Campus Hub"
 
     @field_validator("ALLOWED_EMAIL_DOMAINS", mode="before")
