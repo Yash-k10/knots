@@ -248,23 +248,15 @@ class AuthService:
         # Save in Redis & in-memory cache (valid for 10 minutes / 600s)
         save_otp(normalized_email, otp_code, payload.purpose, expires_in=600)
 
-        # Dispatch real email via SMTP in a background thread for instant responsiveness
-        import asyncio
+        # Dispatch real email via SMTP
         try:
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(
-                None,
-                send_otp_email,
-                normalized_email,
-                otp_code,
-                payload.purpose,
-            )
-        except RuntimeError:
             send_otp_email(
                 recipient_email=normalized_email,
                 otp_code=otp_code,
                 purpose=payload.purpose,
             )
+        except Exception as e:
+            logger.error(f"Error during send_otp_email dispatch: {e}")
 
         return SendOTPResponse(
             message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
