@@ -18,10 +18,8 @@ from app.users.models.role import Role
 from app.users.models.user import User
 
 
-
 import json
 import logging
-from typing import Any
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
@@ -31,16 +29,19 @@ logger = logging.getLogger(__name__)
 
 # --- Pydantic Models for LLM Structured Output ---
 
+
 class BulletRewriteModel(BaseModel):
     original: str
     improved: str
     reason: str
+
 
 class ResumeDimensionsModel(BaseModel):
     overall: int
     ats_compatibility: int
     impact_metrics: int
     tech_stack_depth: int
+
 
 class ResumeAnalysisResultModel(BaseModel):
     score: int
@@ -55,10 +56,12 @@ class ResumeAnalysisResultModel(BaseModel):
     strengths: list[str]
     suggestions: list[str]
 
+
 class RoadmapProjectModel(BaseModel):
     title: str
     description: str
     tech_stack: str
+
 
 class RoadmapMilestoneModel(BaseModel):
     phase: str
@@ -69,21 +72,25 @@ class RoadmapMilestoneModel(BaseModel):
     project: RoadmapProjectModel
     interview_focus: str
 
+
 class RoleOverviewModel(BaseModel):
     title: str
     market_demand: str
     salary_range: str
     estimated_duration: str
 
+
 class SkillGapAnalysisModel(BaseModel):
     matching_skills: list[str]
     skills_to_acquire: list[str]
     readiness_percentage: int
 
+
 class InterviewPrepModel(BaseModel):
     system_design: list[str]
     dsa_focus: list[str]
     behavioral: list[str]
+
 
 class CareerRoadmapResultModel(BaseModel):
     target_role: str
@@ -94,6 +101,7 @@ class CareerRoadmapResultModel(BaseModel):
     recommended_skills: list[str]
     interview_prep: InterviewPrepModel
 
+
 def _get_genai_client() -> genai.Client | None:
     if settings.GEMINI_API_KEY:
         try:
@@ -102,14 +110,17 @@ def _get_genai_client() -> genai.Client | None:
             logger.error(f"Failed to initialize GenAI client: {e}")
     return None
 
+
 class AIResumeService:
     """AI-powered Resume Analyzer using Gemini."""
 
-    async def analyze_resume(self, resume_text: str, target_role: str = "Software Developer") -> dict:
+    async def analyze_resume(
+        self, resume_text: str, target_role: str = "Software Developer"
+    ) -> dict:
         client = _get_genai_client()
         if not client:
             return {"error": "GEMINI_API_KEY not configured"}
-        
+
         prompt = f"""
 Analyze the following resume for a target role of '{target_role}'.
 Provide a comprehensive ATS-style score out of 100, ratings, dimensions, detected skills mapped by category, missing high-impact keywords, and 3 specific bullet point rewrites using the STAR method (Situation, Task, Action, Result). Also provide feedback, strengths, and suggestions for improvement.
@@ -120,7 +131,7 @@ Resume Text:
 """
         try:
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model="gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -132,6 +143,7 @@ Resume Text:
         except Exception as e:
             logger.error(f"Error calling Gemini for resume analysis: {e}")
             return {"error": str(e)}
+
 
 class CareerRoadmapService:
     """AI-powered Career Roadmap Generator using Gemini."""
@@ -147,7 +159,7 @@ class CareerRoadmapService:
             return {"error": "GEMINI_API_KEY not configured"}
 
         skills_str = ", ".join(current_skills) if current_skills else "None specified"
-        
+
         prompt = f"""
 Generate a comprehensive, personalized career roadmap for the following user profile:
 - Target Role: {target_role}
@@ -165,7 +177,7 @@ Make sure the roadmap focuses on practical projects, interview preparation, rele
 """
         try:
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model="gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -177,6 +189,7 @@ Make sure the roadmap focuses on practical projects, interview preparation, rele
         except Exception as e:
             logger.error(f"Error calling Gemini for roadmap generation: {e}")
             return {"error": str(e)}
+
 
 class AIConnectionSuggestionService:
     """AI-powered connection suggestions service based on skills, department, and graduation year."""
