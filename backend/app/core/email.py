@@ -39,7 +39,7 @@ def send_otp_email(
         return True
 
     try:
-        subject = f"Your KNOTS {purpose.capitalize()} Verification Code: {otp_code}"
+        subject = f"[{otp_code}] Your KNOTS {purpose.capitalize()} Verification Code"
 
         html_body = f"""<!DOCTYPE html>
 <html>
@@ -57,7 +57,7 @@ def send_otp_email(
           <tr>
             <td style="padding: 36px 36px 20px; text-align: center; background: linear-gradient(135deg, #FAF9FD 0%, #F0EDFB 100%); border-bottom: 1px solid #eae4f7;">
               <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #4B63D2; letter-spacing: 0.5px;">KNOTS</h1>
-              <p style="margin: 6px 0 0; font-size: 13px; color: #5851A4; font-weight: 600;">SBJIT Institutional Career & Collaboration Hub</p>
+              <p style="margin: 6px 0 0; font-size: 13px; color: #5851A4; font-weight: 600;">S. B. Jain Institute of Technology, Management & Research, Nagpur</p>
             </td>
           </tr>
 
@@ -100,7 +100,7 @@ def send_otp_email(
           <tr>
             <td style="padding: 20px 36px 30px; background-color: #FAF9FD; border-top: 1px solid #eae4f7; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                St. Vincent Pallotti College of Engineering & Technology, Nagpur
+                S. B. Jain Institute of Technology, Management & Research, Nagpur
               </p>
               <p style="margin: 6px 0 0; font-size: 11px; color: #c4b5fd;">
                 KNOTS -- Campus Community, Placement & Innovation Network
