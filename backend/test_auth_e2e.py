@@ -29,6 +29,8 @@ import unittest
 
 import httpx
 
+from app.auth.services.auth import save_otp
+
 BASE_URL = "http://localhost:8000/api/v1"
 
 # Unique test user credentials (using timestamp to avoid collisions)
@@ -38,6 +40,7 @@ TEST_PASSWORD = "TestPassword123!"
 TEST_NEW_EMAIL = f"e2e.updated.{TEST_TIMESTAMP}@sbjit.edu.in"
 TEST_NEW_PASSWORD = "NewSecurePass456!"
 TEST_ROLE_ID = 2  # Student
+TEST_OTP = "123456"
 
 
 class TestAuthFlowEndToEnd(unittest.TestCase):
@@ -61,13 +64,15 @@ class TestAuthFlowEndToEnd(unittest.TestCase):
 
     # --- 1. REGISTER ---
     def test_01_register_new_user(self):
-        """Register a new user via POST /auth/register."""
+        """Register a new user via POST /auth/register with verified OTP."""
+        save_otp(TEST_EMAIL, TEST_OTP, "register", expires_in=300)
         response = httpx.post(
             f"{BASE_URL}/auth/register",
             json={
                 "email": TEST_EMAIL,
                 "password": TEST_PASSWORD,
                 "role_id": TEST_ROLE_ID,
+                "otp": TEST_OTP,
             },
             timeout=10,
         )
@@ -83,12 +88,14 @@ class TestAuthFlowEndToEnd(unittest.TestCase):
 
     def test_02_register_duplicate_email_fails(self):
         """Attempting to register the same email should fail with 409."""
+        save_otp(TEST_EMAIL, TEST_OTP, "register", expires_in=300)
         response = httpx.post(
             f"{BASE_URL}/auth/register",
             json={
                 "email": TEST_EMAIL,
                 "password": TEST_PASSWORD,
                 "role_id": TEST_ROLE_ID,
+                "otp": TEST_OTP,
             },
             timeout=10,
         )

@@ -348,6 +348,12 @@ class AuthService:
                 raise ConflictError(
                     message="This college email address is already registered. Please sign in directly."
                 )
+        elif payload.purpose == "reset":
+            existing_user = await self.repository.get_by_email(normalized_email)
+            if not existing_user:
+                raise NotFoundError(
+                    message="No account found with this college email address. Please register first."
+                )
 
         # Generate a 6-digit cryptographic-safe random OTP
         otp_code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
@@ -420,6 +426,17 @@ class AuthService:
                     "is_verified": True,
                 }
             )
+
+            # Auto-provision initial profile
+            profile = Profile(
+                user_id=user.id,
+                first_name="Member",
+                last_name="",
+                department="Computer Science",
+                bio="Member at SBJIT.",
+            )
+            self.db.add(profile)
+            await self.db.flush()
         else:
             if not user.is_verified:
                 user.is_verified = True

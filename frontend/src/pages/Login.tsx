@@ -364,122 +364,6 @@ export default function Login() {
     }, 1000);
   };
 
-  interface DemoCredential {
-    label: string;
-    roleKey: string;
-    email: string;
-    pass: string;
-    canReach: string;
-    department: string;
-    badgeStyle: string;
-  }
-
-  const DEMO_CREDENTIALS: DemoCredential[] = [
-    {
-      label: "Student",
-      roleKey: "student",
-      email: "student.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Faculty, Alumni",
-      department: "Computer Science",
-      badgeStyle: "bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400",
-    },
-    {
-      label: "Faculty",
-      roleKey: "faculty",
-      email: "faculty.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Student, HOD, Controller, Alumni",
-      department: "Computer Science",
-      badgeStyle: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:border-indigo-400",
-    },
-    {
-      label: "HOD",
-      roleKey: "hod",
-      email: "hod.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Faculty, Controller, Alumni, TPO, Dean",
-      department: "Computer Science",
-      badgeStyle: "bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-400",
-    },
-    {
-      label: "Controller",
-      roleKey: "controller",
-      email: "controller.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Faculty, HOD, Alumni",
-      department: "Administration",
-      badgeStyle: "bg-teal-50 text-teal-700 border-teal-200 hover:border-teal-400",
-    },
-    {
-      label: "Alumni",
-      roleKey: "alumni",
-      email: "alumni.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Student, Faculty, Controller, TPO",
-      department: "Alumni Network",
-      badgeStyle: "bg-cyan-50 text-cyan-700 border-cyan-200 hover:border-cyan-400",
-    },
-    {
-      label: "TPO",
-      roleKey: "tpo",
-      email: "tpo.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Central Admin, Dean, Principal, Alumni, HOD",
-      department: "Training & Placement Cell",
-      badgeStyle: "bg-amber-50 text-amber-800 border-amber-200 hover:border-amber-400",
-    },
-    {
-      label: "Dean",
-      roleKey: "dean",
-      email: "dean.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "HOD, TPO, Principal, CEO",
-      department: "Academic Affairs",
-      badgeStyle: "bg-violet-50 text-violet-700 border-violet-200 hover:border-violet-400",
-    },
-    {
-      label: "Principal",
-      roleKey: "principal",
-      email: "principal.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "TPO, Dean, CEO",
-      department: "Executive Leadership",
-      badgeStyle: "bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-400",
-    },
-    {
-      label: "CEO",
-      roleKey: "ceo",
-      email: "ceo.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Principal",
-      department: "Board of Governors",
-      badgeStyle: "bg-orange-50 text-orange-700 border-orange-200 hover:border-orange-400",
-    },
-    {
-      label: "Central Admin / Super Admin",
-      roleKey: "central admin",
-      email: "centraladmin.demo@sbjit.edu.in",
-      pass: "password123",
-      canReach: "Full administrative communication hierarchy (All roles)",
-      department: "Platform Administration",
-      badgeStyle: "bg-emerald-50 text-emerald-800 border-emerald-300 hover:border-emerald-500",
-    },
-  ];
-
-  const [selectedDemoRole, setSelectedDemoRole] = useState<DemoCredential | null>(null);
-
-  // Quick Demo account auto-filler
-  const handleQuickFill = (demoRole: DemoCredential) => {
-    setSelectedDemoRole(demoRole);
-    setEmail(demoRole.email);
-    setPassword(demoRole.pass);
-    setEmailTouched(true);
-    setPasswordTouched(true);
-    setError(null);
-    setAuthMode("password");
-  };
-
   const emailError = getEmailError();
   const passwordError = getPasswordError();
 
@@ -617,62 +501,43 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Quick Demo Role Selector for Testing */}
+          {/* Institutional Security Highlights */}
           <div className="w-full max-w-lg pt-4 border-t border-[#EAE4F7] space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-[#5851A4]">
               <span className="flex items-center gap-1.5 text-[#1E2746]">
-                <UserCheck className="w-3.5 h-3.5 text-[#4B63D2]" />
-                Demo Credentials Quick-Fill (10 Roles):
+                <ShieldCheck className="w-3.5 h-3.5 text-[#4B63D2]" />
+                Institutional Security & Verification:
               </span>
               <span className="text-[10px] font-semibold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-full">
-                Password Auth • No OTP Required
+                Encrypted Auth • @sbjit.edu.in
               </span>
             </div>
 
-            {/* Role Buttons Grid */}
-            <div className="flex flex-wrap gap-1.5">
-              {DEMO_CREDENTIALS.map((role) => {
-                const isSelected = selectedDemoRole?.roleKey === role.roleKey;
-                return (
-                  <button
-                    key={role.roleKey}
-                    type="button"
-                    onClick={() => handleQuickFill(role)}
-                    title={`Click to fill ${role.label} credentials (${role.email})`}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5 ${
-                      isSelected
-                        ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-md shadow-[#4B63D2]/30 ring-2 ring-[#4B63D2]/20"
-                        : "bg-white hover:bg-[#FAF9FD] text-[#1E2746] hover:text-[#4B63D2] border-[#EAE4F7] hover:border-[#4B63D2]"
-                    }`}
-                  >
-                    <span>{role.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Active Selected Role Details & Communication Hierarchy Card */}
-            {selectedDemoRole && (
-              <div className="p-3 bg-white rounded-2xl border border-[#4B63D2]/30 shadow-xs space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-[#1E2746]">
-                      {selectedDemoRole.label}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#5851A4] bg-[#F8F6FD] px-2 py-0.5 rounded-md border border-[#EAE4F7]">
-                      {selectedDemoRole.email}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Auto-Filled
-                  </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] shadow-xs flex items-start gap-2.5">
+                <div className="p-1.5 bg-blue-50 text-[#4B63D2] rounded-lg mt-0.5">
+                  <UserCheck className="w-3.5 h-3.5" />
                 </div>
-                <div className="text-[11px] text-[#5851A4] leading-relaxed">
-                  <span className="font-bold text-[#1E2746]">Communication Reach: </span>
-                  <span className="font-medium text-[#4B63D2]">{selectedDemoRole.canReach}</span>
+                <div className="text-left">
+                  <h4 className="text-xs font-bold text-[#1E2746]">Campus Email OTP</h4>
+                  <p className="text-[10px] text-[#5851A4] leading-tight mt-0.5">
+                    Instant 6-digit codes sent via secure institutional SMTP.
+                  </p>
                 </div>
               </div>
-            )}
+
+              <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] shadow-xs flex items-start gap-2.5">
+                <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg mt-0.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-xs font-bold text-[#1E2746]">Role Hierarchy</h4>
+                  <p className="text-[10px] text-[#5851A4] leading-tight mt-0.5">
+                    Direct access for Students, Faculty, HODs, TPO & Management.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -914,7 +779,7 @@ export default function Login() {
                       type="text"
                       maxLength={6}
                       value={loginOtp}
-                      onChange={(e) => setLoginOtp(e.target.value)}
+                      onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ""))}
                       placeholder="Enter 6-digit code"
                       className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
                     />
@@ -923,7 +788,7 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  disabled={loading || !loginOtpSent}
+                  disabled={loading || !loginOtpSent || loginOtp.length < 6}
                   className="w-full h-12 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-sm font-bold rounded-xl shadow-md shadow-[#4B63D2]/25 hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -1000,7 +865,7 @@ export default function Login() {
                         type="text"
                         maxLength={6}
                         value={resetOtp}
-                        onChange={(e) => setResetOtp(e.target.value)}
+                        onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ""))}
                         placeholder="Enter 6-digit code"
                         className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
                       />

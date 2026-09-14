@@ -9,6 +9,7 @@ class TestDuplicateEmailRegistration(unittest.TestCase):
             email="  TestUser@sbjit.edu.in  ",
             password="password123",
             role_id=2,
+            otp="123456",
         )
         self.assertEqual(reg.email, "testuser@sbjit.edu.in")
 
