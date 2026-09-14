@@ -270,6 +270,7 @@ class AuthService:
             message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
             email=normalized_email,
             expires_in_seconds=600,
+            demo_otp=otp_code,
         )
 
     async def authenticate_otp(self, payload: LoginOTPRequest) -> TokenResponse:
