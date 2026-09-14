@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # CORS Origins (comma-separated string or list)
-    BACKEND_CORS_ORIGINS: list[str] = [
+    BACKEND_CORS_ORIGINS: list[str] | str = [
         "http://localhost",
         "http://localhost:5173",
         "http://localhost:5174",
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = (
         "852745392294-uk37vr6m0qkjq36f7u7jk66tuvc3t8v3.apps.googleusercontent.com"
     )
-    ALLOWED_EMAIL_DOMAINS: list[str] = ["@sbjit.edu.in", "@sbjie.edu.in"]
+    ALLOWED_EMAIL_DOMAINS: list[str] | str = ["@sbjit.edu.in", "@sbjie.edu.in"]
 
     # SMTP / Email Service Settings
     SMTP_HOST: str = "smtp.gmail.com"
@@ -60,14 +60,38 @@ class Settings(BaseSettings):
     @classmethod
     def parse_allowed_domains(cls, v: Any) -> list[str]:
         if isinstance(v, str):
-            return [d.strip() for d in v.split(",") if d.strip()]
+            v_trimmed = v.strip()
+            if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
+                try:
+                    import json
+
+                    parsed = json.loads(v_trimmed)
+                    if isinstance(parsed, list):
+                        return [str(d).strip() for d in parsed if str(d).strip()]
+                except Exception:
+                    pass
+            return [d.strip() for d in v_trimmed.split(",") if d.strip()]
+        elif isinstance(v, (list, tuple, set)):
+            return [str(d).strip() for d in v if str(d).strip()]
         return v
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: Any) -> list[str]:
         if isinstance(v, str):
-            return [d.strip() for d in v.split(",") if d.strip()]
+            v_trimmed = v.strip()
+            if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
+                try:
+                    import json
+
+                    parsed = json.loads(v_trimmed)
+                    if isinstance(parsed, list):
+                        return [str(d).strip() for d in parsed if str(d).strip()]
+                except Exception:
+                    pass
+            return [d.strip() for d in v_trimmed.split(",") if d.strip()]
+        elif isinstance(v, (list, tuple, set)):
+            return [str(d).strip() for d in v if str(d).strip()]
         return v
 
     model_config = SettingsConfigDict(
