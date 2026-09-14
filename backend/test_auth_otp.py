@@ -16,37 +16,15 @@ from app.core.exceptions import AuthenticationError, ValidationError
 class TestAuthOTPFlow(unittest.TestCase):
     def setUp(self):
         OTP_STORE.clear()
-        from app.auth.services.auth import get_redis_client
-
-        r = get_redis_client()
-        if r:
-            try:
-                for key in [
-                    "otp:student@sbjit.edu.in",
-                    "otp:user1@sbjit.edu.in",
-                    "otp:user2@sbjit.edu.in",
-                    "otp:user3@sbjit.edu.in",
-                ]:
-                    r.delete(key)
-            except Exception:
-                pass
+        # Mock Redis client so CI tests run isolated and fast without network calls
+        self.redis_patcher = patch(
+            "app.auth.services.auth.get_redis_client", return_value=None
+        )
+        self.redis_patcher.start()
 
     def tearDown(self):
+        self.redis_patcher.stop()
         OTP_STORE.clear()
-        from app.auth.services.auth import get_redis_client
-
-        r = get_redis_client()
-        if r:
-            try:
-                for key in [
-                    "otp:student@sbjit.edu.in",
-                    "otp:user1@sbjit.edu.in",
-                    "otp:user2@sbjit.edu.in",
-                    "otp:user3@sbjit.edu.in",
-                ]:
-                    r.delete(key)
-            except Exception:
-                pass
 
     def test_otp_hashing(self):
         email = "student@sbjit.edu.in"
