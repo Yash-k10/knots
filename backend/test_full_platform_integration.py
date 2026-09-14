@@ -8,6 +8,7 @@ from app.admin.models.flagged_post import FlaggedPost  # noqa: F401
 from app.ai.models.ai_log import AILog  # noqa: F401
 from app.analytics.models.post_engagement import PostEngagement  # noqa: F401
 from app.analytics.models.profile_view import ProfileView  # noqa: F401
+from app.auth.services.auth import save_otp
 from app.clubs.models.club import Club  # noqa: F401
 from app.clubs.models.club_member import ClubMember  # noqa: F401
 from app.connections.models.connection import Connection  # noqa: F401
@@ -149,12 +150,14 @@ class TestFullPlatformIntegration(unittest.IsolatedAsyncioTestCase):
             # 1. AUTH & USER ENDPOINTS
             # -------------------------------------------------------------
             # Register new user
+            save_otp("newuser@sbjit.edu.in", "123456", "register", expires_in=300)
             reg_resp = await client.post(
                 "/api/v1/auth/register",
                 json={
                     "email": "newuser@sbjit.edu.in",
                     "password": "Password123!",
                     "role_id": 2,
+                    "otp": "123456",
                 },
             )
             self.assertIn(reg_resp.status_code, [200, 201])
