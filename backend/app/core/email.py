@@ -136,15 +136,23 @@ def send_otp_email(
         # Try Port 465 (SSL) first (fastest and most reliable on cloud deployments)
         try:
             ssl_context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, 465, timeout=12, context=ssl_context) as server:
+            with smtplib.SMTP_SSL(
+                settings.SMTP_HOST, 465, timeout=12, context=ssl_context
+            ) as server:
                 server.login(smtp_user, smtp_password)
                 server.sendmail(sender_email, [normalized_recipient], msg.as_string())
             sent = True
-            logger.info(f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 465 (SSL)")
-            print(f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:465")
+            logger.info(
+                f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 465 (SSL)"
+            )
+            print(
+                f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:465"
+            )
         except Exception as e_ssl:
             last_error = e_ssl
-            logger.warning(f"Port 465 delivery attempt failed: {e_ssl}. Attempting fallback to Port 587 (STARTTLS)...")
+            logger.warning(
+                f"Port 465 delivery attempt failed: {e_ssl}. Attempting fallback to Port 587 (STARTTLS)..."
+            )
 
         # Fallback to Port 587 (STARTTLS) if Port 465 failed
         if not sent:
@@ -152,10 +160,16 @@ def send_otp_email(
                 with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=12) as server:
                     server.starttls()
                     server.login(smtp_user, smtp_password)
-                    server.sendmail(sender_email, [normalized_recipient], msg.as_string())
+                    server.sendmail(
+                        sender_email, [normalized_recipient], msg.as_string()
+                    )
                 sent = True
-                logger.info(f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 587 (STARTTLS)")
-                print(f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:587")
+                logger.info(
+                    f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 587 (STARTTLS)"
+                )
+                print(
+                    f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:587"
+                )
             except Exception as e_tls:
                 last_error = e_tls
                 logger.error(f"Port 587 delivery attempt also failed: {e_tls}")
