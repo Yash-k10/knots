@@ -1,5 +1,6 @@
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -15,31 +16,34 @@ def send_otp_email(
 ) -> bool:
     """Send an HTML OTP verification email to the user's institutional inbox.
 
-    Gracefully falls back to console logging if SMTP credentials are not configured.
+    Transmits the 6-digit OTP over SMTP without exposing the code in log output.
     """
     normalized_recipient = recipient_email.strip().lower()
 
-    # Always log for local development tracing
+    # Log dispatch event without logging plaintext OTP
     logger.info(
-        f"[AUTH OTP DISPATCH] Target: {normalized_recipient} | Purpose: {purpose} | OTP: {otp_code}"
-    )
-    print(
-        f"\n=======================================================\n"
-        f"[AUTH OTP DISPATCH] College Inbox: {normalized_recipient}\n"
-        f"Purpose: {purpose.upper()}\n"
-        f"6-Digit Code: {otp_code}\n"
-        f"Valid for: 10 Minutes\n"
-        f"=======================================================\n"
+        f"[AUTH OTP DISPATCH] Initiating OTP delivery for {normalized_recipient} (Purpose: {purpose})"
     )
 
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.info(
-            f"SMTP credentials not configured. OTP '{otp_code}' recorded for {normalized_recipient} in development mode."
+        logger.warning(
+            f"SMTP credentials not configured. Email dispatch skipped for {normalized_recipient}."
         )
         return True
 
     try:
-        subject = f"[{otp_code}] Your KNOTS {purpose.capitalize()} Verification Code"
+        subject = "KNOTS College Email Verification Code"
+
+        plain_text_body = (
+            f"Hello,\n\n"
+            f"Your KNOTS verification code is:\n\n"
+            f"{otp_code}\n\n"
+            f"This code will expire in 5 minutes.\n\n"
+            f"If you did not request this code, please ignore this email.\n\n"
+            f"Regards,\n"
+            f"KNOTS Team\n"
+            f"S. B. Jain Institute of Technology, Management & Research, Nagpur"
+        )
 
         html_body = f"""<!DOCTYPE html>
 <html>
@@ -68,7 +72,7 @@ def send_otp_email(
                 Hello,
               </p>
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #4b5563;">
-                We received a request for <strong>{purpose.lower()}</strong> on your authorized college account (<strong>{normalized_recipient}</strong>). Use the one-time verification code below to proceed:
+                Your KNOTS verification code for <strong>{purpose.lower()}</strong> is:
               </p>
 
               <!-- OTP Display Box -->
@@ -85,12 +89,12 @@ def send_otp_email(
               </table>
 
               <p style="margin: 0 0 12px; font-size: 13px; color: #6b7280; text-align: center;">
-                This code is valid for <strong>10 minutes</strong> and can only be used once.
+                This code will expire in <strong>5 minutes</strong> and can only be used once.
               </p>
 
               <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px; margin: 24px 0 0;">
                 <p style="margin: 0; font-size: 12px; color: #92400E; line-height: 1.5;">
-                  <strong>Security Reminder:</strong> Never share this code with anyone. KNOTS staff or college administrators will never ask for your verification code.
+                  <strong>Security Notice:</strong> If you did not request this verification code, please ignore this email. Never share this code with anyone.
                 </p>
               </div>
             </td>
@@ -103,7 +107,7 @@ def send_otp_email(
                 S. B. Jain Institute of Technology, Management & Research, Nagpur
               </p>
               <p style="margin: 6px 0 0; font-size: 11px; color: #c4b5fd;">
-                KNOTS -- Campus Community, Placement & Innovation Network
+                KNOTS &bull; Campus Community, Placement & Innovation Network
               </p>
             </td>
           </tr>
@@ -113,8 +117,6 @@ def send_otp_email(
   </table>
 </body>
 </html>"""
-
-        import ssl
 
         smtp_user = settings.SMTP_USER.strip()
         smtp_password = settings.SMTP_PASSWORD.replace(" ", "").strip()
@@ -128,12 +130,13 @@ def send_otp_email(
         msg["Subject"] = subject
         msg["From"] = f"{settings.EMAILS_FROM_NAME} <{sender_email}>"
         msg["To"] = normalized_recipient
+        msg.attach(MIMEText(plain_text_body, "plain", "utf-8"))
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         sent = False
         last_error = None
 
-        # Try Port 465 (SSL) first (fastest and most reliable on cloud deployments)
+        # Try Port 465 (SSL) first
         try:
             ssl_context = ssl.create_default_context()
             with smtplib.SMTP_SSL(
@@ -145,16 +148,13 @@ def send_otp_email(
             logger.info(
                 f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 465 (SSL)"
             )
-            print(
-                f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:465"
-            )
         except Exception as e_ssl:
             last_error = e_ssl
             logger.warning(
                 f"Port 465 delivery attempt failed: {e_ssl}. Attempting fallback to Port 587 (STARTTLS)..."
             )
 
-        # Fallback to Port 587 (STARTTLS) if Port 465 failed
+        # Fallback to Port 587 (STARTTLS)
         if not sent:
             try:
                 with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=12) as server:
@@ -167,25 +167,19 @@ def send_otp_email(
                 logger.info(
                     f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 587 (STARTTLS)"
                 )
-                print(
-                    f"[SUCCESS] OTP email successfully delivered to {normalized_recipient} via {settings.SMTP_HOST}:587"
-                )
             except Exception as e_tls:
                 last_error = e_tls
-                logger.error(f"Port 587 delivery attempt also failed: {e_tls}")
+                logger.error(f"Port 587 delivery attempt failed: {e_tls}")
 
         if not sent:
             error_msg = f"All SMTP delivery channels failed. Last error: {last_error}"
             logger.error(f"[ERROR] {error_msg}")
-            print(f"[ERROR] {error_msg}")
-            raise RuntimeError(error_msg)
+            raise RuntimeError("Unable to send verification email. Please try again.")
 
         return True
 
     except Exception as e:
         logger.error(
-            f"[ERROR] Failed to dispatch OTP email via SMTP to {normalized_recipient}: {e}",
-            exc_info=True,
+            f"[ERROR] Failed to dispatch OTP email to {normalized_recipient}: {e}"
         )
-        print(f"[ERROR] SMTP Dispatch Error for {normalized_recipient}: {e}")
-        raise e
+        raise RuntimeError("Unable to send verification email. Please try again.")

@@ -83,7 +83,7 @@ class SendOTPRequest(BaseModel):
 class SendOTPResponse(BaseModel):
     message: str
     email: str
-    expires_in_seconds: int = 600
+    expires_in_seconds: int = 300
 
 
 class LoginOTPRequest(BaseModel):

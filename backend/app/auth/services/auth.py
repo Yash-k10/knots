@@ -35,6 +35,7 @@ from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
 
+import hashlib
 import json
 import redis
 
@@ -56,61 +57,162 @@ def get_redis_client():
         return None
 
 
-def save_otp(email: str, otp: str, purpose: str, expires_in: int = 600) -> None:
+def hash_otp(email: str, otp: str) -> str:
+    """Generate SHA-256 HMAC-style digest of the OTP bound to email and secret key."""
+    salt = settings.SECRET_KEY
+    payload = f"{email.strip().lower()}:{otp.strip()}:{salt}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def save_otp(email: str, otp: str, purpose: str, expires_in: int = 300) -> None:
+    """Store hashed OTP with 5-minute expiry, attempt tracker, and resend cooldown."""
     normalized_email = email.strip().lower()
-    # 1. Store in in-memory dict
-    OTP_STORE[normalized_email] = {
-        "otp": otp,
-        "expires_at": time.time() + expires_in,
+    now = time.time()
+
+    # Rate limiting: 30-second resend cooldown
+    existing_data = None
+    r = get_redis_client()
+    if r:
+        try:
+            raw = r.get(f"otp:{normalized_email}")
+            if raw:
+                existing_data = json.loads(raw)
+        except Exception:
+            pass
+
+    if not existing_data:
+        existing_data = OTP_STORE.get(normalized_email)
+
+    if existing_data:
+        created_at = existing_data.get("created_at", 0)
+        if now - created_at < 30:
+            remaining_cooldown = int(30 - (now - created_at))
+            raise ValidationError(
+                message=f"Please wait {remaining_cooldown} seconds before requesting a new verification code."
+            )
+
+    otp_record = {
+        "otp_hash": hash_otp(normalized_email, otp),
+        "expires_at": now + expires_in,
+        "attempts": 0,
+        "max_attempts": 5,
+        "created_at": now,
         "purpose": purpose,
     }
-    # 2. Store in Upstash Redis (persists across workers, reloads, and restarts)
-    r = get_redis_client()
+
+    # 1. In-memory storage
+    OTP_STORE[normalized_email] = otp_record
+
+    # 2. Redis storage with TTL
     if r:
         try:
             r.set(
                 f"otp:{normalized_email}",
-                json.dumps({"otp": otp, "purpose": purpose}),
-                ex=expires_in,
+                json.dumps(otp_record),
+                ex=max(1, int(expires_in)),
             )
         except Exception as e:
             logger.warning(f"Failed to persist OTP to Redis: {e}")
 
 
 def check_and_consume_otp(email: str, candidate_otp: str) -> bool:
+    """Verify candidate OTP against stored hash, enforcing 5-min expiry, max 5 attempts, and single-use."""
     normalized_email = email.strip().lower()
-    otp_code = candidate_otp.strip()
+    candidate_code = candidate_otp.strip()
+    now = time.time()
 
-    # 1. Check Redis first
+    otp_record = None
     r = get_redis_client()
+
+    # 1. Fetch from Redis first
     if r:
         try:
-            val = r.get(f"otp:{normalized_email}")
-            if val:
-                data = json.loads(val)
-                if data.get("otp") == otp_code:
-                    r.delete(f"otp:{normalized_email}")
-                    OTP_STORE.pop(normalized_email, None)
-                    return True
+            raw = r.get(f"otp:{normalized_email}")
+            if raw:
+                otp_record = json.loads(raw)
         except Exception as e:
-            logger.warning(f"Failed to verify OTP from Redis: {e}")
+            logger.warning(f"Redis get error during OTP check: {e}")
 
-    # 2. Fallback check in-memory
-    otp_data = OTP_STORE.get(normalized_email)
-    if otp_data and otp_data["otp"] == otp_code:
-        if time.time() <= otp_data["expires_at"]:
+    # 2. Fallback to in-memory
+    if not otp_record:
+        otp_record = OTP_STORE.get(normalized_email)
+
+    if not otp_record:
+        raise AuthenticationError(
+            message="No active verification code found or code has expired. Please request a new code."
+        )
+
+    # Check Expiry (5 minutes)
+    if now > otp_record.get("expires_at", 0):
+        OTP_STORE.pop(normalized_email, None)
+        if r:
+            try:
+                r.delete(f"otp:{normalized_email}")
+            except Exception:
+                pass
+        raise AuthenticationError(
+            message="Verification code expired. Please request a new code."
+        )
+
+    # Check Attempt limits
+    attempts = otp_record.get("attempts", 0)
+    max_attempts = otp_record.get("max_attempts", 5)
+
+    if attempts >= max_attempts:
+        OTP_STORE.pop(normalized_email, None)
+        if r:
+            try:
+                r.delete(f"otp:{normalized_email}")
+            except Exception:
+                pass
+        raise AuthenticationError(
+            message="Too many failed attempts. This verification code has been invalidated. Please request a new code."
+        )
+
+    # Verify Hash
+    candidate_hash = hash_otp(normalized_email, candidate_code)
+    expected_hash = otp_record.get("otp_hash")
+
+    if candidate_hash != expected_hash:
+        attempts += 1
+        otp_record["attempts"] = attempts
+        remaining = max_attempts - attempts
+
+        if attempts >= max_attempts:
             OTP_STORE.pop(normalized_email, None)
             if r:
                 try:
                     r.delete(f"otp:{normalized_email}")
                 except Exception:
                     pass
-            return True
+            raise AuthenticationError(
+                message="Too many failed attempts. This verification code has been invalidated. Please request a new code."
+            )
         else:
-            OTP_STORE.pop(normalized_email, None)
-            return False
+            OTP_STORE[normalized_email] = otp_record
+            if r:
+                try:
+                    ttl = max(1, int(otp_record["expires_at"] - now))
+                    r.set(
+                        f"otp:{normalized_email}",
+                        json.dumps(otp_record),
+                        ex=ttl,
+                    )
+                except Exception:
+                    pass
+            raise AuthenticationError(
+                message=f"Invalid verification code. {remaining} attempt(s) remaining."
+            )
 
-    return False
+    # Successful Verification: Consume and Invalidate
+    OTP_STORE.pop(normalized_email, None)
+    if r:
+        try:
+            r.delete(f"otp:{normalized_email}")
+        except Exception:
+            pass
+
+    return True
 
 
 class AuthService:
@@ -227,11 +329,17 @@ class AuthService:
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
     async def send_otp(self, payload: SendOTPRequest) -> SendOTPResponse:
-        """Generate a 6-digit OTP for the college email address and store it with 10-minute expiry."""
+        """Generate a 6-digit OTP for the college email address and store it with 5-minute expiry."""
         normalized_email = payload.email.strip().lower()
-        if not normalized_email.endswith("@sbjit.edu.in"):
+        allowed_domains = settings.ALLOWED_EMAIL_DOMAINS
+        if isinstance(allowed_domains, str):
+            allowed_domains = [
+                d.strip() for d in allowed_domains.split(",") if d.strip()
+            ]
+
+        if not any(normalized_email.endswith(d.lower()) for d in allowed_domains):
             raise ValidationError(
-                message="Only authorized college email addresses (@sbjit.edu.in) are supported."
+                message="Please use your valid college email address."
             )
 
         if payload.purpose == "register":
@@ -244,8 +352,8 @@ class AuthService:
         # Generate a 6-digit cryptographic-safe random OTP
         otp_code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
 
-        # Save in Redis & in-memory cache (valid for 10 minutes / 600s)
-        save_otp(normalized_email, otp_code, payload.purpose, expires_in=600)
+        # Save in Redis & in-memory cache (valid for 5 minutes / 300s)
+        save_otp(normalized_email, otp_code, payload.purpose, expires_in=300)
 
         # Dispatch real email via SMTP
         try:
@@ -257,13 +365,13 @@ class AuthService:
         except Exception as e:
             logger.error(f"Error during send_otp_email dispatch: {e}")
             raise ValidationError(
-                message=f"Failed to dispatch OTP verification email to {normalized_email}. Error: {str(e)}"
+                message="Unable to send verification email. Please try again."
             )
 
         return SendOTPResponse(
-            message=f"A 6-digit verification code has been dispatched to {normalized_email}.",
+            message=f"Verification code sent to {normalized_email}.",
             email=normalized_email,
-            expires_in_seconds=600,
+            expires_in_seconds=300,
         )
 
     async def authenticate_otp(self, payload: LoginOTPRequest) -> TokenResponse:
