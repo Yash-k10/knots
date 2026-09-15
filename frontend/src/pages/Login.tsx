@@ -382,11 +382,23 @@ export default function Login() {
   const passwordError = getPasswordError();
 
   return (
-    <div className="min-h-screen bg-[#F8F6FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex flex-col font-sans select-none antialiased transition-colors duration-200">
+    <div className="relative min-h-screen bg-[#FAF9FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex flex-col font-sans select-none antialiased transition-colors duration-200 overflow-x-hidden">
+      {/* Background Graphic with Soft Overlays */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <img
+          src="/landing_bg.png"
+          alt="KNOTS Academic Canvas"
+          className="w-full h-full object-cover object-top opacity-30 dark:opacity-15 transform scale-105 transition-all duration-1000 filter blur-[1px]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9FD]/70 via-[#FAF9FD]/85 to-[#FAF9FD] dark:from-[#0B0F19]/80 dark:via-[#0B0F19]/90 dark:to-[#0B0F19]" />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/3 left-10 w-96 h-96 bg-[#5851A4]/10 dark:bg-[#5851A4]/20 rounded-full blur-3xl pointer-events-none" />
+      </div>
+
       {/* ============================================================ */}
       {/* 1. TOP NAVBAR                                                */}
       {/* ============================================================ */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
+      <header className="relative z-40 sticky top-0 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
           {/* Brand Logo & Tagline */}
           <Link to="/login" className="flex items-center gap-3 sm:gap-4 group">
@@ -450,7 +462,7 @@ export default function Login() {
       {/* ============================================================ */}
       {/* 2. MAIN LOGIN AREA (Two-part Desktop Composition)            */}
       {/* ============================================================ */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+      <main className="relative z-10 flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
         
         {/* LEFT SIDE: Knots Brand Narrative & Campus Community Visual */}
         <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 order-2 lg:order-1">
@@ -928,7 +940,7 @@ export default function Login() {
       {/* ============================================================ */}
       {/* 3. MULTI-COLUMN KNOTS FOOTER                                 */}
       {/* ============================================================ */}
-      <footer className="w-full bg-white dark:bg-[#111827] border-t border-[#EAE4F7] dark:border-[#1F2937] mt-auto">
+      <footer className="relative z-10 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-[#EAE4F7] dark:border-[#1F2937] mt-auto">
         <div className="max-w-7xl mx-auto pt-12 pb-6 px-6 sm:px-8 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
             {/* Brand column */}

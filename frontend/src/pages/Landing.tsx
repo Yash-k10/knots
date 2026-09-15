@@ -257,7 +257,7 @@ export default function Landing() {
               },
               {
                 icon: Briefcase,
-                title: "Internship & Career Guidance",
+                title: "Internship and Career Guidance",
                 desc: "Proactive internship alerts, domain training suggestions, and authorized faculty mentorship checkpoints.",
               },
             ].map((item, idx) => (
@@ -536,7 +536,7 @@ export default function Landing() {
             {[
               {
                 icon: Building,
-                title: "Opportunities from TPOs & College Authorities",
+                title: "Opportunities from TPOs and Authorized College Authorities",
                 desc: "Official campus placement drives, pool recruitment schedules, pre-placement talks, and campus walk-in drives with zero middlemen.",
               },
               {
