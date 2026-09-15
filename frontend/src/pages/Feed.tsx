@@ -1182,7 +1182,7 @@ export default function Feed() {
           </form>
 
           {/* Feed Filter Chips Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
             {[
               { id: "FOR_YOU", label: "🌟 For You", badge: "Smart" },
               { id: "CONNECTIONS", label: "👥 Connections" },
@@ -1202,7 +1202,7 @@ export default function Feed() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveFilter(tab.id)}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap flex items-center gap-1.5 ${
                     isActive
                       ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                       : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"

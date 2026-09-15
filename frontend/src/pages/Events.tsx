@@ -896,7 +896,7 @@ export default function Events() {
         </div>
 
         {/* Category Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
           {[
             { id: "ALL", label: "All Clubs" },
             { id: "Technical", label: "Technical & Coding" },
@@ -909,7 +909,7 @@ export default function Events() {
               <button
                 key={tab.id}
                 onClick={() => setClubCategory(tab.id)}
-                className={`py-2 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                className={`py-2 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shrink-0 whitespace-nowrap ${
                   isActive
                     ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                     : "bg-white hover:bg-[#FAF9FD] text-[#5851A4] hover:text-[#1E2746] border border-[#EAE4F7]"

@@ -516,10 +516,10 @@ export default function Jobs() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mt-6 border-t border-[#EAE4F7] pt-4">
+        <div className="flex gap-2 mt-6 border-t border-[#EAE4F7] pt-4 overflow-x-auto no-scrollbar max-w-full pb-1">
           <button
             onClick={() => setActiveTab("explore")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "explore"
                 ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] border border-transparent"
@@ -531,7 +531,7 @@ export default function Jobs() {
 
           <button
             onClick={() => setActiveTab("alumni-companies")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "alumni-companies"
                 ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
@@ -543,7 +543,7 @@ export default function Jobs() {
 
           <button
             onClick={() => setActiveTab("applications")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "applications"
                 ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
@@ -556,7 +556,7 @@ export default function Jobs() {
           {canPostJob && (
             <button
               onClick={() => setActiveTab("post")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === "post"
                   ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
                   : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"

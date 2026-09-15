@@ -252,33 +252,33 @@ export default function Profile() {
                 {userPosts.map((post) => (
                   <div
                     key={post.id}
-                    className="bg-slate-900/30 border border-slate-900 hover:border-slate-800 rounded-xl p-4 transition duration-300"
+                    className="bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl p-4 sm:p-5 transition duration-300 space-y-3"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[#5851A4] font-semibold flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-[#4B63D2]" />
                         Posted {formatTimeAgo(post.created_at)}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs sm:text-sm text-[#1E2746] leading-relaxed whitespace-pre-wrap font-medium">
                       {post.content}
                     </p>
                     {post.image_url && (
-                      <div className="mt-3 rounded-lg overflow-hidden border border-slate-800 max-h-60 bg-slate-950 flex items-center justify-center">
+                      <div className="rounded-xl overflow-hidden border border-[#EAE4F7] max-h-60 bg-white flex items-center justify-center">
                         <img
                           src={getMediaUrl(post.image_url)}
                           alt="Post attachment"
-                          className="max-h-60 object-contain w-full"
+                          className="max-h-60 object-contain w-auto max-w-full"
                         />
                       </div>
                     )}
-                    <div className="flex gap-4 mt-4 pt-3 border-t border-slate-900/60 text-xs text-slate-500 font-bold uppercase tracking-wider">
-                      <span className="flex items-center gap-1">
-                        <Heart className="h-4 w-4 text-rose-400" />{" "}
+                    <div className="flex gap-4 pt-3 border-t border-[#EAE4F7] text-xs text-[#5851A4] font-bold">
+                      <span className="flex items-center gap-1.5 text-rose-600">
+                        <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />{" "}
                         {post.likes_count} Likes
                       </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-4 w-4 text-indigo-400" />{" "}
+                      <span className="flex items-center gap-1.5 text-[#4B63D2]">
+                        <MessageSquare className="h-4 w-4" />{" "}
                         {post.comments_count} Comments
                       </span>
                     </div>
@@ -286,12 +286,12 @@ export default function Profile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl bg-slate-900/10">
-                <MessageSquare className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-                <p className="text-slate-400 text-sm font-medium">
+              <div className="text-center py-8 border border-dashed border-[#D5CBEE] rounded-2xl bg-[#FAF9FD]/50">
+                <MessageSquare className="h-8 w-8 text-[#9188BE] mx-auto mb-2" />
+                <p className="text-[#1E2746] text-sm font-bold">
                   No recent activity yet
                 </p>
-                <p className="text-slate-600 text-xs mt-1">
+                <p className="text-[#5851A4] text-xs mt-1 font-medium">
                   Posts and discussions shared by this user will appear here.
                 </p>
               </div>

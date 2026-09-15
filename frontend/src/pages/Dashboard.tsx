@@ -871,34 +871,34 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Hero Intro Panel */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-sm relative overflow-hidden">
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#C8B6E2]/20 via-[#4B63D2]/10 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="relative z-10 space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/60 text-[#1E2746] text-xs font-black shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-[#5851A4]" /> AI Engine Active
           </div>
-          <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
             Welcome Back{greetingName} 👋
           </h2>
-          <p className="text-[#5851A4] text-sm max-w-2xl leading-relaxed font-medium">
+          <p className="text-[#5851A4] text-xs sm:text-sm max-w-2xl leading-relaxed font-medium">
             Your personalized AI Hub has analyzed your skills, network activity,
             and target role to bring you high-value recommendations and career
             utilities.
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-wrap gap-3 shrink-0">
+        <div className="relative z-10 flex flex-wrap gap-2.5 sm:gap-3 shrink-0">
           <Link
             to="/jobs"
-            className="px-4 py-2.5 bg-[#F8F6FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#1E2746] rounded-xl font-bold text-xs transition flex items-center gap-2"
+            className="px-4 py-2.5 bg-[#F8F6FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#1E2746] rounded-xl font-bold text-xs transition flex items-center gap-2 whitespace-nowrap shrink-0"
           >
-            Referrals & Opportunities <Briefcase className="h-4 w-4 text-[#4B63D2]" />
+            Referrals & Opportunities <Briefcase className="h-4 w-4 text-[#4B63D2] shrink-0" />
           </Link>
           <Link
             to="/profile"
-            className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl font-bold text-xs tracking-wider uppercase transition shadow-md shadow-[#4B63D2]/20 hover:scale-[1.02] flex items-center gap-2"
+            className="px-4 sm:px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl font-bold text-xs tracking-wider uppercase transition shadow-md shadow-[#4B63D2]/20 hover:scale-[1.02] flex items-center gap-2 whitespace-nowrap shrink-0"
           >
-            My Profile <ArrowUpRight className="h-4 w-4 text-[#FFD21A]" />
+            My Profile <ArrowUpRight className="h-4 w-4 text-[#FFD21A] shrink-0" />
           </Link>
         </div>
       </div>
@@ -913,52 +913,52 @@ export default function Dashboard() {
       />
 
       {/* Main Section Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#EAE4F7] pb-4 gap-4">
-        <div className="flex bg-white p-1.5 rounded-2xl border border-[#EAE4F7] gap-1.5 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#EAE4F7] pb-4 gap-4 w-full">
+        <div className="flex bg-white p-1.5 rounded-2xl border border-[#EAE4F7] gap-1.5 shadow-sm overflow-x-auto no-scrollbar max-w-full">
           <button
             onClick={() => setMainTab("recommendations")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
               mainTab === "recommendations"
                 ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
             <Sparkles
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 shrink-0 ${
                 mainTab === "recommendations" ? "text-[#FFD21A]" : "text-[#5851A4]"
               }`}
             />{" "}
-            AI Recommendations
+            <span>AI Recommendations</span>
           </button>
           <button
             onClick={() => setMainTab("analytics")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
               mainTab === "analytics"
                 ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
             <TrendingUp
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 shrink-0 ${
                 mainTab === "analytics" ? "text-[#FFD21A]" : "text-[#5851A4]"
               }`}
             />{" "}
-            Performance & Analytics
+            <span>Performance & Analytics</span>
           </button>
           <button
             onClick={() => setMainTab("aitools")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer ${
               mainTab === "aitools"
                 ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
                 : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#F8F6FD]"
             }`}
           >
             <Brain
-              className={`h-4 w-4 ${
+              className={`h-4 w-4 shrink-0 ${
                 mainTab === "aitools" ? "text-[#FFD21A]" : "text-[#5851A4]"
               }`}
             />{" "}
-            AI Career Tools
+            <span>AI Career Tools</span>
           </button>
         </div>
       </div>

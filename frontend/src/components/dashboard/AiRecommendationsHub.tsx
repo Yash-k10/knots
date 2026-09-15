@@ -36,10 +36,10 @@ export function AiRecommendationsHub({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar max-w-full pb-1">
         <button
           onClick={() => setRecCategory("peers")}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer whitespace-nowrap shrink-0 ${
             recCategory === "peers"
               ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
               : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
@@ -49,7 +49,7 @@ export function AiRecommendationsHub({
         </button>
         <button
           onClick={() => setRecCategory("jobs")}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer whitespace-nowrap shrink-0 ${
             recCategory === "jobs"
               ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
               : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
@@ -59,7 +59,7 @@ export function AiRecommendationsHub({
         </button>
         <button
           onClick={() => setRecCategory("content")}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold transition border cursor-pointer whitespace-nowrap shrink-0 ${
             recCategory === "content"
               ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-sm"
               : "bg-white text-[#5851A4] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
@@ -71,7 +71,7 @@ export function AiRecommendationsHub({
 
       {/* Peer Suggestions */}
       {recCategory === "peers" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {connectionSuggestions.length > 0 ? (
             connectionSuggestions.map((item) => {
               // Extract real name or clean handle from email

@@ -357,18 +357,18 @@ export default function Connections() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 border-b border-[#EAE4F7] pb-4">
+        <div className="flex items-center gap-2 border-b border-[#EAE4F7] pb-4 overflow-x-auto no-scrollbar max-w-full">
           <button
             onClick={() => handleTabChange('discover')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'discover'
                 ? 'bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20'
                 : 'bg-[#FAF9FD] text-[#5851A4] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
-            Discover & Suggestions
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span>Discover & Suggestions</span>
+            <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold ${
               activeTab === 'discover' ? 'bg-white/20 text-white' : 'bg-[#EAE4F7] text-[#5851A4]'
             }`}>
               {suggestions.length + filteredUsers.length}
@@ -377,16 +377,16 @@ export default function Connections() {
 
           <button
             onClick={() => handleTabChange('requests')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'requests'
                 ? 'bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20'
                 : 'bg-[#FAF9FD] text-[#5851A4] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
             }`}
           >
-            <Users className="w-4 h-4" />
-            Pending Requests
+            <Users className="w-4 h-4 shrink-0" />
+            <span>Pending Requests</span>
             {requests.length > 0 && (
-              <span className="bg-[#FFD21A] text-[#1E2746] font-extrabold text-xs px-2 py-0.5 rounded-full animate-pulse shadow-sm">
+              <span className="bg-[#FFD21A] text-[#1E2746] font-extrabold text-[10px] sm:text-xs px-2 py-0.5 rounded-full animate-pulse shadow-sm">
                 {requests.length}
               </span>
             )}
@@ -394,15 +394,15 @@ export default function Connections() {
 
           <button
             onClick={() => handleTabChange('sent')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'sent'
                 ? 'bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20'
                 : 'bg-[#FAF9FD] text-[#5851A4] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
             }`}
           >
-            <Send className="w-4 h-4" />
-            Sent Requests
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
+            <Send className="w-4 h-4 shrink-0" />
+            <span>Sent Requests</span>
+            <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold ${
               activeTab === 'sent' ? 'bg-white/20 text-white' : 'bg-[#EAE4F7] text-[#5851A4]'
             }`}>
               {sentRequests.length}
@@ -411,15 +411,15 @@ export default function Connections() {
 
           <button
             onClick={() => handleTabChange('connections')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+            className={`flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'connections'
                 ? 'bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20'
                 : 'bg-[#FAF9FD] text-[#5851A4] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
             }`}
           >
-            <Users className="w-4 h-4" />
-            My Ties
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
+            <Users className="w-4 h-4 shrink-0" />
+            <span>My Ties</span>
+            <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold ${
               activeTab === 'connections' ? 'bg-white/20 text-white' : 'bg-[#EAE4F7] text-[#5851A4]'
             }`}>
               {connections.length}

@@ -1084,7 +1084,7 @@ export default function Messaging() {
   };
 
   return (
-    <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[calc(100vh-140px)] min-h-[580px] shadow-sm">
+    <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[calc(100dvh-130px)] min-h-[480px] sm:min-h-[580px] shadow-sm max-w-full">
       {/* Hidden File Input for Attachments */}
       <input
         ref={fileInputRef}

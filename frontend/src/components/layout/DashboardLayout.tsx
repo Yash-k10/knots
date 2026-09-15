@@ -310,7 +310,7 @@ export default function DashboardLayout() {
       <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
           {/* 1. Brand Logo on Top Left */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link to="/feed" className="flex items-center gap-2 group">
               <KnotsLogo size="md" />
               <div className="hidden sm:block">
@@ -325,12 +325,12 @@ export default function DashboardLayout() {
           </div>
 
           {/* 2. Global Search Bar */}
-          <div className="hidden md:flex flex-1 min-w-[260px] max-w-sm lg:max-w-md mx-2 lg:mx-4">
+          <div className="hidden md:flex flex-1 min-w-[200px] max-w-sm lg:max-w-md mx-2 lg:mx-3 shrink">
             <GlobalSearchBar />
           </div>
 
           {/* 3. Navigation Page Links (Desktop) */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto py-1 shrink-0">
+          <nav className="hidden xl:flex items-center gap-1 py-1 shrink-0">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.path;
@@ -338,20 +338,20 @@ export default function DashboardLayout() {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`relative flex items-center gap-1 xl:gap-1.5 px-2.5 xl:px-3 py-2 rounded-xl text-[11px] xl:text-xs font-bold transition-all duration-200 ${
+                  className={`relative flex items-center gap-1.5 px-2.5 2xl:px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
                     isActive
                       ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/25"
                       : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
                   }`}
                 >
                   <Icon
-                    className={`w-4 h-4 ${
+                    className={`w-4 h-4 shrink-0 ${
                       isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
                     }`}
                   />
                   <span>{link.name}</span>
                   {link.badge !== undefined && link.badge > 0 && (
-                    <span className="px-1.5 py-0.2 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full animate-pulse">
+                    <span className="px-1.5 py-0.2 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full animate-pulse shrink-0">
                       {link.badge > 99 ? "99+" : link.badge}
                     </span>
                   )}
@@ -361,14 +361,14 @@ export default function DashboardLayout() {
           </nav>
 
           {/* 4. User Profile with PFP & Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {/* Quick Theme Toggle Button */}
             <ThemeToggle />
 
             {/* Mobile notification bell */}
             <Link
               to="/notifications"
-              className="lg:hidden relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] transition-all"
+              className="xl:hidden relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] transition-all shrink-0"
               title="Notifications"
             >
               <Bell className="w-5 h-5" />
@@ -382,14 +382,14 @@ export default function DashboardLayout() {
             {/* Profile Capsule with PFP */}
             <Link
               to="/profile"
-              className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-2xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all group"
+              className="flex items-center gap-2 p-1.5 pl-2 rounded-2xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all group shrink-0"
               title="View Profile"
             >
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors truncate max-w-[110px]">
+                <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors truncate max-w-[100px] lg:max-w-[110px]">
                   {fullName}
                 </p>
-                <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate max-w-[110px]">
+                <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate max-w-[100px] lg:max-w-[110px]">
                   {roleBadgeLabel}
                 </p>
               </div>
@@ -398,10 +398,10 @@ export default function DashboardLayout() {
                 <img
                   src={avatarUrl}
                   alt={fullName}
-                  className="h-9 w-9 rounded-xl object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-sm group-hover:scale-105 transition-transform"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-sm group-hover:scale-105 transition-transform shrink-0"
                 />
               ) : (
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-sm text-white shadow-sm shadow-[#4B63D2]/20 group-hover:scale-105 transition-transform">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-xs sm:text-sm text-white shadow-sm shadow-[#4B63D2]/20 group-hover:scale-105 transition-transform shrink-0">
                   {userInitial}
                 </div>
               )}
@@ -410,7 +410,7 @@ export default function DashboardLayout() {
             {/* Settings Link */}
             <Link
               to="/settings"
-              className="hidden sm:flex p-2.5 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] rounded-xl border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all"
+              className="hidden sm:flex p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] rounded-xl border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all shrink-0"
               title="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -419,7 +419,7 @@ export default function DashboardLayout() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="hidden sm:flex p-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 transition-all cursor-pointer"
+              className="hidden sm:flex p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 transition-all cursor-pointer shrink-0"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -428,7 +428,7 @@ export default function DashboardLayout() {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all"
+              className="xl:hidden p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all shrink-0"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
@@ -442,7 +442,7 @@ export default function DashboardLayout() {
 
         {/* Mobile Navigation Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-white dark:bg-[#111827] border-b border-[#EAE4F7] dark:border-[#1F2937] px-4 py-3 space-y-2 animate-in slide-in-from-top duration-200 shadow-md">
+          <div className="xl:hidden bg-white dark:bg-[#111827] border-b border-[#EAE4F7] dark:border-[#1F2937] px-4 py-3 space-y-2 animate-in slide-in-from-top duration-200 shadow-md">
             <div className="mb-3">
               <GlobalSearchBar />
             </div>
