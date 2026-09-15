@@ -388,9 +388,9 @@ export default function Login() {
         <img
           src="/landing_bg.png"
           alt="KNOTS Academic Canvas"
-          className="w-full h-full object-cover object-top opacity-30 dark:opacity-15 transform scale-105 transition-all duration-1000 filter blur-[1px]"
+          className="w-full h-full object-cover object-top opacity-70 dark:opacity-35 transform scale-100 transition-all duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9FD]/70 via-[#FAF9FD]/85 to-[#FAF9FD] dark:from-[#0B0F19]/80 dark:via-[#0B0F19]/90 dark:to-[#0B0F19]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9FD]/30 via-[#FAF9FD]/70 to-[#FAF9FD] dark:from-[#0B0F19]/50 dark:via-[#0B0F19]/80 dark:to-[#0B0F19]" />
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/3 left-10 w-96 h-96 bg-[#5851A4]/10 dark:bg-[#5851A4]/20 rounded-full blur-3xl pointer-events-none" />
       </div>
