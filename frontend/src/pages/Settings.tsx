@@ -13,8 +13,11 @@ import {
   Clock,
   Eye,
   EyeOff,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { apiRequest, ApiError } from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 interface UserData {
   id: number;
@@ -27,6 +30,7 @@ interface UserData {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<UserData | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -557,28 +561,64 @@ export default function Settings() {
       </div>
 
       {/* Preferences Section */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-6 shadow-sm space-y-6">
         <div>
-          <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
+          <h3 className="text-lg font-black text-[#1E2746] dark:text-[#F1F5F9] flex items-center gap-2">
             <Save className="h-5 w-5 text-[#4B63D2]" /> System Preferences
           </h3>
-          <p className="text-xs text-[#5851A4] mt-1 font-medium">
-            Manage notifications and chat visibility settings.
+          <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] mt-1 font-medium">
+            Manage appearance themes, notifications, and chat visibility settings.
           </p>
         </div>
 
         {prefSuccess && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl p-3 text-xs flex items-start gap-2 font-medium">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 rounded-xl p-3 text-xs flex items-start gap-2 font-medium">
             <CheckCircle className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
             <span>Preferences saved successfully.</span>
           </div>
         )}
 
         <div className="space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-[#EAE4F7]">
+          {/* Appearance / Theme Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#EAE4F7] dark:border-[#1F2937] gap-3">
             <div>
-              <h4 className="text-sm font-bold text-[#1E2746]">Email Alerts</h4>
-              <p className="text-xs text-[#5851A4] font-medium">
+              <h4 className="text-sm font-bold text-[#1E2746] dark:text-[#F1F5F9]">Interface Appearance</h4>
+              <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-medium">
+                Choose between Light and Dark interface modes
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  theme === "light"
+                    ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
+                    : "bg-[#FAF9FD] dark:bg-[#1E293B] text-[#5851A4] dark:text-[#94A3B8] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2]"
+                }`}
+              >
+                <Sun className="w-4 h-4" />
+                <span>Light</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  theme === "dark"
+                    ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
+                    : "bg-[#FAF9FD] dark:bg-[#1E293B] text-[#5851A4] dark:text-[#94A3B8] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2]"
+                }`}
+              >
+                <Moon className="w-4 h-4" />
+                <span>Dark</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pb-4 border-b border-[#EAE4F7] dark:border-[#1F2937]">
+            <div>
+              <h4 className="text-sm font-bold text-[#1E2746] dark:text-[#F1F5F9]">Email Alerts</h4>
+              <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-medium">
                 Receive notifications when matching jobs are found
               </p>
             </div>
@@ -590,12 +630,12 @@ export default function Settings() {
             />
           </div>
 
-          <div className="flex justify-between items-center pb-4 border-b border-[#EAE4F7]">
+          <div className="flex justify-between items-center pb-4 border-b border-[#EAE4F7] dark:border-[#1F2937]">
             <div>
-              <h4 className="text-sm font-bold text-[#1E2746]">
+              <h4 className="text-sm font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                 Real-time Chat Status
               </h4>
-              <p className="text-xs text-[#5851A4] font-medium">
+              <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-medium">
                 Show online status badge to peers
               </p>
             </div>
@@ -609,7 +649,7 @@ export default function Settings() {
 
           <button
             onClick={handleSavePreferences}
-            className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl px-5 py-2.5 font-bold text-xs transition-all shadow-sm"
+            className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white rounded-xl px-5 py-2.5 font-bold text-xs transition-all shadow-sm cursor-pointer"
           >
             Save Preferences
           </button>

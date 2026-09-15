@@ -158,29 +158,29 @@ export default function InfoModal({ type, onClose }: InfoModalProps) {
   const IconComponent = contentMap.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-lg bg-white rounded-2xl border border-[#E2E8F0] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-white dark:bg-[#111827] rounded-2xl border border-[#E2E8F0] dark:border-[#1F2937] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 text-[#1E2746] dark:text-[#F1F5F9]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="px-6 py-5 border-b border-[#F1F5F9] flex items-center justify-between bg-[#F8FAFC]">
+        <div className="px-6 py-5 border-b border-[#F1F5F9] dark:border-[#1F2937] flex items-center justify-between bg-[#F8FAFC] dark:bg-[#1E293B]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#0F4C5C]/10 text-[#0F4C5C] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 text-[#4B63D2] flex items-center justify-center">
               <IconComponent className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#0F172A] leading-tight">
+              <h3 className="text-base font-bold text-[#0F172A] dark:text-[#F1F5F9] leading-tight">
                 {contentMap.title}
               </h3>
-              <p className="text-xs text-[#64748B] mt-0.5">
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
                 {contentMap.subtitle}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#E2E8F0]/60 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F1F5F9] hover:bg-[#E2E8F0]/60 dark:hover:bg-[#334155] transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
@@ -188,15 +188,15 @@ export default function InfoModal({ type, onClose }: InfoModalProps) {
         </div>
 
         {/* Modal Body */}
-        <div className="p-6">
+        <div className="p-6 text-sm text-[#334155] dark:text-[#CBD5E1]">
           {contentMap.body}
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex justify-end">
+        <div className="px-6 py-4 bg-[#F8FAFC] dark:bg-[#1E293B] border-t border-[#F1F5F9] dark:border-[#1F2937] flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-[#0F4C5C] hover:bg-[#0A3642] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-sm"
           >
             Close
           </button>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import KnotsLogo from "../components/common/KnotsLogo";
 import InfoModal, { ModalType } from "../components/common/InfoModal";
+import ThemeToggle from "../components/common/ThemeToggle";
 import {
   Eye,
   EyeOff,
@@ -10,10 +11,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
-  Users,
-  Sparkles,
   ShieldCheck,
-  UserCheck,
   Building2,
 } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
@@ -50,6 +48,22 @@ export default function Login() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Newsletter Subscription State
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterMessage, setNewsletterMessage] = useState<string | null>(null);
+
+  const handleNewsletterSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim() || !isValidEmail(newsletterEmail)) {
+      setNewsletterMessage("Please enter a valid college email address.");
+      setTimeout(() => setNewsletterMessage(null), 3000);
+      return;
+    }
+    setNewsletterMessage("Subscribed to campus alerts!");
+    setNewsletterEmail("");
+    setTimeout(() => setNewsletterMessage(null), 3500);
+  };
 
   // Field validation flags
   const [emailTouched, setEmailTouched] = useState(false);
@@ -368,25 +382,25 @@ export default function Login() {
   const passwordError = getPasswordError();
 
   return (
-    <div className="min-h-screen bg-[#F8F6FD] text-[#1E2746] flex flex-col font-sans select-none antialiased">
+    <div className="min-h-screen bg-[#F8F6FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex flex-col font-sans select-none antialiased transition-colors duration-200">
       {/* ============================================================ */}
       {/* 1. TOP NAVBAR                                                */}
       {/* ============================================================ */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#EAE4F7] shadow-sm">
+      <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
           {/* Brand Logo & Tagline */}
           <Link to="/login" className="flex items-center gap-3 sm:gap-4 group">
             <KnotsLogo size="lg" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#1E2746] group-hover:text-[#4B63D2] transition-colors">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors">
                   KNOTS
                 </span>
-                <span className="text-[10px] sm:text-xs font-bold text-[#4B63D2] bg-[#4B63D2]/10 px-2.5 py-0.5 rounded-full border border-[#4B63D2]/20">
+                <span className="text-[10px] sm:text-xs font-bold text-[#4B63D2] bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 px-2.5 py-0.5 rounded-full border border-[#4B63D2]/20">
                   SBJIT Campus Hub
                 </span>
               </div>
-              <p className="text-[11px] text-[#5851A4] font-semibold tracking-wide hidden sm:block">
+              <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-semibold tracking-wide hidden sm:block">
                 Connect • Collaborate • Climb
               </p>
             </div>
@@ -396,27 +410,30 @@ export default function Login() {
           <nav className="hidden md:flex items-center gap-6">
             <button
               onClick={() => setActiveInfoModal("about")}
-              className="text-xs sm:text-sm font-bold text-[#5851A4] hover:text-[#1E2746] transition-colors cursor-pointer"
+              className="text-xs sm:text-sm font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors cursor-pointer"
             >
               About
             </button>
             <button
               onClick={() => setActiveInfoModal("community")}
-              className="text-xs sm:text-sm font-bold text-[#5851A4] hover:text-[#1E2746] transition-colors cursor-pointer"
+              className="text-xs sm:text-sm font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors cursor-pointer"
             >
               Community
             </button>
             <button
               onClick={() => setActiveInfoModal("resources")}
-              className="text-xs sm:text-sm font-bold text-[#5851A4] hover:text-[#1E2746] transition-colors cursor-pointer"
+              className="text-xs sm:text-sm font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors cursor-pointer"
             >
               Resources
             </button>
           </nav>
 
           {/* Right Action */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-[#5851A4] hidden sm:inline-block font-semibold">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Theme Toggle Button */}
+            <ThemeToggle />
+
+            <span className="text-xs text-[#5851A4] dark:text-[#94A3B8] hidden sm:inline-block font-semibold">
               Don't have an account?
             </span>
             <Link
@@ -443,134 +460,56 @@ export default function Login() {
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Official Institutional Gateway</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1E2746] tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight leading-tight">
               Welcome back to <span className="text-[#4B63D2]">Knots</span>.
             </h1>
-            <p className="text-sm sm:text-base text-[#5851A4] font-medium leading-relaxed max-w-lg">
+            <p className="text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed max-w-lg">
               Reconnect with people, ideas and opportunities that matter to you across the SBJIT campus ecosystem.
             </p>
           </div>
 
-          {/* Campus Community Image Showcase with Knots Badges */}
-          <div className="relative w-full max-w-md sm:max-w-lg rounded-3xl overflow-hidden bg-white border border-[#EAE4F7] shadow-xl shadow-[#5851A4]/10 p-3 sm:p-4 group">
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[#FAF9FD]">
+          {/* Campus Community Image Showcase */}
+          <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-3xl overflow-hidden bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] shadow-xl shadow-[#5851A4]/10 dark:shadow-black/40 p-3 sm:p-4 group">
+            <div className="relative rounded-2xl overflow-hidden aspect-[16/9] bg-[#FAF9FD] dark:bg-[#1E293B]">
               <img
                 src="/campus_collaboration.jpg"
-                alt="College students networking, collaborating and communicating on campus"
+                alt="Knots - One Platform for Everyone. Your Institute. Your Network. Your Future."
                 className="w-full h-full object-cover object-center transform group-hover:scale-[1.02] transition-transform duration-700 ease-out"
               />
-            </div>
-
-            {/* Knots Campus Community Badge */}
-            <div className="absolute -bottom-3 left-6 sm:left-8 bg-white/95 backdrop-blur-md border border-[#EAE4F7] shadow-lg rounded-2xl px-4 py-2.5 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2]">
-                <Users className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-black text-[#1E2746]">
-                  Campus Community
-                </p>
-                <p className="text-[10px] font-semibold text-[#5851A4]">
-                  Students • Faculty • Management • Alumni
-                </p>
-              </div>
-            </div>
-
-            {/* Knots Verified Badge */}
-            <div className="absolute -top-3 right-6 sm:right-8 bg-white/95 backdrop-blur-md border border-[#EAE4F7] shadow-lg rounded-2xl px-3.5 py-1.5 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#FFD21A]" />
-              <span className="text-xs font-bold text-[#1E2746]">
-                Authorized SBJIT Portal
-              </span>
-            </div>
-          </div>
-
-          {/* Fast Stats Row */}
-          <div className="w-full max-w-lg grid grid-cols-3 gap-3 pt-2">
-            <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] text-center shadow-xs">
-              <span className="text-lg font-black text-[#4B63D2]">12.4k+</span>
-              <p className="text-[10px] font-bold text-[#5851A4] mt-0.5">Active Ties</p>
-            </div>
-            <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] text-center shadow-xs">
-              <span className="text-lg font-black text-[#5851A4]">340+</span>
-              <p className="text-[10px] font-bold text-[#5851A4] mt-0.5">Placements</p>
-            </div>
-            <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] text-center shadow-xs">
-              <span className="text-lg font-black text-[#4B63D2]">52+</span>
-              <p className="text-[10px] font-bold text-[#5851A4] mt-0.5">Clubs & Orgs</p>
-            </div>
-          </div>
-
-          {/* Institutional Security Highlights */}
-          <div className="w-full max-w-lg pt-4 border-t border-[#EAE4F7] space-y-3">
-            <div className="flex items-center justify-between text-xs font-bold text-[#5851A4]">
-              <span className="flex items-center gap-1.5 text-[#1E2746]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#4B63D2]" />
-                Institutional Security & Verification:
-              </span>
-              <span className="text-[10px] font-semibold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-full">
-                Encrypted Auth • @sbjit.edu.in
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] shadow-xs flex items-start gap-2.5">
-                <div className="p-1.5 bg-blue-50 text-[#4B63D2] rounded-lg mt-0.5">
-                  <UserCheck className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="text-xs font-bold text-[#1E2746]">Campus Email OTP</h4>
-                  <p className="text-[10px] text-[#5851A4] leading-tight mt-0.5">
-                    Instant 6-digit codes sent via secure institutional SMTP.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 bg-white rounded-2xl border border-[#EAE4F7] shadow-xs flex items-start gap-2.5">
-                <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-lg mt-0.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <h4 className="text-xs font-bold text-[#1E2746]">Role Hierarchy</h4>
-                  <p className="text-[10px] text-[#5851A4] leading-tight mt-0.5">
-                    Direct access for Students, Faculty, HODs, TPO & Management.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         {/* RIGHT SIDE: Knots Clean Structured Login Card */}
         <div className="lg:col-span-6 flex justify-center lg:justify-end order-1 lg:order-2">
-          <div className="w-full max-w-md bg-white border border-[#EAE4F7] rounded-3xl shadow-xl shadow-[#5851A4]/10 p-6 sm:p-8 lg:p-10">
+          <div className="w-full max-w-md bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl shadow-xl shadow-[#5851A4]/10 dark:shadow-black/40 p-6 sm:p-8 lg:p-10">
             
             {/* Card Header */}
             <div className="mb-6 space-y-1 text-left">
               {authMode === "forgot" ? (
                 <>
-                  <h2 className="text-2xl font-black text-[#1E2746] tracking-tight">
+                  <h2 className="text-2xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight">
                     Reset your password
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#5851A4] font-semibold">
+                  <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-semibold">
                     Enter your email to receive an authorized 6-digit OTP code.
                   </p>
                 </>
               ) : authMode === "otp" ? (
                 <>
-                  <h2 className="text-2xl font-black text-[#1E2746] tracking-tight">
+                  <h2 className="text-2xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight">
                     Sign in with Code
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#5851A4] font-semibold">
+                  <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-semibold">
                     Instant access using verified college email OTP.
                   </p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-2xl font-black text-[#1E2746] tracking-tight">
+                  <h2 className="text-2xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight">
                     Welcome back
                   </h2>
-                  <p className="text-xs sm:text-sm text-[#5851A4] font-semibold">
+                  <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-semibold">
                     Sign in to continue to Knots.
                   </p>
                 </>
@@ -608,7 +547,7 @@ export default function Login() {
                 <div className="space-y-1.5 text-left">
                   <label
                     htmlFor="knots-email"
-                    className="block text-xs font-bold text-[#1E2746]"
+                    className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]"
                   >
                     College Email Address
                   </label>
@@ -621,14 +560,14 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setEmailTouched(true)}
                     placeholder="name@sbjit.edu.in"
-                    className={`w-full h-12 px-4 rounded-xl text-sm text-[#1E2746] bg-white border transition-all focus:outline-none focus:ring-2 ${
+                    className={`w-full h-12 px-4 rounded-xl text-sm text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border transition-all focus:outline-none focus:ring-2 ${
                       emailError
-                        ? "border-rose-300 focus:border-rose-500 focus:ring-rose-200"
-                        : "border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-[#4B63D2]/20"
+                        ? "border-rose-300 dark:border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-900/30"
+                        : "border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-[#4B63D2]/20"
                     }`}
                   />
                   {emailError && (
-                    <p className="text-xs text-rose-600 font-semibold mt-1">
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-semibold mt-1">
                       {emailError}
                     </p>
                   )}
@@ -639,7 +578,7 @@ export default function Login() {
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="knots-password"
-                      className="block text-xs font-bold text-[#1E2746]"
+                      className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]"
                     >
                       Password
                     </label>
@@ -649,7 +588,7 @@ export default function Login() {
                         setError(null);
                         setAuthMode("forgot");
                       }}
-                      className="text-xs font-bold text-[#4B63D2] hover:text-[#5851A4] hover:underline transition-colors cursor-pointer"
+                      className="text-xs font-bold text-[#4B63D2] hover:text-[#5851A4] dark:hover:text-[#A5B4FC] hover:underline transition-colors cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -663,23 +602,23 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       onBlur={() => setPasswordTouched(true)}
                       placeholder="Enter your password"
-                      className={`w-full h-12 pl-4 pr-11 rounded-xl text-sm text-[#1E2746] bg-white border transition-all focus:outline-none focus:ring-2 ${
+                      className={`w-full h-12 pl-4 pr-11 rounded-xl text-sm text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border transition-all focus:outline-none focus:ring-2 ${
                         passwordError
-                          ? "border-rose-300 focus:border-rose-500 focus:ring-rose-200"
-                          : "border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-[#4B63D2]/20"
+                          ? "border-rose-300 dark:border-rose-500 focus:border-rose-500 focus:ring-rose-200 dark:focus:ring-rose-900/30"
+                          : "border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-[#4B63D2]/20"
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5851A4] hover:text-[#1E2746] transition-colors p-1 rounded-lg"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors p-1 rounded-lg"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {passwordError && (
-                    <p className="text-xs text-rose-600 font-semibold mt-1">
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-semibold mt-1">
                       {passwordError}
                     </p>
                   )}
@@ -692,9 +631,9 @@ export default function Login() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#4B63D2] border-[#EAE4F7] focus:ring-[#4B63D2]/20 accent-[#4B63D2]"
+                      className="w-4 h-4 rounded text-[#4B63D2] border-[#EAE4F7] dark:border-[#334155] focus:ring-[#4B63D2]/20 accent-[#4B63D2]"
                     />
-                    <span className="text-xs text-[#5851A4] font-semibold">
+                    <span className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-semibold">
                       Remember this device
                     </span>
                   </label>
@@ -738,7 +677,7 @@ export default function Login() {
             {authMode === "otp" && (
               <form onSubmit={handleOtpLogin} className="space-y-4" noValidate>
                 <div className="space-y-1.5 text-left">
-                  <label htmlFor="otp-email-input" className="block text-xs font-bold text-[#1E2746]">
+                  <label htmlFor="otp-email-input" className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                     College Email Address
                   </label>
                   <div className="flex gap-2">
@@ -748,13 +687,13 @@ export default function Login() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@sbjit.edu.in"
-                      className="flex-1 h-12 px-4 rounded-xl text-sm text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
+                      className="flex-1 h-12 px-4 rounded-xl text-sm text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleSendLoginOtp}
                       disabled={sendingOtp || loginOtpCountdown > 0}
-                      className="px-3.5 h-12 bg-[#FAF9FD] hover:bg-[#EAE4F7] text-[#4B63D2] text-xs font-bold rounded-xl border border-[#EAE4F7] transition-colors disabled:opacity-60 cursor-pointer flex-shrink-0"
+                      className="px-3.5 h-12 bg-[#FAF9FD] dark:bg-[#1E293B] hover:bg-[#EAE4F7] dark:hover:bg-[#334155] text-[#4B63D2] text-xs font-bold rounded-xl border border-[#EAE4F7] dark:border-[#334155] transition-colors disabled:opacity-60 cursor-pointer flex-shrink-0"
                     >
                       {sendingOtp ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -771,7 +710,7 @@ export default function Login() {
 
                 {loginOtpSent && (
                   <div className="space-y-1.5 text-left animate-in fade-in duration-200">
-                    <label htmlFor="login-otp-code" className="block text-xs font-bold text-[#1E2746]">
+                    <label htmlFor="login-otp-code" className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                       6-Digit Verification Code
                     </label>
                     <input
@@ -781,7 +720,7 @@ export default function Login() {
                       value={loginOtp}
                       onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ""))}
                       placeholder="Enter 6-digit code"
-                      className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
+                      className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
                     />
                   </div>
                 )}
@@ -808,7 +747,7 @@ export default function Login() {
                       setError(null);
                       setAuthMode("password");
                     }}
-                    className="text-xs font-bold text-[#5851A4] hover:text-[#1E2746] flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+                    className="text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     Back to password login
@@ -823,7 +762,7 @@ export default function Login() {
             {authMode === "forgot" && (
               <form onSubmit={handleResetPassword} className="space-y-4" noValidate>
                 <div className="space-y-1.5 text-left">
-                  <label htmlFor="reset-email-input" className="block text-xs font-bold text-[#1E2746]">
+                  <label htmlFor="reset-email-input" className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                     Registered College Email
                   </label>
                   <div className="flex gap-2">
@@ -833,13 +772,13 @@ export default function Login() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@sbjit.edu.in"
-                      className="flex-1 h-12 px-4 rounded-xl text-sm text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
+                      className="flex-1 h-12 px-4 rounded-xl text-sm text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleSendResetOtp}
                       disabled={sendingOtp || resetOtpCountdown > 0}
-                      className="px-3.5 h-12 bg-[#FAF9FD] hover:bg-[#EAE4F7] text-[#4B63D2] text-xs font-bold rounded-xl border border-[#EAE4F7] transition-colors disabled:opacity-60 cursor-pointer flex-shrink-0"
+                      className="px-3.5 h-12 bg-[#FAF9FD] dark:bg-[#1E293B] hover:bg-[#EAE4F7] dark:hover:bg-[#334155] text-[#4B63D2] text-xs font-bold rounded-xl border border-[#EAE4F7] dark:border-[#334155] transition-colors disabled:opacity-60 cursor-pointer flex-shrink-0"
                     >
                       {sendingOtp ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -857,7 +796,7 @@ export default function Login() {
                 {resetOtpSent && (
                   <div className="space-y-4 animate-in fade-in duration-200">
                     <div className="space-y-1.5 text-left">
-                      <label htmlFor="reset-otp-input" className="block text-xs font-bold text-[#1E2746]">
+                      <label htmlFor="reset-otp-input" className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                         6-Digit Verification OTP
                       </label>
                       <input
@@ -867,12 +806,12 @@ export default function Login() {
                         value={resetOtp}
                         onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ""))}
                         placeholder="Enter 6-digit code"
-                        className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
+                        className="w-full h-12 px-4 rounded-xl text-base tracking-widest text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none font-mono text-center font-bold"
                       />
                     </div>
 
                     <div className="space-y-1.5 text-left">
-                      <label htmlFor="reset-new-password" className="block text-xs font-bold text-[#1E2746]">
+                      <label htmlFor="reset-new-password" className="block text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">
                         New Password
                       </label>
                       <div className="relative">
@@ -882,12 +821,12 @@ export default function Login() {
                           value={resetNewPassword}
                           onChange={(e) => setResetNewPassword(e.target.value)}
                           placeholder="Minimum 6 characters"
-                          className="w-full h-12 pl-4 pr-11 rounded-xl text-sm text-[#1E2746] bg-white border border-[#EAE4F7] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
+                          className="w-full h-12 pl-4 pr-11 rounded-xl text-sm text-[#1E2746] dark:text-[#F1F5F9] bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => setShowResetPassword(!showResetPassword)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5851A4] hover:text-[#1E2746] transition-colors p-1"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors p-1"
                         >
                           {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -918,7 +857,7 @@ export default function Login() {
                       setError(null);
                       setAuthMode("password");
                     }}
-                    className="text-xs font-bold text-[#5851A4] hover:text-[#1E2746] flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
+                    className="text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     Back to sign in
@@ -929,12 +868,12 @@ export default function Login() {
 
             {/* Divider & Social Login Options */}
             {authMode === "password" && (
-              <div className="mt-6 pt-6 border-t border-[#EAE4F7] space-y-4">
+              <div className="mt-6 pt-6 border-t border-[#EAE4F7] dark:border-[#1F2937] space-y-4">
                 <div className="relative flex items-center justify-center">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#EAE4F7]" />
+                    <div className="w-full border-t border-[#EAE4F7] dark:border-[#1F2937]" />
                   </div>
-                  <span className="relative bg-white px-3 text-[11px] font-bold uppercase tracking-wider text-[#5851A4]">
+                  <span className="relative bg-white dark:bg-[#111827] px-3 text-[11px] font-bold uppercase tracking-wider text-[#5851A4] dark:text-[#94A3B8]">
                     or continue with
                   </span>
                 </div>
@@ -959,7 +898,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => handleSocialLogin("Campus SSO")}
-                    className="h-10 px-4 w-full sm:w-auto bg-white hover:bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs flex-shrink-0"
+                    className="h-10 px-4 w-full sm:w-auto bg-white dark:bg-[#1E293B] hover:bg-[#FAF9FD] dark:hover:bg-[#334155] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs flex-shrink-0"
                   >
                     <Building2 className="w-4 h-4 text-[#4B63D2]" />
                     <span>Campus SSO</span>
@@ -969,12 +908,12 @@ export default function Login() {
             )}
 
             {/* Create Account Link */}
-            <div className="mt-6 pt-5 border-t border-[#EAE4F7] text-center">
-              <p className="text-xs sm:text-sm text-[#5851A4] font-medium">
+            <div className="mt-6 pt-5 border-t border-[#EAE4F7] dark:border-[#1F2937] text-center">
+              <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium">
                 New to Knots?{" "}
                 <Link
                   to="/register"
-                  className="font-bold text-[#4B63D2] hover:text-[#5851A4] hover:underline transition-colors"
+                  className="font-bold text-[#4B63D2] hover:text-[#5851A4] dark:hover:text-[#A5B4FC] hover:underline transition-colors"
                 >
                   Create an account
                 </Link>
@@ -987,53 +926,242 @@ export default function Login() {
       </main>
 
       {/* ============================================================ */}
-      {/* 3. FOOTER                                                    */}
+      {/* 3. MULTI-COLUMN KNOTS FOOTER                                 */}
       {/* ============================================================ */}
-      <footer className="w-full bg-white border-t border-[#EAE4F7] mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <KnotsLogo size="sm" />
-            <span className="text-sm font-black text-[#1E2746]">KNOTS</span>
-            <span className="text-[#C8B6E2]">|</span>
-            <p className="text-xs text-[#5851A4] font-medium">
-              Connecting people, ideas and opportunities.
-            </p>
+      <footer className="w-full bg-white dark:bg-[#111827] border-t border-[#EAE4F7] dark:border-[#1F2937] mt-auto">
+        <div className="max-w-7xl mx-auto pt-12 pb-6 px-6 sm:px-8 lg:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
+            {/* Brand column */}
+            <div className="lg:col-span-4 space-y-4">
+              <div className="flex items-center gap-3">
+                <KnotsLogo size="md" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight">KNOTS</span>
+                    <span className="text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
+                      SBJIT Hub
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-semibold">Connect • Collaborate • Climb</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-[#5851A4] dark:text-[#94A3B8] leading-relaxed">
+                Knots is the dedicated institutional networking ecosystem for S.B. Jain Institute of Technology. Connecting students, faculty, departments, and alumni for career growth, capstones, and collaboration.
+              </p>
+
+              {/* Social Icons */}
+              <div className="flex items-center gap-3 pt-1">
+                {/* LinkedIn */}
+                <a
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="w-8 h-8 rounded-xl bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2] hover:bg-[#4B63D2] text-[#5851A4] dark:text-[#94A3B8] hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M4.98 3.5C3.88 3.5 3 4.38 3 5.48c0 1.1.88 1.98 1.98 1.98h.02c1.1 0 1.98-.88 1.98-1.98C6.98 4.38 6.1 3.5 4.98 3.5zM3 8.75h3.96V21H3V8.75zm6.25 0h3.8v1.68h.05c.53-.98 1.82-2.02 3.75-2.02 4.01 0 4.75 2.64 4.75 6.07V21H17v-5.63c0-1.34-.03-3.07-1.88-3.07-1.88 0-2.17 1.47-2.17 2.98V21H9.25V8.75z" />
+                  </svg>
+                </a>
+
+                {/* GitHub */}
+                <a
+                  href="https://github.com/Yash-k10/knots"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  className="w-8 h-8 rounded-xl bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2] hover:bg-[#4B63D2] text-[#5851A4] dark:text-[#94A3B8] hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                  </svg>
+                </a>
+
+                {/* Twitter / X */}
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter / X"
+                  className="w-8 h-8 rounded-xl bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2] hover:bg-[#4B63D2] text-[#5851A4] dark:text-[#94A3B8] hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M22 5.92a8.2 8.2 0 01-2.36.65A4.1 4.1 0 0021.4 4a8.27 8.27 0 01-2.6 1A4.14 4.14 0 0016 4a4.15 4.15 0 00-4.15 4.15c0 .32.04.64.1.94a11.75 11.75 0 01-8.52-4.32 4.14 4.14 0 001.29 5.54A4.1 4.1 0 013 10v.05a4.15 4.15 0 003.33 4.07 4.12 4.12 0 01-1.87.07 4.16 4.16 0 003.88 2.89A8.33 8.33 0 012 19.56a11.72 11.72 0 006.29 1.84c7.55 0 11.68-6.25 11.68-11.67 0-.18 0-.35-.01-.53A8.18 8.18 0 0022 5.92z" />
+                  </svg>
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-xl bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#4B63D2] hover:bg-[#4B63D2] text-[#5851A4] dark:text-[#94A3B8] hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M7.75 2A5.75 5.75 0 002 7.75v8.5A5.75 5.75 0 007.75 22h8.5A5.75 5.75 0 0022 16.25v-8.5A5.75 5.75 0 0016.25 2h-8.5zM4.5 7.75A3.25 3.25 0 017.75 4.5h8.5a3.25 3.25 0 013.25 3.25v8.5a3.25 3.25 0 01-3.25 3.25h-8.5a3.25 3.25 0 01-3.25-3.25v-8.5zm9.5 1a4 4 0 11-4 4 4 4 0 014-4zm0 1.5a2.5 2.5 0 102.5 2.5 2.5 2.5 0 00-2.5-2.5zm3.5-.75a.75.75 0 11.75-.75.75.75 0 01-.75.75z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Column 2: ECOSYSTEM */}
+            <div className="lg:col-span-2 space-y-3">
+              <p className="text-xs font-black tracking-wider text-[#1E2746] dark:text-[#F1F5F9] uppercase">Ecosystem</p>
+              <ul className="space-y-2.5 text-sm text-[#5851A4] dark:text-[#94A3B8]">
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("about")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    About Knots
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("community")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Campus Community
+                  </button>
+                </li>
+                <li>
+                  <Link to="/register" className="hover:text-[#4B63D2] transition-colors">
+                    Join Network
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("resources")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Career Resources
+                  </button>
+                </li>
+                <li>
+                  <span className="text-[#5851A4]/60 dark:text-[#94A3B8]/60 text-xs">Clubs & Capstones</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: SUPPORT & LEGAL */}
+            <div className="lg:col-span-2 space-y-3">
+              <p className="text-xs font-black tracking-wider text-[#1E2746] dark:text-[#F1F5F9] uppercase">Support</p>
+              <ul className="space-y-2.5 text-sm text-[#5851A4] dark:text-[#94A3B8]">
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("help")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Help Center
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("contact")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Contact Team
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("privacy")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveInfoModal("terms")}
+                    className="hover:text-[#4B63D2] transition-colors cursor-pointer text-left"
+                  >
+                    Terms of Service
+                  </button>
+                </li>
+                <li>
+                  <span className="text-[#5851A4]/60 dark:text-[#94A3B8]/60 text-xs">Accessibility</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: STAY UPDATED */}
+            <div className="lg:col-span-4 space-y-3">
+              <p className="text-xs font-black tracking-wider text-[#1E2746] dark:text-[#F1F5F9] uppercase">Stay Updated</p>
+              <p className="text-sm text-[#5851A4] dark:text-[#94A3B8] leading-relaxed">
+                Subscribe to campus placement circulars, hackathon alerts, and department announcements.
+              </p>
+              <form onSubmit={handleNewsletterSubscribe} className="space-y-2">
+                <div className="flex items-center max-w-sm">
+                  <input
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    placeholder="student@sbjit.edu.in"
+                    className="bg-[#FAF9FD] dark:bg-[#1E293B] rounded-l-xl border border-[#EAE4F7] dark:border-[#334155] h-10 px-3.5 text-xs sm:text-sm text-[#1E2746] dark:text-[#F1F5F9] placeholder:text-[#5851A4]/50 dark:placeholder:text-[#64748B] outline-none focus:border-[#4B63D2] focus:bg-white dark:focus:bg-[#0F172A] w-full transition-all"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Subscribe to newsletter"
+                    className="flex items-center justify-center bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] h-10 w-11 aspect-square rounded-r-xl text-white transition-all shadow-xs cursor-pointer flex-shrink-0"
+                  >
+                    <svg className="w-4 h-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 12H5m14 0-4 4m4-4-4-4" />
+                    </svg>
+                  </button>
+                </div>
+                {newsletterMessage && (
+                  <p className="text-xs font-bold text-[#4B63D2] animate-in fade-in duration-200">
+                    {newsletterMessage}
+                  </p>
+                )}
+              </form>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-bold text-[#5851A4]">
-            <button
-              onClick={() => setActiveInfoModal("about")}
-              className="hover:text-[#1E2746] transition-colors cursor-pointer"
-            >
-              About
-            </button>
-            <button
-              onClick={() => setActiveInfoModal("help")}
-              className="hover:text-[#1E2746] transition-colors cursor-pointer"
-            >
-              Help & Support
-            </button>
-            <button
-              onClick={() => setActiveInfoModal("privacy")}
-              className="hover:text-[#1E2746] transition-colors cursor-pointer"
-            >
-              Privacy Policy
-            </button>
-            <button
-              onClick={() => setActiveInfoModal("terms")}
-              className="hover:text-[#1E2746] transition-colors cursor-pointer"
-            >
-              Terms of Service
-            </button>
-            <button
-              onClick={() => setActiveInfoModal("contact")}
-              className="hover:text-[#1E2746] transition-colors cursor-pointer"
-            >
-              Contact
-            </button>
-            <span className="text-[#5851A4]/60 font-normal">
-              © {new Date().getFullYear()} Knots. All rights reserved.
-            </span>
+          <hr className="border-[#EAE4F7] dark:border-[#1F2937] mt-10" />
+
+          {/* Bottom Bar */}
+          <div className="flex flex-col md:flex-row gap-3 items-center justify-between py-5 text-xs text-[#5851A4] dark:text-[#94A3B8]">
+            <p className="font-medium">
+              © {new Date().getFullYear()} <span className="font-bold text-[#1E2746] dark:text-[#F1F5F9]">KNOTS Campus Hub</span> (SBJIT). All rights reserved.
+            </p>
+            <ul className="flex items-center gap-5 font-bold">
+              <li>
+                <button
+                  onClick={() => setActiveInfoModal("privacy")}
+                  className="hover:text-[#4B63D2] transition-colors cursor-pointer"
+                >
+                  Privacy
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveInfoModal("terms")}
+                  className="hover:text-[#4B63D2] transition-colors cursor-pointer"
+                >
+                  Terms
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveInfoModal("resources")}
+                  className="hover:text-[#4B63D2] transition-colors cursor-pointer"
+                >
+                  Resources
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setActiveInfoModal("help")}
+                  className="hover:text-[#4B63D2] transition-colors cursor-pointer"
+                >
+                  Support
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
       </footer>

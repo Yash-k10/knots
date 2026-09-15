@@ -11,11 +11,11 @@ export default function KnotsLogo({
   animate = true,
 }: KnotsLogoProps) {
   const sizeClasses = {
-    sm: 'h-8 w-auto',
-    md: 'h-12 w-auto',
-    lg: 'h-16 w-auto',
-    xl: 'h-24 w-auto sm:h-28',
-    hero: 'h-24 w-auto sm:h-32 md:h-36',
+    sm: 'h-6 sm:h-7 w-auto',
+    md: 'h-8 sm:h-9 w-auto',
+    lg: 'h-10 sm:h-12 w-auto',
+    xl: 'h-16 w-auto sm:h-20',
+    hero: 'h-20 w-auto sm:h-24 md:h-28',
   };
 
   return (
@@ -23,13 +23,9 @@ export default function KnotsLogo({
       <img
         src="/knots_logo.png"
         alt="KNOTS Official Infinity Loop Design"
-        className={`${sizeClasses[size]} object-contain drop-shadow-sm ${
+        className={`${sizeClasses[size]} object-contain ${
           animate ? 'hover:scale-105 transition-transform duration-300 transform' : ''
         }`}
-        style={{
-          backgroundColor: 'transparent',
-          filter: 'drop-shadow(0 4px 12px rgba(75, 99, 210, 0.15))',
-        }}
       />
     </div>
   );

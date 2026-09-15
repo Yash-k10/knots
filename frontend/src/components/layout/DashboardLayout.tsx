@@ -26,6 +26,7 @@ import { wsClient } from "../../services/websocket";
 import { apiRequest, getMediaUrl } from "../../services/api";
 import GlobalSearchBar from "./GlobalSearchBar";
 import KnotsLogo from "../common/KnotsLogo";
+import ThemeToggle from "../common/ThemeToggle";
 
 interface UserProfile {
   first_name?: string | null;
@@ -302,21 +303,21 @@ export default function DashboardLayout() {
   const roleBadgeLabel = user?.role?.name || (isAdmin ? "Admin" : "Student");
 
   return (
-    <div className="min-h-screen bg-[#F8F6FD] text-[#1E2746] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F8F6FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex flex-col font-sans transition-colors duration-200">
       {/* ============================================================ */}
       {/* UNIVERSAL TOP NAVBAR (NO SIDE NAVBAR)                        */}
       {/* ============================================================ */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#EAE4F7] shadow-sm">
+      <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
           {/* 1. Brand Logo on Top Left */}
           <div className="flex items-center gap-3 shrink-0">
             <Link to="/feed" className="flex items-center gap-2 group">
               <KnotsLogo size="md" />
               <div className="hidden sm:block">
-                <span className="text-xl font-black tracking-tight text-[#1E2746] group-hover:text-[#4B63D2] transition-colors">
+                <span className="text-xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors">
                   KNOTS
                 </span>
-                <span className="ml-2 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
+                <span className="ml-2 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
                   SBJIT
                 </span>
               </div>
@@ -340,12 +341,12 @@ export default function DashboardLayout() {
                   className={`relative flex items-center gap-1 xl:gap-1.5 px-2.5 xl:px-3 py-2 rounded-xl text-[11px] xl:text-xs font-bold transition-all duration-200 ${
                     isActive
                       ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/25"
-                      : "text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
+                      : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
                   }`}
                 >
                   <Icon
                     className={`w-4 h-4 ${
-                      isActive ? "text-[#FFD21A]" : "text-[#5851A4]"
+                      isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
                     }`}
                   />
                   <span>{link.name}</span>
@@ -361,10 +362,13 @@ export default function DashboardLayout() {
 
           {/* 4. User Profile with PFP & Quick Actions */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Quick Theme Toggle Button */}
+            <ThemeToggle />
+
             {/* Mobile notification bell */}
             <Link
               to="/notifications"
-              className="lg:hidden relative p-2 text-[#5851A4] hover:text-[#1E2746] rounded-xl hover:bg-[#FAF9FD] transition-all"
+              className="lg:hidden relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] transition-all"
               title="Notifications"
             >
               <Bell className="w-5 h-5" />
@@ -378,14 +382,14 @@ export default function DashboardLayout() {
             {/* Profile Capsule with PFP */}
             <Link
               to="/profile"
-              className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-2xl hover:bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#C8B6E2] transition-all group"
+              className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-2xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all group"
               title="View Profile"
             >
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#1E2746] group-hover:text-[#4B63D2] transition-colors truncate max-w-[110px]">
+                <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors truncate max-w-[110px]">
                   {fullName}
                 </p>
-                <p className="text-[10px] font-semibold text-[#5851A4] truncate max-w-[110px]">
+                <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate max-w-[110px]">
                   {roleBadgeLabel}
                 </p>
               </div>
@@ -394,7 +398,7 @@ export default function DashboardLayout() {
                 <img
                   src={avatarUrl}
                   alt={fullName}
-                  className="h-9 w-9 rounded-xl object-cover border border-[#EAE4F7] shadow-sm group-hover:scale-105 transition-transform"
+                  className="h-9 w-9 rounded-xl object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-sm group-hover:scale-105 transition-transform"
                 />
               ) : (
                 <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-sm text-white shadow-sm shadow-[#4B63D2]/20 group-hover:scale-105 transition-transform">
@@ -406,7 +410,7 @@ export default function DashboardLayout() {
             {/* Settings Link */}
             <Link
               to="/settings"
-              className="hidden sm:flex p-2.5 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-xl border border-[#EAE4F7] hover:border-[#C8B6E2] transition-all"
+              className="hidden sm:flex p-2.5 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] rounded-xl border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all"
               title="Settings"
             >
               <Settings className="w-4 h-4" />
@@ -415,7 +419,7 @@ export default function DashboardLayout() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="hidden sm:flex p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl border border-rose-200 transition-all cursor-pointer"
+              className="hidden sm:flex p-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 transition-all cursor-pointer"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -424,7 +428,7 @@ export default function DashboardLayout() {
             {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-[#5851A4] hover:text-[#1E2746] rounded-xl hover:bg-[#FAF9FD] border border-[#EAE4F7] transition-all"
+              className="lg:hidden p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
@@ -438,7 +442,7 @@ export default function DashboardLayout() {
 
         {/* Mobile Navigation Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-b border-[#EAE4F7] px-4 py-3 space-y-2 animate-in slide-in-from-top duration-200 shadow-md">
+          <div className="lg:hidden bg-white dark:bg-[#111827] border-b border-[#EAE4F7] dark:border-[#1F2937] px-4 py-3 space-y-2 animate-in slide-in-from-top duration-200 shadow-md">
             <div className="mb-3">
               <GlobalSearchBar />
             </div>
@@ -453,7 +457,7 @@ export default function DashboardLayout() {
                     className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
-                        : "text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746] border border-[#EAE4F7]"
+                        : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] border border-[#EAE4F7] dark:border-[#1F2937]"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -469,10 +473,10 @@ export default function DashboardLayout() {
                 );
               })}
             </div>
-            <div className="pt-2 border-t border-[#EAE4F7] flex items-center justify-between">
+            <div className="pt-2 border-t border-[#EAE4F7] dark:border-[#1F2937] flex items-center justify-between">
               <Link
                 to="/settings"
-                className="flex items-center gap-2 text-xs font-bold text-[#5851A4] hover:text-[#1E2746] py-1"
+                className="flex items-center gap-2 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] py-1"
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>

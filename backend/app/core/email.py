@@ -136,45 +136,61 @@ def send_otp_email(
         sent = False
         last_error = None
 
-        # Try Port 465 (SSL) first
-        try:
-            ssl_context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(
-                settings.SMTP_HOST, 465, timeout=12, context=ssl_context
-            ) as server:
-                server.login(smtp_user, smtp_password)
-                server.sendmail(sender_email, [normalized_recipient], msg.as_string())
-            sent = True
-            logger.info(
-                f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 465 (SSL)"
-            )
-        except Exception as e_ssl:
-            last_error = e_ssl
-            logger.warning(
-                f"Port 465 delivery attempt failed: {e_ssl}. Attempting fallback to Port 587 (STARTTLS)..."
-            )
+        configured_port = int(settings.SMTP_PORT or 587)
+        # Prioritize configured port, then try the other standard secure port as fallback
+        ports_to_try = [configured_port]
+        if configured_port == 587:
+            ports_to_try.append(465)
+        elif configured_port == 465:
+            ports_to_try.append(587)
+        else:
+            ports_to_try.extend([587, 465])
 
-        # Fallback to Port 587 (STARTTLS)
-        if not sent:
+        for port in ports_to_try:
+            if sent:
+                break
             try:
-                with smtplib.SMTP(settings.SMTP_HOST, 587, timeout=12) as server:
-                    server.starttls()
-                    server.login(smtp_user, smtp_password)
-                    server.sendmail(
-                        sender_email, [normalized_recipient], msg.as_string()
+                if port == 465:
+                    ssl_context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL(
+                        settings.SMTP_HOST, 465, timeout=10, context=ssl_context
+                    ) as server:
+                        server.login(smtp_user, smtp_password)
+                        server.sendmail(
+                            sender_email, [normalized_recipient], msg.as_string()
+                        )
+                    sent = True
+                    logger.info(
+                        f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 465 (SSL)"
                     )
-                sent = True
-                logger.info(
-                    f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port 587 (STARTTLS)"
+                else:
+                    with smtplib.SMTP(settings.SMTP_HOST, port, timeout=10) as server:
+                        server.ehlo()
+                        ssl_context = ssl.create_default_context()
+                        server.starttls(context=ssl_context)
+                        server.ehlo()
+                        server.login(smtp_user, smtp_password)
+                        server.sendmail(
+                            sender_email, [normalized_recipient], msg.as_string()
+                        )
+                    sent = True
+                    logger.info(
+                        f"[SUCCESS] OTP email dispatched to {normalized_recipient} via Port {port} (STARTTLS)"
+                    )
+            except smtplib.SMTPAuthenticationError as auth_err:
+                last_error = auth_err
+                logger.error(
+                    f"[AUTH ERROR] SMTP authentication failed on Port {port}: {auth_err}. "
+                    f"Ensure 2-Step Verification is active and a 16-character App Password is used without spaces."
                 )
-            except Exception as e_tls:
-                last_error = e_tls
-                logger.error(f"Port 587 delivery attempt failed: {e_tls}")
+            except Exception as e_port:
+                last_error = e_port
+                logger.warning(f"Delivery attempt on Port {port} failed: {e_port}")
 
         if not sent:
             error_msg = f"All SMTP delivery channels failed. Last error: {last_error}"
             logger.error(f"[ERROR] {error_msg}")
-            raise RuntimeError("Unable to send verification email. Please try again.")
+            raise RuntimeError(f"Unable to send verification email: {last_error}")
 
         return True
 
@@ -182,4 +198,4 @@ def send_otp_email(
         logger.error(
             f"[ERROR] Failed to dispatch OTP email to {normalized_recipient}: {e}"
         )
-        raise RuntimeError("Unable to send verification email. Please try again.")
+        raise RuntimeError(f"Unable to send verification email: {e}")

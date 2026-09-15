@@ -30,6 +30,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { apiRequest, ApiError } from "../services/api";
+import ThemeToggle from "../components/common/ThemeToggle";
 
 type MainRole = "Student" | "Faculty" | "Alumni" | "Management";
 type FacultyType = "HOD" | "Normal faculty";
@@ -342,22 +343,22 @@ export default function Register() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F6FD] px-4 py-8 select-none">
-        <div className="max-w-md w-full bg-white border border-[#EAE4F7] rounded-3xl p-8 shadow-xl shadow-[#5851A4]/5 text-center space-y-6 animate-in zoom-in-95 duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F6FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200">
+        <div className="max-w-md w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-8 shadow-xl shadow-[#5851A4]/5 text-center space-y-6 animate-in zoom-in-95 duration-300">
           <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-              <CheckCircle className="h-10 w-10 text-emerald-600" />
+            <div className="h-16 w-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+              <CheckCircle className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-[#1E2746]">
+            <h2 className="text-2xl font-black text-[#1E2746] dark:text-[#F1F5F9]">
               Registration Successful!
             </h2>
-            <p className="text-[#5851A4] text-xs sm:text-sm font-medium">
+            <p className="text-[#5851A4] dark:text-[#94A3B8] text-xs sm:text-sm font-medium">
               Your verified profile for{" "}
-              <strong className="text-[#1E2746]">{email}</strong> has been
+              <strong className="text-[#1E2746] dark:text-[#F1F5F9]">{email}</strong> has been
               registered as{" "}
-              <strong className="text-[#1E2746]">
+              <strong className="text-[#1E2746] dark:text-[#F1F5F9]">
                 {selectedRole === "Faculty"
                   ? `${facultyType} (${department})`
                   : selectedRole === "Management"
@@ -370,7 +371,7 @@ export default function Register() {
               </strong>
               .
             </p>
-            <p className="text-[#9188BE] text-xs mt-2 font-semibold">
+            <p className="text-[#9188BE] dark:text-[#64748B] text-xs mt-2 font-semibold">
               Redirecting you to the sign in page in a moment...
             </p>
           </div>
@@ -386,21 +387,32 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F6FD] px-4 py-10 select-none">
-      <div className="max-w-2xl w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-9 shadow-xl shadow-[#5851A4]/5 transition-all">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F6FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200">
+      {/* Top Bar for Theme Toggle & Back to Sign In */}
+      <div className="w-full max-w-2xl flex items-center justify-between mb-4 px-2">
+        <Link
+          to="/login"
+          className="text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors"
+        >
+          ← Back to Sign In
+        </Link>
+        <ThemeToggle />
+      </div>
+
+      <div className="max-w-2xl w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-6 sm:p-9 shadow-xl shadow-[#5851A4]/5 dark:shadow-black/40 transition-all">
         {/* Header with Logo */}
         <div className="flex flex-col items-center text-center mb-7">
-          <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center mb-3.5 shadow-md shadow-[#4B63D2]/15 border border-[#EAE4F7] overflow-hidden p-2">
+          <div className="h-14 w-14 rounded-2xl bg-white dark:bg-[#1E293B] flex items-center justify-center mb-3.5 shadow-md shadow-[#4B63D2]/15 border border-[#EAE4F7] dark:border-[#334155] overflow-hidden p-2">
             <img
               src="/knots_logo.png"
               alt="KNOTS Logo"
               className="w-full h-full object-contain"
             />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] dark:text-[#F1F5F9] tracking-tight">
             Create SBJIT Account
           </h2>
-          <p className="text-[#5851A4] text-xs sm:text-sm mt-1.5 font-medium max-w-md">
+          <p className="text-[#5851A4] dark:text-[#94A3B8] text-xs sm:text-sm mt-1.5 font-medium max-w-md">
             Join the authorized campus collaboration & career network
           </p>
         </div>
