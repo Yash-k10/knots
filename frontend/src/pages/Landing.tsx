@@ -31,11 +31,9 @@ export default function Landing() {
         <img
           src="/landing_bg.png"
           alt="KNOTS Academic Canvas"
-          className="w-full h-full object-cover object-top opacity-70 dark:opacity-35 transform scale-100 transition-all duration-700"
+          className="w-full h-full object-cover object-center opacity-90 dark:opacity-40 transform scale-100 transition-all duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9FD]/30 via-[#FAF9FD]/70 to-[#FAF9FD] dark:from-[#0B0F19]/50 dark:via-[#0B0F19]/80 dark:to-[#0B0F19]" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/3 left-10 w-96 h-96 bg-[#5851A4]/10 dark:bg-[#5851A4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-white/25 dark:bg-[#0B0F19]/60" />
       </div>
 
       {/* Navigation Bar */}

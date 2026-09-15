@@ -388,11 +388,9 @@ export default function Login() {
         <img
           src="/landing_bg.png"
           alt="KNOTS Academic Canvas"
-          className="w-full h-full object-cover object-top opacity-70 dark:opacity-35 transform scale-100 transition-all duration-700"
+          className="w-full h-full object-cover object-center opacity-90 dark:opacity-40 transform scale-100 transition-all duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9FD]/30 via-[#FAF9FD]/70 to-[#FAF9FD] dark:from-[#0B0F19]/50 dark:via-[#0B0F19]/80 dark:to-[#0B0F19]" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/3 left-10 w-96 h-96 bg-[#5851A4]/10 dark:bg-[#5851A4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-white/25 dark:bg-[#0B0F19]/60" />
       </div>
 
       {/* ============================================================ */}
@@ -464,7 +462,7 @@ export default function Login() {
       {/* ============================================================ */}
       <main className="relative z-10 flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
         
-        {/* LEFT SIDE: Knots Brand Narrative & Campus Community Visual */}
+        {/* LEFT SIDE: Knots Brand Narrative & Campus Community Highlights */}
         <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 order-2 lg:order-1">
           {/* Header Message */}
           <div className="space-y-2">
@@ -480,15 +478,35 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Campus Community Image Showcase */}
-          <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-xl rounded-3xl overflow-hidden bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] shadow-xl shadow-[#5851A4]/10 dark:shadow-black/40 p-3 sm:p-4 group">
-            <div className="relative rounded-2xl overflow-hidden aspect-[16/9] bg-[#FAF9FD] dark:bg-[#1E293B]">
-              <img
-                src="/campus_collaboration.jpg"
-                alt="Knots - One Platform for Everyone. Your Institute. Your Network. Your Future."
-                className="w-full h-full object-cover object-center transform group-hover:scale-[1.02] transition-transform duration-700 ease-out"
-              />
-            </div>
+          {/* Institutional Highlights Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md sm:max-w-lg">
+            {[
+              {
+                icon: ShieldCheck,
+                title: "100% Verified Members",
+                desc: "Official SBJIT student & faculty network",
+              },
+              {
+                icon: Building2,
+                title: "Department Direct Connect",
+                desc: "Access notices, HODs, and campus drives",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-2xl bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] shadow-sm text-left"
+              >
+                <div className="w-8 h-8 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center mb-2">
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <h4 className="text-xs font-black text-[#1E2746] dark:text-white">
+                  {item.title}
+                </h4>
+                <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-medium mt-0.5">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
