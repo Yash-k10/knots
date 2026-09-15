@@ -17,7 +17,9 @@ class ControllerInviteRepository(BaseRepository[ControllerInvite]):
         )
         return result.scalars().first()
 
-    async def list_invites(self, skip: int = 0, limit: int = 100) -> list[ControllerInvite]:
+    async def list_invites(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[ControllerInvite]:
         # Auto-update status for expired ones that are still ACTIVE
         now = datetime.utcnow()
         result = await self.db.execute(

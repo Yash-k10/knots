@@ -165,9 +165,7 @@ async def generate_controller_invite(
 ):
     """Generate a high-entropy one-time Controller Activation Code (Central Admin only)."""
     service = ControllerInviteService(db)
-    invite = await service.generate_invite(
-        admin_id=current_user.id, payload=payload
-    )
+    invite = await service.generate_invite(admin_id=current_user.id, payload=payload)
     return APIResponse(
         message=f"Controller activation code for {payload.department} generated successfully",
         data=invite,
@@ -200,10 +198,7 @@ async def revoke_controller_invite(
 ):
     """Revoke an active controller activation code (Central Admin only)."""
     service = ControllerInviteService(db)
-    revoked = await service.revoke_invite(
-        invite_id=invite_id, admin_id=current_user.id
-    )
+    revoked = await service.revoke_invite(invite_id=invite_id, admin_id=current_user.id)
     return APIResponse(
         message="Controller activation code revoked successfully", data=revoked
     )
-

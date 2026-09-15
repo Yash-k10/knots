@@ -622,7 +622,9 @@ class AuthService:
                 else:
                     # Fallback check against static department keys for backwards compatibility
                     dept_to_check = user_in.department
-                    if not dept_to_check or not verify_security_key("Controller", dept_to_check, user_in.access_key):
+                    if not dept_to_check or not verify_security_key(
+                        "Controller", dept_to_check, user_in.access_key
+                    ):
                         raise ValidationError(
                             message="Invalid Controller Activation Code. Please provide an authorized activation code issued by Central Admin."
                         )

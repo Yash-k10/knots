@@ -121,7 +121,9 @@ class TestControllerInvites(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(revoke_res.status_code, 200)
             self.assertEqual(revoke_res.json()["data"]["status"], "REVOKED")
 
-    async def test_controller_registration_authoritative_department_and_single_use(self):
+    async def test_controller_registration_authoritative_department_and_single_use(
+        self,
+    ):
         """Registering with code binds department from invite authoritatively and sets status to USED."""
         # 1. Generate code via invite service
         async with self.SessionLocal() as db:

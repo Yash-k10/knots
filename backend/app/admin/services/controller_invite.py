@@ -14,10 +14,7 @@ from app.core.exceptions import NotFoundError, ValidationError
 def generate_high_entropy_code() -> str:
     """Generate a high-entropy controller activation code in format: KNT-XXXX-XXXX-XXXX-XXXX"""
     alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"  # High legibility characters
-    chunks = [
-        "".join(secrets.choice(alphabet) for _ in range(4))
-        for _ in range(4)
-    ]
+    chunks = ["".join(secrets.choice(alphabet) for _ in range(4)) for _ in range(4)]
     return f"KNT-{'-'.join(chunks)}"
 
 
@@ -38,7 +35,9 @@ class ControllerInviteService:
     ) -> dict:
         dept = payload.department.strip()
         if not dept:
-            raise ValidationError(message="Department is required to generate controller invite")
+            raise ValidationError(
+                message="Department is required to generate controller invite"
+            )
 
         raw_code = generate_high_entropy_code()
         code_hash = hash_activation_code(raw_code)
