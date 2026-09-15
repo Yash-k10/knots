@@ -283,82 +283,272 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* SECTION 2: Build Connections Across Your Campus */}
+        {/* SECTION 2: Build Connections Across Your Campus (Interconnected Flow Layout) */}
         <section
           id="campus-connections"
-          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
+          className="relative py-16 md:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20 overflow-hidden"
         >
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 border border-[#4B63D2]/20 text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>How Knots Works</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#1E2746] dark:text-white">
               Build Connections Across Your Campus
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
-              Eliminate departmental silos and establish verified connections
-              with all key stakeholders of our academic institution.
+            <p className="mt-4 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium max-w-2xl mx-auto leading-relaxed">
+              Eliminate departmental silos and establish verified connections with all key stakeholders of our academic institution.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
-            {[
-              {
-                icon: Users,
-                title: "Students across departments and batches",
-                desc: "Collaborate on multidisciplinary capstones, competitive hackathons, research publications, and peer study groups.",
-                accent: "from-blue-500/20 to-indigo-500/10",
-                iconColor: "text-blue-500",
-              },
-              {
-                icon: GraduationCap,
-                title: "Faculty and mentors",
-                desc: "Direct communication with course professors, lab directors, research guides, and project review committees.",
-                accent: "from-indigo-500/20 to-purple-500/10",
-                iconColor: "text-indigo-500",
-              },
-              {
-                icon: Award,
-                title: "Alumni and industry professionals",
-                desc: "Connect directly with verified graduates working across premier technology, consulting, and core enterprises.",
-                accent: "from-purple-500/20 to-pink-500/10",
-                iconColor: "text-purple-500",
-              },
-              {
-                icon: Building,
-                title: "HODs and department authorities",
-                desc: "Receive authoritative department notices, internship approvals, academic letters, and event accreditations.",
-                accent: "from-amber-500/20 to-orange-500/10",
-                iconColor: "text-amber-500",
-              },
-              {
-                icon: ShieldCheck,
-                title: "College management and institutional leadership",
-                desc: "Institutional governance, high-level policies, infrastructure updates, and campus-wide strategic initiatives.",
-                accent: "from-emerald-500/20 to-teal-500/10",
-                iconColor: "text-emerald-500",
-              },
-            ].map((pillar, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#5851A4]/40 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${pillar.accent} ${pillar.iconColor} flex items-center justify-center mb-4`}
-                  >
-                    <pillar.icon className="w-6 h-6" />
+          {/* Interconnected Workflow Container */}
+          <div className="relative max-w-5xl mx-auto">
+            
+            {/* Desktop SVG Connector Paths (Hidden on Mobile) */}
+            <svg
+              className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none z-0"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              preserveAspectRatio="none"
+              viewBox="0 0 1000 850"
+            >
+              <defs>
+                <marker
+                  id="arrow-knots"
+                  viewBox="0 0 10 10"
+                  refX="6"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#9188BE" />
+                </marker>
+                <linearGradient id="curve-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#4B63D2" stopOpacity="0.4" />
+                  <stop offset="50%" stopColor="#818CF8" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#5851A4" stopOpacity="0.4" />
+                </linearGradient>
+              </defs>
+
+              {/* Path 1 -> 2 (Top Left to Top Right with smooth loop) */}
+              <path
+                d="M 420 100 C 470 30, 520 180, 570 100"
+                stroke="url(#curve-gradient)"
+                strokeWidth="2.5"
+                strokeDasharray="6 6"
+                markerEnd="url(#arrow-knots)"
+              />
+
+              {/* Path 2 -> 3 (Top Right looping down to Middle Left) */}
+              <path
+                d="M 800 190 C 850 310, 350 240, 260 360"
+                stroke="url(#curve-gradient)"
+                strokeWidth="2.5"
+                strokeDasharray="6 6"
+                markerEnd="url(#arrow-knots)"
+              />
+
+              {/* Path 3 -> 4 (Middle Left across to Middle Right) */}
+              <path
+                d="M 450 440 C 510 370, 550 510, 600 440"
+                stroke="url(#curve-gradient)"
+                strokeWidth="2.5"
+                strokeDasharray="6 6"
+                markerEnd="url(#arrow-knots)"
+              />
+
+              {/* Path 4 -> 5 (Middle Right down to Bottom Center) */}
+              <path
+                d="M 760 530 C 780 630, 630 680, 530 680"
+                stroke="url(#curve-gradient)"
+                strokeWidth="2.5"
+                strokeDasharray="6 6"
+                markerEnd="url(#arrow-knots)"
+              />
+            </svg>
+
+            {/* STAGE 1: Top Row (Students & Faculty) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative z-10 mb-10 sm:mb-16">
+              
+              {/* Card 1: Students across departments and batches */}
+              <div className="lg:col-span-6 flex justify-start">
+                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm border border-blue-500/20">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <h3 className="text-base sm:text-lg font-black text-[#1E2746] dark:text-white tracking-tight">
+                        Students across departments and batches
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
+                        Collaborate on multidisciplinary capstones, competitive hackathons, research publications, and peer study groups.
+                      </p>
+                      <div className="pt-2 flex items-center justify-between">
+                        <Link
+                          to="/register"
+                          className="text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Connect with peers</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                        <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Verified Identity</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-sm font-black text-[#1E2746] dark:text-white tracking-tight">
-                    {pillar.title}
-                  </h3>
-                  <p className="mt-2.5 text-xs text-[#5851A4] dark:text-[#94A3B8] leading-relaxed font-medium">
-                    {pillar.desc}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-[#EAE4F7]/60 dark:border-[#1F2937] flex items-center gap-1.5 text-[11px] font-bold text-[#5851A4] dark:text-[#A5B4FC]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Verified Identity</span>
                 </div>
               </div>
-            ))}
+
+              {/* Card 2: Faculty and mentors */}
+              <div className="lg:col-span-6 flex justify-end">
+                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-sm border border-indigo-500/20">
+                      <GraduationCap className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <h3 className="text-base sm:text-lg font-black text-[#1E2746] dark:text-white tracking-tight">
+                        Faculty and mentors
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
+                        Direct communication with course professors, lab directors, research guides, and project review committees.
+                      </p>
+                      <div className="pt-2 flex items-center justify-between">
+                        <Link
+                          to="/register"
+                          className="text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Reach faculty guides</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                        <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Verified Identity</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* STAGE 2: Middle Row (Alumni & Department Authorities) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative z-10 mb-10 sm:mb-16">
+              
+              {/* Card 3: Alumni and industry professionals */}
+              <div className="lg:col-span-6 flex justify-start">
+                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm border border-purple-500/20">
+                      <Award className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <h3 className="text-base sm:text-lg font-black text-[#1E2746] dark:text-white tracking-tight">
+                        Alumni and industry professionals
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
+                        Connect directly with verified graduates working across premier technology, consulting, and core enterprises.
+                      </p>
+                      <div className="pt-2 flex items-center justify-between">
+                        <Link
+                          to="/register"
+                          className="text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Explore alumni network</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                        <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Verified Identity</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: HODs and department authorities */}
+              <div className="lg:col-span-6 flex justify-end">
+                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm border border-amber-500/20">
+                      <Building className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <h3 className="text-base sm:text-lg font-black text-[#1E2746] dark:text-white tracking-tight">
+                        HODs and department authorities
+                      </h3>
+                      <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
+                        Receive authoritative department notices, internship approvals, academic letters, and event accreditations.
+                      </p>
+                      <div className="pt-2 flex items-center justify-between">
+                        <Link
+                          to="/register"
+                          className="text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Department notices</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                        <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Verified Identity</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* STAGE 3: Bottom Row (College management and institutional leadership & Hand-drawn badge) */}
+            <div className="relative z-10 flex flex-col items-center">
+              
+              {/* Card 5: College management and institutional leadership */}
+              <div className="w-full max-w-xl p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-white/95 via-white/98 to-white/95 dark:from-[#111827]/95 dark:via-[#131D31]/98 dark:to-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-emerald-500/40 shadow-xl shadow-[#5851A4]/8 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all duration-300">
+                <div className="flex items-start gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm border border-emerald-500/20">
+                    <ShieldCheck className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base sm:text-xl font-black text-[#1E2746] dark:text-white tracking-tight">
+                        College management and institutional leadership
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
+                      Institutional governance, high-level policies, infrastructure updates, and campus-wide strategic initiatives.
+                    </p>
+                    <div className="pt-2 flex items-center justify-between">
+                      <Link
+                        to="/register"
+                        className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>Institutional gateway</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Verified Identity</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Playful Tagline Badge (Inspired by Meetup's "Friends. But make it easy") */}
+              <div className="mt-8 inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-amber-700 dark:text-amber-300 shadow-sm">
+                <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span className="text-xs font-black uppercase tracking-wider font-mono">
+                  One Campus Network • Zero Department Silos
+                </span>
+              </div>
+            </div>
+
           </div>
         </section>
 
