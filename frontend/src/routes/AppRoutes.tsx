@@ -7,6 +7,7 @@ import { apiRequest } from "../services/api";
 import DashboardLayout from "../components/layout/DashboardLayout";
 
 // Public Pages
+import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 
@@ -40,8 +41,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const token = localStorage.getItem("knots_token");
 
   if (!token) {
-    // Redirect to login if token is missing
-    return <Navigate to="/login" replace />;
+    // Redirect to landing if token is missing
+    return <Navigate to="/landing" replace />;
   }
 
   return children;
@@ -194,19 +195,27 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
 };
 
 export default function AppRoutes() {
+  const token = localStorage.getItem("knots_token");
+
   return (
     <Routes>
-      {/* Public Auth Routes */}
+      {/* Public Pages */}
+      <Route path="/landing" element={<Landing />} />
+      <Route path="/welcome" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected Main Application Routes */}
+      {/* Main Root: Landing for guests, Dashboard Layout for Authenticated users */}
       <Route
         path="/"
         element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
+          token ? (
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          ) : (
+            <Landing />
+          )
         }
       >
         <Route index element={<Dashboard />} />
