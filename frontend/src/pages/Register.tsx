@@ -343,8 +343,18 @@ export default function Register() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F6FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200">
-        <div className="max-w-md w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-8 shadow-xl shadow-[#5851A4]/5 text-center space-y-6 animate-in zoom-in-95 duration-300">
+      <div className="relative min-h-screen flex items-center justify-center bg-[#FAF9FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200 overflow-x-hidden">
+        {/* Background Graphic with Soft Overlays */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          <img
+            src="/landing_bg.png"
+            alt="KNOTS Academic Canvas"
+            className="w-full h-full object-cover object-center opacity-90 dark:opacity-40 transform scale-100 transition-all duration-700"
+          />
+          <div className="absolute inset-0 bg-white/25 dark:bg-[#0B0F19]/60" />
+        </div>
+
+        <div className="relative z-10 max-w-md w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-8 shadow-xl shadow-[#5851A4]/5 text-center space-y-6 animate-in zoom-in-95 duration-300">
           <div className="flex justify-center">
             <div className="h-16 w-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
               <CheckCircle className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
@@ -387,9 +397,19 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F6FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#FAF9FD] dark:bg-[#0B0F19] px-4 py-8 select-none transition-colors duration-200 overflow-x-hidden">
+      {/* Background Graphic with Soft Overlays */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <img
+          src="/landing_bg.png"
+          alt="KNOTS Academic Canvas"
+          className="w-full h-full object-cover object-center opacity-90 dark:opacity-40 transform scale-100 transition-all duration-700"
+        />
+        <div className="absolute inset-0 bg-white/25 dark:bg-[#0B0F19]/60" />
+      </div>
+
       {/* Top Bar for Theme Toggle & Back to Sign In */}
-      <div className="w-full max-w-2xl flex items-center justify-between mb-4 px-2">
+      <div className="relative z-10 w-full max-w-2xl flex items-center justify-between mb-4 px-2">
         <Link
           to="/login"
           className="text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] transition-colors"
@@ -399,7 +419,7 @@ export default function Register() {
         <ThemeToggle />
       </div>
 
-      <div className="max-w-2xl w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-6 sm:p-9 shadow-xl shadow-[#5851A4]/5 dark:shadow-black/40 transition-all">
+      <div className="relative z-10 max-w-2xl w-full bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-6 sm:p-9 shadow-xl shadow-[#5851A4]/5 dark:shadow-black/40 transition-all">
         {/* Header with Logo */}
         <div className="flex flex-col items-center text-center mb-7">
           <div className="h-14 w-14 rounded-2xl bg-white dark:bg-[#1E293B] flex items-center justify-center mb-3.5 shadow-md shadow-[#4B63D2]/15 border border-[#EAE4F7] dark:border-[#334155] overflow-hidden p-2">
