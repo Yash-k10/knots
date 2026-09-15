@@ -23,6 +23,7 @@ from app.notifications.models.notification_preference import (
     NotificationPreference,  # noqa: F401
 )
 from app.admin.models.audit import AuditLog  # noqa
+from app.admin.models.controller_invite import ControllerInvite  # noqa
 from app.admin.models.flagged_post import FlaggedPost  # noqa
 from app.ai.models.ai_log import AILog  # noqa
 from app.jobs.models.company import Company  # noqa

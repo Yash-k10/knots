@@ -760,10 +760,10 @@ export default function Register() {
                     <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE] pointer-events-none" />
                   </div>
 
-                  {/* Controller Security Key Input */}
+                  {/* Controller Activation Code Input */}
                   <div className="space-y-1.5 pt-1">
                     <label className="block text-[11px] font-bold text-[#5851A4]">
-                      Department Controller Security Key / Access ID{" "}
+                      Controller Activation Code{" "}
                       <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
@@ -771,20 +771,23 @@ export default function Register() {
                       <input
                         type="text"
                         value={accessKey}
-                        onChange={(e) => setAccessKey(e.target.value)}
-                        placeholder={`e.g. SBJIT-CTRL-${department.includes("(") ? department.split("(")[1].replace(")", "") : "DEPT"}-8F3A-7E2D-9B4C-1A05`}
-                        className="w-full bg-white border border-[#D5CBEE] rounded-xl pl-10 pr-3.5 py-2.5 text-[#1E2746] placeholder-[#9188BE] text-xs font-mono font-bold focus:outline-none focus:border-[#4B63D2] shadow-sm"
+                        onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
+                        placeholder="e.g. KNT-8XQ7-4MNP-92LA-6TRC"
+                        className="w-full bg-white border border-[#D5CBEE] rounded-xl pl-10 pr-3.5 py-2.5 text-[#1E2746] placeholder-[#9188BE] text-xs font-mono font-bold tracking-wider focus:outline-none focus:border-[#4B63D2] shadow-sm"
                         required
                       />
                     </div>
+                    <p className="text-[10.5px] text-[#5851A4]/80 leading-relaxed font-normal pt-0.5">
+                      Enter the activation code provided by your Central Admin. This code verifies your assigned department and controller access.
+                    </p>
                   </div>
 
                   <div className="bg-[#4B63D2]/5 border border-[#4B63D2]/20 rounded-xl p-3 flex items-start gap-2 text-[11px] text-[#5851A4] font-medium">
                     <Sparkles className="w-4 h-4 text-[#4B63D2] shrink-0 mt-0.5" />
                     <span>
-                      As the <strong>{department}</strong> Controller, you will
-                      be authorized to post, coordinate, and moderate all
-                      departmental events, clubs, and student activities.
+                      As a <strong>Department Controller</strong>, you will
+                      be authorized to coordinate, publish, and moderate official
+                      departmental events, clubs, notices, and student activities.
                     </span>
                   </div>
                 </div>

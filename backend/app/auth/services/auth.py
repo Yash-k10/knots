@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import logging
 import secrets
 import time
@@ -6,6 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.core.base  # noqa: F401
+from app.admin.models.controller_invite import ControllerInvite
+from app.admin.services.controller_invite import hash_activation_code
 from app.auth.repository.auth import AuthRepository
 
 from app.auth.schemas.auth import (
@@ -578,20 +580,54 @@ class AuthService:
                 message="Invalid, incorrect, or expired email OTP verification code."
             )
 
-        # Verify Security Access Key for Controller & Central Admin
+        # Verify Security Access Key / Activation Code for Controller & Central Admin
+        assigned_department = None
+        matched_invite = None
+
         if user_in.management_role:
             role_type = user_in.management_role.strip()
             if role_type.lower() == "controller":
-                if not user_in.department:
+                if not user_in.access_key or not user_in.access_key.strip():
                     raise ValidationError(
-                        message="Department must be specified when registering as Department Controller."
+                        message="Controller Activation Code is required for Department Controller registration."
                     )
-                if not verify_security_key(
-                    "Controller", user_in.department, user_in.access_key
-                ):
-                    raise ValidationError(
-                        message=f"Invalid Controller Security Key for {user_in.department}. Please provide the authorized departmental access key."
-                    )
+                # Lookup ControllerInvite in DB via SHA-256 hash
+                code_hash = hash_activation_code(user_in.access_key)
+                invite_stmt = select(ControllerInvite).filter(
+                    ControllerInvite.code_hash == code_hash
+                )
+                invite_res = await self.db.execute(invite_stmt)
+                invite = invite_res.scalars().first()
+
+                if invite:
+                    if invite.status == "REVOKED":
+                        raise ValidationError(
+                            message="This controller activation code has been revoked by Central Admin."
+                        )
+                    if invite.expires_at and invite.expires_at < datetime.utcnow():
+                        invite.status = "EXPIRED"
+                        await self.db.flush()
+                        raise ValidationError(
+                            message="This controller activation code has expired. Please contact Central Admin for a new code."
+                        )
+                    if invite.used_count >= invite.max_uses or invite.status == "USED":
+                        invite.status = "USED"
+                        await self.db.flush()
+                        raise ValidationError(
+                            message="This controller activation code has already been used."
+                        )
+                    # Authoritative assignment directly from verified invite
+                    assigned_department = invite.department
+                    matched_invite = invite
+                else:
+                    # Fallback check against static department keys for backwards compatibility
+                    dept_to_check = user_in.department
+                    if not dept_to_check or not verify_security_key("Controller", dept_to_check, user_in.access_key):
+                        raise ValidationError(
+                            message="Invalid Controller Activation Code. Please provide an authorized activation code issued by Central Admin."
+                        )
+                    assigned_department = dept_to_check
+
             elif role_type.lower() in ["central admin", "central_admin", "admin"]:
                 if not verify_security_key("Central Admin", None, user_in.access_key):
                     raise ValidationError(
@@ -649,6 +685,16 @@ class AuthService:
             }
             user = await self.repository.create(user_data)
 
+        # Consume the controller invite upon successful user creation
+        if matched_invite:
+            matched_invite.used_count += 1
+            if matched_invite.used_count >= matched_invite.max_uses:
+                matched_invite.status = "USED"
+            matched_invite.used_by = user.id
+            matched_invite.used_at = datetime.utcnow()
+            self.db.add(matched_invite)
+            await self.db.flush()
+
         # Initialize Profile with contact details and bio
         name_parts = [
             p.capitalize()
@@ -658,8 +704,11 @@ class AuthService:
         first_name = name_parts[0] if name_parts else (role.name or "User")
         last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
 
-        # Determine department
-        department_val = user_in.department if user_in.department else role.name
+        # Determine department authoritatively
+        if assigned_department:
+            department_val = assigned_department
+        else:
+            department_val = user_in.department if user_in.department else role.name
 
         # Determine customized bio and designation
         if user_in.faculty_type:

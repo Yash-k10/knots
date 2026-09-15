@@ -117,3 +117,62 @@ export async function deletePostAsAdmin(postId: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+export interface ControllerInviteCreated {
+  id: number;
+  code: string;
+  department: string;
+  role: string;
+  expires_at: string;
+  max_uses: number;
+  used_count: number;
+  status: string;
+  created_at: string;
+}
+
+export interface ControllerInviteItem {
+  id: number;
+  department: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+  max_uses: number;
+  used_count: number;
+  status: string;
+  created_by?: number | null;
+  used_by?: number | null;
+  used_at?: string | null;
+}
+
+export async function generateControllerInvite(payload: {
+  department: string;
+  validity_days?: number;
+  max_uses?: number;
+  role?: string;
+}): Promise<ControllerInviteCreated> {
+  return apiRequest<ControllerInviteCreated>("/admin/controller-invites", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getControllerInvites(
+  skip: number = 0,
+  limit: number = 100,
+): Promise<ControllerInviteItem[]> {
+  return apiRequest<ControllerInviteItem[]>(
+    `/admin/controller-invites?skip=${skip}&limit=${limit}`,
+  );
+}
+
+export async function revokeControllerInvite(
+  inviteId: number,
+): Promise<ControllerInviteItem> {
+  return apiRequest<ControllerInviteItem>(
+    `/admin/controller-invites/${inviteId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+

@@ -7,7 +7,13 @@ from app.admin.schemas.admin import (
     FlaggedPostResolve,
     FlaggedPostResponse,
 )
+from app.admin.schemas.controller_invite import (
+    ControllerInviteCreate,
+    ControllerInviteCreatedResponse,
+    ControllerInviteItemResponse,
+)
 from app.admin.services.admin import AdminService
+from app.admin.services.controller_invite import ControllerInviteService
 from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
 from app.core.response_models import APIResponse
@@ -146,3 +152,58 @@ async def delete_post_as_admin(
         post_id=post_id, actor_id=current_user.id, ip_address=client_ip
     )
     return APIResponse(message="Post removed successfully by Administrator")
+
+
+@router.post(
+    "/controller-invites",
+    response_model=APIResponse[ControllerInviteCreatedResponse],
+)
+async def generate_controller_invite(
+    payload: ControllerInviteCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a high-entropy one-time Controller Activation Code (Central Admin only)."""
+    service = ControllerInviteService(db)
+    invite = await service.generate_invite(
+        admin_id=current_user.id, payload=payload
+    )
+    return APIResponse(
+        message=f"Controller activation code for {payload.department} generated successfully",
+        data=invite,
+    )
+
+
+@router.get(
+    "/controller-invites",
+    response_model=APIResponse[list[ControllerInviteItemResponse]],
+)
+async def list_controller_invites(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all controller activation codes and their statuses (Central Admin only)."""
+    service = ControllerInviteService(db)
+    invites = await service.list_invites(skip=skip, limit=limit)
+    return APIResponse(data=invites)
+
+
+@router.delete(
+    "/controller-invites/{invite_id}",
+    response_model=APIResponse[ControllerInviteItemResponse],
+)
+async def revoke_controller_invite(
+    invite_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revoke an active controller activation code (Central Admin only)."""
+    service = ControllerInviteService(db)
+    revoked = await service.revoke_invite(
+        invite_id=invite_id, admin_id=current_user.id
+    )
+    return APIResponse(
+        message="Controller activation code revoked successfully", data=revoked
+    )
+
