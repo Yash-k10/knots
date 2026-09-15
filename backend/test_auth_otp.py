@@ -93,13 +93,91 @@ class TestAuthOTPFlow(unittest.TestCase):
         with self.assertRaises(Exception):
             SendOTPRequest(email="hacker@gmail.com", purpose="login")
 
+    @patch("smtplib.SMTP")
     @patch("smtplib.SMTP_SSL")
-    def test_mock_smtp_email_dispatch(self, mock_smtp):
-        instance = MagicMock()
-        mock_smtp.return_value.__enter__.return_value = instance
+    def test_mock_smtp_email_dispatch(self, mock_ssl, mock_smtp):
+        from app.core.config import settings
 
-        res = send_otp_email("student@sbjit.edu.in", "654321", "login")
-        self.assertTrue(res)
+        old_resend = settings.RESEND_API_KEY
+        old_brevo = settings.BREVO_API_KEY
+        old_sg = settings.SENDGRID_API_KEY
+        try:
+            settings.RESEND_API_KEY = None
+            settings.BREVO_API_KEY = None
+            settings.SENDGRID_API_KEY = None
+            instance = MagicMock()
+            mock_ssl.return_value.__enter__.return_value = instance
+            mock_smtp.return_value.__enter__.return_value = instance
+
+            res = send_otp_email("student@sbjit.edu.in", "654321", "login")
+            self.assertTrue(res)
+        finally:
+            settings.RESEND_API_KEY = old_resend
+            settings.BREVO_API_KEY = old_brevo
+            settings.SENDGRID_API_KEY = old_sg
+
+    @patch("urllib.request.urlopen")
+    def test_resend_api_email_dispatch(self, mock_urlopen):
+        from app.core.config import settings
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        old_resend = settings.RESEND_API_KEY
+        try:
+            settings.RESEND_API_KEY = "re_test_dummy_key"
+            res = send_otp_email("student@sbjit.edu.in", "123456", "login")
+            self.assertTrue(res)
+            self.assertTrue(mock_urlopen.called)
+        finally:
+            settings.RESEND_API_KEY = old_resend
+
+    @patch("urllib.request.urlopen")
+    def test_brevo_api_email_dispatch(self, mock_urlopen):
+        from app.core.config import settings
+
+        mock_resp = MagicMock()
+        mock_resp.status = 201
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        old_brevo = settings.BREVO_API_KEY
+        old_resend = settings.RESEND_API_KEY
+        try:
+            settings.RESEND_API_KEY = None
+            settings.BREVO_API_KEY = "xkeysib_test_dummy_key"
+            res = send_otp_email("student@sbjit.edu.in", "123456", "login")
+            self.assertTrue(res)
+            self.assertTrue(mock_urlopen.called)
+        finally:
+            settings.RESEND_API_KEY = old_resend
+            settings.BREVO_API_KEY = old_brevo
+
+    @patch("urllib.request.urlopen")
+    def test_sendgrid_api_email_dispatch(self, mock_urlopen):
+        from app.core.config import settings
+
+        mock_resp = MagicMock()
+        mock_resp.status = 202
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        old_sg = settings.SENDGRID_API_KEY
+        old_resend = settings.RESEND_API_KEY
+        old_brevo = settings.BREVO_API_KEY
+        try:
+            settings.RESEND_API_KEY = None
+            settings.BREVO_API_KEY = None
+            settings.SENDGRID_API_KEY = "SG.dummy_test_key"
+            res = send_otp_email("student@sbjit.edu.in", "123456", "login")
+            self.assertTrue(res)
+            self.assertTrue(mock_urlopen.called)
+        finally:
+            settings.RESEND_API_KEY = old_resend
+            settings.BREVO_API_KEY = old_brevo
+            settings.SENDGRID_API_KEY = old_sg
 
 
 if __name__ == "__main__":

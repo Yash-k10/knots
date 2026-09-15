@@ -60,7 +60,15 @@ class Settings(BaseSettings):
     )
     ALLOWED_EMAIL_DOMAINS: list[str] | str = ["@sbjit.edu.in", "@sbjie.edu.in"]
 
-    # SMTP / Email Service Settings
+    # HTTP Email API Keys (Bypasses Render/Cloud SMTP port blocks over HTTPS 443)
+    RESEND_API_KEY: str | None = None
+    RESEND_FROM_EMAIL: str | None = (
+        None  # e.g., "KNOTS <onboarding@resend.dev>" or "KNOTS <noreply@yourdomain.com>"
+    )
+    BREVO_API_KEY: str | None = None
+    SENDGRID_API_KEY: str | None = None
+
+    # SMTP / Email Service Settings (Fallback)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 465
     SMTP_USER: str | None = "kanchangaikwad.aiml23@sbjit.edu.in"
