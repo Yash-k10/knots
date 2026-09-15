@@ -4,27 +4,19 @@ import ThemeToggle from "../components/common/ThemeToggle";
 import InfoModal, { ModalType } from "../components/common/InfoModal";
 import {
   Sparkles,
-  Compass,
   LineChart,
-  MapPin,
   Briefcase,
   Users,
   GraduationCap,
   Award,
   FileDown,
   FileCheck2,
-  Search,
   Building,
   Target,
   CheckCircle2,
   ArrowRight,
   ShieldCheck,
   ChevronRight,
-  Mail,
-  Phone,
-  MessageSquare,
-  Network,
-  UserCheck,
 } from "lucide-react";
 
 export default function Landing() {
@@ -75,7 +67,7 @@ export default function Landing() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8]">
+          <nav className="hidden lg:flex items-center gap-7 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8]">
             <a
               href="#career-path"
               className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
@@ -99,18 +91,6 @@ export default function Landing() {
               className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
             >
               Opportunities
-            </a>
-            <a
-              href="#alumni-network"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
-            >
-              Alumni
-            </a>
-            <a
-              href="#about-knots"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
-            >
-              About
             </a>
           </nav>
 
@@ -249,16 +229,12 @@ export default function Landing() {
           className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
         >
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 dark:bg-[#4B63D2]/25 text-[#4B63D2] dark:text-[#818CF8] text-xs font-extrabold uppercase tracking-wider mb-3">
-              <Compass className="w-3.5 h-3.5" /> Section 01
-            </div>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
               Discover Your Ideal Career Path
             </h2>
             <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
               Harness AI-driven diagnostics and goal-oriented roadmaps tailored
-              specifically to your engineering branch, academic performance, and
-              aspirations.
+              specifically to your academic performance and aspirations.
             </p>
           </div>
 
@@ -268,25 +244,21 @@ export default function Landing() {
                 icon: Sparkles,
                 title: "AI-Powered Career Guidance",
                 desc: "Intelligent career trajectory matching based on your coursework, strengths, and technological interest areas.",
-                badge: "Adaptive AI",
               },
               {
                 icon: LineChart,
                 title: "Personalized Skill-Gap Analysis",
                 desc: "Real-time benchmarking of your current technical & soft skills against current high-demand industry job standards.",
-                badge: "Diagnostic",
               },
               {
                 icon: Target,
                 title: "Goal-Based Career Roadmaps",
-                desc: "Structured semester-by-semester milestone blueprints for software engineering, core engineering, GATE, and civil exams.",
-                badge: "Milestones",
+                desc: "Structured semester-by-semester milestone blueprints for software engineering, core engineering, and competitive exams.",
               },
               {
                 icon: Briefcase,
                 title: "Internship & Career Guidance",
                 desc: "Proactive internship alerts, domain training suggestions, and authorized faculty mentorship checkpoints.",
-                badge: "Industry-Ready",
               },
             ].map((item, idx) => (
               <div
@@ -294,13 +266,8 @@ export default function Landing() {
                 className="group relative p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-sm hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4B63D2]/10 to-[#5851A4]/20 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <item.icon className="w-6 h-6" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#FAF9FD] dark:bg-[#1E293B] text-[#5851A4] dark:text-[#94A3B8] border border-[#EAE4F7] dark:border-[#334155]">
-                      {item.badge}
-                    </span>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4B63D2]/10 to-[#5851A4]/20 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
+                    <item.icon className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-black text-[#1E2746] dark:text-white tracking-tight group-hover:text-[#4B63D2] transition-colors">
                     {item.title}
@@ -310,7 +277,7 @@ export default function Landing() {
                   </p>
                 </div>
                 <div className="mt-5 pt-4 border-t border-[#EAE4F7]/60 dark:border-[#1F2937] flex items-center text-xs font-bold text-[#4B63D2] dark:text-[#818CF8]">
-                  <span>Explore guidance module</span>
+                  <span>Learn more</span>
                   <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -324,9 +291,6 @@ export default function Landing() {
           className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
         >
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#5851A4]/10 dark:bg-[#5851A4]/25 text-[#5851A4] dark:text-[#A5B4FC] text-xs font-extrabold uppercase tracking-wider mb-3">
-              <Network className="w-3.5 h-3.5" /> Section 02
-            </div>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
               Build Connections Across Your Campus
             </h2>
@@ -347,7 +311,7 @@ export default function Landing() {
               },
               {
                 icon: GraduationCap,
-                title: "Faculty & Academic Mentors",
+                title: "Faculty & Mentors",
                 desc: "Direct communication with course professors, lab directors, research guides, and project review committees.",
                 accent: "from-indigo-500/20 to-purple-500/10",
                 iconColor: "text-indigo-500",
@@ -368,7 +332,7 @@ export default function Landing() {
               },
               {
                 icon: ShieldCheck,
-                title: "College Management & Leadership",
+                title: "College Management & Institutional Leadership",
                 desc: "Institutional governance, high-level policies, infrastructure updates, and campus-wide strategic initiatives.",
                 accent: "from-emerald-500/20 to-teal-500/10",
                 iconColor: "text-emerald-500",
@@ -409,9 +373,6 @@ export default function Landing() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               {/* Left Column Text & Feature Checklist */}
               <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
-                  <FileDown className="w-3.5 h-3.5" /> Section 03
-                </div>
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
                   Create and Download Your Resume Instantly
                 </h2>
@@ -474,7 +435,7 @@ export default function Landing() {
               {/* Right Column Interactive Resume Card Preview */}
               <div className="lg:col-span-5">
                 <div className="relative p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] shadow-2xl shadow-[#4B63D2]/10 space-y-4">
-                  {/* Decorative Badge */}
+                  {/* Decorative Header */}
                   <div className="flex items-center justify-between pb-3 border-b border-[#EAE4F7] dark:border-[#334155]">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-rose-400" />
@@ -562,9 +523,6 @@ export default function Landing() {
           className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
         >
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-extrabold uppercase tracking-wider mb-3">
-              <Briefcase className="w-3.5 h-3.5" /> Section 04
-            </div>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
               Discover Opportunities Through Your College Network
             </h2>
@@ -578,27 +536,23 @@ export default function Landing() {
             {[
               {
                 icon: Building,
-                title: "Opportunities from TPOs & Authorities",
+                title: "Opportunities from TPOs & College Authorities",
                 desc: "Official campus placement drives, pool recruitment schedules, pre-placement talks, and campus walk-in drives with zero middlemen.",
-                tag: "Official TPO",
               },
               {
                 icon: Award,
                 title: "Opportunities Shared by Alumni",
                 desc: "Exclusive internal referral pathways, startup openings, and direct vacancy postings shared by our working alumni across global firms.",
-                tag: "Alumni Referral",
               },
               {
                 icon: Sparkles,
                 title: "Personalized Opportunities",
                 desc: "Automated opportunity matching based on your branch, CGPA eligibility criteria, live backlog checks, and domain skill sets.",
-                tag: "Smart Match",
               },
               {
                 icon: LineChart,
                 title: "Application & Progress Tracking",
                 desc: "Full lifecycle tracking from resume submission, online assessment notifications, technical rounds, to final offer issuance.",
-                tag: "Live Tracker",
               },
             ].map((opp, idx) => (
               <div
@@ -606,13 +560,8 @@ export default function Landing() {
                 className="p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-amber-500/40 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                      <opp.icon className="w-6 h-6" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                      {opp.tag}
-                    </span>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
+                    <opp.icon className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-black text-[#1E2746] dark:text-white tracking-tight">
                     {opp.title}
@@ -627,207 +576,6 @@ export default function Landing() {
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* SECTION 5: Connect with Successful Alumni */}
-        <section
-          id="alumni-network"
-          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
-        >
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-extrabold uppercase tracking-wider mb-3">
-              <Users className="w-3.5 h-3.5" /> Section 05
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
-              Connect with Successful Alumni
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
-              Bridge the experience gap by learning directly from graduates who
-              walked the same campus halls and now excel in top industries.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Search,
-                title: "Search by Company, Role, Department & Batch",
-                desc: "Filter through thousands of institutional alumni working at top tech firms, Fortune 500 giants, research labs, or government organizations.",
-              },
-              {
-                icon: GraduationCap,
-                title: "View Professional Backgrounds",
-                desc: "Explore verified career pathways, promotion histories, postgraduate specializations, and industry domain masteries.",
-              },
-              {
-                icon: UserCheck,
-                title: "Connect with Relevant Alumni",
-                desc: "Send personalized, verified connection requests with dedicated intent notes for project reviews and guidance.",
-              },
-              {
-                icon: MessageSquare,
-                title: "Seek Mentorship & Career Guidance",
-                desc: "Schedule 1-on-1 career consultation sessions, mock technical interviews, resume critiques, and industry roadmaps.",
-              },
-            ].map((alumnus, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-purple-500/40 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-4">
-                    <alumnus.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base font-black text-[#1E2746] dark:text-white tracking-tight">
-                    {alumnus.title}
-                  </h3>
-                  <p className="mt-2 text-xs text-[#5851A4] dark:text-[#94A3B8] leading-relaxed font-medium">
-                    {alumnus.desc}
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-[#EAE4F7]/60 dark:border-[#1F2937] flex items-center text-xs font-bold text-purple-600 dark:text-purple-400">
-                  <span>Connect with Mentors</span>
-                  <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* SECTION 6: About KNOTS & Official Institutional Details */}
-        <section
-          id="about-knots"
-          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
-        >
-          <div className="rounded-3xl bg-white/90 dark:bg-[#111827]/90 backdrop-blur-xl border border-[#EAE4F7] dark:border-[#1F2937] p-8 sm:p-12 shadow-xl">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              {/* About Knots Platform Overview */}
-              <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 dark:bg-[#4B63D2]/25 text-[#4B63D2] dark:text-[#818CF8] text-xs font-extrabold uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5" /> Section 06 • Institutional Profile
-                </div>
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
-                  About KNOTS
-                </h2>
-                <p className="text-base font-bold text-[#4B63D2] dark:text-[#818CF8]">
-                  An AI-powered academic and career collaboration platform
-                  connecting the entire institution.
-                </p>
-                <p className="text-xs sm:text-sm text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
-                  KNOTS is engineered to unite every stakeholder of the college
-                  campus—from newly enrolled undergraduate students to esteemed
-                  professors, accomplished alumni, and senior management—into a
-                  secure, authenticated digital ecosystem.
-                </p>
-
-                {/* Core Pillars List */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {[
-                    {
-                      title: "Connect All Stakeholders",
-                      desc: "Unite students, faculty, alumni, and management on a single authenticated platform.",
-                    },
-                    {
-                      title: "Centralize Opportunities",
-                      desc: "Unified hub for internships, full-time campus placements, and research projects.",
-                    },
-                    {
-                      title: "Strengthen Alumni Ties",
-                      desc: "Active engagement, student mentorship loops, and verified referral pipelines.",
-                    },
-                    {
-                      title: "Drive Collaboration",
-                      desc: "Support interdisciplinary academic research and institutional governance.",
-                    },
-                  ].map((pillar, pIdx) => (
-                    <div
-                      key={pIdx}
-                      className="p-3.5 rounded-2xl bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155]"
-                    >
-                      <h4 className="text-xs font-black text-[#1E2746] dark:text-white flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#4B63D2]" />
-                        {pillar.title}
-                      </h4>
-                      <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] mt-1 font-medium">
-                        {pillar.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Official Institutional Contact Card */}
-              <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-[#FAF9FD] to-[#EEF2FF] dark:from-[#1E293B] dark:to-[#0F172A] border border-[#EAE4F7] dark:border-[#334155] shadow-sm">
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B0F19] flex items-center justify-center p-1.5 shadow-sm border border-[#EAE4F7] dark:border-[#334155]">
-                      <img
-                        src="/knots_logo.png"
-                        alt="Logo"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-black text-[#1E2746] dark:text-white">
-                        S. B. Jain Institute of Technology, Management & Research
-                      </h3>
-                      <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-medium">
-                        (An Autonomous Institute | NAAC 'A+' Grade)
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3.5 text-xs text-[#5851A4] dark:text-[#CBD5E1] pt-2">
-                    <div className="flex items-start gap-2.5">
-                      <MapPin className="w-4 h-4 text-[#4B63D2] shrink-0 mt-0.5" />
-                      <span>
-                        Near Katol Road, Nagpur, Maharashtra - 441501, India
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2.5">
-                      <Phone className="w-4 h-4 text-[#4B63D2] shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#1E2746] dark:text-white">
-                          +91 712 266 7777 / +91 (0712) 2667778
-                        </span>
-                        <span className="text-[10px] text-[#5851A4] dark:text-[#94A3B8]">
-                          TPO & Campus Administrative Helpline
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2.5">
-                      <Mail className="w-4 h-4 text-[#4B63D2] shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#1E2746] dark:text-white">
-                          info@sbjit.edu.in | support@sbjit.edu.in
-                        </span>
-                        <span className="text-[10px] text-[#5851A4] dark:text-[#94A3B8]">
-                          Official College Inquiries & Support
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-[#EAE4F7] dark:border-[#334155] flex flex-col gap-2">
-                  <Link
-                    to="/register"
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all text-center"
-                  >
-                    Activate Your College Account
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="w-full py-2.5 rounded-xl bg-white dark:bg-[#111827] text-[#4B63D2] dark:text-[#A5B4FC] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] text-xs font-bold text-center transition-all"
-                  >
-                    Existing Member Sign In
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       </main>
