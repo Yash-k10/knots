@@ -242,22 +242,22 @@ export default function Landing() {
             {[
               {
                 icon: Sparkles,
-                title: "AI-Powered Career Guidance",
+                title: "AI-powered career guidance",
                 desc: "Intelligent career trajectory matching based on your coursework, strengths, and technological interest areas.",
               },
               {
                 icon: LineChart,
-                title: "Personalized Skill-Gap Analysis",
+                title: "Personalized skill-gap analysis",
                 desc: "Real-time benchmarking of your current technical & soft skills against current high-demand industry job standards.",
               },
               {
                 icon: Target,
-                title: "Goal-Based Career Roadmaps",
+                title: "Goal-based career roadmaps",
                 desc: "Structured semester-by-semester milestone blueprints for software engineering, core engineering, and competitive exams.",
               },
               {
                 icon: Briefcase,
-                title: "Internship and Career Guidance",
+                title: "Internship and career guidance",
                 desc: "Proactive internship alerts, domain training suggestions, and authorized faculty mentorship checkpoints.",
               },
             ].map((item, idx) => (
@@ -296,7 +296,7 @@ export default function Landing() {
             </h2>
             <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
               Eliminate departmental silos and establish verified connections
-              with all five pillars of our academic institution.
+              with all key stakeholders of our academic institution.
             </p>
           </div>
 
@@ -304,35 +304,35 @@ export default function Landing() {
             {[
               {
                 icon: Users,
-                title: "Students Across Departments & Batches",
+                title: "Students across departments and batches",
                 desc: "Collaborate on multidisciplinary capstones, competitive hackathons, research publications, and peer study groups.",
                 accent: "from-blue-500/20 to-indigo-500/10",
                 iconColor: "text-blue-500",
               },
               {
                 icon: GraduationCap,
-                title: "Faculty & Mentors",
+                title: "Faculty and mentors",
                 desc: "Direct communication with course professors, lab directors, research guides, and project review committees.",
                 accent: "from-indigo-500/20 to-purple-500/10",
                 iconColor: "text-indigo-500",
               },
               {
                 icon: Award,
-                title: "Alumni & Industry Professionals",
+                title: "Alumni and industry professionals",
                 desc: "Connect directly with verified graduates working across premier technology, consulting, and core enterprises.",
                 accent: "from-purple-500/20 to-pink-500/10",
                 iconColor: "text-purple-500",
               },
               {
                 icon: Building,
-                title: "HODs & Department Authorities",
+                title: "HODs and department authorities",
                 desc: "Receive authoritative department notices, internship approvals, academic letters, and event accreditations.",
                 accent: "from-amber-500/20 to-orange-500/10",
                 iconColor: "text-amber-500",
               },
               {
                 icon: ShieldCheck,
-                title: "College Management & Institutional Leadership",
+                title: "College management and institutional leadership",
                 desc: "Institutional governance, high-level policies, infrastructure updates, and campus-wide strategic initiatives.",
                 accent: "from-emerald-500/20 to-teal-500/10",
                 iconColor: "text-emerald-500",
@@ -385,20 +385,20 @@ export default function Landing() {
                 <div className="space-y-4 pt-2">
                   {[
                     {
-                      title: "Build a Resume from the KNOTS Profile",
+                      title: "Build a resume from the KNOTS profile",
                       desc: "One-click auto-population pulling your verified branch, CGPA, coursework, and contact credentials directly.",
                     },
                     {
                       title:
-                        "Include Skills, Projects, Certifications & Achievements",
+                        "Include skills, projects, certifications and achievements",
                       desc: "Dynamic categorization of technical frameworks, hackathon accolades, capstone GitHub repos, and certificates.",
                     },
                     {
-                      title: "Generate a Professional Structured Resume",
+                      title: "Generate a professional structured resume",
                       desc: "Engineered with strict ATS industry typography standards to breeze past enterprise applicant tracking filters.",
                     },
                     {
-                      title: "Download with One Click",
+                      title: "Download with one click",
                       desc: "Instant export to clean, print-ready PDF format tailored for campus drives and off-campus opportunities.",
                     },
                   ].map((feat, idx) => (
@@ -536,22 +536,22 @@ export default function Landing() {
             {[
               {
                 icon: Building,
-                title: "Opportunities from TPOs and Authorized College Authorities",
+                title: "Opportunities from TPOs and authorized college authorities",
                 desc: "Official campus placement drives, pool recruitment schedules, pre-placement talks, and campus walk-in drives with zero middlemen.",
               },
               {
                 icon: Award,
-                title: "Opportunities Shared by Alumni",
+                title: "Opportunities shared by alumni",
                 desc: "Exclusive internal referral pathways, startup openings, and direct vacancy postings shared by our working alumni across global firms.",
               },
               {
                 icon: Sparkles,
-                title: "Personalized Opportunities",
+                title: "Personalized opportunities",
                 desc: "Automated opportunity matching based on your branch, CGPA eligibility criteria, live backlog checks, and domain skill sets.",
               },
               {
                 icon: LineChart,
-                title: "Application & Progress Tracking",
+                title: "Application and progress tracking",
                 desc: "Full lifecycle tracking from resume submission, online assessment notifications, technical rounds, to final offer issuance.",
               },
             ].map((opp, idx) => (
