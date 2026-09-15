@@ -48,6 +48,17 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return children;
 };
 
+// Public-Only Route Wrapper Component (redirects logged-in users away from auth pages to dashboard)
+const PublicOnlyRoute = ({ children }: ProtectedRouteProps) => {
+  const token = localStorage.getItem("knots_token");
+
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 // Controller Route Wrapper Component for Role-Based Access Control
 const ControllerRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -195,27 +206,37 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
 };
 
 export default function AppRoutes() {
-  const token = localStorage.getItem("knots_token");
-
   return (
     <Routes>
-      {/* Public Pages */}
+      {/* Public Landing & Informational Pages */}
       <Route path="/landing" element={<Landing />} />
       <Route path="/welcome" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
 
-      {/* Main Root: Landing for guests, Dashboard Layout for Authenticated users */}
+      {/* Public Auth Pages (Redirect to dashboard if already authenticated) */}
+      <Route
+        path="/login"
+        element={
+          <PublicOnlyRoute>
+            <Login />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicOnlyRoute>
+            <Register />
+          </PublicOnlyRoute>
+        }
+      />
+
+      {/* Main Authenticated Application */}
       <Route
         path="/"
         element={
-          token ? (
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          ) : (
-            <Landing />
-          )
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />

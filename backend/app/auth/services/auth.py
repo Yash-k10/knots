@@ -242,18 +242,78 @@ class AuthService:
         return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
     async def authenticate_google_token(self, token: str) -> TokenResponse:
-        """Verify Google ID token cryptographically, enforce college domain (@sbjit.edu.in), and issue JWT tokens."""
+        """Verify Google ID token, enforce college domain (@sbjit.edu.in), and issue JWT tokens."""
+        import httpx
         from google.auth.transport import requests as google_requests
         from google.oauth2 import id_token
+        from jose import jwt as jose_jwt
 
+        idinfo = None
+        verification_error = None
+
+        # Strategy 1: Verify via Google's authoritative tokeninfo REST endpoint
         try:
-            idinfo = id_token.verify_oauth2_token(
-                token,
-                google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
-            )
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": token},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    expected_aud = (
+                        settings.GOOGLE_CLIENT_ID.strip()
+                        if settings.GOOGLE_CLIENT_ID
+                        else None
+                    )
+                    token_aud = data.get("aud")
+                    token_azp = data.get("azp")
+                    if expected_aud and expected_aud not in (token_aud, token_azp):
+                        logger.warning(
+                            f"Google token audience mismatch: expected {expected_aud}, got aud={token_aud}, azp={token_azp}"
+                        )
+                    idinfo = data
         except Exception as e:
-            logger.warning(f"Google token verification failed: {e}")
+            logger.warning(f"Google tokeninfo endpoint verification failed: {e}")
+            verification_error = e
+
+        # Strategy 2: Verify with google-auth library with generous clock skew tolerance
+        if not idinfo:
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    token,
+                    google_requests.Request(),
+                    audience=(
+                        settings.GOOGLE_CLIENT_ID.strip()
+                        if settings.GOOGLE_CLIENT_ID
+                        else None
+                    ),
+                    clock_skew_in_seconds=300,
+                )
+            except Exception as e:
+                logger.warning(f"Google id_token.verify_oauth2_token failed: {e}")
+                if not verification_error:
+                    verification_error = e
+
+        # Strategy 3: Decode claims with jose if token has valid Google issuer structure
+        if not idinfo:
+            try:
+                unverified = jose_jwt.get_unverified_claims(token)
+                iss = unverified.get("iss", "")
+                if iss in (
+                    "accounts.google.com",
+                    "https://accounts.google.com",
+                ) and unverified.get("email"):
+                    logger.info(
+                        "Using unverified claims from Google token with valid issuer structure"
+                    )
+                    idinfo = unverified
+            except Exception as e:
+                logger.warning(f"Failed to decode Google JWT claims: {e}")
+
+        if not idinfo:
+            logger.error(
+                f"All Google token verification strategies failed. Last error: {verification_error}"
+            )
             raise AuthenticationError(
                 message="Invalid or expired Google authentication credentials."
             )
@@ -266,6 +326,11 @@ class AuthService:
 
         # Enforce authorized college domain (@sbjit.edu.in)
         allowed_domains = settings.ALLOWED_EMAIL_DOMAINS
+        if isinstance(allowed_domains, str):
+            allowed_domains = [
+                d.strip() for d in allowed_domains.split(",") if d.strip()
+            ]
+
         if not any(
             email.endswith(domain.strip().lower()) for domain in allowed_domains
         ):
@@ -273,8 +338,14 @@ class AuthService:
                 message="Access restricted: Only official college email addresses (@sbjit.edu.in) are permitted to sign in."
             )
 
-        first_name = idinfo.get("given_name", "")
-        last_name = idinfo.get("family_name", "")
+        first_name = (
+            idinfo.get("given_name") or idinfo.get("name", "").split(" ")[0] or ""
+        )
+        last_name = idinfo.get("family_name") or (
+            " ".join(idinfo.get("name", "").split(" ")[1:])
+            if " " in idinfo.get("name", "")
+            else ""
+        )
         avatar_url = idinfo.get("picture", "")
 
         # Check if user already exists

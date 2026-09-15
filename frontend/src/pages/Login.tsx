@@ -478,6 +478,16 @@ export default function Login() {
             </p>
           </div>
 
+          {/* Campus Students Banner Image */}
+          <div className="w-full max-w-md sm:max-w-lg overflow-hidden rounded-2xl sm:rounded-3xl border border-[#EAE4F7] dark:border-[#1F2937] shadow-lg shadow-[#5851A4]/10 dark:shadow-black/30 group">
+            <img
+              src="/knots_campus_banner.jpg"
+              alt="Knots Campus Community Collaboration"
+              className="w-full h-auto object-cover transform group-hover:scale-[1.02] transition-transform duration-500"
+              loading="eager"
+            />
+          </div>
+
           {/* Institutional Highlights Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md sm:max-w-lg">
             {[
