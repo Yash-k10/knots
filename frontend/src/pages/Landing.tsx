@@ -37,22 +37,22 @@ export default function Landing() {
       </div>
 
       {/* Navigation Bar */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/75 dark:bg-[#0B0F19]/80 border-b border-[#EAE4F7]/80 dark:border-[#1E293B]/80 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#0B0F19]/85 border-b border-[#EAE4F7]/80 dark:border-[#1E293B]/80 transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <Link
             to="/"
-            className="flex items-center gap-3.5 group focus:outline-none"
+            className="flex items-center gap-3 group focus:outline-none flex-shrink-0"
           >
-            <div className="h-11 w-11 rounded-2xl bg-white dark:bg-[#1E293B] flex items-center justify-center p-1.5 shadow-sm border border-[#EAE4F7] dark:border-[#334155] group-hover:shadow-md group-hover:scale-105 transition-all">
+            <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white dark:bg-[#1E293B] flex items-center justify-center p-1.5 shadow-sm border border-[#EAE4F7] dark:border-[#334155] group-hover:shadow-md group-hover:scale-105 transition-all flex-shrink-0">
               <img
                 src="/knots_logo.png"
                 alt="KNOTS Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <div>
-              <span className="text-2xl font-black tracking-tight text-[#1E2746] dark:text-white flex items-center gap-1.5">
+            <div className="flex-shrink-0">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-[#1E2746] dark:text-white flex items-center gap-1.5">
                 KNOTS
                 <span className="text-[10px] uppercase font-extrabold tracking-widest px-2 py-0.5 rounded-full bg-[#4B63D2]/10 dark:bg-[#4B63D2]/30 text-[#4B63D2] dark:text-[#818cf8] border border-[#4B63D2]/20">
                   SBJIT
@@ -65,60 +65,60 @@ export default function Landing() {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8]">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] flex-shrink-0">
             <a
               href="#career-path"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
+              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
             >
               Career Path
             </a>
             <a
               href="#campus-connections"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
+              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
             >
               Campus Network
             </a>
             <a
               href="#resume-builder"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
+              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
             >
               Instant Resume
             </a>
             <a
               href="#college-opportunities"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors"
+              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
             >
               Opportunities
             </a>
           </nav>
 
           {/* Action CTAs & Theme Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <ThemeToggle />
             {isAuthenticated ? (
               <Link
                 to="/feed"
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all flex items-center gap-2"
+                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0"
               >
                 <span>Go to Portal</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
               </Link>
             ) : (
-              <>
+              <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
                 <Link
                   to="/login"
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#4B63D2] dark:text-[#A5B4FC] hover:bg-[#EEF2FF] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#EAE4F7] dark:hover:border-[#334155] transition-all"
+                  className="px-3 sm:px-4 py-2 rounded-xl text-xs font-bold text-[#4B63D2] dark:text-[#A5B4FC] hover:bg-[#EEF2FF] dark:hover:bg-[#1E293B] border border-transparent hover:border-[#EAE4F7] dark:hover:border-[#334155] transition-all whitespace-nowrap flex-shrink-0"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4.5 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all flex items-center gap-1.5"
+                  className="px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
                 >
                   <span>Join Network</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
