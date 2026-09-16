@@ -281,9 +281,9 @@ def send_otp_email(
     """
     normalized_recipient = recipient_email.strip().lower()
 
-    # Log dispatch event without exposing plaintext OTP
+    # Log dispatch event and display OTP in logs for development verification
     logger.info(
-        f"[AUTH OTP DISPATCH] Initiating OTP delivery for {normalized_recipient} (Purpose: {purpose})"
+        f"[AUTH OTP DISPATCH] Initiating OTP delivery for {normalized_recipient} (Purpose: {purpose}) | Code: {otp_code}"
     )
 
     subject = "KNOTS College Email Verification Code"
