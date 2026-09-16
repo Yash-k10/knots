@@ -918,9 +918,9 @@ export default function Login() {
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                <div className="flex flex-col gap-2.5 w-full">
                   {/* Real Google OAuth Button */}
-                  <div className="flex-1 w-full flex justify-center">
+                  <div className="w-full flex justify-center [&>div]:!w-full [&>div>div]:!w-full [&_iframe]:!w-full [&_iframe]:!mx-auto">
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={() => {
@@ -938,10 +938,10 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => handleSocialLogin("Campus SSO")}
-                    className="h-10 px-4 w-full sm:w-auto bg-white dark:bg-[#1E293B] hover:bg-[#FAF9FD] dark:hover:bg-[#334155] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs flex-shrink-0"
+                    className="w-full h-10 px-4 bg-white dark:bg-[#1E293B] hover:bg-[#FAF9FD] dark:hover:bg-[#334155] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                   >
                     <Building2 className="w-4 h-4 text-[#4B63D2]" />
-                    <span>Campus SSO</span>
+                    <span>Campus SSO (Institutional Gateway)</span>
                   </button>
                 </div>
               </div>
