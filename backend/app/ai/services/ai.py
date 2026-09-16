@@ -145,8 +145,14 @@ Resume Text:
             return {"error": str(e)}
 
 
+from app.ai.services.career_roadmap_service import LocalCareerRoadmapService
+
+
 class CareerRoadmapService:
-    """AI-powered Career Roadmap Generator using Gemini."""
+    """Local career knowledge base & deterministic roadmap generator."""
+
+    def __init__(self):
+        self.local_service = LocalCareerRoadmapService()
 
     async def generate_roadmap(
         self,
@@ -154,41 +160,7 @@ class CareerRoadmapService:
         current_skills: list[str],
         experience_level: str = "Mid-Level",
     ) -> dict:
-        client = _get_genai_client()
-        if not client:
-            return {"error": "GEMINI_API_KEY not configured"}
-
-        skills_str = ", ".join(current_skills) if current_skills else "None specified"
-
-        prompt = f"""
-Generate a comprehensive, personalized career roadmap for the following user profile:
-- Target Role: {target_role}
-- Current Skills: {skills_str}
-- Experience Level: {experience_level}
-
-Instructions:
-1. Target Role focus: First identify what skills are normally required for the target role ('{target_role}'), then compare them with the student's current skills ('{skills_str}').
-2. Relevant Skill Gap: Recommend ONLY skills/topics that are relevant to the target role. Do not insert unrelated technologies. Do not recommend skills the student already knows unless they need advanced-level improvement.
-3. Personalization: Provide a personalized career roadmap specific to this exact profile and role. Different roles and skills MUST produce completely different, tailored roadmaps.
-4. Structure: The roadmap must be sequential (Current level -> Skill gaps -> Learning steps -> Practical projects -> Job/internship readiness).
-5. Ensure the output strictly follows the JSON schema provided, with exactly 4 detailed milestones.
-
-Make sure the roadmap focuses on practical projects, interview preparation, relevant certifications, and portfolio building.
-"""
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=CareerRoadmapResultModel,
-                    temperature=0.3,
-                ),
-            )
-            return json.loads(response.text)
-        except Exception as e:
-            logger.error(f"Error calling Gemini for roadmap generation: {e}")
-            return {"error": str(e)}
+        return self.local_service.generate_roadmap(target_role, current_skills)
 
 
 class AIConnectionSuggestionService:

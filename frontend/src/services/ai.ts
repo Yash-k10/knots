@@ -84,9 +84,24 @@ export interface RoadmapMilestone {
   interview_focus?: string;
 }
 
+export interface LearningStep {
+  step: number;
+  title: string;
+  skills: string[];
+  status: "completed" | "in_progress" | "not_started" | string;
+}
+
 export interface CareerRoadmapResult {
-  target_role: string;
-  experience_level?: string;
+  role?: string;
+  target_role?: string;
+  description?: string;
+  currentSkills?: string[];
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  totalRequiredSkills?: number;
+  completionPercentage?: number;
+  learningSteps?: LearningStep[];
+  milestones?: RoadmapMilestone[];
   role_overview?: {
     title: string;
     market_demand: string;
@@ -98,15 +113,11 @@ export interface CareerRoadmapResult {
     skills_to_acquire: string[];
     readiness_percentage: number;
   };
-  milestones?: RoadmapMilestone[];
-  recommended_skills?: string[];
-  interview_prep?: {
-    system_design: string[];
-    dsa_focus: string[];
-    behavioral: string[];
-  };
+  error?: string;
+  suggestions?: string[];
   [key: string]: any;
 }
+
 
 export const aiService = {
   async getConnectionSuggestions(limit = 6): Promise<ConnectionSuggestion[]> {

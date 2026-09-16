@@ -1,0 +1,3388 @@
+{
+  "Frontend Developer": {
+    "description": "Builds responsive, interactive user interfaces for web applications using modern web technologies and frameworks.",
+    "skills": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Tailwind CSS",
+      "REST API",
+      "Git",
+      "GitHub",
+      "Vite",
+      "Responsive Design",
+      "Testing",
+      "Performance Optimization"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Web Foundations & Responsive Design",
+        "skills": [
+          "HTML",
+          "CSS",
+          "Responsive Design"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "JavaScript & Modern ES6+",
+        "skills": [
+          "JavaScript"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Version Control & Tooling",
+        "skills": [
+          "Git",
+          "GitHub",
+          "Vite"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Component Framework & State Management",
+        "skills": [
+          "React"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Modern Styling & Design Systems",
+        "skills": [
+          "Tailwind CSS"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Type Safety & Enterprise Frontend",
+        "skills": [
+          "TypeScript"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "API Integration & Async State",
+        "skills": [
+          "REST API"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Testing, Performance & Deployment",
+        "skills": [
+          "Testing",
+          "Performance Optimization"
+        ]
+      }
+    ]
+  },
+  "Backend Developer": {
+    "description": "Architects server-side business logic, APIs, database layers, and authentication systems.",
+    "skills": [
+      "Python",
+      "Node.js",
+      "FastAPI",
+      "Express.js",
+      "SQL",
+      "PostgreSQL",
+      "MongoDB",
+      "REST API",
+      "JWT",
+      "OAuth",
+      "Authentication",
+      "Docker",
+      "Redis",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Backend Language Core",
+        "skills": [
+          "Python",
+          "Node.js"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Version Control & Linux Basics",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "RESTful Architecture & Web Standards",
+        "skills": [
+          "REST API"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Backend Framework & API Routing",
+        "skills": [
+          "FastAPI",
+          "Express.js"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Database Engineering & ORMs",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MongoDB"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Authentication & Security",
+        "skills": [
+          "JWT",
+          "OAuth",
+          "Authentication"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Caching & Performance",
+        "skills": [
+          "Redis"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Containerization & Deployment",
+        "skills": [
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Full Stack Developer": {
+    "description": "Builds end-to-end web applications covering frontend UI, backend APIs, databases, authentication, and deployment.",
+    "skills": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Node.js",
+      "Express.js",
+      "REST API",
+      "SQL",
+      "PostgreSQL",
+      "MongoDB",
+      "JWT",
+      "Authentication",
+      "Git",
+      "GitHub",
+      "Docker",
+      "Deployment"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "HTML & CSS Fundamentals",
+        "skills": [
+          "HTML",
+          "CSS"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "JavaScript & TypeScript",
+        "skills": [
+          "JavaScript",
+          "TypeScript"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Version Control & Collaboration",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Frontend React Architecture",
+        "skills": [
+          "React"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Backend Services & REST APIs",
+        "skills": [
+          "Node.js",
+          "Express.js",
+          "REST API"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Databases & Data Modeling",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MongoDB"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Authentication & App Security",
+        "skills": [
+          "JWT",
+          "Authentication"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Containerization, CI/CD & Deployment",
+        "skills": [
+          "Docker",
+          "Deployment"
+        ]
+      }
+    ]
+  },
+  "Software Developer": {
+    "description": "Develops robust, maintainable software applications across domains using core computer science principles.",
+    "skills": [
+      "Python",
+      "Java",
+      "C++",
+      "Data Structures & Algorithms",
+      "OOP",
+      "SQL",
+      "PostgreSQL",
+      "REST API",
+      "Git",
+      "GitHub",
+      "Unit Testing",
+      "Debugging",
+      "CI/CD"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Core Programming & Syntax",
+        "skills": [
+          "Python",
+          "Java",
+          "C++"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Data Structures & Algorithms",
+        "skills": [
+          "Data Structures & Algorithms"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Object-Oriented Design & Clean Code",
+        "skills": [
+          "OOP"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Version Control & Collaboration",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Database Querying & Schema Design",
+        "skills": [
+          "SQL",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "API Development & Communication",
+        "skills": [
+          "REST API"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Unit Testing & Debugging",
+        "skills": [
+          "Unit Testing",
+          "Debugging"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Continuous Integration & Deployment",
+        "skills": [
+          "CI/CD"
+        ]
+      }
+    ]
+  },
+  "Software Engineer": {
+    "description": "Engineers scalable, high-performance distributed systems, microservices, and enterprise architectures.",
+    "skills": [
+      "Python",
+      "Java",
+      "Go",
+      "Data Structures & Algorithms",
+      "System Design",
+      "Microservices",
+      "SQL",
+      "PostgreSQL",
+      "Redis",
+      "Docker",
+      "Kubernetes",
+      "Git",
+      "GitHub",
+      "CI/CD",
+      "Testing"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Computer Science Foundations & Algorithms",
+        "skills": [
+          "Data Structures & Algorithms"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Primary Systems Language",
+        "skills": [
+          "Python",
+          "Java",
+          "Go"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Version Control & CI/CD",
+        "skills": [
+          "Git",
+          "GitHub",
+          "CI/CD"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Database Engineering & Caching",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "Redis"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "System Design & Distributed Architecture",
+        "skills": [
+          "System Design",
+          "Microservices"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Testing, Observability & Reliability",
+        "skills": [
+          "Testing"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Cloud Native Orchestration",
+        "skills": [
+          "Docker",
+          "Kubernetes"
+        ]
+      }
+    ]
+  },
+  "Web Developer": {
+    "description": "Builds, maintains, and deploys client-facing websites and web applications with seamless user experience.",
+    "skills": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "React",
+      "Node.js",
+      "REST API",
+      "SQL",
+      "PostgreSQL",
+      "MongoDB",
+      "Git",
+      "GitHub",
+      "Responsive Design",
+      "Web Hosting",
+      "Deployment"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Web Markup & Styling",
+        "skills": [
+          "HTML",
+          "CSS",
+          "Responsive Design"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Interactive Client Scripting",
+        "skills": [
+          "JavaScript"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Version Control",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Modern Frontend Framework",
+        "skills": [
+          "React"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Server Logic & APIs",
+        "skills": [
+          "Node.js",
+          "REST API"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Data Persistence",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MongoDB"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Web Hosting & Cloud Deployment",
+        "skills": [
+          "Web Hosting",
+          "Deployment"
+        ]
+      }
+    ]
+  },
+  "Python Developer": {
+    "description": "Specializes in building backend APIs, automation pipelines, and data services using the Python ecosystem.",
+    "skills": [
+      "Python",
+      "FastAPI",
+      "Django",
+      "Flask",
+      "SQL",
+      "PostgreSQL",
+      "SQLAlchemy",
+      "REST API",
+      "AsyncIO",
+      "PyTest",
+      "Redis",
+      "Docker",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python Core & OOP",
+        "skills": [
+          "Python"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Environment Management & Git",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Web Frameworks & APIs",
+        "skills": [
+          "FastAPI",
+          "Django",
+          "Flask",
+          "REST API"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Databases & ORMs",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "SQLAlchemy"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Asynchronous Programming",
+        "skills": [
+          "AsyncIO"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Automated Testing & Quality",
+        "skills": [
+          "PyTest"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Caching & Background Tasks",
+        "skills": [
+          "Redis"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Containerization & Production Readiness",
+        "skills": [
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Java Developer": {
+    "description": "Builds robust enterprise backend services, microservices, and transaction systems using Java and Spring Boot.",
+    "skills": [
+      "Java",
+      "OOP",
+      "Maven",
+      "Gradle",
+      "Spring Boot",
+      "Spring MVC",
+      "SQL",
+      "PostgreSQL",
+      "MySQL",
+      "Hibernate",
+      "JPA",
+      "REST API",
+      "JUnit",
+      "Docker",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Java Core & Object-Oriented Principles",
+        "skills": [
+          "Java",
+          "OOP"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Build Automation & Version Control",
+        "skills": [
+          "Maven",
+          "Gradle",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Relational Databases & Hibernate ORM",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MySQL",
+          "Hibernate",
+          "JPA"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Spring Boot & RESTful APIs",
+        "skills": [
+          "Spring Boot",
+          "Spring MVC",
+          "REST API"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Automated Unit & Integration Testing",
+        "skills": [
+          "JUnit"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Containerization & Cloud Microservices",
+        "skills": [
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "JavaScript Developer": {
+    "description": "Masters full-lifecycle JavaScript/TypeScript engineering from browser runtimes to server microservices.",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "HTML",
+      "CSS",
+      "React",
+      "Node.js",
+      "Express.js",
+      "REST API",
+      "MongoDB",
+      "PostgreSQL",
+      "Jest",
+      "Git",
+      "GitHub",
+      "Vite"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "JavaScript Language Core & ESNext",
+        "skills": [
+          "JavaScript",
+          "HTML",
+          "CSS"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Tooling & Version Control",
+        "skills": [
+          "Git",
+          "GitHub",
+          "Vite"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "TypeScript Foundations",
+        "skills": [
+          "TypeScript"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Frontend UI Frameworks",
+        "skills": [
+          "React"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Backend Node.js & Express",
+        "skills": [
+          "Node.js",
+          "Express.js",
+          "REST API"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Database Integration",
+        "skills": [
+          "MongoDB",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Unit & Integration Testing",
+        "skills": [
+          "Jest"
+        ]
+      }
+    ]
+  },
+  "React Developer": {
+    "description": "Designs and builds single-page applications, UI components, and state management architectures using React.",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "HTML",
+      "CSS",
+      "React",
+      "React Router",
+      "Tailwind CSS",
+      "REST API",
+      "Redux",
+      "React Query",
+      "Jest",
+      "Git",
+      "GitHub",
+      "Vite"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Modern JavaScript & DOM Fundamentals",
+        "skills": [
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "React Core & JSX",
+        "skills": [
+          "React"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Styling & Responsive Components",
+        "skills": [
+          "Tailwind CSS"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Client-Side Routing & Navigation",
+        "skills": [
+          "React Router"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Type Safety with TypeScript",
+        "skills": [
+          "TypeScript"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "State Management & Server Caching",
+        "skills": [
+          "Redux",
+          "React Query",
+          "REST API"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Testing, Bundling & Version Control",
+        "skills": [
+          "Jest",
+          "Git",
+          "GitHub",
+          "Vite"
+        ]
+      }
+    ]
+  },
+  "Angular Developer": {
+    "description": "Constructs enterprise web applications using Angular, TypeScript, RxJS reactive streams, and NgRx state stores.",
+    "skills": [
+      "TypeScript",
+      "JavaScript",
+      "HTML",
+      "CSS",
+      "Angular",
+      "RxJS",
+      "REST API",
+      "NgRx",
+      "Jasmine",
+      "Karma",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "TypeScript & OOP Mastery",
+        "skills": [
+          "JavaScript",
+          "TypeScript",
+          "HTML",
+          "CSS"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Angular Framework Architecture",
+        "skills": [
+          "Angular"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Reactive Programming with RxJS",
+        "skills": [
+          "RxJS"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "API Communication & Services",
+        "skills": [
+          "REST API"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Enterprise State Management",
+        "skills": [
+          "NgRx"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Testing & CI Automation",
+        "skills": [
+          "Jasmine",
+          "Karma",
+          "Git",
+          "GitHub"
+        ]
+      }
+    ]
+  },
+  "Node.js Developer": {
+    "description": "Specializes in high-throughput, non-blocking asynchronous backend servers, APIs, and microservices.",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "Node.js",
+      "Express.js",
+      "REST API",
+      "SQL",
+      "PostgreSQL",
+      "MongoDB",
+      "JWT",
+      "Authentication",
+      "Redis",
+      "Docker",
+      "Jest",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "JavaScript Async Runtime & Node Core",
+        "skills": [
+          "JavaScript",
+          "TypeScript",
+          "Node.js"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "API Development with Express",
+        "skills": [
+          "Express.js",
+          "REST API"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Database Integrations",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MongoDB"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Authentication & Authorization",
+        "skills": [
+          "JWT",
+          "Authentication"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Caching & Message Queues",
+        "skills": [
+          "Redis"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Testing, Containerization & Git",
+        "skills": [
+          "Jest",
+          "Docker",
+          "Git",
+          "GitHub"
+        ]
+      }
+    ]
+  },
+  "Mobile App Developer": {
+    "description": "Builds native and cross-platform mobile apps for iOS and Android with responsive UI and offline data caching.",
+    "skills": [
+      "Flutter",
+      "React Native",
+      "JavaScript",
+      "Dart",
+      "Mobile UI",
+      "REST API",
+      "SQLite",
+      "Firebase",
+      "State Management",
+      "Git",
+      "GitHub",
+      "App Store Deployment"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Mobile Development Core Language",
+        "skills": [
+          "JavaScript",
+          "Dart"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Cross-Platform Framework",
+        "skills": [
+          "Flutter",
+          "React Native",
+          "Mobile UI"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "State Management & Architecture",
+        "skills": [
+          "State Management"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "API Integration & Local Storage",
+        "skills": [
+          "REST API",
+          "SQLite",
+          "Firebase"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "App Store Deployment & CI/CD",
+        "skills": [
+          "Git",
+          "GitHub",
+          "App Store Deployment"
+        ]
+      }
+    ]
+  },
+  "Android Developer": {
+    "description": "Creates native Android apps using Kotlin, Jetpack Compose, Coroutines, and MVVM clean architecture.",
+    "skills": [
+      "Kotlin",
+      "Java",
+      "Android Studio",
+      "Jetpack Compose",
+      "Android SDK",
+      "MVVM",
+      "Coroutines",
+      "Retrofit",
+      "REST API",
+      "Room Database",
+      "SQLite",
+      "Git",
+      "GitHub",
+      "Google Play"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Kotlin Programming Core",
+        "skills": [
+          "Kotlin",
+          "Java"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Android Studio & Android SDK",
+        "skills": [
+          "Android Studio",
+          "Android SDK"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Modern UI with Jetpack Compose",
+        "skills": [
+          "Jetpack Compose"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Architecture & Coroutines",
+        "skills": [
+          "MVVM",
+          "Coroutines"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Networking & Local Database",
+        "skills": [
+          "Retrofit",
+          "REST API",
+          "Room Database",
+          "SQLite"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Testing & Google Play Deployment",
+        "skills": [
+          "Git",
+          "GitHub",
+          "Google Play"
+        ]
+      }
+    ]
+  },
+  "iOS Developer": {
+    "description": "Develops native iOS, iPadOS, and watchOS applications using Swift, SwiftUI, UIKit, and Apple developer tools.",
+    "skills": [
+      "Swift",
+      "Xcode",
+      "SwiftUI",
+      "UIKit",
+      "Auto Layout",
+      "MVVM",
+      "Core Data",
+      "REST API",
+      "Git",
+      "GitHub",
+      "App Store Connect",
+      "TestFlight"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Swift Programming Language",
+        "skills": [
+          "Swift"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Xcode & Apple Frameworks",
+        "skills": [
+          "Xcode",
+          "UIKit",
+          "Auto Layout"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Modern Declarative UI with SwiftUI",
+        "skills": [
+          "SwiftUI",
+          "MVVM"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Networking & Data Persistence",
+        "skills": [
+          "REST API",
+          "Core Data"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Testing & App Store Release",
+        "skills": [
+          "Git",
+          "GitHub",
+          "TestFlight",
+          "App Store Connect"
+        ]
+      }
+    ]
+  },
+  "DevOps Engineer": {
+    "description": "Automates software delivery pipelines, container orchestration, cloud infrastructure, and system observability.",
+    "skills": [
+      "Linux",
+      "Bash",
+      "Python",
+      "Git",
+      "GitHub",
+      "Docker",
+      "Kubernetes",
+      "CI/CD",
+      "GitHub Actions",
+      "Jenkins",
+      "Terraform",
+      "Ansible",
+      "Prometheus",
+      "Grafana",
+      "AWS"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Linux Administration & Scripting",
+        "skills": [
+          "Linux",
+          "Bash",
+          "Python"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Version Control & Workflow",
+        "skills": [
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Containerization",
+        "skills": [
+          "Docker"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "CI/CD Pipeline Automation",
+        "skills": [
+          "CI/CD",
+          "GitHub Actions",
+          "Jenkins"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Container Orchestration",
+        "skills": [
+          "Kubernetes"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Infrastructure as Code & Config Management",
+        "skills": [
+          "Terraform",
+          "Ansible",
+          "AWS"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Monitoring & Observability",
+        "skills": [
+          "Prometheus",
+          "Grafana"
+        ]
+      }
+    ]
+  },
+  "Cloud Engineer": {
+    "description": "Deploys, scales, and manages reliable cloud architectures across AWS, Azure, or Google Cloud Platform.",
+    "skills": [
+      "Cloud Architecture",
+      "Linux",
+      "Networking",
+      "AWS",
+      "Azure",
+      "Google Cloud",
+      "Terraform",
+      "Docker",
+      "Kubernetes",
+      "IAM",
+      "Security",
+      "Monitoring",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Networking & Linux Foundations",
+        "skills": [
+          "Linux",
+          "Networking",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Core Cloud Compute & Storage",
+        "skills": [
+          "Cloud Architecture",
+          "AWS",
+          "Azure",
+          "Google Cloud"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Identity, Access & Cloud Security",
+        "skills": [
+          "IAM",
+          "Security"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Infrastructure as Code",
+        "skills": [
+          "Terraform"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Cloud Containers & Orchestration",
+        "skills": [
+          "Docker",
+          "Kubernetes"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Cloud Observability & Governance",
+        "skills": [
+          "Monitoring"
+        ]
+      }
+    ]
+  },
+  "AWS Cloud Engineer": {
+    "description": "Designs, implements, and secures enterprise workloads on the Amazon Web Services (AWS) ecosystem.",
+    "skills": [
+      "AWS",
+      "VPC",
+      "EC2",
+      "S3",
+      "IAM",
+      "Lambda",
+      "API Gateway",
+      "RDS",
+      "DynamoDB",
+      "Terraform",
+      "CloudFormation",
+      "Docker",
+      "CloudWatch",
+      "CI/CD",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "AWS Networking & Cloud Core",
+        "skills": [
+          "AWS",
+          "VPC",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Compute, Storage & IAM",
+        "skills": [
+          "EC2",
+          "S3",
+          "IAM"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Managed Databases",
+        "skills": [
+          "RDS",
+          "DynamoDB"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Serverless Cloud Architecture",
+        "skills": [
+          "Lambda",
+          "API Gateway"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Infrastructure as Code",
+        "skills": [
+          "Terraform",
+          "CloudFormation",
+          "Docker"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Monitoring, Auditing & CI/CD",
+        "skills": [
+          "CloudWatch",
+          "CI/CD"
+        ]
+      }
+    ]
+  },
+  "Azure Cloud Engineer": {
+    "description": "Builds and manages scalable cloud services and hybrid solutions on Microsoft Azure.",
+    "skills": [
+      "Azure",
+      "Azure Virtual Network",
+      "Azure VMs",
+      "Blob Storage",
+      "Microsoft Entra ID",
+      "Azure Functions",
+      "Azure SQL",
+      "Cosmos DB",
+      "Terraform",
+      "Docker",
+      "Azure DevOps",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Azure Networking & Identity",
+        "skills": [
+          "Azure",
+          "Azure Virtual Network",
+          "Microsoft Entra ID",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Compute & Storage Services",
+        "skills": [
+          "Azure VMs",
+          "Blob Storage"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Managed Databases",
+        "skills": [
+          "Azure SQL",
+          "Cosmos DB"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Serverless & Integration",
+        "skills": [
+          "Azure Functions"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Infrastructure as Code & Containers",
+        "skills": [
+          "Terraform",
+          "Docker"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "DevOps & Monitoring",
+        "skills": [
+          "Azure DevOps"
+        ]
+      }
+    ]
+  },
+  "Data Engineer": {
+    "description": "Designs and builds large-scale data pipelines, distributed storage, ETL workflows, and lakehouse platforms.",
+    "skills": [
+      "Python",
+      "SQL",
+      "PostgreSQL",
+      "Apache Spark",
+      "PySpark",
+      "Apache Kafka",
+      "Apache Airflow",
+      "dbt",
+      "Snowflake",
+      "BigQuery",
+      "Data Lake",
+      "Docker",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python & Advanced SQL",
+        "skills": [
+          "Python",
+          "SQL",
+          "PostgreSQL",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Data Warehouses & Cloud Storage",
+        "skills": [
+          "Snowflake",
+          "BigQuery",
+          "Data Lake"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Distributed Big Data Processing",
+        "skills": [
+          "Apache Spark",
+          "PySpark"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Real-time Streaming",
+        "skills": [
+          "Apache Kafka"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Pipeline Orchestration & Transformations",
+        "skills": [
+          "Apache Airflow",
+          "dbt",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Data Analyst": {
+    "description": "Extracts actionable business insights using data cleaning, SQL querying, statistics, and interactive BI dashboards.",
+    "skills": [
+      "Excel",
+      "SQL",
+      "Data Cleaning",
+      "Statistics",
+      "Python",
+      "Pandas",
+      "NumPy",
+      "Data Visualization",
+      "Power BI",
+      "Tableau",
+      "Dashboard Project"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Spreadsheets & Fundamentals",
+        "skills": [
+          "Excel"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Database Querying & Relational Data",
+        "skills": [
+          "SQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Data Cleaning & Preparation",
+        "skills": [
+          "Data Cleaning"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Applied Statistics & Analysis",
+        "skills": [
+          "Statistics"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Python for Data Analytics",
+        "skills": [
+          "Python",
+          "Pandas",
+          "NumPy"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Data Visualization & Storytelling",
+        "skills": [
+          "Data Visualization"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Business Intelligence & Dashboards",
+        "skills": [
+          "Power BI",
+          "Tableau"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Executive Dashboard Capstone",
+        "skills": [
+          "Dashboard Project"
+        ]
+      }
+    ]
+  },
+  "Business Intelligence Analyst": {
+    "description": "Transforms complex organizational data into executive reports, strategic dashboards, and actionable KPIs.",
+    "skills": [
+      "SQL",
+      "Data Modeling",
+      "Power BI",
+      "DAX",
+      "Tableau",
+      "ETL",
+      "Excel",
+      "Data Storytelling",
+      "KPI Modeling",
+      "Data Warehousing"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "KPI Modeling & Excel Analysis",
+        "skills": [
+          "KPI Modeling",
+          "Excel"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Relational Data & Advanced SQL",
+        "skills": [
+          "SQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Dimensional Modeling & Data Warehouses",
+        "skills": [
+          "Data Modeling",
+          "Data Warehousing"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Power BI & DAX Calculations",
+        "skills": [
+          "Power BI",
+          "DAX"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Tableau Visualizations & Data Storytelling",
+        "skills": [
+          "Tableau",
+          "Data Storytelling"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Automated ETL & Reporting Flows",
+        "skills": [
+          "ETL"
+        ]
+      }
+    ]
+  },
+  "Data Scientist": {
+    "description": "Applies statistical modeling, exploratory data analysis, and predictive machine learning to solve business problems.",
+    "skills": [
+      "Python",
+      "NumPy",
+      "Pandas",
+      "Statistics",
+      "Linear Algebra",
+      "Data Cleaning",
+      "Data Visualization",
+      "Scikit-learn",
+      "Machine Learning",
+      "PyTorch",
+      "FastAPI",
+      "SQL",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python Scientific Stack & SQL",
+        "skills": [
+          "Python",
+          "NumPy",
+          "Pandas",
+          "SQL",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Math & Applied Statistics",
+        "skills": [
+          "Statistics",
+          "Linear Algebra"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Data Cleaning & Visualization",
+        "skills": [
+          "Data Cleaning",
+          "Data Visualization"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Machine Learning Models",
+        "skills": [
+          "Scikit-learn",
+          "Machine Learning"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Deep Learning Fundamentals",
+        "skills": [
+          "PyTorch"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Model Serving & Deployment",
+        "skills": [
+          "FastAPI"
+        ]
+      }
+    ]
+  },
+  "Machine Learning Engineer": {
+    "description": "Designs, trains, optimizes, and productionizes machine learning and deep learning models at scale.",
+    "skills": [
+      "Python",
+      "NumPy",
+      "Pandas",
+      "Statistics",
+      "Data Preprocessing",
+      "Scikit-learn",
+      "Supervised Learning",
+      "Unsupervised Learning",
+      "Feature Engineering",
+      "Deep Learning",
+      "PyTorch",
+      "TensorFlow",
+      "Model Deployment",
+      "MLOps",
+      "ML Project"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python Programming",
+        "skills": [
+          "Python"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Math & Data Manipulation",
+        "skills": [
+          "NumPy",
+          "Pandas",
+          "Statistics"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Data Preprocessing & Cleaning",
+        "skills": [
+          "Data Preprocessing"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Core Scikit-learn & Machine Learning",
+        "skills": [
+          "Scikit-learn",
+          "Supervised Learning",
+          "Unsupervised Learning"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Feature Engineering & Validation",
+        "skills": [
+          "Feature Engineering"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Deep Learning Foundations",
+        "skills": [
+          "Deep Learning"
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Deep Learning Frameworks",
+        "skills": [
+          "PyTorch",
+          "TensorFlow"
+        ]
+      },
+      {
+        "step": 8,
+        "title": "Model Deployment & MLOps",
+        "skills": [
+          "Model Deployment",
+          "MLOps"
+        ]
+      },
+      {
+        "step": 9,
+        "title": "Machine Learning Capstone Project",
+        "skills": [
+          "ML Project"
+        ]
+      }
+    ]
+  },
+  "AI Engineer": {
+    "description": "Develops modern AI solutions leveraging Large Language Models, embeddings, RAG pipelines, and intelligent agents.",
+    "skills": [
+      "Python",
+      "PyTorch",
+      "NLP",
+      "Transformers",
+      "Hugging Face",
+      "LLMs",
+      "Vector Databases",
+      "RAG",
+      "Prompt Engineering",
+      "LangChain",
+      "FastAPI",
+      "Docker",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python Programming & AI Tooling",
+        "skills": [
+          "Python",
+          "PyTorch",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "NLP Foundations & Transformers",
+        "skills": [
+          "NLP",
+          "Transformers",
+          "Hugging Face"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Large Language Models & Prompt Engineering",
+        "skills": [
+          "LLMs",
+          "Prompt Engineering"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Vector Databases & Retrieval Augmented Generation",
+        "skills": [
+          "Vector Databases",
+          "RAG"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Autonomous AI Agents & Orchestration",
+        "skills": [
+          "LangChain"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "API Deployment & Production AI Guardrails",
+        "skills": [
+          "FastAPI",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Deep Learning Engineer": {
+    "description": "Specializes in training, tuning, and deploying deep neural network architectures including CNNs and Transformers.",
+    "skills": [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "Neural Networks",
+      "CNNs",
+      "RNNs",
+      "Transformers",
+      "CUDA",
+      "Model Optimization",
+      "Computer Vision",
+      "NLP",
+      "Docker"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python & Tensor Math",
+        "skills": [
+          "Python",
+          "Neural Networks"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Deep Learning Frameworks",
+        "skills": [
+          "PyTorch",
+          "TensorFlow"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Computer Vision & CNN Architectures",
+        "skills": [
+          "CNNs",
+          "Computer Vision"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Sequence Modeling & Transformers",
+        "skills": [
+          "RNNs",
+          "Transformers",
+          "NLP"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "GPU Acceleration & Optimization",
+        "skills": [
+          "CUDA",
+          "Model Optimization",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "NLP Engineer": {
+    "description": "Builds natural language understanding systems, text mining models, sentiment classifiers, and LLM applications.",
+    "skills": [
+      "Python",
+      "NLP",
+      "spaCy",
+      "NLTK",
+      "Transformers",
+      "Hugging Face",
+      "LLMs",
+      "Embeddings",
+      "Vector Databases",
+      "RAG",
+      "PyTorch",
+      "FastAPI",
+      "Docker"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python & Text Processing",
+        "skills": [
+          "Python",
+          "NLP",
+          "spaCy",
+          "NLTK"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Text Embeddings & Vector Representations",
+        "skills": [
+          "Embeddings",
+          "Vector Databases"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Transformer Models & Hugging Face",
+        "skills": [
+          "Transformers",
+          "Hugging Face",
+          "PyTorch"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "LLMs & RAG Pipelines",
+        "skills": [
+          "LLMs",
+          "RAG"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Deployment & Real-Time Inference",
+        "skills": [
+          "FastAPI",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Computer Vision Engineer": {
+    "description": "Designs algorithms and deep neural networks for image processing, object detection, segmentation, and video analytics.",
+    "skills": [
+      "Python",
+      "C++",
+      "OpenCV",
+      "PyTorch",
+      "TensorFlow",
+      "CNNs",
+      "Object Detection",
+      "YOLO",
+      "Image Segmentation",
+      "CUDA",
+      "TensorRT",
+      "Docker"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python, C++ & OpenCV Fundamentals",
+        "skills": [
+          "Python",
+          "C++",
+          "OpenCV"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Deep Learning for Vision",
+        "skills": [
+          "PyTorch",
+          "TensorFlow",
+          "CNNs"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Object Detection & Tracking",
+        "skills": [
+          "Object Detection",
+          "YOLO"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Segmentation & 3D Vision",
+        "skills": [
+          "Image Segmentation"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Edge Deployment & GPU Optimization",
+        "skills": [
+          "CUDA",
+          "TensorRT",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "Generative AI Engineer": {
+    "description": "Constructs generative AI systems, autonomous agent workflows, fine-tuned foundation models, and enterprise copilot platforms.",
+    "skills": [
+      "Python",
+      "PyTorch",
+      "LLMs",
+      "Transformers",
+      "Prompt Engineering",
+      "RAG",
+      "Vector Databases",
+      "LangChain",
+      "Fine-Tuning",
+      "LoRA",
+      "FastAPI",
+      "Docker"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python & Foundation Models",
+        "skills": [
+          "Python",
+          "PyTorch",
+          "Transformers"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "LLM APIs & Prompt Engineering",
+        "skills": [
+          "LLMs",
+          "Prompt Engineering"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "RAG & Vector Retrieval",
+        "skills": [
+          "RAG",
+          "Vector Databases"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Agentic Workflows & Multi-Agent Frameworks",
+        "skills": [
+          "LangChain"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Model Fine-Tuning & Parameter-Efficient Tuning",
+        "skills": [
+          "Fine-Tuning",
+          "LoRA"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Evaluation, Guardrails & Production API",
+        "skills": [
+          "FastAPI",
+          "Docker"
+        ]
+      }
+    ]
+  },
+  "MLOps Engineer": {
+    "description": "Establishes automated CI/CD for machine learning, model registries, feature stores, and continuous model monitoring.",
+    "skills": [
+      "Python",
+      "Bash",
+      "Linux",
+      "Docker",
+      "Kubernetes",
+      "MLflow",
+      "Apache Airflow",
+      "Kubeflow",
+      "DVC",
+      "Model Serving",
+      "Monitoring",
+      "CI/CD",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Python, Linux & Version Control",
+        "skills": [
+          "Python",
+          "Bash",
+          "Linux",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Containerization & Orchestration",
+        "skills": [
+          "Docker",
+          "Kubernetes"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Experiment Tracking & Model Registries",
+        "skills": [
+          "MLflow"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Pipeline Orchestration & Versioning",
+        "skills": [
+          "Apache Airflow",
+          "Kubeflow",
+          "DVC"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Model Serving & Continuous Monitoring",
+        "skills": [
+          "Model Serving",
+          "Monitoring",
+          "CI/CD"
+        ]
+      }
+    ]
+  },
+  "Database Administrator": {
+    "description": "Oversees database security, backup strategies, performance tuning, clustering, and zero-downtime operations.",
+    "skills": [
+      "SQL",
+      "PostgreSQL",
+      "MySQL",
+      "Database Tuning",
+      "Backup & Recovery",
+      "High Availability",
+      "Replication",
+      "Security",
+      "Linux",
+      "Bash",
+      "Monitoring"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Database Architecture & SQL",
+        "skills": [
+          "SQL",
+          "Linux",
+          "Bash"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "RDBMS Administration & Security",
+        "skills": [
+          "PostgreSQL",
+          "MySQL",
+          "Security"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Backup Strategies & Disaster Recovery",
+        "skills": [
+          "Backup & Recovery"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "High Availability & Replication",
+        "skills": [
+          "High Availability",
+          "Replication"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Performance Tuning & Monitoring",
+        "skills": [
+          "Database Tuning",
+          "Monitoring"
+        ]
+      }
+    ]
+  },
+  "Database Developer": {
+    "description": "Specializes in relational schema modeling, advanced SQL queries, stored procedures, triggers, and query optimization.",
+    "skills": [
+      "SQL",
+      "PL/SQL",
+      "T-SQL",
+      "PostgreSQL",
+      "MySQL",
+      "Schema Design",
+      "Stored Procedures",
+      "Query Optimization",
+      "Indexing",
+      "Database Migration",
+      "Git"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Relational Data Modeling & Normalization",
+        "skills": [
+          "Schema Design",
+          "Git"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Advanced SQL & Analytics",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MySQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Procedural Database Programming",
+        "skills": [
+          "PL/SQL",
+          "T-SQL",
+          "Stored Procedures"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Indexing & Query Optimization",
+        "skills": [
+          "Indexing",
+          "Query Optimization"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Migrations & Schema Evolution",
+        "skills": [
+          "Database Migration"
+        ]
+      }
+    ]
+  },
+  "SQL Developer": {
+    "description": "Writes high-efficiency SQL queries, analytical aggregations, stored procedures, and ETL data transformations.",
+    "skills": [
+      "SQL",
+      "PostgreSQL",
+      "MySQL",
+      "Stored Procedures",
+      "Triggers",
+      "Views",
+      "Indexing",
+      "Query Optimization",
+      "ETL",
+      "Data Analysis"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "SQL Query Syntax & Aggregations",
+        "skills": [
+          "SQL",
+          "PostgreSQL",
+          "MySQL"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Advanced Joins & Window Functions",
+        "skills": [
+          "Data Analysis"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Database Objects & Automation",
+        "skills": [
+          "Stored Procedures",
+          "Triggers",
+          "Views"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Performance Tuning & Indexes",
+        "skills": [
+          "Indexing",
+          "Query Optimization"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Data Extraction & ETL Workflows",
+        "skills": [
+          "ETL"
+        ]
+      }
+    ]
+  },
+  "Cybersecurity Analyst": {
+    "description": "Monitors network traffic, evaluates vulnerabilities, analyzes logs in SIEM tools, and mitigates security incidents.",
+    "skills": [
+      "Networking",
+      "Linux",
+      "Windows",
+      "SIEM",
+      "Splunk",
+      "Incident Response",
+      "Vulnerability Assessment",
+      "Wireshark",
+      "Nmap",
+      "Threat Hunting",
+      "MITRE ATT&CK"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Networking & Systems Fundamentals",
+        "skills": [
+          "Networking",
+          "Linux",
+          "Windows"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Network Analysis & Vulnerability Scanning",
+        "skills": [
+          "Wireshark",
+          "Nmap",
+          "Vulnerability Assessment"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Security Information & Event Management (SIEM)",
+        "skills": [
+          "SIEM",
+          "Splunk"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Incident Response & Playbook Execution",
+        "skills": [
+          "Incident Response"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Threat Intelligence & Hunting",
+        "skills": [
+          "Threat Hunting",
+          "MITRE ATT&CK"
+        ]
+      }
+    ]
+  },
+  "Cybersecurity Engineer": {
+    "description": "Architects resilient enterprise security defenses, IAM infrastructure, encryption protocols, and DevSecOps pipelines.",
+    "skills": [
+      "Network Security",
+      "Firewalls",
+      "VPN",
+      "Linux",
+      "Python",
+      "Bash",
+      "Cryptography",
+      "IAM",
+      "Cloud Security",
+      "DevSecOps",
+      "SIEM",
+      "Git"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Network Security & Hardening",
+        "skills": [
+          "Network Security",
+          "Firewalls",
+          "VPN",
+          "Linux"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Security Scripting & Automation",
+        "skills": [
+          "Python",
+          "Bash",
+          "Git"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Cryptography & PKI",
+        "skills": [
+          "Cryptography"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Identity & Access Management (IAM)",
+        "skills": [
+          "IAM"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Cloud Security & DevSecOps",
+        "skills": [
+          "Cloud Security",
+          "DevSecOps",
+          "SIEM"
+        ]
+      }
+    ]
+  },
+  "Network Engineer": {
+    "description": "Designs, configures, and maintains scalable local and wide area network infrastructure, routing, and switches.",
+    "skills": [
+      "Networking",
+      "TCP/IP",
+      "Cisco IOS",
+      "Routing & Switching",
+      "BGP",
+      "OSPF",
+      "VLAN",
+      "Firewalls",
+      "VPN",
+      "Wireshark",
+      "Python",
+      "Network Automation"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Network Foundations & TCP/IP Protocol Stack",
+        "skills": [
+          "Networking",
+          "TCP/IP"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Routing & Switching Configuration",
+        "skills": [
+          "Cisco IOS",
+          "Routing & Switching",
+          "VLAN",
+          "BGP",
+          "OSPF"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Perimeter Security & VPNs",
+        "skills": [
+          "Firewalls",
+          "VPN"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Packet Analysis & Troubleshooting",
+        "skills": [
+          "Wireshark"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Network Automation with Python",
+        "skills": [
+          "Python",
+          "Network Automation"
+        ]
+      }
+    ]
+  },
+  "QA Engineer": {
+    "description": "Ensures software reliability through test plan design, manual validation, API testing, and UI test automation.",
+    "skills": [
+      "Manual Testing",
+      "Test Cases",
+      "Postman",
+      "REST API Testing",
+      "Selenium",
+      "Cypress",
+      "Python",
+      "JavaScript",
+      "SQL",
+      "Git",
+      "GitHub",
+      "CI/CD"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Testing Fundamentals & Test Case Design",
+        "skills": [
+          "Manual Testing",
+          "Test Cases"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "API Testing & HTTP Protocols",
+        "skills": [
+          "Postman",
+          "REST API Testing",
+          "SQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Test Automation Languages & Git",
+        "skills": [
+          "Python",
+          "JavaScript",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Web UI Test Automation",
+        "skills": [
+          "Selenium",
+          "Cypress"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "CI/CD Integration & Test Reporting",
+        "skills": [
+          "CI/CD"
+        ]
+      }
+    ]
+  },
+  "Automation Test Engineer": {
+    "description": "Builds scalable, maintainable test automation frameworks for Web, API, and Mobile CI/CD pipelines.",
+    "skills": [
+      "Java",
+      "Python",
+      "TypeScript",
+      "Playwright",
+      "Selenium",
+      "Cypress",
+      "REST API Testing",
+      "Postman",
+      "Appium",
+      "Docker",
+      "CI/CD",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Programming for Test Engineers",
+        "skills": [
+          "Java",
+          "Python",
+          "TypeScript",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "UI Automation Frameworks",
+        "skills": [
+          "Playwright",
+          "Selenium",
+          "Cypress"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "API Automation Testing",
+        "skills": [
+          "REST API Testing",
+          "Postman"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Mobile Automation Testing",
+        "skills": [
+          "Appium"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Containerized Parallel Testing & CI/CD",
+        "skills": [
+          "Docker",
+          "CI/CD"
+        ]
+      }
+    ]
+  },
+  "System Administrator": {
+    "description": "Maintains physical and virtual server infrastructure, user directories, backups, security patches, and monitoring.",
+    "skills": [
+      "Linux",
+      "Windows Server",
+      "Active Directory",
+      "Bash",
+      "PowerShell",
+      "VMware",
+      "DNS",
+      "DHCP",
+      "Backup & Recovery",
+      "Zabbix",
+      "Security Hardening"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Linux & Windows Server Administration",
+        "skills": [
+          "Linux",
+          "Windows Server"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Shell Scripting & Automation",
+        "skills": [
+          "Bash",
+          "PowerShell"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Core Services & Active Directory",
+        "skills": [
+          "Active Directory",
+          "DNS",
+          "DHCP"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Virtualization & Storage",
+        "skills": [
+          "VMware"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Backup, Disaster Recovery & Monitoring",
+        "skills": [
+          "Backup & Recovery",
+          "Zabbix",
+          "Security Hardening"
+        ]
+      }
+    ]
+  },
+  "Solutions Architect": {
+    "description": "Translates business requirements into resilient, secure, scalable end-to-end technical system architectures.",
+    "skills": [
+      "System Design",
+      "Cloud Architecture",
+      "AWS",
+      "Azure",
+      "Microservices",
+      "SQL",
+      "NoSQL",
+      "Security",
+      "DevOps",
+      "API Design",
+      "High Availability",
+      "Technical Leadership"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Full-Stack Technology Ecosystem",
+        "skills": [
+          "API Design",
+          "SQL",
+          "NoSQL"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Cloud Architecture & Services",
+        "skills": [
+          "Cloud Architecture",
+          "AWS",
+          "Azure"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "System Design & Distributed Patterns",
+        "skills": [
+          "System Design",
+          "Microservices",
+          "High Availability"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Security, Governance & DevOps",
+        "skills": [
+          "Security",
+          "DevOps"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Enterprise Solution Design & Leadership",
+        "skills": [
+          "Technical Leadership"
+        ]
+      }
+    ]
+  },
+  "UI/UX Designer": {
+    "description": "Conducts user research, designs wireframes, builds interactive Figma prototypes, and enforces accessibility.",
+    "skills": [
+      "Figma",
+      "User Research",
+      "Wireframing",
+      "Prototyping",
+      "Design Systems",
+      "Usability Testing",
+      "UI Design",
+      "Responsive Design",
+      "Accessibility",
+      "Design Handoff"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Visual Design & UI Principles",
+        "skills": [
+          "UI Design",
+          "Responsive Design"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "User Research & Information Architecture",
+        "skills": [
+          "User Research",
+          "Wireframing"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Figma Mastery & Component Systems",
+        "skills": [
+          "Figma",
+          "Design Systems"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Interactive Prototyping",
+        "skills": [
+          "Prototyping"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Usability Testing & Accessibility Standards",
+        "skills": [
+          "Usability Testing",
+          "Accessibility"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Design Systems & Developer Handoff",
+        "skills": [
+          "Design Handoff"
+        ]
+      }
+    ]
+  },
+  "Product Designer": {
+    "description": "Combines UX research, visual craft, product strategy, and business goals to design high-impact digital products.",
+    "skills": [
+      "Product Strategy",
+      "User Research",
+      "Figma",
+      "Design Systems",
+      "Prototyping",
+      "A/B Testing",
+      "Product Analytics",
+      "Usability Testing",
+      "Agile",
+      "Cross-Functional Collaboration"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Product Strategy & Problem Framing",
+        "skills": [
+          "Product Strategy",
+          "User Research"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "UI/UX Design Systems & Figma",
+        "skills": [
+          "Figma",
+          "Design Systems"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Interactive Prototyping & Flows",
+        "skills": [
+          "Prototyping",
+          "Usability Testing"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Data-Driven Validation & Product Analytics",
+        "skills": [
+          "A/B Testing",
+          "Product Analytics"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Cross-Functional Agile Execution",
+        "skills": [
+          "Agile",
+          "Cross-Functional Collaboration"
+        ]
+      }
+    ]
+  },
+  "Product Manager": {
+    "description": "Leads cross-functional teams to discover, define, prioritize, and launch software products that delight users.",
+    "skills": [
+      "Product Strategy",
+      "User Research",
+      "Roadmapping",
+      "Feature Prioritization",
+      "PRDs",
+      "Jira",
+      "Agile",
+      "Scrum",
+      "Product Analytics",
+      "Go-To-Market",
+      "Stakeholder Management"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Product Discovery & User Needs",
+        "skills": [
+          "Product Strategy",
+          "User Research"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Roadmapping & Prioritization",
+        "skills": [
+          "Roadmapping",
+          "Feature Prioritization"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "PRD Writing & User Stories",
+        "skills": [
+          "PRDs",
+          "Jira"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Agile Sprint Execution",
+        "skills": [
+          "Agile",
+          "Scrum"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Product Analytics & Growth",
+        "skills": [
+          "Product Analytics"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Go-To-Market & Executive Alignment",
+        "skills": [
+          "Go-To-Market",
+          "Stakeholder Management"
+        ]
+      }
+    ]
+  },
+  "Technical Product Manager": {
+    "description": "Bridges engineering, architecture, and business product management for platform, API, and data infrastructure.",
+    "skills": [
+      "Product Strategy",
+      "Technical Specifications",
+      "API Design",
+      "Cloud Infrastructure",
+      "Database Modeling",
+      "SQL",
+      "Jira",
+      "Agile",
+      "System Design",
+      "Release Management"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Technical Architecture & API Literacy",
+        "skills": [
+          "System Design",
+          "API Design",
+          "Cloud Infrastructure"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Data Modeling & SQL",
+        "skills": [
+          "Database Modeling",
+          "SQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Product Strategy & Technical PRDs",
+        "skills": [
+          "Product Strategy",
+          "Technical Specifications"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Agile Delivery & Backlog Management",
+        "skills": [
+          "Jira",
+          "Agile"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Developer Experience & Release Management",
+        "skills": [
+          "Release Management"
+        ]
+      }
+    ]
+  },
+  "Business Analyst": {
+    "description": "Analyzes business workflows, gathers functional requirements, models processes, and facilitates user acceptance testing.",
+    "skills": [
+      "Business Process Modeling",
+      "BPMN",
+      "Requirements Gathering",
+      "User Stories",
+      "Excel",
+      "SQL",
+      "Tableau",
+      "Power BI",
+      "Stakeholder Management",
+      "UAT",
+      "Jira"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Business Process Modeling & Mapping",
+        "skills": [
+          "Business Process Modeling",
+          "BPMN"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Requirements Elicitation & User Stories",
+        "skills": [
+          "Requirements Gathering",
+          "User Stories",
+          "Jira"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Data Analysis & Relational Querying",
+        "skills": [
+          "Excel",
+          "SQL"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Reporting Dashboards & Insights",
+        "skills": [
+          "Tableau",
+          "Power BI"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Stakeholder Alignment & UAT Facilitation",
+        "skills": [
+          "Stakeholder Management",
+          "UAT"
+        ]
+      }
+    ]
+  },
+  "Technical Business Analyst": {
+    "description": "Translates complex business workflows into technical requirements, data flows, and system integration specs.",
+    "skills": [
+      "Business Process Modeling",
+      "BPMN",
+      "Technical Requirements",
+      "SQL",
+      "REST API",
+      "Postman",
+      "System Integration",
+      "Power BI",
+      "Jira",
+      "UAT"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Process Mapping & Technical Architecture",
+        "skills": [
+          "Business Process Modeling",
+          "BPMN"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Relational Data Analysis",
+        "skills": [
+          "SQL"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "API & Technical Specification",
+        "skills": [
+          "Technical Requirements",
+          "REST API",
+          "Postman"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "System Integration & Data Pipelines",
+        "skills": [
+          "System Integration",
+          "Power BI"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Agile Sprint Execution & UAT",
+        "skills": [
+          "Jira",
+          "UAT"
+        ]
+      }
+    ]
+  },
+  "Blockchain Developer": {
+    "description": "Programs smart contracts, decentralized finance protocols, and Web3 DApps on EVM and layer-1/2 chains.",
+    "skills": [
+      "Solidity",
+      "Smart Contracts",
+      "EVM",
+      "Hardhat",
+      "Foundry",
+      "Web3.js",
+      "Ethers.js",
+      "React",
+      "IPFS",
+      "Security Auditing",
+      "Git",
+      "GitHub"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Cryptography & Distributed Ledger Basics",
+        "skills": [
+          "EVM",
+          "Git",
+          "GitHub"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Smart Contract Programming with Solidity",
+        "skills": [
+          "Solidity",
+          "Smart Contracts"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Development Frameworks & Testing",
+        "skills": [
+          "Hardhat",
+          "Foundry"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Web3 Frontend & Wallet Integration",
+        "skills": [
+          "Web3.js",
+          "Ethers.js",
+          "React"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Decentralized Storage & Protocol Security",
+        "skills": [
+          "IPFS",
+          "Security Auditing"
+        ]
+      }
+    ]
+  },
+  "Game Developer": {
+    "description": "Builds 2D and 3D games, physics simulations, gameplay mechanics, and animation systems in Unity or Unreal Engine.",
+    "skills": [
+      "C#",
+      "C++",
+      "Unity",
+      "Unreal Engine",
+      "3D Math",
+      "Game Physics",
+      "Animation",
+      "Gameplay AI",
+      "Shader Programming",
+      "Git",
+      "Game UI"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Programming & 3D Math for Games",
+        "skills": [
+          "C#",
+          "C++",
+          "3D Math",
+          "Git"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Game Engine Architecture",
+        "skills": [
+          "Unity",
+          "Unreal Engine"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Game Physics & Input Handling",
+        "skills": [
+          "Game Physics"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Animation, Shaders & Visual Effects",
+        "skills": [
+          "Animation",
+          "Shader Programming"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Gameplay AI, UI & Optimization",
+        "skills": [
+          "Gameplay AI",
+          "Game UI"
+        ]
+      }
+    ]
+  },
+  "Embedded Systems Developer": {
+    "description": "Develops firmware, hardware device drivers, and real-time operating systems on microcontrollers and embedded chips.",
+    "skills": [
+      "C",
+      "C++",
+      "Microcontrollers",
+      "ARM Cortex",
+      "FreeRTOS",
+      "UART",
+      "SPI",
+      "I2C",
+      "GPIO",
+      "Hardware Debugging",
+      "Low Power Design",
+      "Git"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Embedded C & Bit Manipulation",
+        "skills": [
+          "C",
+          "C++",
+          "Git"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Microcontroller Architecture & Registers",
+        "skills": [
+          "Microcontrollers",
+          "ARM Cortex"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Peripheral Communication Protocols",
+        "skills": [
+          "UART",
+          "SPI",
+          "I2C",
+          "GPIO"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Real-Time Operating Systems (RTOS)",
+        "skills": [
+          "FreeRTOS"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Hardware Debugging & Power Optimization",
+        "skills": [
+          "Hardware Debugging",
+          "Low Power Design"
+        ]
+      }
+    ]
+  },
+  "Robotics Engineer": {
+    "description": "Develops autonomous robotics software, robot operating systems (ROS), kinematics, motion planning, and SLAM.",
+    "skills": [
+      "C++",
+      "Python",
+      "ROS",
+      "ROS2",
+      "Gazebo",
+      "Kinematics",
+      "Motion Planning",
+      "Computer Vision",
+      "SLAM",
+      "Sensor Fusion",
+      "Control Systems",
+      "Git"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "title": "Robotics Math & Programming",
+        "skills": [
+          "C++",
+          "Python",
+          "Kinematics",
+          "Git"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Robot Operating System (ROS / ROS2)",
+        "skills": [
+          "ROS",
+          "ROS2"
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Simulation & Physical Modeling",
+        "skills": [
+          "Gazebo"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Perception, Vision & Sensor Fusion",
+        "skills": [
+          "Computer Vision",
+          "Sensor Fusion"
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Motion Planning, SLAM & Control",
+        "skills": [
+          "Motion Planning",
+          "SLAM",
+          "Control Systems"
+        ]
+      }
+    ]
+  }
+}

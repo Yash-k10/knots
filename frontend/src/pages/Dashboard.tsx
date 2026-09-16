@@ -7,6 +7,7 @@ import {
   Compass,
   FileText,
   CheckCircle2,
+  AlertCircle,
   Brain,
   Send,
   Loader2,
@@ -79,6 +80,7 @@ export default function Dashboard() {
   const [targetRole, setTargetRole] = useState("");
   const [skillsInput, setSkillsInput] = useState("");
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
+  const [roadmapError, setRoadmapError] = useState<string | null>(null);
   const [roadmapResult, setRoadmapResult] = useState<CareerRoadmapResult | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -159,7 +161,11 @@ export default function Dashboard() {
 
   const handleGenerateRoadmap = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetRole.trim()) return;
+    setRoadmapError(null);
+    if (!targetRole.trim()) {
+      setRoadmapError("Please enter a Target Role (e.g. Full Stack Developer, Data Analyst).");
+      return;
+    }
     setIsGeneratingRoadmap(true);
     const skillsList = skillsInput
       .split(",")
@@ -167,9 +173,15 @@ export default function Dashboard() {
       .filter(Boolean);
     try {
       const res = await aiService.generateRoadmap(targetRole, skillsList);
-      setRoadmapResult(res);
-    } catch (err) {
+      if (res.error) {
+        setRoadmapError(res.error);
+        setRoadmapResult(null);
+      } else {
+        setRoadmapResult(res);
+      }
+    } catch (err: any) {
       console.error("Roadmap generation failed", err);
+      setRoadmapError(err?.message || "Failed to generate roadmap. Please check your target role.");
     } finally {
       setIsGeneratingRoadmap(false);
     }
@@ -1106,13 +1118,13 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-[#1E2746] mb-1.5 uppercase tracking-wider">
-                      Target Role
+                      Target Role <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={targetRole}
                       onChange={(e) => setTargetRole(e.target.value)}
-                      placeholder="e.g. Senior Full-Stack Engineer, AI Research Intern"
+                      placeholder="e.g. Full Stack Developer, Machine Learning Engineer"
                       className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl p-3 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
                     />
                   </div>
@@ -1148,15 +1160,187 @@ export default function Dashboard() {
                 </button>
               </form>
 
+              {roadmapError && (
+                <div className="bg-red-50/80 border border-red-200 rounded-2xl p-4 text-xs text-red-700 flex items-start gap-2.5 animate-in fade-in duration-200">
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">{roadmapError}</span>
+                    <p className="text-[11px] text-red-600 mt-1">
+                      Tip: Try canonical roles like <em>Frontend Developer</em>, <em>Full Stack Developer</em>, <em>Data Analyst</em>, <em>Machine Learning Engineer</em>, <em>DevOps Engineer</em>, etc.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {roadmapResult && (
-                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-4 animate-in fade-in duration-300">
-                  <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
-                    <Compass className="h-4 w-4 text-[#4B63D2]" /> Proposed
-                    Career Path
-                  </h4>
-                  {roadmapResult.milestones && (
-                    <div className="space-y-3">
-                      {roadmapResult.milestones.map((step: any, idx: number) => (
+                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-6 animate-in fade-in duration-300">
+                  {/* Header & Completion */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EAE4F7] pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Compass className="h-5 w-5 text-[#4B63D2]" />
+                        <h4 className="text-base font-black text-[#1E2746]">
+                          {roadmapResult.role || roadmapResult.target_role || targetRole}
+                        </h4>
+                      </div>
+                      {roadmapResult.description && (
+                        <p className="text-xs text-[#5851A4] mt-1 font-medium">
+                          {roadmapResult.description}
+                        </p>
+                      )}
+                    </div>
+                    {typeof roadmapResult.completionPercentage === "number" && (
+                      <div className="bg-white px-4 py-2.5 rounded-2xl border border-[#EAE4F7] shadow-sm flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="text-[10px] font-bold text-[#5851A4] uppercase tracking-wider block">
+                            Readiness Score
+                          </span>
+                          <span className="text-sm font-black text-[#4B63D2]">
+                            {roadmapResult.completionPercentage}%
+                          </span>
+                        </div>
+                        <div className="w-16 h-2 bg-[#EAE4F7] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#4B63D2] rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(Math.max(roadmapResult.completionPercentage, 5), 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skills Breakdown */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Matched Skills */}
+                    <div className="bg-white p-4 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#1E2746] flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          Matched Skills (Completed)
+                        </span>
+                        <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+                          {roadmapResult.matchedSkills?.length || 0}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {roadmapResult.matchedSkills && roadmapResult.matchedSkills.length > 0 ? (
+                          roadmapResult.matchedSkills.map((sk: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-1 rounded-xl"
+                            >
+                              ✓ {sk}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-[#9188BE] italic">
+                            No matching skills acquired yet.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Missing Skills */}
+                    <div className="bg-white p-4 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#1E2746] flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-[#4B63D2]" />
+                          Skills To Acquire
+                        </span>
+                        <span className="text-[11px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-lg border border-[#4B63D2]/20">
+                          {roadmapResult.missingSkills?.length || 0}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {roadmapResult.missingSkills && roadmapResult.missingSkills.length > 0 ? (
+                          roadmapResult.missingSkills.map((sk: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="text-[11px] font-semibold bg-[#FAF9FD] text-[#4B63D2] border border-[#D5CBEE] px-2.5 py-1 rounded-xl"
+                            >
+                              + {sk}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-emerald-600 font-bold">
+                            🎉 All required skills acquired!
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sequential Learning Steps */}
+                  <div className="space-y-3 pt-2">
+                    <h5 className="text-xs font-black text-[#1E2746] uppercase tracking-wider">
+                      Ordered Learning Roadmap ({roadmapResult.learningSteps?.length || 0} Steps)
+                    </h5>
+
+                    {roadmapResult.learningSteps && roadmapResult.learningSteps.length > 0 ? (
+                      roadmapResult.learningSteps.map((step: any, idx: number) => {
+                        const isDone = step.status === "completed";
+                        const inProg = step.status === "in_progress";
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm transition ${
+                              isDone
+                                ? "bg-emerald-50/40 border-emerald-200"
+                                : inProg
+                                ? "bg-amber-50/40 border-amber-200"
+                                : "bg-white border-[#EAE4F7]"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span
+                                className={`h-7 w-7 rounded-full font-black text-xs flex items-center justify-center shrink-0 ${
+                                  isDone
+                                    ? "bg-emerald-600 text-white"
+                                    : inProg
+                                    ? "bg-amber-500 text-white"
+                                    : "bg-[#4B63D2]/15 text-[#4B63D2]"
+                                }`}
+                              >
+                                {step.step || idx + 1}
+                              </span>
+                              <div>
+                                <h5 className="text-xs font-bold text-[#1E2746]">
+                                  {step.title}
+                                </h5>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {step.skills?.map((sk: string, sIdx: number) => (
+                                    <span
+                                      key={sIdx}
+                                      className="text-[10px] font-medium bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] px-2 py-0.5 rounded-lg"
+                                    >
+                                      {sk}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 self-end sm:self-center">
+                              {isDone ? (
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-300 flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> COMPLETED
+                                </span>
+                              ) : inProg ? (
+                                <span className="text-[10px] font-bold text-amber-700 bg-amber-100/80 px-2.5 py-1 rounded-full border border-amber-300">
+                                  IN PROGRESS
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-[#5851A4] bg-[#FAF9FD] px-2.5 py-1 rounded-full border border-[#D5CBEE]">
+                                  NOT STARTED
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : roadmapResult.milestones ? (
+                      roadmapResult.milestones.map((step: any, idx: number) => (
                         <div
                           key={idx}
                           className="bg-white p-3.5 rounded-2xl border border-[#EAE4F7] flex items-start gap-3 shadow-sm"
@@ -1173,9 +1357,9 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      ))
+                    ) : null}
+                  </div>
                 </div>
               )}
             </div>
