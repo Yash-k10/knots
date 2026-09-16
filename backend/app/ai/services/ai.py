@@ -111,17 +111,21 @@ def _get_genai_client() -> genai.Client | None:
     return None
 
 
+from app.ai.services.resume_analyzer_service import LocalResumeAnalyzerService
+
+
 class AIResumeService:
-    """AI-powered Resume Analyzer using Gemini."""
+    """AI-powered Resume Analyzer with local deterministic engine and optional LLM enhancement."""
+
+    def __init__(self):
+        self.local_analyzer = LocalResumeAnalyzerService()
 
     async def analyze_resume(
         self, resume_text: str, target_role: str = "Software Developer"
     ) -> dict:
         client = _get_genai_client()
-        if not client:
-            return {"error": "GEMINI_API_KEY not configured"}
-
-        prompt = f"""
+        if client:
+            prompt = f"""
 Analyze the following resume for a target role of '{target_role}'.
 Provide a comprehensive ATS-style score out of 100, ratings, dimensions, detected skills mapped by category, missing high-impact keywords, and 3 specific bullet point rewrites using the STAR method (Situation, Task, Action, Result). Also provide feedback, strengths, and suggestions for improvement.
 Ensure the output matches the required JSON schema perfectly.
@@ -129,20 +133,24 @@ Ensure the output matches the required JSON schema perfectly.
 Resume Text:
 {resume_text}
 """
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ResumeAnalysisResultModel,
-                    temperature=0.2,
-                ),
-            )
-            return json.loads(response.text)
-        except Exception as e:
-            logger.error(f"Error calling Gemini for resume analysis: {e}")
-            return {"error": str(e)}
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ResumeAnalysisResultModel,
+                        temperature=0.2,
+                    ),
+                )
+                return json.loads(response.text)
+            except Exception as e:
+                logger.warning(
+                    f"Gemini API call failed, using local resume analyzer: {e}"
+                )
+
+        # High-performance local deterministic analyzer
+        return self.local_analyzer.analyze_resume(resume_text, target_role=target_role)
 
 
 from app.ai.services.career_roadmap_service import LocalCareerRoadmapService

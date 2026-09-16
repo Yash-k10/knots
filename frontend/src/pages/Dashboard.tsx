@@ -75,6 +75,7 @@ export default function Dashboard() {
   // Interactive AI Tools States
   const [resumeText, setResumeText] = useState("");
   const [isAnalyzingResume, setIsAnalyzingResume] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
   const [resumeResult, setResumeResult] = useState<ResumeAnalysisResult | null>(null);
 
   const [targetRole, setTargetRole] = useState("");
@@ -147,13 +148,23 @@ export default function Dashboard() {
 
   const handleAnalyzeResume = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resumeText.trim()) return;
+    setResumeError(null);
+    if (!resumeText.trim()) {
+      setResumeError("Please paste your resume text or bullet points to analyze.");
+      return;
+    }
     setIsAnalyzingResume(true);
     try {
       const res = await aiService.analyzeResume(resumeText);
-      setResumeResult(res);
-    } catch (err) {
+      if (res.error) {
+        setResumeError(res.error);
+        setResumeResult(null);
+      } else {
+        setResumeResult(res);
+      }
+    } catch (err: any) {
       console.error("Resume analysis failed", err);
+      setResumeError(err?.message || "Failed to analyze resume. Please try again.");
     } finally {
       setIsAnalyzingResume(false);
     }
@@ -1047,7 +1058,7 @@ export default function Dashboard() {
                 <textarea
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
-                  placeholder="Paste your resume content or bullet points here..."
+                  placeholder="Paste your resume content, experience, projects, or bullet points here..."
                   rows={6}
                   className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl p-4 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
                 />
@@ -1069,32 +1080,194 @@ export default function Dashboard() {
                 </button>
               </form>
 
+              {resumeError && (
+                <div className="bg-red-50/80 border border-red-200 rounded-2xl p-4 text-xs text-red-700 flex items-start gap-2.5 animate-in fade-in duration-200">
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <span className="font-bold">{resumeError}</span>
+                </div>
+              )}
+
               {resumeResult && (
-                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-4 animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />{" "}
-                      Analysis Results
-                    </h4>
-                    {resumeResult.score !== undefined && (
-                      <span className="px-3 py-1 bg-[#4B63D2]/10 border border-[#4B63D2]/30 text-[#4B63D2] rounded-full text-xs font-black">
-                        Resume Score: {resumeResult.score}/100
-                      </span>
-                    )}
+                <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-6 space-y-6 animate-in fade-in duration-300">
+                  {/* Score & Rating Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EAE4F7] pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <h4 className="text-base font-black text-[#1E2746]">
+                          Resume Evaluation Report
+                        </h4>
+                      </div>
+                      <p className="text-xs text-[#5851A4] mt-1 font-medium">
+                        Target Role: <strong className="text-[#1E2746]">{resumeResult.target_role || "Software Developer"}</strong>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {resumeResult.rating && (
+                        <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
+                          {resumeResult.rating}
+                        </span>
+                      )}
+                      {resumeResult.score !== undefined && (
+                        <div className="px-4 py-2 bg-[#4B63D2] text-white rounded-2xl font-black text-sm shadow-sm flex items-center gap-1.5">
+                          <span>{resumeResult.score}</span>
+                          <span className="text-xs font-normal text-white/80">/ 100</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {resumeResult.feedback && (
-                    <div className="space-y-2">
-                      <span className="text-xs font-bold text-[#1E2746]">
-                        Key Feedback:
-                      </span>
-                      <ul className="list-disc list-inside space-y-1 text-xs text-[#5851A4] font-medium">
-                        {resumeResult.feedback.map((item: string, idx: number) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
+                  {/* Dimensions Breakdown */}
+                  {resumeResult.dimensions && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-white p-3.5 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-[#1E2746]">
+                          <span>ATS Compatibility</span>
+                          <span className="text-[#4B63D2]">{resumeResult.dimensions.ats_compatibility}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#EAE4F7] rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${resumeResult.dimensions.ats_compatibility}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3.5 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-[#1E2746]">
+                          <span>Impact & Metrics</span>
+                          <span className="text-[#4B63D2]">{resumeResult.dimensions.impact_metrics}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#EAE4F7] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#4B63D2] rounded-full" style={{ width: `${resumeResult.dimensions.impact_metrics}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3.5 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-[#1E2746]">
+                          <span>Tech Stack Depth</span>
+                          <span className="text-[#4B63D2]">{resumeResult.dimensions.tech_stack_depth}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-[#EAE4F7] rounded-full overflow-hidden">
+                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${resumeResult.dimensions.tech_stack_depth}%` }} />
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* Detected Skills Matrix */}
+                  {resumeResult.detected_skills && Object.keys(resumeResult.detected_skills).length > 0 && (
+                    <div className="bg-white p-4 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#1E2746] flex items-center gap-1.5">
+                          <Brain className="h-4 w-4 text-[#4B63D2]" />
+                          Detected Technical Skills
+                        </span>
+                        <span className="text-[11px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-lg">
+                          {resumeResult.detected_skills_count || Object.values(resumeResult.detected_skills).flat().length} Skills
+                        </span>
+                      </div>
+                      <div className="space-y-2 pt-1">
+                        {Object.entries(resumeResult.detected_skills).map(([category, skills], idx) => (
+                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <span className="text-[11px] font-bold text-[#5851A4] w-36 shrink-0">
+                              {category}:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {(skills as string[]).map((sk, sIdx) => (
+                                <span key={sIdx} className="text-[11px] font-semibold bg-[#FAF9FD] text-[#1E2746] border border-[#D5CBEE] px-2 py-0.5 rounded-lg">
+                                  {sk}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STAR Bullet Point Rewrites */}
+                  {resumeResult.bullet_rewrites && resumeResult.bullet_rewrites.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="text-xs font-black text-[#1E2746] uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-[#4B63D2]" />
+                        STAR Method Bullet Enhancements
+                      </span>
+                      <div className="space-y-3">
+                        {resumeResult.bullet_rewrites.map((rw: any, idx: number) => (
+                          <div key={idx} className="bg-white p-4 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-2">
+                            <div className="text-xs">
+                              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 uppercase mr-1.5">
+                                Original
+                              </span>
+                              <span className="text-[#5851A4] italic">"{rw.original}"</span>
+                            </div>
+                            <div className="text-xs">
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 uppercase mr-1.5">
+                                STAR Rewrite
+                              </span>
+                              <span className="text-[#1E2746] font-semibold">{rw.improved}</span>
+                            </div>
+                            {rw.reason && (
+                              <p className="text-[11px] text-[#5851A4] mt-1 font-medium">
+                                💡 <em>{rw.reason}</em>
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Keywords & Recommendations */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Strengths */}
+                    {resumeResult.strengths && resumeResult.strengths.length > 0 && (
+                      <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm space-y-2">
+                        <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          Key Strengths
+                        </span>
+                        <ul className="space-y-1.5 text-xs text-[#1E2746] font-medium">
+                          {resumeResult.strengths.map((item: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="text-emerald-500 font-bold">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Missing Keywords & Feedback */}
+                    <div className="bg-white p-4 rounded-2xl border border-[#EAE4F7] shadow-sm space-y-3">
+                      {resumeResult.missing_high_impact_keywords && resumeResult.missing_high_impact_keywords.length > 0 && (
+                        <div>
+                          <span className="text-xs font-bold text-[#1E2746] block mb-1.5">
+                            Recommended Keywords to Include:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {resumeResult.missing_high_impact_keywords.map((kw: string, idx: number) => (
+                              <span key={idx} className="text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2 py-0.5 rounded-md">
+                                + {kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {resumeResult.suggestions && resumeResult.suggestions.length > 0 && (
+                        <div>
+                          <span className="text-xs font-bold text-[#1E2746] block mb-1">
+                            Actionable Suggestions:
+                          </span>
+                          <ul className="space-y-1 text-[11px] text-[#5851A4] font-medium">
+                            {resumeResult.suggestions.map((sug: string, idx: number) => (
+                              <li key={idx}>→ {sug}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
