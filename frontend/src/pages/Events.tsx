@@ -54,6 +54,7 @@ export default function Events() {
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     email: string;
+    role_id?: number;
     role?: { name: string };
   } | null>(null);
 
@@ -452,15 +453,17 @@ export default function Events() {
   }, []);
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
+  const isAdmin =
+    currentUser?.role_id === 1 ||
+    ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName) ||
+    currentUser?.email?.toLowerCase().includes("admin") ||
+    false;
+
   const canCreateEvent =
+    isAdmin ||
     roleName === "controller" ||
-    roleName === "admin" ||
-    roleName === "super admin" ||
-    roleName === "superadmin" ||
-    roleName === "central admin" ||
-    roleName === "management" ||
-    currentUser?.email?.toLowerCase().includes("controller") ||
-    currentUser?.email?.toLowerCase().includes("admin");
+    roleName === "tpo" ||
+    currentUser?.email?.toLowerCase().includes("controller");
 
   // Check if current user is Controller, President, Secretary, Admin, or Management
   const isPresidentOrSecretary =

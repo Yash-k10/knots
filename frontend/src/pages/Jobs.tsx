@@ -79,23 +79,14 @@ export default function Jobs() {
     role?: { id: number; name: string };
   } | null>(null);
 
-  const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
-  const canPostJob =
+  const roleName = currentUser?.role?.name?.toLowerCase().trim() || "student";
+  const isAdmin =
     currentUser?.role_id === 1 ||
-    roleName === "tpo" ||
-    roleName === "controller" ||
-    roleName === "admin" ||
-    roleName === "super admin" ||
-    roleName === "superadmin" ||
-    roleName === "management" ||
-    roleName === "central admin";
+    ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName);
 
-  const isStudentOrAlumni =
-    currentUser?.role_id === 2 ||
-    currentUser?.role_id === 3 ||
-    roleName === "student" ||
-    roleName === "alumni" ||
-    !roleName;
+  const canPostJob = isAdmin || roleName === "tpo" || roleName === "controller";
+  const canApplyJob = roleName === "student";
+  const canViewApplications = roleName === "student";
 
   // Search and filter states for Jobs
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -541,17 +532,19 @@ export default function Jobs() {
             <span>Company Alumni & Referrals ({alumniDirectory.length})</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab("applications")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
-              activeTab === "applications"
-                ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>My Applications ({applications.length})</span>
-          </button>
+          {canViewApplications && (
+            <button
+              onClick={() => setActiveTab("applications")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                activeTab === "applications"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>My Applications ({applications.length})</span>
+            </button>
+          )}
 
           {canPostJob && (
             <button
@@ -736,7 +729,7 @@ export default function Jobs() {
 
                   {/* Action Buttons */}
                   <div className="pt-3 border-t border-[#EAE4F7] flex items-center gap-2">
-                    {isStudentOrAlumni ? (
+                    {canApplyJob ? (
                       <button
                         onClick={() => setSelectedJobForApply(job)}
                         className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
@@ -747,9 +740,9 @@ export default function Jobs() {
                       <button
                         disabled
                         className="flex-1 py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-[11px] font-bold text-center cursor-not-allowed"
-                        title="Job applications are restricted to Students and Alumni accounts."
+                        title="Job applications are restricted to Students."
                       >
-                        Student / Alumni Only
+                        Student Only
                       </button>
                     )}
                     <button

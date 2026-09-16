@@ -21,7 +21,6 @@ import {
   Menu,
   X,
   User as UserIcon,
-  Compass,
 } from "lucide-react";
 
 import { wsClient } from "../../services/websocket";
@@ -191,12 +190,7 @@ export default function DashboardLayout() {
       icon: Calendar,
       section: "main",
     };
-    const baseClubs: NavLinkItem = {
-      name: "Clubs",
-      path: "/clubs",
-      icon: Compass,
-      section: "main",
-    };
+
 
     switch (roleName) {
       case "alumni":
@@ -205,7 +199,6 @@ export default function DashboardLayout() {
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
-          baseClubs,
           baseEvents,
           baseMessages,
           baseNotifications,

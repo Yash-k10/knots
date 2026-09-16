@@ -1317,7 +1317,10 @@ export default function Feed() {
                   const isSaved = savedPostIds.includes(post.id);
                   const isCommentsLocked = !!lockedCommentPostIds[post.id];
                   const isAuthorOrAdmin =
-                    isSuperAdminOrAdmin || post.author_id === currentUser?.id;
+                    isSuperAdminOrAdmin ||
+                    roleName === "controller" ||
+                    currentUser?.email?.toLowerCase().includes("controller") ||
+                    post.author_id === currentUser?.id;
                   const isMenuOpen = activePostMenuId === post.id;
 
                   return (
