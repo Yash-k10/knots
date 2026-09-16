@@ -20,6 +20,7 @@ import Jobs from "../pages/Jobs";
 import Events from "../pages/Events";
 import Messaging from "../pages/Messaging";
 import Notifications from "../pages/Notifications";
+import Clubs from "../pages/Clubs";
 import Admin from "../pages/Admin";
 import Controller from "../pages/Controller";
 import Settings from "../pages/Settings";
@@ -254,6 +255,7 @@ export default function AppRoutes() {
         <Route path="academic-overview" element={<InstitutionOverview />} />
         <Route path="jobs" element={<Jobs />} />
         <Route path="events" element={<Events />} />
+        <Route path="clubs" element={<Clubs />} />
         <Route path="messaging" element={<Messaging />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="users" element={<Admin />} />

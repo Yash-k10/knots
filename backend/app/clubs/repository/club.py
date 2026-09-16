@@ -7,6 +7,9 @@ from app.clubs.models.club_member import ClubMember
 from app.core.repository import BaseRepository
 
 
+from app.users.models.user import User
+
+
 class ClubRepository(BaseRepository[Club]):
     """Repository for Club CRUD and listing queries."""
 
@@ -19,10 +22,17 @@ class ClubRepository(BaseRepository[Club]):
         return result.scalars().first()
 
     async def get_with_details(self, club_id: int) -> Club | None:
-        """Fetch a single club with all its members loaded."""
+        """Fetch a single club with all its members and user profiles loaded."""
         result = await self.db.execute(
             select(Club)
-            .options(selectinload(Club.members).selectinload(ClubMember.user))
+            .options(
+                selectinload(Club.members)
+                .selectinload(ClubMember.user)
+                .selectinload(User.profile),
+                selectinload(Club.members)
+                .selectinload(ClubMember.user)
+                .selectinload(User.role),
+            )
             .filter(Club.id == club_id)
         )
         return result.scalars().first()

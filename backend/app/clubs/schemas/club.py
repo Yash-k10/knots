@@ -22,6 +22,12 @@ class ClubMemberUser(BaseModel):
 
     id: int
     email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+    department: str | None = None
+    graduation_year: int | None = None
+    user_role: str | None = None
 
     class Config:
         from_attributes = True

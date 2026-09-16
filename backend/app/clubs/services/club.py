@@ -82,7 +82,19 @@ class ClubService:
         for m in club.members:
             user_info = None
             if m.user:
-                user_info = ClubMemberUser(id=m.user.id, email=m.user.email)
+                prof = getattr(m.user, "profile", None)
+                role_obj = getattr(m.user, "role", None)
+                role_name = role_obj.name if role_obj else None
+                user_info = ClubMemberUser(
+                    id=m.user.id,
+                    email=m.user.email,
+                    first_name=prof.first_name if prof else None,
+                    last_name=prof.last_name if prof else None,
+                    profile_picture=prof.profile_picture if prof else None,
+                    department=prof.department if prof else None,
+                    graduation_year=prof.graduation_year if prof else None,
+                    user_role=role_name,
+                )
             mapped_members.append(
                 ClubMemberResponse(
                     id=m.id,

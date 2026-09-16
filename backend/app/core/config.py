@@ -61,11 +61,16 @@ class Settings(BaseSettings):
     ALLOWED_EMAIL_DOMAINS: list[str] | str = ["@sbjit.edu.in", "@sbjie.edu.in"]
 
     # HTTP Email API Keys (Bypasses Render/Cloud SMTP port blocks over HTTPS 443)
+    EMAIL_WEBHOOK_URL: str | None = (
+        None  # Google Apps Script Webhook (100% Free forever using Gmail/College account)
+    )
     RESEND_API_KEY: str | None = None
     RESEND_FROM_EMAIL: str | None = (
         None  # e.g., "KNOTS <onboarding@resend.dev>" or "KNOTS <noreply@yourdomain.com>"
     )
     BREVO_API_KEY: str | None = None
+    MAILJET_API_KEY: str | None = None
+    MAILJET_API_SECRET: str | None = None
     SENDGRID_API_KEY: str | None = None
 
     # SMTP / Email Service Settings (Fallback)

@@ -12,6 +12,46 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _send_via_webhook(
+    recipient: str,
+    subject: str,
+    plain_text: str,
+    html_content: str,
+) -> bool:
+    """Dispatch email via Google Apps Script Webhook or custom HTTPS Webhook (Port 443 - 100% Free)."""
+    webhook_url = settings.EMAIL_WEBHOOK_URL.strip()
+    payload = {
+        "to": recipient,
+        "subject": subject,
+        "text": plain_text,
+        "html": html_content,
+        "sender_name": settings.EMAILS_FROM_NAME or "KNOTS Campus Hub",
+    }
+
+    req = urllib.request.Request(
+        webhook_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        if resp.status in (200, 201, 202, 302):
+            logger.info(
+                f"[SUCCESS] OTP email dispatched to {recipient} via Email Webhook (HTTPS 443)"
+            )
+            return True
+        else:
+            resp_body = resp.read().decode("utf-8", errors="replace")
+            logger.error(
+                f"[ERROR] Email Webhook responded with status {resp.status}: {resp_body}"
+            )
+            raise RuntimeError(f"Email Webhook failed with status {resp.status}")
+
+
 def _send_via_resend(
     recipient: str,
     subject: str,
@@ -333,7 +373,18 @@ def send_otp_email(
 </html>"""
 
     try:
-        # Priority 1: Resend HTTP API (Recommended for modern cloud apps & Render)
+        # Priority 1: Webhook HTTP API (100% Free Google Apps Script / Custom Webhook over HTTPS 443)
+        if settings.EMAIL_WEBHOOK_URL:
+            try:
+                return _send_via_webhook(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
+            except Exception as webhook_err:
+                logger.warning(
+                    f"Email Webhook delivery failed: {webhook_err}. Attempting fallback..."
+                )
+
+        # Priority 2: Resend HTTP API (Recommended for modern cloud apps & Render)
         if settings.RESEND_API_KEY:
             try:
                 return _send_via_resend(
