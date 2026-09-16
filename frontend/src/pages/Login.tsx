@@ -918,18 +918,19 @@ export default function Login() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center w-full">
+                <div className="flex flex-col gap-2.5 w-full">
                   {/* Real Google OAuth Button */}
-                  <div className="w-full flex justify-center items-center overflow-hidden">
+                  <div className="w-full flex justify-center [&>div]:!w-full [&>div>div]:!w-full [&_iframe]:!w-full [&_iframe]:!mx-auto">
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={() => {
                         setError("Google Sign-In was cancelled or failed.");
                       }}
-                      text="signin_with"
+                      text="continue_with"
                       shape="pill"
                       theme="outline"
                       size="large"
+                      width="100%"
                     />
                   </div>
 
@@ -937,10 +938,10 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => handleSocialLogin("Campus SSO")}
-                    className="h-10 px-4 w-full bg-white dark:bg-[#1E293B] hover:bg-[#FAF9FD] dark:hover:bg-[#334155] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                    className="w-full h-10 px-4 bg-white dark:bg-[#1E293B] hover:bg-[#FAF9FD] dark:hover:bg-[#334155] border border-[#EAE4F7] dark:border-[#334155] hover:border-[#C8B6E2] rounded-full text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                   >
                     <Building2 className="w-4 h-4 text-[#4B63D2]" />
-                    <span>Campus SSO</span>
+                    <span>Campus SSO (Institutional Gateway)</span>
                   </button>
                 </div>
               </div>

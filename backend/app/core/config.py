@@ -35,10 +35,10 @@ class Settings(BaseSettings):
 
     # Database Settings
     DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+        "postgresql+asyncpg://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
     SYNC_DATABASE_URL: str = (
-        "postgresql://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+        "postgresql://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
 
     # Redis Settings
@@ -78,6 +78,15 @@ class Settings(BaseSettings):
 
     # Gemini Configurations
     GEMINI_API_KEY: str | None = None
+
+    @field_validator("DATABASE_URL", "SYNC_DATABASE_URL", mode="before")
+    @classmethod
+    def rewrite_supabase_pooler_port(cls, v: Any) -> Any:
+        if isinstance(v, str) and "pooler.supabase.com:5432" in v:
+            # Supabase Session Mode (:5432) has a strict limit of 15 connections (EMAXCONNSESSION).
+            # Transaction Mode (:6543) enables pooled multi-tenant connections.
+            return v.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
+        return v
 
     @field_validator("ALLOWED_EMAIL_DOMAINS", mode="before")
     @classmethod
