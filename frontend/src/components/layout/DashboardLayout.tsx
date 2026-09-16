@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   X,
+  User as UserIcon,
 } from "lucide-react";
 
 import { wsClient } from "../../services/websocket";
@@ -46,6 +47,14 @@ interface CurrentUser {
   role_id?: number;
   role?: UserRole;
   profile?: UserProfile | null;
+}
+
+interface NavLinkItem {
+  name: string;
+  path: string;
+  icon: any;
+  badge?: number;
+  section?: "main" | "communication" | "role" | "system";
 }
 
 export default function DashboardLayout() {
@@ -152,13 +161,6 @@ export default function DashboardLayout() {
     navigate("/login");
   };
 
-  interface NavLinkItem {
-    name: string;
-    path: string;
-    icon: any;
-    badge?: number;
-  }
-
   const roleName = user?.role?.name?.toLowerCase().trim() || "";
   const isAdmin =
     user?.role_id === 1 ||
@@ -173,58 +175,61 @@ export default function DashboardLayout() {
       path: "/notifications",
       icon: Bell,
       badge: unreadNotifications,
+      section: "communication",
     };
     const baseMessages: NavLinkItem = {
       name: "Messages",
       path: "/messaging",
       icon: MessageSquare,
       badge: unreadMessages,
+      section: "communication",
     };
     const baseEvents: NavLinkItem = {
       name: "Events",
       path: "/events",
       icon: Calendar,
+      section: "main",
     };
 
     switch (roleName) {
       case "student":
       case "alumni":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
-          { name: "Opportunities", path: "/jobs", icon: Briefcase },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       case "faculty":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
-          { name: "Students", path: "/students", icon: GraduationCap },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       case "hod":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
-          { name: "Department", path: "/department", icon: Layers },
-          { name: "Reports", path: "/reports", icon: BarChart3 },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Department", path: "/department", icon: Layers, section: "role" },
+          { name: "Reports", path: "/reports", icon: BarChart3, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       case "controller":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Department", path: "/department", icon: Layers },
-          { name: "Applications", path: "/applications", icon: FileCheck2 },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Department", path: "/department", icon: Layers, section: "role" },
+          { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
@@ -235,35 +240,36 @@ export default function DashboardLayout() {
       case "superadmin":
       case "management":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Users", path: "/admin", icon: UserCog },
-          { name: "Departments", path: "/department", icon: Layers },
-          { name: "Reports", path: "/reports", icon: BarChart3 },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Users", path: "/admin", icon: UserCog, section: "role" },
+          { name: "Departments", path: "/department", icon: Layers, section: "role" },
+          { name: "Reports", path: "/reports", icon: BarChart3, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       case "tpo":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Students", path: "/students", icon: GraduationCap },
-          { name: "Opportunities", path: "/jobs", icon: Briefcase },
-          { name: "Applications", path: "/applications", icon: FileCheck2 },
-          { name: "Placements", path: "/placements", icon: Award },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
+          { name: "Placements", path: "/placements", icon: Award, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       case "dean":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
           {
             name: "Academic Overview",
             path: "/academic-overview",
             icon: BookOpen,
+            section: "role",
           },
           baseEvents,
           baseMessages,
@@ -272,20 +278,20 @@ export default function DashboardLayout() {
       case "principal":
       case "ceo":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
-          { name: "Institution", path: "/institution", icon: Building },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Institution", path: "/institution", icon: Building, section: "role" },
           baseEvents,
           baseMessages,
           baseNotifications,
         ];
       default:
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard },
-          { name: "Feed", path: "/feed", icon: Rss },
-          { name: "Ties", path: "/connections", icon: Users },
-          { name: "Opportunities", path: "/jobs", icon: Briefcase },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,
@@ -302,203 +308,355 @@ export default function DashboardLayout() {
   const userInitial = fullName.charAt(0).toUpperCase();
   const roleBadgeLabel = user?.role?.name || (isAdmin ? "Admin" : "Student");
 
-  return (
-    <div className="min-h-screen bg-[#F8F6FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex flex-col font-sans transition-colors duration-200">
-      {/* ============================================================ */}
-      {/* UNIVERSAL TOP NAVBAR (NO SIDE NAVBAR)                        */}
-      {/* ============================================================ */}
-      <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
-          {/* 1. Brand Logo on Top Left */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Link to="/feed" className="flex items-center gap-2 group">
-              <KnotsLogo size="md" />
-              <div className="hidden sm:block">
-                <span className="text-xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors">
-                  KNOTS
-                </span>
-                <span className="ml-2 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
-                  SBJIT
-                </span>
-              </div>
-            </Link>
-          </div>
-
-          {/* 2. Global Search Bar */}
-          <div className="hidden md:flex flex-1 min-w-[200px] max-w-sm lg:max-w-md mx-2 lg:mx-3 shrink">
-            <GlobalSearchBar />
-          </div>
-
-          {/* 3. Navigation Page Links (Desktop) */}
-          <nav className="hidden xl:flex items-center gap-1 py-1 shrink-0">
-            {navLinks.map((link) => {
+  // Reusable Sidebar Navigation Content Component
+  const renderSidebarLinks = () => (
+    <div className="flex flex-col h-full justify-between">
+      {/* Scrollable Navigation Groups */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {/* Section: Main Navigation */}
+        <div className="space-y-1">
+          <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-[#5851A4]/70 dark:text-[#94A3B8]/70">
+            Navigation
+          </p>
+          {navLinks
+            .filter((l) => l.section === "main" || !l.section)
+            .map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.path;
               return (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`relative flex items-center gap-1.5 px-2.5 2xl:px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap shrink-0 ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                     isActive
-                      ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/25"
+                      ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
                       : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
                   }`}
                 >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
-                    }`}
-                  />
-                  <span>{link.name}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
+                      }`}
+                    />
+                    <span className="truncate">{link.name}</span>
+                  </div>
                   {link.badge !== undefined && link.badge > 0 && (
-                    <span className="px-1.5 py-0.2 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full animate-pulse shrink-0">
+                    <span className="px-2 py-0.5 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full shrink-0 animate-pulse">
                       {link.badge > 99 ? "99+" : link.badge}
                     </span>
                   )}
                 </Link>
               );
             })}
-          </nav>
-
-          {/* 4. User Profile with PFP & Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {/* Quick Theme Toggle Button */}
-            <ThemeToggle />
-
-            {/* Mobile notification bell */}
-            <Link
-              to="/notifications"
-              className="xl:hidden relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] transition-all shrink-0"
-              title="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadNotifications > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FFD21A] text-[10px] font-black text-[#1E2746] shadow-sm">
-                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
-                </span>
-              )}
-            </Link>
-
-            {/* Profile Capsule with PFP */}
-            <Link
-              to="/profile"
-              className="flex items-center gap-2 p-1.5 pl-2 rounded-2xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all group shrink-0"
-              title="View Profile"
-            >
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors truncate max-w-[100px] lg:max-w-[110px]">
-                  {fullName}
-                </p>
-                <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate max-w-[100px] lg:max-w-[110px]">
-                  {roleBadgeLabel}
-                </p>
-              </div>
-
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={fullName}
-                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-sm group-hover:scale-105 transition-transform shrink-0"
-                />
-              ) : (
-                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-xs sm:text-sm text-white shadow-sm shadow-[#4B63D2]/20 group-hover:scale-105 transition-transform shrink-0">
-                  {userInitial}
-                </div>
-              )}
-            </Link>
-
-            {/* Settings Link */}
-            <Link
-              to="/settings"
-              className="hidden sm:flex p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] rounded-xl border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all shrink-0"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </Link>
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="hidden sm:flex p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/40 transition-all cursor-pointer shrink-0"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-
-            {/* Mobile Menu Toggle Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="xl:hidden p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all shrink-0"
-              aria-label="Toggle navigation menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
-          </div>
         </div>
 
-        {/* Mobile Navigation Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="xl:hidden bg-white dark:bg-[#111827] border-b border-[#EAE4F7] dark:border-[#1F2937] px-4 py-3 space-y-2 animate-in slide-in-from-top duration-200 shadow-md">
-            <div className="mb-3">
-              <GlobalSearchBar />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {navLinks.map((link) => {
+        {/* Section: Role Specific */}
+        {navLinks.some((l) => l.section === "role") && (
+          <div className="space-y-1 pt-2 border-t border-[#EAE4F7] dark:border-[#1F2937]">
+            <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-[#5851A4]/70 dark:text-[#94A3B8]/70">
+              Campus Management
+            </p>
+            {navLinks
+              .filter((l) => l.section === "role")
+              .map((link) => {
                 const Icon = link.icon;
                 const isActive = location.pathname === link.path;
                 return (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                       isActive
-                        ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
-                        : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] border border-[#EAE4F7] dark:border-[#1F2937]"
+                        ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                        : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-4 h-4" />
-                      <span>{link.name}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${
+                          isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
+                        }`}
+                      />
+                      <span className="truncate">{link.name}</span>
                     </div>
-                    {link.badge !== undefined && link.badge > 0 && (
-                      <span className="px-1.5 py-0.2 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full">
-                        {link.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}
-            </div>
-            <div className="pt-2 border-t border-[#EAE4F7] dark:border-[#1F2937] flex items-center justify-between">
-              <Link
-                to="/settings"
-                className="flex items-center gap-2 text-xs font-bold text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] py-1"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-xs font-bold text-rose-500 hover:text-rose-600 py-1 cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
           </div>
         )}
-      </header>
+
+        {/* Section: Communication & Inbox */}
+        <div className="space-y-1 pt-2 border-t border-[#EAE4F7] dark:border-[#1F2937]">
+          <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-[#5851A4]/70 dark:text-[#94A3B8]/70">
+            Inbox & Alerts
+          </p>
+          {navLinks
+            .filter((l) => l.section === "communication")
+            .map((link) => {
+              const Icon = link.icon;
+              const isActive = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+                    isActive
+                      ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                      : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        isActive ? "text-[#FFD21A]" : "text-[#5851A4] dark:text-[#94A3B8]"
+                      }`}
+                    />
+                    <span className="truncate">{link.name}</span>
+                  </div>
+                  {link.badge !== undefined && link.badge > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full shrink-0">
+                      {link.badge > 99 ? "99+" : link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+        </div>
+
+        {/* Section: Quick Links */}
+        <div className="space-y-1 pt-2 border-t border-[#EAE4F7] dark:border-[#1F2937]">
+          <p className="px-3 text-[10px] font-bold tracking-wider uppercase text-[#5851A4]/70 dark:text-[#94A3B8]/70">
+            Preferences
+          </p>
+          <Link
+            to="/profile"
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              location.pathname === "/profile"
+                ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
+            }`}
+          >
+            <UserIcon className="w-4 h-4 shrink-0" />
+            <span>My Profile</span>
+          </Link>
+          <Link
+            to="/settings"
+            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              location.pathname === "/settings"
+                ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30"
+                : "text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] hover:text-[#1E2746] dark:hover:text-[#F1F5F9]"
+            }`}
+          >
+            <Settings className="w-4 h-4 shrink-0" />
+            <span>Settings</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Sidebar Footer User Capsule */}
+      <div className="p-3 border-t border-[#EAE4F7] dark:border-[#1F2937] bg-[#FAF9FD]/80 dark:bg-[#0F172A]/80 backdrop-blur-xs">
+        <div className="flex items-center justify-between gap-2">
+          <Link
+            to="/profile"
+            className="flex items-center gap-2.5 min-w-0 flex-1 group"
+            title="View Profile"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={fullName}
+                className="h-8 w-8 rounded-xl object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-xs group-hover:scale-105 transition-transform shrink-0"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-xs text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                {userInitial}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] truncate group-hover:text-[#4B63D2] transition-colors">
+                {fullName}
+              </p>
+              <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate">
+                {roleBadgeLabel}
+              </p>
+            </div>
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl border border-rose-200/80 dark:border-rose-900/40 transition-colors cursor-pointer shrink-0"
+            title="Logout"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F8F6FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#F1F5F9] flex font-sans transition-colors duration-200">
+      {/* ============================================================ */}
+      {/* 1. DESKTOP PERMANENT SCROLLING SIDEBAR (LEFT)                */}
+      {/* ============================================================ */}
+      <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-[#111827] border-r border-[#EAE4F7] dark:border-[#1F2937] h-screen sticky top-0 z-30 shrink-0 select-none shadow-xs">
+        {/* Brand Header */}
+        <div className="h-16 flex items-center px-4 border-b border-[#EAE4F7] dark:border-[#1F2937] shrink-0">
+          <Link to="/feed" className="flex items-center gap-2.5 group">
+            <KnotsLogo size="md" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors">
+                KNOTS
+              </span>
+              <span className="text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 px-2 py-0.5 rounded-full border border-[#4B63D2]/20">
+                SBJIT
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Sidebar Nav links */}
+        <div className="flex-1 overflow-hidden">
+          {renderSidebarLinks()}
+        </div>
+      </aside>
 
       {/* ============================================================ */}
-      {/* MAIN APPLICATION CONTENT CANVAS (FULL WIDTH, NO SIDEBAR)     */}
+      {/* 2. MOBILE DRAWER SIDEBAR MODAL (< lg)                         */}
       {/* ============================================================ */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <Outlet />
-      </main>
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative flex flex-col w-72 max-w-[85vw] bg-white dark:bg-[#111827] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            {/* Header with Close button */}
+            <div className="h-16 flex items-center justify-between px-4 border-b border-[#EAE4F7] dark:border-[#1F2937]">
+              <div className="flex items-center gap-2">
+                <KnotsLogo size="md" />
+                <span className="text-lg font-black text-[#1E2746] dark:text-[#F1F5F9]">
+                  KNOTS
+                </span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 text-[#5851A4] dark:text-[#94A3B8] hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] rounded-xl border border-[#EAE4F7] dark:border-[#1F2937]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Nav Content */}
+            <div className="flex-1 overflow-hidden">
+              {renderSidebarLinks()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 3. RIGHT CONTENT AREA WITH 100% WIDTH TOP BAR                */}
+      {/* ============================================================ */}
+      <div className="flex-1 flex flex-col min-w-0 w-full min-h-screen">
+        {/* Universal Clean 100% Top Header */}
+        <header className="sticky top-0 z-20 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-xs">
+          <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-6">
+            {/* Left: Mobile Drawer Button (< lg) & Brand Logo for mobile */}
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all cursor-pointer shrink-0"
+                aria-label="Open Navigation Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="lg:hidden flex items-center gap-1.5">
+                <KnotsLogo size="sm" />
+                <span className="text-base font-black text-[#1E2746] dark:text-[#F1F5F9]">
+                  KNOTS
+                </span>
+              </div>
+            </div>
+
+            {/* Center: Expansive 100% Global Search Bar */}
+            <div className="flex-1 max-w-2xl mx-auto">
+              <GlobalSearchBar />
+            </div>
+
+            {/* Right: Quick Action Controls (Theme, Notifications, Profile) */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Theme Toggle */}
+              <ThemeToggle />
+
+              {/* Messages Shortcut */}
+              <Link
+                to="/messaging"
+                className="relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all shrink-0"
+                title="Direct Messages"
+              >
+                <MessageSquare className="w-4 h-4" />
+                {unreadMessages > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-[#4B63D2] text-[10px] font-black text-white shadow-xs animate-pulse">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
+                )}
+              </Link>
+
+              {/* Notifications Shortcut */}
+              <Link
+                to="/notifications"
+                className="relative p-2 text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] transition-all shrink-0"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-[#FFD21A] text-[10px] font-black text-[#1E2746] shadow-xs">
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </span>
+                )}
+              </Link>
+
+              {/* Profile Capsule (Tablet/Desktop Top Right) */}
+              <Link
+                to="/profile"
+                className="hidden sm:flex items-center gap-2 p-1.5 pl-2.5 rounded-xl hover:bg-[#FAF9FD] dark:hover:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#C8B6E2] dark:hover:border-[#4B63D2] transition-all group shrink-0"
+                title="View Profile"
+              >
+                <div className="text-right hidden md:block">
+                  <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors truncate max-w-[110px]">
+                    {fullName}
+                  </p>
+                  <p className="text-[10px] font-semibold text-[#5851A4] dark:text-[#94A3B8] truncate max-w-[110px]">
+                    {roleBadgeLabel}
+                  </p>
+                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={fullName}
+                    className="h-7 w-7 rounded-lg object-cover border border-[#EAE4F7] dark:border-[#1F2937] shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-xs text-white shadow-xs shrink-0">
+                    {userInitial}
+                  </div>
+                )}
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Application Page Content Canvas */}
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
