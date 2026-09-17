@@ -17,11 +17,20 @@ from app.messaging.schemas.message import (
 )
 
 COMMUNICATION_HIERARCHY: dict[str, set[str]] = {
-    "student": {"faculty", "alumni"},
-    "faculty": {"student", "students", "hod", "controller", "alumni"},
-    "hod": {"faculty", "controller", "alumni", "tpo", "dean"},
-    "controller": {"faculty", "hod", "alumni"},
-    "alumni": {"student", "students", "faculty", "controller", "tpo"},
+    "student": {"student", "students", "faculty", "alumni"},
+    "faculty": {"student", "students", "faculty", "hod", "controller", "alumni"},
+    "hod": {
+        "faculty",
+        "controller",
+        "alumni",
+        "tpo",
+        "dean",
+        "hod",
+        "student",
+        "students",
+    },
+    "controller": {"faculty", "hod", "alumni", "controller"},
+    "alumni": {"student", "students", "faculty", "controller", "tpo", "alumni"},
     "tpo": {
         "central admin",
         "admin",

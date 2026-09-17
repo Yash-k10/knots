@@ -540,9 +540,47 @@ export default function Feed() {
     }
   };
 
+  // Silent background sync for latest posts from other users in real time
+  const syncLatestPosts = async () => {
+    try {
+      const latestPosts = await apiRequest<PostResponse[]>(
+        `/posts/feed?skip=0&limit=15`
+      );
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newIncoming = latestPosts.filter((p) => !existingIds.has(p.id));
+        if (newIncoming.length > 0) {
+          return [...newIncoming, ...prev];
+        }
+        // Also update likes/comments count for existing posts
+        return prev.map((p) => {
+          const updated = latestPosts.find((u) => u.id === p.id);
+          if (updated) {
+            return {
+              ...p,
+              likes_count: updated.likes_count,
+              comments_count: updated.comments_count,
+              is_liked: updated.is_liked,
+            };
+          }
+          return p;
+        });
+      });
+    } catch {
+      // Silent in background sync
+    }
+  };
+
   useEffect(() => {
     fetchFeed(true);
     fetchCurrentUser();
+
+    // Auto-sync feed every 6 seconds for real-time post & media visibility across users
+    const interval = setInterval(() => {
+      syncLatestPosts();
+    }, 6000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Create post action handlers
@@ -1602,7 +1640,32 @@ export default function Feed() {
                               </span>
                             </div>
                           </div>
-                        ) : null)}
+                        ) : (
+                          <div className="my-2 p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-3 shadow-xs">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-9 h-9 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center shrink-0">
+                                <Image className="w-5 h-5 text-[#4B63D2]" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-[#1E2746] truncate">
+                                  {getFileName(post.image_url)}
+                                </p>
+                                <span className="text-[10px] font-semibold text-[#5851A4]">
+                                  Image Attachment
+                                </span>
+                              </div>
+                            </div>
+                            <a
+                              href={getMediaUrl(post.image_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3.5 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
+                            </a>
+                          </div>
+                        ))}
 
                       {/* Card Actions: Likes, Comments, Bookmark, Send to Chat & Share */}
                       <div className="flex items-center justify-between border-t border-[#EAE4F7] pt-3.5 text-xs font-semibold flex-wrap gap-2">

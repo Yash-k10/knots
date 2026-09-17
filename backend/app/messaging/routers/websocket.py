@@ -107,7 +107,9 @@ async def websocket_chat_endpoint(
 
                         # Fetch conversation participants for broadcasting
                         conv_repo = ConversationRepository(db)
-                        conv = await conv_repo.get(message.conversation_id)
+                        conv = await conv_repo.get_conversation_with_participants(
+                            message.conversation_id
+                        )
                         participant_ids = (
                             [p.user_id for p in conv.participants] if conv else []
                         )
@@ -152,7 +154,9 @@ async def websocket_chat_endpoint(
                 if conversation_id:
                     async with SessionLocal() as db:
                         conv_repo = ConversationRepository(db)
-                        conv = await conv_repo.get(conversation_id)
+                        conv = await conv_repo.get_conversation_with_participants(
+                            conversation_id
+                        )
                         participant_ids = (
                             [p.user_id for p in conv.participants] if conv else []
                         )
@@ -180,7 +184,9 @@ async def websocket_chat_endpoint(
                             await db.commit()
 
                             conv_repo = ConversationRepository(db)
-                            conv = await conv_repo.get(conversation_id)
+                            conv = await conv_repo.get_conversation_with_participants(
+                                conversation_id
+                            )
                             participant_ids = (
                                 [p.user_id for p in conv.participants] if conv else []
                             )

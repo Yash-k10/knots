@@ -218,14 +218,14 @@ def _send_via_smtp(
     sent = False
     last_error = None
 
-    configured_port = int(settings.SMTP_PORT or 587)
-    ports_to_try = [configured_port]
-    if configured_port == 587:
-        ports_to_try.append(465)
-    elif configured_port == 465:
-        ports_to_try.append(587)
+    configured_port = int(settings.SMTP_PORT or 465)
+    # On Render and cloud hosts, Port 465 (SSL) is standard and bypasses STARTTLS blocks
+    if configured_port == 465:
+        ports_to_try = [465, 587]
+    elif configured_port == 587:
+        ports_to_try = [465, 587]
     else:
-        ports_to_try.extend([587, 465])
+        ports_to_try = [configured_port, 465, 587]
 
     for port in ports_to_try:
         if sent:

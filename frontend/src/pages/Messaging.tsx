@@ -424,10 +424,22 @@ export default function Messaging() {
         status: "delivered",
       };
       setMessages((prevMsgs) => {
-        if (
-          incoming.conversation_id === activeConvId &&
-          !prevMsgs.some((m) => m.id === incoming.id)
-        ) {
+        if (incoming.conversation_id === activeConvId) {
+          if (prevMsgs.some((m) => m.id === incoming.id)) {
+            return prevMsgs;
+          }
+          // If this is the sender's own incoming confirmation, replace matching temporary sending message
+          const pendingOptIndex = prevMsgs.findIndex(
+            (m) =>
+              m.status === "sending" &&
+              m.sender_id === incoming.sender_id &&
+              m.content === incoming.content,
+          );
+          if (pendingOptIndex !== -1) {
+            const updated = [...prevMsgs];
+            updated[pendingOptIndex] = incoming;
+            return updated;
+          }
           return [...prevMsgs, incoming];
         }
         return prevMsgs;
