@@ -25,10 +25,7 @@ else:
         "command_timeout": 30,
     }
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    **engine_args
-)
+engine = create_async_engine(settings.DATABASE_URL, **engine_args)
 
 # Create session factory
 SessionLocal = async_sessionmaker(
