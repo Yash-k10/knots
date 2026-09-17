@@ -6,7 +6,6 @@ from app.clubs.models.club import Club
 from app.clubs.models.club_member import ClubMember
 from app.core.repository import BaseRepository
 
-
 from app.users.models.user import User
 
 
