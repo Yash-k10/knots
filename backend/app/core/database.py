@@ -7,19 +7,27 @@ from app.core.config import settings
 
 # Create database engine
 # For asyncpg connection pool we can set pooling attributes here
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=False,
-    future=True,
-    pool_size=5,
-    max_overflow=5,
-    pool_pre_ping=True,
-    pool_recycle=180,
-    connect_args={
+engine_args = {
+    "echo": False,
+    "future": True,
+}
+
+if settings.DATABASE_URL.startswith("sqlite"):
+    engine_args["connect_args"] = {"timeout": 30}
+else:
+    engine_args["pool_size"] = 5
+    engine_args["max_overflow"] = 5
+    engine_args["pool_pre_ping"] = True
+    engine_args["pool_recycle"] = 180
+    engine_args["connect_args"] = {
         "statement_cache_size": 0,
         "timeout": 30,
         "command_timeout": 30,
-    },
+    }
+
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    **engine_args
 )
 
 # Create session factory
