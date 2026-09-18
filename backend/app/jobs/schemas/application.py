@@ -29,6 +29,13 @@ class ApplicationUpdate(BaseModel):
     status: ApplicationStatusEnum | None = None
 
 
+class ApplicantUserResponse(BaseModel):
+    id: int
+    email: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ApplicationResponse(ApplicationBase):
     id: int
     job_posting_id: int
@@ -37,5 +44,6 @@ class ApplicationResponse(ApplicationBase):
     applied_at: datetime
     updated_at: datetime
     job_posting: JobPostingResponse | None = None
+    applicant: ApplicantUserResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

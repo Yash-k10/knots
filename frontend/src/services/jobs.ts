@@ -49,6 +49,10 @@ export interface Application {
   applied_at: string;
   updated_at: string;
   job_posting?: JobPosting;
+  applicant?: {
+    id: number;
+    email: string;
+  };
 }
 
 export interface Referral {
@@ -139,6 +143,10 @@ export async function fetchMyApplications(): Promise<Application[]> {
   return apiRequest<Application[]>("/jobs/applications/me");
 }
 
+export async function fetchJobApplications(jobId: number): Promise<Application[]> {
+  return apiRequest<Application[]>(`/jobs/${jobId}/applications`);
+}
+
 export async function requestReferral(data: {
   job_posting_id: number;
   message?: string;
@@ -146,5 +154,15 @@ export async function requestReferral(data: {
   return apiRequest<Referral>("/jobs/referrals", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+}
+
+export async function updateApplicationStatus(
+  applicationId: number,
+  status: ApplicationStatus,
+): Promise<Application> {
+  return apiRequest<Application>(`/jobs/applications/${applicationId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
   });
 }

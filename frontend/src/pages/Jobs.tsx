@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Briefcase,
-
   MapPin,
   Building,
   DollarSign,
@@ -21,6 +20,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Calendar,
+  UserCheck,
+  ExternalLink,
+  Eye,
 } from "lucide-react";
 import {
   fetchJobs,
@@ -29,10 +31,13 @@ import {
   createCompany,
   applyForJob,
   fetchMyApplications,
+  fetchJobApplications,
+  updateApplicationStatus,
   requestReferral,
   JobPosting,
   Company,
   Application,
+  ApplicationStatus,
   JobType,
   WorkplaceType,
 } from "../services/jobs";
@@ -61,12 +66,16 @@ interface ApplicationWithUpdates extends Application {
 
 export default function Jobs() {
   const [activeTab, setActiveTab] = useState<
-    "explore" | "alumni-companies" | "applications" | "post"
+    "explore" | "alumni-companies" | "applications" | "candidates" | "post"
   >("explore");
 
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [applications, setApplications] = useState<ApplicationWithUpdates[]>([]);
+  const [candidateApplications, setCandidateApplications] = useState<Application[]>([]);
+  const [selectedCandidateJobFilter, setSelectedCandidateJobFilter] = useState<number | "ALL">("ALL");
+  const [selectedCoverLetterApp, setSelectedCoverLetterApp] = useState<Application | null>(null);
+  const [updatingAppId, setUpdatingAppId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -353,6 +362,56 @@ export default function Jobs() {
       );
 
       setApplications(realApps);
+
+      // Fetch candidates for jobs posted by current user or all if admin
+      if (userResp) {
+        const uRole = userResp.role?.name?.toLowerCase().trim() || "";
+        const canManage =
+          userResp.role_id === 1 ||
+          [
+            "admin",
+            "super admin",
+            "superadmin",
+            "management",
+            "central admin",
+            "tpo",
+            "controller",
+            "alumni",
+          ].includes(uRole);
+
+        if (canManage) {
+          const userPostedJobs = fetchedJobs.filter((j: JobPosting) =>
+            userResp.role_id === 1 ||
+            [
+              "admin",
+              "super admin",
+              "superadmin",
+              "management",
+              "central admin",
+            ].includes(uRole)
+              ? true
+              : j.posted_by_id === userResp.id
+          );
+
+          if (userPostedJobs.length > 0) {
+            const candidateResults = await Promise.all(
+              userPostedJobs.map((j: JobPosting) =>
+                fetchJobApplications(j.id)
+                  .then((apps) =>
+                    apps.map((a) => ({
+                      ...a,
+                      job_posting: a.job_posting || j,
+                    }))
+                  )
+                  .catch(() => [])
+              )
+            );
+            setCandidateApplications(candidateResults.flat());
+          } else {
+            setCandidateApplications([]);
+          }
+        }
+      }
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -361,6 +420,25 @@ export default function Jobs() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateCandidateStatus = async (
+    applicationId: number,
+    newStatus: ApplicationStatus
+  ) => {
+    setUpdatingAppId(applicationId);
+    setError(null);
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
+      setSuccessMsg(
+        `Application status updated to ${newStatus}! The applicant's live tracker has updated automatically.`
+      );
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || "Failed to update candidate application status.");
+    } finally {
+      setUpdatingAppId(null);
     }
   };
 
@@ -586,6 +664,20 @@ export default function Jobs() {
 
           {canPostJob && (
             <button
+              onClick={() => setActiveTab("candidates")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                activeTab === "candidates"
+                  ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                  : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              <UserCheck className="w-4 h-4 text-[#FFD21A]" />
+              <span>Review Candidates ({candidateApplications.length})</span>
+            </button>
+          )}
+
+          {canPostJob && (
+            <button
               onClick={() => setActiveTab("post")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === "post"
@@ -767,36 +859,57 @@ export default function Jobs() {
 
                   {/* Action Buttons */}
                   <div className="pt-3 border-t border-[#EAE4F7] flex items-center gap-2">
-                    {canApplyJob ? (
-                      <button
-                        onClick={() => setSelectedJobForApply(job)}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
-                      >
-                        Apply Now
-                      </button>
+                    {currentUser?.id && job.posted_by_id === currentUser.id ? (
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                          Posted by You
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedCandidateJobFilter(job.id);
+                            setActiveTab("candidates");
+                          }}
+                          className="py-2 px-3.5 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95"
+                        >
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Review Candidates</span>
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        disabled
-                        className="flex-1 py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-[11px] font-bold text-center cursor-not-allowed"
-                        title="Job applications are restricted to Students."
-                      >
-                        Student Only
-                      </button>
+                      <>
+                        {canApplyJob ? (
+                          <button
+                            onClick={() => setSelectedJobForApply(job)}
+                            className="flex-1 py-2.5 px-3 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95"
+                          >
+                            Apply Now
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-2.5 px-2 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-[11px] font-bold text-center cursor-not-allowed"
+                            title="Job applications are restricted to Students."
+                          >
+                            Student Only
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            const matchingAlum = alumniDirectory.find(
+                              (a) => a.company.toLowerCase() === (job.company?.name || "").toLowerCase()
+                            ) || alumniDirectory[0];
+                            setReferralModalTarget(matchingAlum);
+                            setTargetJobTitle(job.title);
+                          }}
+                          className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          title="Request direct alumni referral"
+                        >
+                          <Mail className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Referral</span>
+                        </button>
+                      </>
                     )}
-                    <button
-                      onClick={() => {
-                        const matchingAlum = alumniDirectory.find(
-                          (a) => a.company.toLowerCase() === (job.company?.name || "").toLowerCase()
-                        ) || alumniDirectory[0];
-                        setReferralModalTarget(matchingAlum);
-                        setTargetJobTitle(job.title);
-                      }}
-                      className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
-                      title="Request direct alumni referral"
-                    >
-                      <Mail className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Referral</span>
-                    </button>
                   </div>
                 </div>
               ))}
@@ -1157,6 +1270,251 @@ export default function Jobs() {
             </div>
           )}
         </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: REVIEW CANDIDATES & APPLICANTS (For Alumni, TPO & Admins)             */}
+      {/* ========================================================================= */}
+      {activeTab === "candidates" && (
+        !canPostJob ? (
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 text-center space-y-4 max-w-2xl mx-auto shadow-sm">
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-[#1E2746]">Access Restricted</h3>
+            <p className="text-sm text-[#5851A4] font-medium max-w-md mx-auto leading-relaxed">
+              Candidate review is available for opportunity creators, <strong>Alumni</strong>, <strong>Faculty</strong>, and <strong>Administrators</strong>.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Header & Metrics */}
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-[#4B63D2]" />
+                    Candidate Review & Lifecycle Manager
+                  </h2>
+                  <p className="text-xs text-[#5851A4] font-medium mt-0.5 max-w-2xl">
+                    Review incoming student applications for your posted jobs. When you update a candidate's status here, their <strong>My Applications</strong> stage progression automatically updates in real-time.
+                  </p>
+                </div>
+
+                {/* Job Filter Selector */}
+                <div className="w-full sm:w-auto flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#5851A4] shrink-0">Filter by Role:</span>
+                  <select
+                    value={selectedCandidateJobFilter}
+                    onChange={(e) =>
+                      setSelectedCandidateJobFilter(
+                        e.target.value === "ALL" ? "ALL" : Number(e.target.value)
+                      )
+                    }
+                    className="px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none w-full sm:w-auto"
+                  >
+                    <option value="ALL">All Posted Jobs ({candidateApplications.length} applicants)</option>
+                    {jobs
+                      .filter((j) =>
+                        currentUser?.role_id === 1 ||
+                        ["admin", "super admin", "superadmin", "management"].includes(roleName)
+                          ? true
+                          : j.posted_by_id === currentUser?.id
+                      )
+                      .map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.title} ({j.company?.name || "Partner"})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Metric Chips */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div className="p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] text-center">
+                  <span className="text-[11px] font-bold text-[#5851A4] uppercase tracking-wider block">Total Received</span>
+                  <span className="text-xl font-black text-[#1E2746]">{candidateApplications.length}</span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 text-center">
+                  <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Pending Review</span>
+                  <span className="text-xl font-black text-amber-900">
+                    {candidateApplications.filter((a) => (a.status || "PENDING").toUpperCase() === "PENDING").length}
+                  </span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200 text-center">
+                  <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">Shortlisted</span>
+                  <span className="text-xl font-black text-blue-900">
+                    {candidateApplications.filter((a) => (a.status || "").toUpperCase() === "REVIEWING").length}
+                  </span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-center">
+                  <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Accepted / Offer</span>
+                  <span className="text-xl font-black text-emerald-900">
+                    {candidateApplications.filter((a) => (a.status || "").toUpperCase() === "ACCEPTED").length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Candidate List */}
+            {(() => {
+              const filteredCandidates = candidateApplications.filter((a) =>
+                selectedCandidateJobFilter === "ALL"
+                  ? true
+                  : a.job_posting_id === selectedCandidateJobFilter
+              );
+
+              if (filteredCandidates.length === 0) {
+                return (
+                  <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-3 shadow-sm">
+                    <UserCheck className="w-12 h-12 text-[#C8B6E2] mx-auto" />
+                    <h3 className="text-lg font-black text-[#1E2746]">No Applicants Yet</h3>
+                    <p className="text-xs text-[#5851A4] max-w-md mx-auto font-medium">
+                      There are currently no candidate applications for the selected job posting.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {filteredCandidates.map((app: Application) => {
+                    const normStatus = (app.status || "PENDING").toUpperCase();
+                    const isReviewing = normStatus === "REVIEWING" || normStatus === "UNDER_REVIEW";
+                    const isAccepted = normStatus === "ACCEPTED";
+                    const isRejected = normStatus === "REJECTED";
+
+                    return (
+                      <div
+                        key={app.id}
+                        className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm space-y-4 transition-all"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#EAE4F7]">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#4B63D2]/10 text-[#4B63D2]">
+                                Applicant #{app.applicant_id}
+                              </span>
+                              <span
+                                className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                                  isAccepted
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                    : isReviewing
+                                    ? "bg-blue-50 text-blue-800 border-blue-200"
+                                    : isRejected
+                                    ? "bg-rose-50 text-rose-800 border-rose-200"
+                                    : "bg-amber-50 text-amber-800 border-amber-200"
+                                }`}
+                              >
+                                {normStatus}
+                              </span>
+                            </div>
+
+                            <h3 className="text-base sm:text-lg font-black text-[#1E2746]">
+                              {app.applicant?.email ? (
+                                <span className="flex items-center gap-1.5">
+                                  <Mail className="w-4 h-4 text-[#4B63D2]" />
+                                  {app.applicant.email}
+                                </span>
+                              ) : (
+                                `SBJIT Student Applicant #${app.applicant_id}`
+                              )}
+                            </h3>
+
+                            <p className="text-xs font-bold text-[#5851A4] flex items-center gap-2">
+                              <Briefcase className="w-3.5 h-3.5 text-[#4B63D2]" />
+                              <span>Applied for: <strong>{app.job_posting?.title || "Opportunity"}</strong></span>
+                              <span>•</span>
+                              <Calendar className="w-3.5 h-3.5 text-[#9188BE]" />
+                              <span>{new Date(app.applied_at).toLocaleDateString()}</span>
+                            </p>
+                          </div>
+
+                          {/* Action Controls for Status Advancement */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => handleUpdateCandidateStatus(app.id, "REVIEWING")}
+                              disabled={updatingAppId === app.id || isReviewing}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isReviewing
+                                  ? "bg-blue-100 text-blue-700 border border-blue-200 cursor-default"
+                                  : "bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200"
+                              }`}
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Shortlist / Review</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleUpdateCandidateStatus(app.id, "ACCEPTED")}
+                              disabled={updatingAppId === app.id || isAccepted}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isAccepted
+                                  ? "bg-emerald-100 text-emerald-700 border border-emerald-200 cursor-default"
+                                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                              }`}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Accept & Offer</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleUpdateCandidateStatus(app.id, "REJECTED")}
+                              disabled={updatingAppId === app.id || isRejected}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                isRejected
+                                  ? "bg-rose-100 text-rose-700 border border-rose-200 cursor-default"
+                                  : "bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+                              }`}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Decline</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Resume & Cover Letter Section */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                          <div className="flex items-center gap-3">
+                            {app.resume_url ? (
+                              <a
+                                href={app.resume_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9FD] hover:bg-[#4B63D2]/10 border border-[#D5CBEE] text-[#4B63D2] rounded-xl text-xs font-bold transition-all"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>View Resume / CV</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400 italic">No direct resume URL provided</span>
+                            )}
+
+                            {app.cover_letter && (
+                              <button
+                                onClick={() => setSelectedCoverLetterApp(app)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF9FD] hover:bg-[#FAF9FD] border border-[#D5CBEE] text-[#5851A4] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Read Cover Letter</span>
+                              </button>
+                            )}
+                          </div>
+
+                          <span className="text-[11px] text-[#9188BE] font-medium">
+                            Live updates linked directly to candidate's dashboard
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )
       )}
 
       {/* ========================================================================= */}
@@ -1615,6 +1973,49 @@ export default function Jobs() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: VIEW COVER LETTER MODAL                                          */}
+      {/* ========================================================================= */}
+      {selectedCoverLetterApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+            <button
+              onClick={() => setSelectedCoverLetterApp(null)}
+              className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2]">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[#1E2746]">Candidate Cover Letter</h3>
+                <p className="text-xs text-[#5851A4]">
+                  Applicant #{selectedCoverLetterApp.applicant_id} • {selectedCoverLetterApp.job_posting?.title || "Opportunity"}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl max-h-64 overflow-y-auto">
+              <p className="text-xs sm:text-sm text-[#1E2746] font-medium leading-relaxed whitespace-pre-wrap">
+                {selectedCoverLetterApp.cover_letter || "No cover letter provided."}
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setSelectedCoverLetterApp(null)}
+                className="px-5 py-2 rounded-xl bg-[#4B63D2] text-white text-xs font-bold hover:bg-[#3E53BE] transition-all cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
