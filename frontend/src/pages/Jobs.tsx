@@ -291,41 +291,68 @@ export default function Jobs() {
       setJobs(fetchedJobs);
       setCompanies(fetchedCompanies);
 
-      // Enhance applications with mock lifecycle progression stages if needed
-      const enhancedApps: ApplicationWithUpdates[] = (fetchedApps || []).map(
-        (app: Application, index: number) => {
+      // Build authentic application lifecycle progression stages based strictly on real DB status
+      const realApps: ApplicationWithUpdates[] = (fetchedApps || []).map(
+        (app: Application) => {
           const appDate = app.applied_at || new Date().toISOString();
-          const stages = [
+          const normalizedStatus = (app.status || "PENDING").toUpperCase();
+
+          const stages: {
+            stage: "SUBMITTED" | "REVIEW" | "TECH_ROUND" | "INTERVIEW" | "OFFER" | "REJECTED";
+            updatedAt: string;
+            note: string;
+          }[] = [
             {
-              stage: "SUBMITTED" as const,
+              stage: "SUBMITTED",
               updatedAt: appDate,
               note: "Application & Resume received by the recruitment team.",
             },
-            ...(index % 2 === 0
-              ? [
-                  {
-                    stage: "REVIEW" as const,
-                    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-                    note: "Profile shortlisted by Technical Hiring Manager.",
-                  },
-                  {
-                    stage: "TECH_ROUND" as const,
-                    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-                    note: "Online Coding Assessment link sent to candidate email.",
-                  },
-                ]
-              : []),
           ];
+
+          if (
+            normalizedStatus === "REVIEWING" ||
+            normalizedStatus === "UNDER_REVIEW" ||
+            normalizedStatus === "REVIEW"
+          ) {
+            stages.push({
+              stage: "REVIEW",
+              updatedAt: app.updated_at || appDate,
+              note: "Profile shortlisted and currently under hiring manager review.",
+            });
+          } else if (normalizedStatus === "ACCEPTED") {
+            stages.push(
+              {
+                stage: "REVIEW",
+                updatedAt: app.updated_at || appDate,
+                note: "Profile shortlisted by Technical Hiring Manager.",
+              },
+              {
+                stage: "TECH_ROUND",
+                updatedAt: app.updated_at || appDate,
+                note: "Technical Assessment & Interview rounds completed.",
+              },
+              {
+                stage: "OFFER",
+                updatedAt: app.updated_at || appDate,
+                note: "Application accepted! Offer extended.",
+              },
+            );
+          } else if (normalizedStatus === "REJECTED") {
+            stages.push({
+              stage: "REJECTED",
+              updatedAt: app.updated_at || appDate,
+              note: "Application reviewed. Not moving forward at this time.",
+            });
+          }
 
           return {
             ...app,
             updates: stages,
           };
-        }
+        },
       );
 
-
-      setApplications(enhancedApps);
+      setApplications(realApps);
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -1027,32 +1054,56 @@ export default function Jobs() {
                       Application Stage Progression
                     </h4>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                      {[
-                        { label: "Submitted", active: true },
-                        { label: "In Review", active: true },
-                        { label: "Technical Round", active: (app.updates?.length || 0) > 1 },
-                        { label: "Final Decision", active: false },
-                      ].map((step, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-2xl border text-center transition-all ${
-                            step.active
-                              ? "bg-emerald-50/70 border-emerald-300 text-emerald-800"
-                              : "bg-[#FAF9FD] border-[#EAE4F7] text-slate-600"
-                          }`}
-                        >
-                          <div className="flex items-center justify-center gap-1 text-xs font-bold">
-                            {step.active ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            ) : (
-                              <Clock className="w-3.5 h-3.5 text-slate-500" />
-                            )}
-                            <span>{step.label}</span>
-                          </div>
+                    {(() => {
+                      const st = (app.status || "PENDING").toUpperCase();
+                      const isSubmitted = true;
+                      const isReview =
+                        st === "REVIEWING" ||
+                        st === "UNDER_REVIEW" ||
+                        st === "REVIEW" ||
+                        st === "ACCEPTED";
+                      const isTech = st === "ACCEPTED";
+                      const isFinal = st === "ACCEPTED" || st === "REJECTED";
+
+                      return (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                          {[
+                            { label: "Submitted", active: isSubmitted },
+                            { label: "In Review", active: isReview },
+                            { label: "Technical Round", active: isTech },
+                            {
+                              label: st === "REJECTED" ? "Closed" : "Decision",
+                              active: isFinal,
+                              isRejected: st === "REJECTED",
+                            },
+                          ].map((step, idx) => (
+                            <div
+                              key={idx}
+                              className={`p-3 rounded-2xl border text-center transition-all ${
+                                step.active
+                                  ? step.isRejected
+                                    ? "bg-rose-50 border-rose-200 text-rose-800"
+                                    : "bg-emerald-50/70 border-emerald-300 text-emerald-800"
+                                  : "bg-[#FAF9FD] border-[#EAE4F7] text-slate-400"
+                              }`}
+                            >
+                              <div className="flex items-center justify-center gap-1 text-xs font-bold">
+                                {step.active ? (
+                                  step.isRejected ? (
+                                    <X className="w-3.5 h-3.5 text-rose-600" />
+                                  ) : (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  )
+                                ) : (
+                                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                )}
+                                <span>{step.label}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Timeline Notes Updates */}
@@ -1378,7 +1429,11 @@ export default function Jobs() {
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Hi Priya, I am a 4th-year AIML student at SBJIT. I built projects in distributed systems and would love a referral for this opening..."
+                  placeholder={`Hi ${
+                    referralModalTarget?.name ? referralModalTarget.name.split(" ")[0] : "there"
+                  }, I am a student at SBJIT interested in ${
+                    targetJobTitle || "this opening"
+                  }. I would love a referral for this role...`}
                   value={emailReferralPitch}
                   onChange={(e) => setEmailReferralPitch(e.target.value)}
                   required
