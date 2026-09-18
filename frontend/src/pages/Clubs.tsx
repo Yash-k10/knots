@@ -604,20 +604,20 @@ export default function Clubs() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* ── 1. Hero Banner with Department & Leadership Overview ────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#1E2746] via-[#2A3558] to-[#182038] text-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-800/80">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#4B63D2]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-[#FFD21A]/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#12192F] via-[#1B2544] to-[#16203B] text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-white/10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#4B63D2]/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-[#FFD21A]/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-amber-300">
-              <Crown className="w-3.5 h-3.5 text-[#FFD21A]" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/15 backdrop-blur-md border border-amber-400/30 text-xs font-bold text-[#FFD21A] shadow-sm">
+              <Crown className="w-4 h-4 text-[#FFD21A]" />
               <span>Controller-Verified Department Clubs &amp; Alumni Chapters</span>
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-sm">
               Department Clubs &amp; Classrooms
             </h1>
-            <p className="text-slate-300 text-xs md:text-sm leading-relaxed font-normal">
+            <p className="text-xs md:text-sm leading-relaxed font-medium" style={{ color: "#E2E8F0" }}>
               Official clubs organized by department and category. Join verified chapters to access Google Classroom codes, live meeting sessions, shared notes, and connect with mentors.
             </p>
           </div>
@@ -626,10 +626,10 @@ export default function Clubs() {
             {isControllerOrAdmin && (
               <button
                 onClick={openCreateModal}
-                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-3 rounded-2xl text-xs md:text-sm shadow-lg shadow-[#4B63D2]/30 transition-all duration-200 flex items-center gap-2 cursor-pointer border border-white/15 active:scale-95"
+                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#484288] text-white font-bold px-5 py-3 rounded-2xl text-xs md:text-sm shadow-xl shadow-[#4B63D2]/30 hover:shadow-[#4B63D2]/50 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 cursor-pointer border border-white/20 active:scale-95"
               >
-                <Plus className="w-4 h-4 text-[#FFD21A]" />
-                <span>+ Create Department Club</span>
+                <Plus className="w-4 h-4 text-[#FFD21A] stroke-[2.5]" />
+                <span>Create Department Club</span>
               </button>
             )}
           </div>
@@ -637,25 +637,33 @@ export default function Clubs() {
 
         {/* Quick KPI stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mt-8 pt-6 border-t border-white/10 relative z-10">
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Active Clubs</div>
-            <div className="text-xl md:text-2xl font-black text-white mt-1">{clubs.length}</div>
+          <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-md border border-white/15 rounded-2xl p-4 transition-all shadow-inner">
+            <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#CBD5E1" }}>
+              Active Clubs
+            </div>
+            <div className="text-2xl font-black text-white mt-1.5">{clubs.length}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">Enrolled Members</div>
-            <div className="text-xl md:text-2xl font-black text-amber-400 mt-1">
+          <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-md border border-white/15 rounded-2xl p-4 transition-all shadow-inner">
+            <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
+              Enrolled Members
+            </div>
+            <div className="text-2xl font-black text-[#FFD21A] mt-1.5">
               {clubDetail ? clubDetail.members_count : "—"}
             </div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">Pending Requests</div>
-            <div className="text-xl md:text-2xl font-black text-emerald-400 mt-1">
+          <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-md border border-white/15 rounded-2xl p-4 transition-all shadow-inner">
+            <div className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+              Pending Requests
+            </div>
+            <div className="text-2xl font-black text-emerald-400 mt-1.5">
               {pendingRequests.length}
             </div>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">Your Status</div>
-            <div className="text-sm font-bold text-indigo-300 mt-1 truncate">
+          <div className="bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-md border border-white/15 rounded-2xl p-4 transition-all shadow-inner">
+            <div className="text-[11px] font-bold text-indigo-200 uppercase tracking-wider">
+              Your Status
+            </div>
+            <div className="text-xs sm:text-sm font-bold text-white mt-2 truncate bg-white/10 px-2.5 py-1 rounded-lg inline-block border border-white/15">
               {clubDetail?.user_role ? `${clubDetail.user_role}` : "Not Joined"}
             </div>
           </div>
@@ -1496,13 +1504,13 @@ export default function Clubs() {
                 <h3 className="text-base md:text-lg font-black">
                   {isEditing ? "Modify Club & Classroom Setup" : "Register Department Club"}
                 </h3>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="text-xs mt-0.5 font-medium" style={{ color: "#E2E8F0" }}>
                   Set up department category, Google Classroom code, and live meeting links
                 </p>
               </div>
               <button
                 onClick={() => setShowFormModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                className="text-white/75 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
