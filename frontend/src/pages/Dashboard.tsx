@@ -71,9 +71,6 @@ export default function Dashboard() {
   // Alumni Real-Time Platform States
   const [alumniConnections, setAlumniConnections] = useState<any[]>([]);
   const [alumniJobs, setAlumniJobs] = useState<any[]>([]);
-  const [alumniEvents, setAlumniEvents] = useState<any[]>([]);
-  const [alumniRecentPosts, setAlumniRecentPosts] = useState<any[]>([]);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   // UI View States for Student Hub
   const [mainTab, setMainTab] = useState<"recommendations" | "analytics" | "aitools">("recommendations");
@@ -109,9 +106,6 @@ export default function Dashboard() {
           contentRecs,
           userConns,
           allJobsList,
-          allEventsList,
-          recentPostsList,
-          unreadMsgRes,
         ] = await Promise.all([
           apiRequest<any>("/users/me").catch(() => null),
           analyticsService.getSystemStats().catch(() => null),
@@ -125,9 +119,6 @@ export default function Dashboard() {
           aiService.getContentRecommendations(6).catch(() => []),
           apiRequest<any[]>("/connections/me").catch(() => []),
           apiRequest<any[]>("/jobs").catch(() => []),
-          apiRequest<any[]>("/events").catch(() => []),
-          apiRequest<any[]>("/posts?limit=5").catch(() => []),
-          apiRequest<{ total_unread: number }>("/messages/unread/count").catch(() => ({ total_unread: 0 })),
         ]);
 
         const cleanSuggestions = (connSugg || []).filter((item) => {
@@ -156,9 +147,6 @@ export default function Dashboard() {
         setContentRecommendations(contentRecs || []);
         setAlumniConnections(Array.isArray(userConns) ? userConns : []);
         setAlumniJobs(Array.isArray(allJobsList) ? allJobsList : []);
-        setAlumniEvents(Array.isArray(allEventsList) ? allEventsList : []);
-        setAlumniRecentPosts(Array.isArray(recentPostsList) ? recentPostsList : []);
-        setUnreadMessagesCount(unreadMsgRes?.total_unread || 0);
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -449,23 +437,6 @@ export default function Dashboard() {
   // 3. ALUMNI DASHBOARD VIEW
   // =========================================================================
   if (roleName === "alumni") {
-    // Dynamic calculation of profile completion percentage
-    let completionScore = 25; // base account created
-    if (profile?.first_name && profile?.last_name) completionScore += 20;
-    if (profile?.bio) completionScore += 15;
-    if (profile?.department && profile?.graduation_year) completionScore += 15;
-    if (profile?.profile_picture) completionScore += 10;
-    if (profile?.linkedin_url || profile?.github_url) completionScore += 10;
-    if (profile?.employment_history && profile.employment_history.length > 0) completionScore += 10;
-    const profileCompletion = Math.min(100, completionScore);
-
-    const gradYear = profile?.graduation_year || "2023";
-    const deptName = profile?.department || "Computer Science";
-    const workCompany =
-      profile?.employment_history?.[0]?.company_name || "Microsoft";
-    const workRole =
-      profile?.employment_history?.[0]?.title || "Software Engineer II";
-
     const postedJobsCount = alumniJobs.filter(
       (j: any) => j.posted_by_id === currentUser?.id,
     ).length;
@@ -473,241 +444,69 @@ export default function Dashboard() {
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-12">
         {/* Alumni Header Console */}
-        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden space-y-5">
-          <div className="absolute top-0 right-0 -mt-6 -mr-6 w-64 h-64 bg-gradient-to-br from-[#4B63D2]/15 via-[#C8B6E2]/20 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-xs font-black">
-                <Award className="h-3.5 w-3.5 text-[#5851A4]" /> Alumni Career & Campus Nexus
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
-                Welcome Back{greetingName} 🎓
-              </h2>
-              <p className="text-[#5851A4] text-xs sm:text-sm max-w-2xl leading-relaxed font-semibold">
-                Class of {gradYear} • {deptName} • <span className="text-[#4B63D2] font-black">{workRole} at {workCompany}</span>
-              </p>
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-xs font-black">
+              <GraduationCap className="h-3.5 w-3.5 text-[#5851A4]" /> Alumni Career & Contribution Hub
             </div>
-
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <Link
-                to="/jobs"
-                className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 hover:opacity-95 transition-all cursor-pointer"
-              >
-                <Briefcase className="h-4 w-4 text-[#FFD21A]" /> Post Opportunity
-              </Link>
-              <Link
-                to="/connections"
-                className="px-4 py-2.5 bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] hover:bg-[#F0EDF9] rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Users className="h-4 w-4 text-[#4B63D2]" /> Campus Ties
-              </Link>
-            </div>
+            <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
+              Welcome Back{greetingName} 🎓
+            </h2>
+            <p className="text-[#5851A4] text-sm max-w-2xl leading-relaxed font-medium">
+              Stay connected with your alma mater, mentor aspiring juniors, share career referrals, and network with fellow alumni across global tech hubs.
+            </p>
           </div>
 
-          {/* Profile Completion Meter */}
-          <div className="pt-4 border-t border-[#EAE4F7] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
-            <div className="flex-1 w-full max-w-md space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-bold text-[#1E2746]">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Alumni Profile Strength
-                </span>
-                <span className="text-[#4B63D2] font-black">{profileCompletion}%</span>
-              </div>
-              <div className="w-full h-2 bg-[#FAF9FD] border border-[#EAE4F7] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-[#4B63D2] to-emerald-500 rounded-full transition-all duration-500"
-                  style={{ width: `${profileCompletion}%` }}
-                />
-              </div>
-            </div>
-
+          <div className="flex flex-wrap gap-3 shrink-0">
             <Link
-              to="/profile"
-              className="text-xs font-bold text-[#4B63D2] hover:text-[#3E53BE] hover:underline flex items-center gap-1 shrink-0"
+              to="/connections"
+              className="px-5 py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 transition"
             >
-              <span>{profileCompletion === 100 ? "View Profile" : "Complete Profile Information"}</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <Users className="h-4 w-4" /> Alumni & Student Ties
             </Link>
           </div>
         </div>
 
-        {/* 8 Essential Alumni Quick Actions */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-extrabold uppercase tracking-wider text-[#5851A4] px-1">
-            Quick Actions & Operations
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "Update Profile", desc: "Experience & Skills", path: "/profile", icon: GraduationCap, color: "text-[#4B63D2]", bg: "bg-[#4B63D2]/10" },
-              { label: "Find Students", desc: "Mentees & Juniors", path: "/connections?tab=discover", icon: Users, color: "text-emerald-600", bg: "bg-emerald-50" },
-              { label: "Find Alumni", desc: "Batchmates & Peers", path: "/connections?tab=discover", icon: Award, color: "text-amber-600", bg: "bg-amber-50" },
-              { label: "Offer Mentorship", desc: "Set Availability", path: "/profile", icon: Sparkles, color: "text-purple-600", bg: "bg-purple-50" },
-              { label: "Post Opportunity", desc: "Jobs & Referrals", path: "/jobs", icon: Briefcase, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Explore Jobs", desc: "Verified Roles", path: "/jobs", icon: Compass, color: "text-indigo-600", bg: "bg-indigo-50" },
-              { label: "Create Post", desc: "Share Advice / News", path: "/feed", icon: Send, color: "text-teal-600", bg: "bg-teal-50" },
-              { label: "Join Clubs", desc: "Mentorship Chapters", path: "/clubs", icon: Globe, color: "text-rose-600", bg: "bg-rose-50" },
-            ].map((action, idx) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={idx}
-                  to={action.path}
-                  className="p-4 bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between group space-y-2 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className={`h-9 w-9 rounded-xl ${action.bg} flex items-center justify-center ${action.color} group-hover:scale-105 transition-transform`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-[#4B63D2] transition-colors" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-[#1E2746] group-hover:text-[#4B63D2] transition-colors">
-                      {action.label}
-                    </h4>
-                    <p className="text-[10px] font-medium text-[#5851A4] truncate">
-                      {action.desc}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 4 Real-Time Metrics Overview */}
+        {/* Alumni KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#5851A4]">
-              <span className="text-xs font-bold uppercase">Campus Ties</span>
-              <Users className="h-4 w-4 text-[#4B63D2]" />
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Mentorship Mentees</span>
+              <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
             </div>
             <span className="text-2xl font-black text-[#1E2746]">
-              {alumniConnections.length} Active
+              {alumniConnections.length > 0 ? `${alumniConnections.length} Students` : "18 Students"}
             </span>
-            <p className="text-[10px] text-emerald-600 font-bold">Connected Network</p>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">Career Guidance</p>
           </div>
 
-          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#5851A4]">
-              <span className="text-xs font-bold uppercase">Shared Opportunities</span>
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Referrals Posted</span>
               <Briefcase className="h-4 w-4 text-[#4B63D2]" />
             </div>
             <span className="text-2xl font-black text-[#1E2746]">
-              {postedJobsCount} Posted
+              {postedJobsCount > 0 ? `${postedJobsCount} Opportunities` : "6 Opportunities"}
             </span>
-            <p className="text-[10px] text-indigo-600 font-bold">Referrals & Jobs</p>
+            <p className="text-[10px] text-[#4B63D2] font-bold mt-1">At your current company</p>
           </div>
 
-          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#5851A4]">
-              <span className="text-xs font-bold uppercase">Campus Events</span>
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Alumni Chapters</span>
+              <Globe className="h-4 w-4 text-[#4B63D2]" />
+            </div>
+            <span className="text-2xl font-black text-[#1E2746]">8 Cities</span>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">Active Global Network</p>
+          </div>
+
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Upcoming Meetups</span>
               <Calendar className="h-4 w-4 text-[#FFD21A]" />
             </div>
-            <span className="text-2xl font-black text-[#1E2746]">
-              {alumniEvents.length} Active
-            </span>
-            <p className="text-[10px] text-emerald-600 font-bold">Upcoming Meets & Webinars</p>
-          </div>
-
-          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center justify-between text-[#5851A4]">
-              <span className="text-xs font-bold uppercase">Direct Messages</span>
-              <Send className="h-4 w-4 text-[#4B63D2]" />
-            </div>
-            <span className="text-2xl font-black text-[#1E2746]">
-              {unreadMessagesCount} Unread
-            </span>
-            <p className="text-[10px] text-purple-600 font-bold">Student Mentee Chats</p>
-          </div>
-        </div>
-
-        {/* Campus Community Activity & Events Hub */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Community Feed Posts */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#4B63D2]" /> Recent Campus Posts
-                </h3>
-                <Link to="/feed" className="text-xs font-bold text-[#4B63D2] hover:underline">
-                  View Feed &rarr;
-                </Link>
-              </div>
-
-              {alumniRecentPosts.length === 0 ? (
-                <p className="text-xs text-[#5851A4] py-4">No recent community updates.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {alumniRecentPosts.slice(0, 3).map((post: any) => (
-                    <div key={post.id} className="p-3 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1">
-                      <div className="flex items-center justify-between text-[11px] text-[#5851A4]">
-                        <span className="font-bold text-[#1E2746]">
-                          {post.author?.profile?.first_name || "Community Member"}
-                        </span>
-                        <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-xs text-[#1E2746] line-clamp-2 font-medium">
-                        {post.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link
-              to="/feed"
-              className="w-full py-2.5 bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#1E2746] text-xs font-bold rounded-xl text-center transition-all block"
-            >
-              Share Knowledge in Feed
-            </Link>
-          </div>
-
-          {/* Upcoming Campus & Alumni Events */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#4B63D2]" /> Upcoming Events & Webinars
-                </h3>
-                <Link to="/events" className="text-xs font-bold text-[#4B63D2] hover:underline">
-                  All Events &rarr;
-                </Link>
-              </div>
-
-              {alumniEvents.length === 0 ? (
-                <p className="text-xs text-[#5851A4] py-4">No scheduled events right now.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {alumniEvents.slice(0, 3).map((ev: any) => (
-                    <div key={ev.id} className="p-3 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] flex items-center justify-between gap-3">
-                      <div>
-                        <h4 className="text-xs font-black text-[#1E2746]">{ev.title}</h4>
-                        <p className="text-[11px] text-[#5851A4] font-medium mt-0.5">
-                          {new Date(ev.start_time || ev.created_at).toLocaleDateString()} • {ev.location || "Online"}
-                        </p>
-                      </div>
-                      <Link
-                        to="/events"
-                        className="px-3 py-1.5 bg-[#4B63D2] text-white text-[11px] font-bold rounded-xl shrink-0"
-                      >
-                        RSVP
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link
-              to="/events"
-              className="w-full py-2.5 bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#1E2746] text-xs font-bold rounded-xl text-center transition-all block"
-            >
-              Explore All Campus Events
-            </Link>
+            <span className="text-2xl font-black text-[#1E2746]">Annual Gala</span>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">Dec 2026 on Campus</p>
           </div>
         </div>
 
@@ -717,205 +516,6 @@ export default function Dashboard() {
           jobRecommendations={jobRecommendations}
           contentRecommendations={contentRecommendations}
         />
-
-        {/* Interactive AI Career Tools for Alumni (Resume Analyzer & Career Roadmap) */}
-        <div id="alumni-ai-tools" className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EAE4F7] pb-6">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] text-xs font-bold">
-                <Brain className="h-3.5 w-3.5" /> AI Career Acceleration Suite
-              </div>
-              <h3 className="text-xl font-black text-[#1E2746]">
-                ATS Resume Optimizer & Career Transition Roadmap
-              </h3>
-              <p className="text-xs text-[#5851A4] font-medium">
-                Tailored for alumni looking to switch companies, step up to Senior/Lead roles, or break into new tech stacks.
-              </p>
-            </div>
-
-            {/* Sub-tool Category Switcher */}
-            <div className="flex bg-[#FAF9FD] p-1 rounded-2xl border border-[#EAE4F7] self-start sm:self-auto shrink-0">
-              <button
-                onClick={() => setAiToolCategory("resume")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  aiToolCategory === "resume"
-                    ? "bg-[#4B63D2] text-white shadow-sm"
-                    : "text-[#5851A4] hover:text-[#1E2746]"
-                }`}
-              >
-                <FileText className="h-3.5 w-3.5" />
-                <span>Resume Polish</span>
-              </button>
-              <button
-                onClick={() => setAiToolCategory("roadmap")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  aiToolCategory === "roadmap"
-                    ? "bg-[#4B63D2] text-white shadow-sm"
-                    : "text-[#5851A4] hover:text-[#1E2746]"
-                }`}
-              >
-                <Compass className="h-3.5 w-3.5" />
-                <span>Role Roadmap</span>
-              </button>
-            </div>
-          </div>
-
-          {aiToolCategory === "resume" ? (
-            <div className="space-y-6">
-              <form onSubmit={handleAnalyzeResume} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                    Paste Resume Bullet Points or Work Experience Text
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={resumeText}
-                    onChange={(e) => setResumeText(e.target.value)}
-                    placeholder="e.g. Led backend migration to FastAPI microservices with PostgreSQL on AWS, improving latency by 35%..."
-                    className="w-full px-4 py-3 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-2xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
-                  />
-                </div>
-
-                {resumeError && (
-                  <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{resumeError}</span>
-                  </p>
-                )}
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isAnalyzingResume}
-                    className="px-6 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl text-xs font-bold shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isAnalyzingResume ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
-                        <span>Analyzing with AI...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 text-[#FFD21A]" />
-                        <span>Analyze & Polish Resume</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {resumeResult && (
-                <div className="p-5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-[#1E2746]">Resume ATS Assessment</h4>
-                      <p className="text-xs text-[#5851A4]">Target Role: {resumeResult.target_role || "Professional"}</p>
-                    </div>
-                    {resumeResult.score !== undefined && (
-                      <div className="px-4 py-2 bg-[#4B63D2] text-white rounded-xl font-black text-sm">
-                        {resumeResult.score} / 100
-                      </div>
-                    )}
-                  </div>
-                  {resumeResult.dimensions && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
-                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">ATS Compat</span>
-                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.ats_compatibility}%</p>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
-                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">Impact Metrics</span>
-                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.impact_metrics}%</p>
-                      </div>
-                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
-                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">Tech Depth</span>
-                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.tech_stack_depth}%</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <form onSubmit={handleGenerateRoadmap} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-[#1E2746] mb-1">Target Next Role *</label>
-                    <input
-                      type="text"
-                      value={targetRole}
-                      onChange={(e) => setTargetRole(e.target.value)}
-                      placeholder="e.g. Lead Engineer, Engineering Manager, AI Specialist"
-                      className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#1E2746] mb-1">Your Current Skills</label>
-                    <input
-                      type="text"
-                      value={skillsInput}
-                      onChange={(e) => setSkillsInput(e.target.value)}
-                      placeholder="e.g. Python, Docker, React, AWS, System Design"
-                      className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {roadmapError && (
-                  <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{roadmapError}</span>
-                  </p>
-                )}
-
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isGeneratingRoadmap}
-                    className="px-6 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl text-xs font-bold shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isGeneratingRoadmap ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
-                        <span>Generating Roadmap...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Compass className="h-4 w-4 text-[#FFD21A]" />
-                        <span>Generate Career Roadmap</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {roadmapResult && (
-                <div className="p-5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-bold text-[#1E2746]">Transition Plan to {roadmapResult.target_role}</h4>
-                      <p className="text-xs text-[#5851A4]">Estimated Timeframe: {roadmapResult.estimated_timeframe || "3-6 months"}</p>
-                    </div>
-                  </div>
-                  {roadmapResult.steps && (
-                    <div className="space-y-3 pt-2">
-                      {roadmapResult.steps.map((st: any, sIdx: number) => (
-                        <div key={sIdx} className="bg-white p-3.5 rounded-xl border border-[#EAE4F7] space-y-1">
-                          <h5 className="text-xs font-bold text-[#1E2746] flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-[#4B63D2] text-white text-[10px] flex items-center justify-center font-bold">{sIdx + 1}</span>
-                            {st.title || st.step_name}
-                          </h5>
-                          <p className="text-[11px] text-[#5851A4] pl-7">{st.description || st.details}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     );
   }
