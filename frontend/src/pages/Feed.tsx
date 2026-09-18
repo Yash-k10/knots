@@ -1562,45 +1562,56 @@ export default function Feed() {
                       {/* Card Body: Attachment (Image, PDF/DOCX Document) */}
                       {post.image_url &&
                         (isDocumentUrl(post.image_url) ? (
-                          getFileExtension(post.image_url) === "PDF" ? (
-                            <div className="my-3 rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] h-[500px] shadow-xs">
-                              <iframe
-                                src={getMediaUrl(post.image_url)}
-                                className="w-full h-full border-none"
-                                title={getFileName(post.image_url)}
-                              />
-                            </div>
-                          ) : (
-                            <div className="my-3 p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all shadow-xs">
-                              <div className="flex items-center gap-3.5 min-w-0">
-                                <div className="w-12 h-12 rounded-2xl bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider shadow-xs">
+                          <div className="my-3 p-4 sm:p-5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#4B63D2]/40 transition-all shadow-xs">
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <div className="w-12 h-12 rounded-2xl bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20 flex items-center justify-center shrink-0 font-black text-xs uppercase tracking-wider shadow-xs">
+                                {getFileExtension(post.image_url) === "PDF" ? (
+                                  <FileText className="w-6 h-6 text-rose-500" />
+                                ) : (
                                   <FileSpreadsheet className="w-6 h-6 text-[#4B63D2]" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs sm:text-sm font-bold text-[#1E2746] truncate">
-                                    {getFileName(post.image_url)}
-                                  </p>
-                                  <span className="text-[11px] font-semibold text-[#5851A4]">
-                                    Verified Document Attachment •{" "}
-                                    {getFileExtension(post.image_url)}
-                                  </span>
-                                </div>
+                                )}
                               </div>
-
-                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                                {/* Direct Download/View in Tab Button */}
-                                <a
-                                  href={getMediaUrl(post.image_url)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-md shadow-[#4B63D2]/20 transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                  <Download className="w-3.5 h-3.5 text-[#FFD21A]" />
-                                  <span>Download</span>
-                                </a>
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm font-bold text-[#1E2746] truncate">
+                                  {getFileName(post.image_url)}
+                                </p>
+                                <span className="text-[11px] font-semibold text-[#5851A4]">
+                                  Verified Document Attachment •{" "}
+                                  {getFileExtension(post.image_url)}
+                                </span>
                               </div>
                             </div>
-                          )
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                              {/* In-app Preview Button for PDFs */}
+                              {getFileExtension(post.image_url) === "PDF" && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setActivePdfModalUrl({
+                                      url: getMediaUrl(post.image_url) || "",
+                                      name: getFileName(post.image_url || ""),
+                                    })
+                                  }
+                                  className="px-3.5 py-2 bg-white hover:bg-[#FAF9FD] text-[#4B63D2] border border-[#D5CBEE] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Preview</span>
+                                </button>
+                              )}
+
+                              {/* Direct Download/View in Tab Button */}
+                              <a
+                                href={getMediaUrl(post.image_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-md shadow-[#4B63D2]/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Download className="w-3.5 h-3.5 text-[#FFD21A]" />
+                                <span>Download</span>
+                              </a>
+                            </div>
+                          </div>
                         ) : !failedImages[post.id] ? (
                           <div
                             onClick={() =>
@@ -1632,18 +1643,27 @@ export default function Feed() {
                         ) : (
                           <div className="my-2 p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-3 shadow-xs">
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
-                                <AlertCircle className="w-5 h-5" />
+                              <div className="w-9 h-9 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center shrink-0">
+                                <Image className="w-5 h-5 text-[#4B63D2]" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-xs font-bold text-rose-900 truncate">
+                                <p className="text-xs font-bold text-[#1E2746] truncate">
                                   {getFileName(post.image_url)}
                                 </p>
-                                <span className="text-[10px] font-semibold text-rose-600">
-                                  Media Not Found (Deleted or missing)
+                                <span className="text-[10px] font-semibold text-[#5851A4]">
+                                  Image Attachment
                                 </span>
                               </div>
                             </div>
+                            <a
+                              href={getMediaUrl(post.image_url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3.5 py-1.5 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
+                            </a>
                           </div>
                         ))}
 
