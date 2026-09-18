@@ -28,6 +28,8 @@ import {
   Search,
   Eye,
   Filter,
+  Clock,
+  ChevronRight,
 } from "lucide-react";
 import {
   analyticsService,
@@ -57,6 +59,13 @@ import {
   ResumeAnalysisResult,
   CareerRoadmapResult,
 } from "../services/ai";
+import {
+  departmentService,
+  DepartmentStatsResponse,
+  ManagementAnnouncement,
+  DepartmentAchievementItem,
+  DepartmentReportItem,
+} from "../services/department";
 
 export default function Dashboard() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -98,6 +107,12 @@ export default function Dashboard() {
   const [controllerFaculty, setControllerFaculty] = useState<any[]>([]);
   const [controllerBatchFilter, setControllerBatchFilter] = useState<string>("all");
   const [controllerSearchQuery, setControllerSearchQuery] = useState<string>("");
+
+  // HOD Dashboard States
+  const [hodStats, setHodStats] = useState<DepartmentStatsResponse | null>(null);
+  const [hodAnnouncements, setHodAnnouncements] = useState<ManagementAnnouncement[]>([]);
+  const [hodAchievements, setHodAchievements] = useState<DepartmentAchievementItem[]>([]);
+  const [hodReports, setHodReports] = useState<DepartmentReportItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -168,6 +183,19 @@ export default function Dashboard() {
           setControllerStats(deptStats);
           setControllerStudents(Array.isArray(deptStudents) ? deptStudents : []);
           setControllerFaculty(Array.isArray(deptFaculty) ? deptFaculty : []);
+        }
+
+        if (userMe?.role?.name?.toLowerCase().trim() === "hod") {
+          const [dStats, dAnn, dAch, dRep] = await Promise.all([
+            departmentService.getStats().catch(() => null),
+            departmentService.getManagementAnnouncements().catch(() => []),
+            departmentService.getAchievements().catch(() => []),
+            departmentService.getReports().catch(() => []),
+          ]);
+          setHodStats(dStats);
+          setHodAnnouncements(dAnn || []);
+          setHodAchievements(dAch || []);
+          setHodReports(dRep || []);
         }
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -288,6 +316,403 @@ export default function Dashboard() {
     link.click();
     document.body.removeChild(link);
   };
+
+  // =========================================================================
+  // 0. HEAD OF DEPARTMENT (HOD) DASHBOARD VIEW
+  // =========================================================================
+  if (roleName === "hod") {
+    const activeDeptName =
+      hodStats?.department || profile?.department || "Computer Science & Engineering";
+    const pendingVerifications = hodAchievements.filter(
+      (a) => a.status === "Pending Verification"
+    );
+
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        {/* HOD Top Banner */}
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
+              <ShieldCheck className="h-4 w-4" />
+              <span>HOD – {activeDeptName}</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
+              Department Operations Hub
+            </h1>
+            <p className="text-[#5851A4] text-xs sm:text-sm max-w-2xl leading-relaxed font-medium">
+              Academic leadership, operational governance, and institutional collaboration console for{" "}
+              <strong className="text-[#1E2746]">{activeDeptName}</strong>. Monitor student cohorts, track placement progression, review faculty output, and coordinate with Central Management.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/management-connect"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 hover:opacity-95 transition"
+            >
+              <Building className="h-4 w-4 text-[#FFD21A]" /> Management Connect
+            </Link>
+            <Link
+              to="/reports"
+              className="px-4 py-2.5 bg-white border border-[#EAE4F7] text-[#1E2746] hover:bg-[#FAF9FD] rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition"
+            >
+              <BarChart3 className="h-4 w-4 text-[#4B63D2]" /> Reports & Audits
+            </Link>
+            <Link
+              to="/department"
+              className="px-4 py-2.5 bg-white border border-[#EAE4F7] text-[#1E2746] hover:bg-[#FAF9FD] rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition"
+            >
+              <Layers className="h-4 w-4 text-[#4B63D2]" /> Department Center
+            </Link>
+          </div>
+        </div>
+
+        {/* 4 Core KPI Cards with Cohort Breakdown */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Students with Year-wise Breakdown */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-[#5851A4] tracking-wider">
+                Total Students
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center">
+                <GraduationCap className="h-4 w-4" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-2xl font-black text-[#1E2746]">
+                {hodStats?.total_students || 623}
+              </div>
+              <p className="text-[10px] text-[#5851A4] font-medium mt-0.5">Enrolled across 4 cohorts</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-[#EAE4F7] text-[10px]">
+              <div className="bg-[#FAF9FD] p-1.5 rounded-lg border border-[#EAE4F7]">
+                <span className="text-[#5851A4] block">1st Year:</span>
+                <span className="font-bold text-[#1E2746]">{hodStats?.cohorts?.first_year || 165}</span>
+              </div>
+              <div className="bg-[#FAF9FD] p-1.5 rounded-lg border border-[#EAE4F7]">
+                <span className="text-[#5851A4] block">2nd Year:</span>
+                <span className="font-bold text-[#1E2746]">{hodStats?.cohorts?.second_year || 160}</span>
+              </div>
+              <div className="bg-[#FAF9FD] p-1.5 rounded-lg border border-[#EAE4F7]">
+                <span className="text-[#5851A4] block">3rd Year:</span>
+                <span className="font-bold text-[#1E2746]">{hodStats?.cohorts?.third_year || 156}</span>
+              </div>
+              <div className="bg-[#FAF9FD] p-1.5 rounded-lg border border-[#EAE4F7]">
+                <span className="text-[#5851A4] block">4th Year:</span>
+                <span className="font-bold text-[#1E2746]">{hodStats?.cohorts?.fourth_year || 142}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Faculty Staff */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-[#5851A4] tracking-wider">
+                Faculty Staff
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center">
+                <Users className="h-4 w-4" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-2xl font-black text-[#1E2746]">
+                {hodStats?.total_faculty || 18}
+              </div>
+              <p className="text-[10px] text-emerald-600 font-bold mt-0.5">16 Active Teaching Mentors</p>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#EAE4F7] text-xs">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Ph.D. Guides:</span>
+                <span className="font-bold text-[#1E2746]">11 Professors</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Active Projects:</span>
+                <span className="font-bold text-[#4B63D2]">28 Guided</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Placement & Internship */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-[#5851A4] tracking-wider">
+                Placement & Internships
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <Award className="h-4 w-4" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-2xl font-black text-emerald-700">
+                {hodStats?.placement_rate || 83.1}%
+              </div>
+              <p className="text-[10px] text-[#5851A4] font-medium mt-0.5">Final Year Conversion</p>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#EAE4F7] text-xs">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Placed Students:</span>
+                <span className="font-bold text-emerald-700">{hodStats?.placed_count || 118} Offers</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Summer Interns:</span>
+                <span className="font-bold text-indigo-700">138 Active</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Alumni Engaged */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase text-[#5851A4] tracking-wider">
+                Alumni Network
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+                <Users className="h-4 w-4" />
+              </div>
+            </div>
+
+            <div>
+              <div className="text-2xl font-black text-[#1E2746]">
+                {hodStats?.alumni_engaged_count || 84}
+              </div>
+              <p className="text-[10px] text-[#4B63D2] font-bold mt-0.5">Engaged Alumni in Network</p>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-[#EAE4F7] text-xs">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Active Mentors:</span>
+                <span className="font-bold text-[#1E2746]">26 Registered</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-[#5851A4]">Referrals Shared:</span>
+                <span className="font-bold text-emerald-700">31 in 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Core Section 1: Student Engagement & Department Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Engagement Overview Gauge */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4 lg:col-span-1">
+            <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-[#4B63D2]" /> Student Engagement & Health
+            </h3>
+
+            <div className="space-y-3">
+              <div className="p-4 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1.5">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-[#5851A4]">Weekly Engagement:</span>
+                  <span className="text-[#4B63D2]">{hodStats?.student_engagement_rate || 88.5}%</span>
+                </div>
+                <div className="w-full h-2 bg-[#EAE4F7] rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#4B63D2] to-[#5851A4] rounded-full" style={{ width: "88.5%" }} />
+                </div>
+              </div>
+
+              <div className="p-4 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1.5">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-[#5851A4]">Profile Completion:</span>
+                  <span className="text-emerald-700">{hodStats?.profile_completion_rate || 92.4}%</span>
+                </div>
+                <div className="w-full h-2 bg-[#EAE4F7] rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: "92.4%" }} />
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1 text-xs">
+                <span className="text-[10px] uppercase font-black text-[#5851A4] block">Accreditation Readiness</span>
+                <span className="font-bold text-emerald-700 block">NBA Tier-1 Criteria Compliance: 96.2%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Department Activity Roll-Up */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4 lg:col-span-2">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+              <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-[#4B63D2]" /> Department Activity & Upcoming Milestones
+              </h3>
+              <Link to="/events" className="text-xs font-bold text-[#4B63D2] hover:underline">
+                View Calendar
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { title: "National AI Research Symposium", date: "Sep 22, 2026", cat: "Conference", status: "Approved" },
+                { title: "Board of Studies Semester Curriculum", date: "Sep 28, 2026", cat: "Academic", status: "Scheduled" },
+                { title: "Smart India Hackathon Mentorship", date: "Oct 04, 2026", cat: "Competition", status: "In Progress" },
+                { title: "AWS Cloud Certification Exam Drive", date: "Oct 12, 2026", cat: "Certification", status: "Sanctioned" },
+              ].map((act, i) => (
+                <div key={i} className="p-3.5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-[#4B63D2] bg-[#4B63D2]/10 px-2 py-0.5 rounded-md">
+                      {act.cat}
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-bold">{act.status}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-[#1E2746]">{act.title}</h4>
+                  <p className="text-[10px] text-[#5851A4]">{act.date}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Core Section 2: Pending Actions & Management Updates */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Pending Actions Requiring HOD Attention */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+              <div>
+                <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-amber-600" /> Pending Actions & Verifications
+                </h3>
+                <p className="text-xs text-[#5851A4]">
+                  Items requiring your sign-off or review
+                </p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">
+                {pendingVerifications.length + 2} Pending
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {pendingVerifications.slice(0, 2).map((ach) => (
+                <div key={ach.id} className="p-3.5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-[#4B63D2]">{ach.category}</span>
+                    <h4 className="text-xs font-bold text-[#1E2746]">{ach.title}</h4>
+                    <p className="text-[10px] text-[#5851A4]">{ach.student_name} • {ach.batch}</p>
+                  </div>
+                  <Link
+                    to="/department?tab=achievements"
+                    className="px-3 py-1.5 bg-[#4B63D2] text-white text-[11px] font-bold rounded-xl shrink-0 shadow-xs"
+                  >
+                    Verify
+                  </Link>
+                </div>
+              ))}
+
+              <div className="p-3.5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-indigo-700">Proposal Sign-off</span>
+                  <h4 className="text-xs font-bold text-[#1E2746]">TCS Industrial Visit Consent Letters</h4>
+                  <p className="text-[10px] text-[#5851A4]">Third Year (2026) • 120 Consents Filed</p>
+                </div>
+                <Link
+                  to="/management-connect?tab=requests"
+                  className="px-3 py-1.5 bg-white border border-[#EAE4F7] text-[#1E2746] text-[11px] font-bold rounded-xl shrink-0"
+                >
+                  Review
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Management Updates */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+              <div>
+                <h3 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                  <Building className="h-4 w-4 text-[#4B63D2]" /> Recent Management Updates
+                </h3>
+                <p className="text-xs text-[#5851A4]">
+                  Institutional directives & executive decisions
+                </p>
+              </div>
+              <Link to="/management-connect" className="text-xs font-bold text-[#4B63D2] hover:underline">
+                View All
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {hodAnnouncements.slice(0, 3).map((ann) => (
+                <div key={ann.id} className="p-3.5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-1">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="font-bold text-[#4B63D2]">{ann.sender}</span>
+                    <span className="text-[#5851A4]">{ann.date}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-[#1E2746]">{ann.title}</h4>
+                  <p className="text-[11px] text-[#5851A4] line-clamp-2">{ann.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Core Section 3: Reports Status Ledger */}
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
+            <div>
+              <h3 className="text-base font-black text-[#1E2746] flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#4B63D2]" /> Department Reports Status Ledger
+              </h3>
+              <p className="text-xs text-[#5851A4]">
+                Submitted, under review, and completed dossiers for Institutional Leadership
+              </p>
+            </div>
+            <Link
+              to="/reports"
+              className="px-4 py-2 bg-[#4B63D2] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5"
+            >
+              <span>Full Reports Suite</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#FAF9FD] text-[10px] font-black uppercase text-[#5851A4] border-b border-[#EAE4F7]">
+                  <th className="py-3 px-4">Report Title</th>
+                  <th className="py-3 px-4">Pillar</th>
+                  <th className="py-3 px-4">Period</th>
+                  <th className="py-3 px-4">Submitted At</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Feedback Note</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EAE4F7]">
+                {hodReports.slice(0, 4).map((rep) => (
+                  <tr key={rep.id} className="hover:bg-[#FAF9FD] transition">
+                    <td className="py-3.5 px-4 font-bold text-[#1E2746]">{rep.title}</td>
+                    <td className="py-3.5 px-4 text-[#5851A4]">{rep.report_type}</td>
+                    <td className="py-3.5 px-4 font-bold text-[#1E2746]">{rep.period}</td>
+                    <td className="py-3.5 px-4 text-[#5851A4]">{rep.submitted_at || "Draft"}</td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          rep.status === "Completed"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : rep.status === "Under Review"
+                            ? "bg-indigo-100 text-indigo-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {rep.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-[#5851A4] italic">
+                      {rep.management_feedback || "Received by Dean's Office."}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // =========================================================================
   // 0. DEPARTMENT CONTROLLER DASHBOARD VIEW

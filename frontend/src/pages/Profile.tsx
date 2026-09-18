@@ -29,6 +29,7 @@ export default function Profile() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activityFilter, setActivityFilter] = useState<"5_DAYS" | "ALL">("5_DAYS");
 
   const fetchProfileAndActivity = async () => {
     setIsLoading(true);
@@ -148,7 +149,6 @@ export default function Profile() {
   }
 
   const isOwnProfile = profile.user_id === ownProfile.user_id;
-  const [activityFilter, setActivityFilter] = useState<"5_DAYS" | "ALL">("5_DAYS");
 
   const filteredUserPosts = userPosts.filter((p) => {
     if (activityFilter === "ALL") return true;

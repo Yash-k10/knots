@@ -24,12 +24,15 @@ class UserRepository(BaseRepository[User]):
         return result.scalars().first()
 
     async def get_multi(self, skip: int = 0, limit: int = 100) -> list[User]:
-        """Fetch multiple users with role relationship loaded."""
+        """Fetch multiple users with role and profile relationships loaded."""
         stmt = (
             select(self.model)
             .offset(skip)
             .limit(limit)
-            .options(selectinload(self.model.role))
+            .options(
+                selectinload(self.model.role),
+                selectinload(self.model.profile),
+            )
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())

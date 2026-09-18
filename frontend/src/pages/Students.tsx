@@ -55,7 +55,8 @@ export default function Students() {
 
         if (meRes?.role?.name) {
           setCurrentUserRole(meRes.role.name);
-          if (meRes.role.name.toLowerCase() === "controller") {
+          const rName = meRes.role.name.toLowerCase();
+          if (rName === "controller" || rName === "hod") {
             const userDept = meRes.profile?.department || "Computer Science";
             setSelectedDept(userDept);
           }

@@ -7,6 +7,8 @@ import ConnectionCard from '../components/connections/ConnectionCard';
 interface User {
   id: number;
   email: string;
+  role?: { name: string };
+  profile?: ConnectionUserProfile | null;
 }
 
 interface ConnectionUserProfile {
@@ -230,6 +232,12 @@ export default function Connections() {
   };
 
   const getUserSimpleDisplayName = (user: User) => {
+    if (user.profile?.first_name || user.profile?.last_name) {
+      const full = `${user.profile.first_name || ''} ${user.profile.last_name || ''}`.trim();
+      if (full && full.toLowerCase() !== 'user' && full.toLowerCase() !== 'user user') {
+        return full;
+      }
+    }
     if (user.email) {
       const handle = user.email.split('@')[0];
       const clean = handle
@@ -508,8 +516,9 @@ export default function Connections() {
                     targetId={user.id}
                     email={user.email}
                     name={getUserSimpleDisplayName(user)}
-                    role={user.email?.includes('prof') ? 'Faculty' : user.email?.includes('alumni') ? 'Alumni' : 'Student'}
-                    subtitle="Campus Member"
+                    role={user.role?.name || (user.email?.includes('prof') ? 'Faculty' : user.email?.includes('alumni') ? 'Alumni' : 'Student')}
+                    profilePicture={user.profile?.profile_picture}
+                    subtitle={user.profile?.department || 'Campus Member'}
                     onConnect={handleConnect}
                   />
                 ))}

@@ -147,6 +147,15 @@ export default function ConnectionCard({
               )}
             </div>
           )}
+
+          <div className="pt-1">
+            <Link
+              to={`/profile/${targetId}`}
+              className="text-xs font-bold text-[#4B63D2] hover:text-[#3E53BE] hover:underline inline-flex items-center gap-1 transition"
+            >
+              View Profile →
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -32,6 +32,8 @@ import ApplicationsPage from "../pages/ApplicationsPage";
 import PlacementsPage from "../pages/PlacementsPage";
 import ReportsPage from "../pages/ReportsPage";
 import InstitutionOverview from "../pages/InstitutionOverview";
+import ManagementConnectPage from "../pages/ManagementConnectPage";
+import DepartmentAnalyticsPage from "../pages/DepartmentAnalyticsPage";
 
 // Protected Route Wrapper Component
 interface ProtectedRouteProps {
@@ -314,12 +316,14 @@ export default function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="profile/:userId" element={<Profile />} />
         <Route path="connections" element={<Connections />} />
-        <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo", "controller"]}><Students /></RoleAllowedRoute>} />
-        <Route path="department" element={<RoleAllowedRoute allowedRoles={["hod", "controller"]}><DepartmentPage /></RoleAllowedRoute>} />
-        <Route path="departments" element={<RoleAllowedRoute allowedRoles={["hod", "controller"]}><DepartmentPage /></RoleAllowedRoute>} />
+        <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo", "controller", "hod"]}><Students /></RoleAllowedRoute>} />
+        <Route path="department" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
+        <Route path="departments" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
         <Route path="applications" element={<RoleAllowedRoute allowedRoles={["controller", "tpo"]}><ApplicationsPage /></RoleAllowedRoute>} />
-        <Route path="placements" element={<RoleAllowedRoute allowedRoles={["tpo"]}><PlacementsPage /></RoleAllowedRoute>} />
-        <Route path="reports" element={<RoleAllowedRoute allowedRoles={["hod"]}><ReportsPage /></RoleAllowedRoute>} />
+        <Route path="placements" element={<RoleAllowedRoute allowedRoles={["tpo", "hod", "controller"]}><PlacementsPage /></RoleAllowedRoute>} />
+        <Route path="reports" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><ReportsPage /></RoleAllowedRoute>} />
+        <Route path="management-connect" element={<RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "management"]}><ManagementConnectPage /></RoleAllowedRoute>} />
+        <Route path="department-analytics" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin", "management"]}><DepartmentAnalyticsPage /></RoleAllowedRoute>} />
         <Route path="institution" element={<RoleAllowedRoute allowedRoles={["principal", "ceo"]}><InstitutionOverview /></RoleAllowedRoute>} />
         <Route path="academic-overview" element={<RoleAllowedRoute allowedRoles={["dean"]}><InstitutionOverview /></RoleAllowedRoute>} />
         <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "faculty", "hod", "controller", "tpo"]}><Jobs /></RoleAllowedRoute>} />

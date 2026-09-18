@@ -32,10 +32,22 @@ class ChangePassword(BaseModel):
         return v
 
 
+class ProfileUserSummary(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_picture: str | None = None
+    department: str | None = None
+    bio: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserResponse(UserBase):
     id: int
     role_id: int | None = None
     role: RoleResponse | None = None
+    profile: ProfileUserSummary | None = None
     created_at: datetime
     updated_at: datetime
 

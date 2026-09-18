@@ -198,6 +198,13 @@ export default function Feed() {
   // Filter tab state ("FOR_YOU", "ALL", "CONNECTIONS", "OPPORTUNITIES", "EVENTS", "DOCS", "MEDIA", "SAVED")
   const [activeFilter, setActiveFilter] = useState<string>("FOR_YOU");
 
+  // HOD & Department-wise Student Sorting Filter States
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>("ALL");
+  const [selectedCohortFilter, setSelectedCohortFilter] = useState<string>("ALL");
+  const [selectedSectionFilter, setSelectedSectionFilter] = useState<string>("ALL");
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>("ALL");
+  const [selectedPostTypeFilter, setSelectedPostTypeFilter] = useState<string>("ALL");
+
   // Bookmarking / Saved Posts state
   const [savedPostIds, setSavedPostIds] = useState<number[]>(() => {
     try {
@@ -1219,6 +1226,143 @@ export default function Feed() {
             </div>
           </form>
 
+          {/* Department-wise Student Sorting Bar (HOD & Leadership Specification) */}
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4F7] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-1 rounded-lg">
+                  {selectedDeptFilter === "ALL"
+                    ? "All Departments Feed"
+                    : selectedDeptFilter === "OTHER"
+                    ? "Other Departments Feed"
+                    : `${selectedDeptFilter} Department Feed`}
+                </span>
+                <span className="text-xs font-bold text-[#1E2746]">
+                  {selectedDeptFilter === "ALL"
+                    ? "All Departments Student & Faculty Activity"
+                    : selectedDeptFilter === "OTHER"
+                    ? "Interdisciplinary & Other Department Activity"
+                    : `${selectedDeptFilter} Student & Faculty Activity`}
+                </span>
+              </div>
+              {selectedDeptFilter !== "ALL" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDeptFilter("ALL");
+                    setSelectedCohortFilter("ALL");
+                    setSelectedSectionFilter("ALL");
+                    setSelectedRoleFilter("ALL");
+                    setSelectedPostTypeFilter("ALL");
+                  }}
+                  className="text-[11px] text-[#4B63D2] hover:underline font-bold self-start sm:self-auto cursor-pointer"
+                >
+                  Reset to All Departments
+                </button>
+              )}
+            </div>
+
+            {/* Department Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
+              {[
+                { id: "ALL", label: "🌐 All Departments" },
+                { id: "CSE", label: "💻 CSE" },
+                { id: "AIML", label: "🤖 AIML" },
+                { id: "IT", label: "⚡ IT" },
+                { id: "ECE", label: "📡 ECE" },
+                { id: "OTHER", label: "🏛️ Other Departments" },
+              ].map((dept) => {
+                const isActive = selectedDeptFilter === dept.id;
+                return (
+                  <button
+                    key={dept.id}
+                    type="button"
+                    onClick={() => setSelectedDeptFilter(dept.id)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                      isActive
+                        ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
+                        : "bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:border-[#D5CBEE] hover:text-[#1E2746]"
+                    }`}
+                  >
+                    {dept.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Additional Sub-Filters: Year, Section, Role, Post Type */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#FAF9FD] text-[11px]">
+              <div className="flex flex-col gap-1">
+                <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                  Academic Year:
+                </span>
+                <select
+                  value={selectedCohortFilter}
+                  onChange={(e) => setSelectedCohortFilter(e.target.value)}
+                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                >
+                  <option value="ALL">All Years</option>
+                  <option value="First Year">First Year</option>
+                  <option value="Second Year">Second Year</option>
+                  <option value="Third Year">Third Year</option>
+                  <option value="Fourth Year">Final Year</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                  Section:
+                </span>
+                <select
+                  value={selectedSectionFilter}
+                  onChange={(e) => setSelectedSectionFilter(e.target.value)}
+                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                >
+                  <option value="ALL">All Sections</option>
+                  <option value="Section A">Section A</option>
+                  <option value="Section B">Section B</option>
+                  <option value="Section C">Section C</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                  User Role:
+                </span>
+                <select
+                  value={selectedRoleFilter}
+                  onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                >
+                  <option value="ALL">All Roles</option>
+                  <option value="student">Student</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="admin">Management / Admin</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                  Post Type:
+                </span>
+                <select
+                  value={selectedPostTypeFilter}
+                  onChange={(e) => setSelectedPostTypeFilter(e.target.value)}
+                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                >
+                  <option value="ALL">All Types</option>
+                  <option value="achievements">Achievements 🏆</option>
+                  <option value="opportunities">Opportunities 💼</option>
+                  <option value="projects">Projects 🚀</option>
+                  <option value="events">Events & Notices 📢</option>
+                  <option value="docs">PDF & Notes 📄</option>
+                  <option value="photos">Photos 📸</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Feed Filter Chips Bar */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
             {[
@@ -1308,47 +1452,205 @@ export default function Feed() {
               {posts
                 .filter((post) => {
                   const contentLower = (post.content || "").toLowerCase();
-                  if (activeFilter === "ALL") return true;
-                  if (activeFilter === "DOCS")
-                    return isDocumentUrl(post.image_url);
-                  if (activeFilter === "MEDIA")
-                    return post.image_url && !isDocumentUrl(post.image_url);
-                  if (activeFilter === "SAVED")
-                    return savedPostIds.includes(post.id);
-                  if (activeFilter === "OPPORTUNITIES") {
-                    return (
-                      contentLower.includes("project") ||
+                  const authorDept = (post.author?.profile?.department || "").toLowerCase();
+                  const authorEmail = (post.author?.email || "").toLowerCase();
+
+                  // 1. Tab filter
+                  if (activeFilter === "DOCS" && !isDocumentUrl(post.image_url)) return false;
+                  if (activeFilter === "MEDIA" && (!post.image_url || isDocumentUrl(post.image_url))) return false;
+                  if (activeFilter === "SAVED" && !savedPostIds.includes(post.id)) return false;
+                  if (activeFilter === "OPPORTUNITIES" && !(
+                    contentLower.includes("project") ||
+                    contentLower.includes("intern") ||
+                    contentLower.includes("job") ||
+                    contentLower.includes("hackathon") ||
+                    contentLower.includes("github") ||
+                    contentLower.includes("hiring") ||
+                    contentLower.includes("placement") ||
+                    contentLower.includes("referral") ||
+                    contentLower.includes("repo")
+                  )) return false;
+                  if (activeFilter === "EVENTS" && !(
+                    contentLower.includes("event") ||
+                    contentLower.includes("workshop") ||
+                    contentLower.includes("webinar") ||
+                    contentLower.includes("club") ||
+                    contentLower.includes("announcement") ||
+                    contentLower.includes("notice") ||
+                    contentLower.includes("fest") ||
+                    contentLower.includes("session")
+                  )) return false;
+                  if (activeFilter === "CONNECTIONS" && !(
+                    post.visibility === "CONNECTIONS" ||
+                    post.visibility === "STUDENTS_AND_ALUMNI" ||
+                    authorEmail.includes("alumni") ||
+                    authorEmail.includes("prof")
+                  )) return false;
+
+                  // 2. Department-wise filter
+                  if (selectedDeptFilter === "CSE") {
+                    const isCse =
+                      authorDept.includes("cse") ||
+                      authorDept.includes("computer") ||
+                      authorEmail.includes("cse") ||
+                      authorEmail.includes("hod") ||
+                      contentLower.includes("cse") ||
+                      contentLower.includes("computer science");
+                    if (!isCse) return false;
+                  } else if (selectedDeptFilter === "AIML") {
+                    const isAiml =
+                      authorDept.includes("aiml") ||
+                      authorDept.includes("ai") ||
+                      authorDept.includes("machine learning") ||
+                      authorEmail.includes("aiml") ||
+                      contentLower.includes("aiml") ||
+                      contentLower.includes("ai/ml") ||
+                      contentLower.includes("machine learning");
+                    if (!isAiml) return false;
+                  } else if (selectedDeptFilter === "IT") {
+                    const isIt =
+                      authorDept.includes("it") ||
+                      authorDept.includes("information tech") ||
+                      authorEmail.includes("it@") ||
+                      contentLower.includes("it department") ||
+                      contentLower.includes("information technology");
+                    if (!isIt) return false;
+                  } else if (selectedDeptFilter === "ECE") {
+                    const isEce =
+                      authorDept.includes("ece") ||
+                      authorDept.includes("electronics") ||
+                      authorEmail.includes("ece") ||
+                      contentLower.includes("ece") ||
+                      contentLower.includes("electronics");
+                    if (!isEce) return false;
+                  } else if (selectedDeptFilter === "OTHER") {
+                    const isCoreTech =
+                      authorDept.includes("cse") ||
+                      authorDept.includes("aiml") ||
+                      authorDept.includes("it") ||
+                      authorDept.includes("ece");
+                    if (isCoreTech && !contentLower.includes("interdisciplinary")) return false;
+                  }
+
+                  // 3. Academic Year / Cohort filter
+                  if (selectedCohortFilter === "First Year") {
+                    const isFirst =
+                      contentLower.includes("1st year") ||
+                      contentLower.includes("first year") ||
+                      contentLower.includes("2028") ||
+                      contentLower.includes("sem 1") ||
+                      contentLower.includes("sem 2");
+                    if (!isFirst) return false;
+                  } else if (selectedCohortFilter === "Second Year") {
+                    const isSecond =
+                      contentLower.includes("2nd year") ||
+                      contentLower.includes("second year") ||
+                      contentLower.includes("2027") ||
+                      contentLower.includes("sem 3") ||
+                      contentLower.includes("sem 4");
+                    if (!isSecond) return false;
+                  } else if (selectedCohortFilter === "Third Year") {
+                    const isThird =
+                      contentLower.includes("3rd year") ||
+                      contentLower.includes("third year") ||
+                      contentLower.includes("2026") ||
+                      contentLower.includes("sem 5") ||
+                      contentLower.includes("sem 6");
+                    if (!isThird) return false;
+                  } else if (selectedCohortFilter === "Fourth Year") {
+                    const isFourth =
+                      contentLower.includes("4th year") ||
+                      contentLower.includes("final year") ||
+                      contentLower.includes("2025") ||
+                      contentLower.includes("sem 7") ||
+                      contentLower.includes("sem 8");
+                    if (!isFourth) return false;
+                  }
+
+                  // 4. Section filter
+                  if (selectedSectionFilter === "Section A") {
+                    if (!contentLower.includes("sec a") && !contentLower.includes("section a")) return false;
+                  } else if (selectedSectionFilter === "Section B") {
+                    if (!contentLower.includes("sec b") && !contentLower.includes("section b")) return false;
+                  } else if (selectedSectionFilter === "Section C") {
+                    if (!contentLower.includes("sec c") && !contentLower.includes("section c")) return false;
+                  }
+
+                  // 5. User Role filter
+                  if (selectedRoleFilter === "student") {
+                    const isNotStudent =
+                      authorEmail.includes("prof") ||
+                      authorEmail.includes("admin") ||
+                      authorEmail.includes("hod") ||
+                      authorEmail.includes("dean") ||
+                      authorEmail.includes("alumni");
+                    if (isNotStudent) return false;
+                  } else if (selectedRoleFilter === "faculty") {
+                    const isFaculty =
+                      authorEmail.includes("prof") ||
+                      authorEmail.includes("faculty") ||
+                      authorEmail.includes("teacher");
+                    if (!isFaculty) return false;
+                  } else if (selectedRoleFilter === "alumni") {
+                    const isAlumni =
+                      authorEmail.includes("alumni") ||
+                      post.visibility === "STUDENTS_AND_ALUMNI";
+                    if (!isAlumni) return false;
+                  } else if (selectedRoleFilter === "admin") {
+                    const isAdminUser =
+                      authorEmail.includes("admin") ||
+                      authorEmail.includes("hod") ||
+                      authorEmail.includes("dean") ||
+                      authorEmail.includes("principal");
+                    if (!isAdminUser) return false;
+                  }
+
+                  // 6. Post Type filter
+                  if (selectedPostTypeFilter === "achievements") {
+                    const isAch =
+                      contentLower.includes("achieve") ||
+                      contentLower.includes("winner") ||
+                      contentLower.includes("won") ||
+                      contentLower.includes("rank") ||
+                      contentLower.includes("prize") ||
+                      contentLower.includes("certif") ||
+                      contentLower.includes("award");
+                    if (!isAch) return false;
+                  } else if (selectedPostTypeFilter === "opportunities") {
+                    const isOpp =
                       contentLower.includes("intern") ||
                       contentLower.includes("job") ||
-                      contentLower.includes("hackathon") ||
-                      contentLower.includes("github") ||
                       contentLower.includes("hiring") ||
                       contentLower.includes("placement") ||
                       contentLower.includes("referral") ||
-                      contentLower.includes("repo")
-                    );
-                  }
-                  if (activeFilter === "EVENTS") {
-                    return (
+                      contentLower.includes("opening");
+                    if (!isOpp) return false;
+                  } else if (selectedPostTypeFilter === "projects") {
+                    const isProj =
+                      contentLower.includes("project") ||
+                      contentLower.includes("github") ||
+                      contentLower.includes("repo") ||
+                      contentLower.includes("demo") ||
+                      contentLower.includes("build") ||
+                      contentLower.includes("dev");
+                    if (!isProj) return false;
+                  } else if (selectedPostTypeFilter === "events") {
+                    const isEvt =
                       contentLower.includes("event") ||
                       contentLower.includes("workshop") ||
                       contentLower.includes("webinar") ||
-                      contentLower.includes("club") ||
-                      contentLower.includes("announcement") ||
-                      contentLower.includes("notice") ||
                       contentLower.includes("fest") ||
-                      contentLower.includes("session")
-                    );
+                      contentLower.includes("session") ||
+                      contentLower.includes("notice");
+                    if (!isEvt) return false;
+                  } else if (selectedPostTypeFilter === "docs") {
+                    const isDoc = isDocumentUrl(post.image_url) || contentLower.includes("pdf") || contentLower.includes("notes");
+                    if (!isDoc) return false;
+                  } else if (selectedPostTypeFilter === "photos") {
+                    const isPhoto = post.image_url && !isDocumentUrl(post.image_url);
+                    if (!isPhoto) return false;
                   }
-                  if (activeFilter === "CONNECTIONS") {
-                    return (
-                      post.visibility === "CONNECTIONS" ||
-                      post.visibility === "STUDENTS_AND_ALUMNI" ||
-                      post.author?.email?.includes("alumni") ||
-                      post.author?.email?.includes("prof")
-                    );
-                  }
-                  // FOR_YOU returns all sorted/prioritized
+
                   return true;
                 })
                 .map((post) => {

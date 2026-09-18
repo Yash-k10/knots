@@ -49,7 +49,7 @@ yarn-error.log*
 .idea/
 .vscode/
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
@@ -71,4 +71,3 @@ backend/static/
 # Personal notes
 personal_notes/
 ~$*
-
