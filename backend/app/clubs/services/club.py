@@ -48,6 +48,7 @@ class ClubService:
 
         # Create Group Chat for the club
         from app.messaging.repository.conversation import ConversationRepository
+
         conv_repo = ConversationRepository(self.db)
         conv = await conv_repo.create_group_conversation(
             name=payload.name, creator_id=creator_id, participant_ids=[]
@@ -182,14 +183,24 @@ class ClubService:
         )
 
         if current_user:
-            role_name = getattr(current_user.role, "name", "student").lower().strip() if getattr(current_user, "role", None) else "student"
+            role_name = (
+                getattr(current_user.role, "name", "student").lower().strip()
+                if getattr(current_user, "role", None)
+                else "student"
+            )
             # Central Admin sees only central clubs (category == 'Central' for example) or maybe all?
             # The prompt: "Controllers can only fetch/manage clubs in their department. Central Admin can only fetch/manage central-level clubs."
             if role_name == "controller":
-                user_dept = getattr(current_user.profile, "department", None) if getattr(current_user, "profile", None) else None
+                user_dept = (
+                    getattr(current_user.profile, "department", None)
+                    if getattr(current_user, "profile", None)
+                    else None
+                )
                 clubs = [c for c in clubs if c.category == user_dept]
             elif role_name == "central admin":
-                clubs = [c for c in clubs if c.category and c.category.lower() == "central"]
+                clubs = [
+                    c for c in clubs if c.category and c.category.lower() == "central"
+                ]
 
         return [
             ClubResponse(
@@ -206,7 +217,7 @@ class ClubService:
 
     async def join_club(self, club_id: int, user_id: int) -> ClubMember:
         """Join a club with PENDING role awaiting Leader/Controller approval."""
-        await self.get_club(club_id)
+        club = await self.get_club(club_id)
 
         # Check if already a member or pending
         existing = await self.member_repo.get_by_club_and_user(club_id, user_id)
@@ -218,23 +229,29 @@ class ClubService:
             raise ConflictError(message="You are already a member of this club")
 
         membership = await self.member_repo.create(
-            {"club_id": club_id, "user_id": user_id, "role": "MEMBER"}  # Changed from PENDING to auto-join
+            {
+                "club_id": club_id,
+                "user_id": user_id,
+                "role": "MEMBER",
+            }  # Changed from PENDING to auto-join
         )
 
         # Auto-join GC
         if club.conversation_id:
             from app.messaging.models.conversation import ConversationParticipant
             from sqlalchemy import select
-            
+
             # Check if already in GC
             existing_part = await self.db.execute(
                 select(ConversationParticipant).where(
                     ConversationParticipant.conversation_id == club.conversation_id,
-                    ConversationParticipant.user_id == user_id
+                    ConversationParticipant.user_id == user_id,
                 )
             )
             if not existing_part.scalars().first():
-                part = ConversationParticipant(conversation_id=club.conversation_id, user_id=user_id)
+                part = ConversationParticipant(
+                    conversation_id=club.conversation_id, user_id=user_id
+                )
                 self.db.add(part)
                 await self.db.flush()
 
@@ -242,7 +259,7 @@ class ClubService:
 
     async def leave_club(self, club_id: int, user_id: int) -> None:
         """Leave a club. Sole leader must assign another leader first."""
-        await self.get_club(club_id)
+        club = await self.get_club(club_id)
 
         membership = await self.member_repo.get_by_club_and_user(club_id, user_id)
         if not membership:
@@ -270,10 +287,11 @@ class ClubService:
         if club.conversation_id:
             from app.messaging.models.conversation import ConversationParticipant
             from sqlalchemy import delete
+
             await self.db.execute(
                 delete(ConversationParticipant).where(
                     ConversationParticipant.conversation_id == club.conversation_id,
-                    ConversationParticipant.user_id == user_id
+                    ConversationParticipant.user_id == user_id,
                 )
             )
             await self.db.flush()
@@ -327,10 +345,11 @@ class ClubService:
         if club.conversation_id:
             from app.messaging.models.conversation import ConversationParticipant
             from sqlalchemy import delete
+
             await self.db.execute(
                 delete(ConversationParticipant).where(
                     ConversationParticipant.conversation_id == club.conversation_id,
-                    ConversationParticipant.user_id == target_user_id
+                    ConversationParticipant.user_id == target_user_id,
                 )
             )
             await self.db.flush()

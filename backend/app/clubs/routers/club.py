@@ -46,7 +46,11 @@ async def read_clubs(
     """Retrieve college clubs list with category filter and search."""
     service = ClubService(db)
     clubs = await service.list_clubs(
-        category=category, search=search, skip=skip, limit=limit, current_user=current_user
+        category=category,
+        search=search,
+        skip=skip,
+        limit=limit,
+        current_user=current_user,
     )
     return APIResponse(data=clubs)
 

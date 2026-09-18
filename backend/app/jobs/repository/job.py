@@ -7,6 +7,7 @@ from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.models.job_posting import JobPosting
 from app.users.models.user import User
 
+
 class JobPostingRepository(BaseRepository[JobPosting]):
     def __init__(self, db: AsyncSession):
         super().__init__(JobPosting, db)

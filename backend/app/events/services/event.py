@@ -223,17 +223,31 @@ class EventService:
         if current_user_id:
             user = await self.db.get(User, current_user_id)
             if user:
-                role_name = getattr(user.role, "name", "student").lower().strip() if getattr(user, "role", None) else "student"
+                role_name = (
+                    getattr(user.role, "name", "student").lower().strip()
+                    if getattr(user, "role", None)
+                    else "student"
+                )
                 if role_name == "controller":
-                    user_dept = getattr(user.profile, "department", None) if getattr(user, "profile", None) else None
+                    user_dept = (
+                        getattr(user.profile, "department", None)
+                        if getattr(user, "profile", None)
+                        else None
+                    )
                     events = [
-                        e for e in events
-                        if getattr(e.organizer, "profile", None) and getattr(e.organizer.profile, "department", None) == user_dept
+                        e
+                        for e in events
+                        if getattr(e.organizer, "profile", None)
+                        and getattr(e.organizer.profile, "department", None)
+                        == user_dept
                     ]
                 elif role_name == "central admin":
                     events = [
-                        e for e in events
-                        if not getattr(e.organizer, "profile", None) or getattr(e.organizer.profile, "department", None) in [None, "Central", ""]
+                        e
+                        for e in events
+                        if not getattr(e.organizer, "profile", None)
+                        or getattr(e.organizer.profile, "department", None)
+                        in [None, "Central", ""]
                     ]
 
         results: list[EventResponse] = []
@@ -306,17 +320,31 @@ class EventService:
         if current_user_id:
             user = await self.db.get(User, current_user_id)
             if user:
-                role_name = getattr(user.role, "name", "student").lower().strip() if getattr(user, "role", None) else "student"
+                role_name = (
+                    getattr(user.role, "name", "student").lower().strip()
+                    if getattr(user, "role", None)
+                    else "student"
+                )
                 if role_name == "controller":
-                    user_dept = getattr(user.profile, "department", None) if getattr(user, "profile", None) else None
+                    user_dept = (
+                        getattr(user.profile, "department", None)
+                        if getattr(user, "profile", None)
+                        else None
+                    )
                     events = [
-                        e for e in events
-                        if getattr(e.organizer, "profile", None) and getattr(e.organizer.profile, "department", None) == user_dept
+                        e
+                        for e in events
+                        if getattr(e.organizer, "profile", None)
+                        and getattr(e.organizer.profile, "department", None)
+                        == user_dept
                     ]
                 elif role_name == "central admin":
                     events = [
-                        e for e in events
-                        if not getattr(e.organizer, "profile", None) or getattr(e.organizer.profile, "department", None) in [None, "Central", ""]
+                        e
+                        for e in events
+                        if not getattr(e.organizer, "profile", None)
+                        or getattr(e.organizer.profile, "department", None)
+                        in [None, "Central", ""]
                     ]
 
         results: list[EventResponse] = []

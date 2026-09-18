@@ -101,6 +101,7 @@ async def record_profile_view(
 # Prototype Generation for Dashboards (TPO / Central Admin)
 # ==============================================================================
 
+
 def generate_department_stats(dept: str):
     if dept == "All":
         base_val = 20
@@ -112,36 +113,72 @@ def generate_department_stats(dept: str):
         "placed_students": 50 + base_val * 4,
         "highest_ctc": f"{10 + (base_val % 20)} LPA",
         "average_ctc": f"{4 + (base_val % 5)}.5 LPA",
-        "active_recruiters": 5 + (base_val % 10)
+        "active_recruiters": 5 + (base_val % 10),
     }
+
 
 def generate_report_data(dept: str, report_type: str):
     if dept == "All":
         base_val = 25
     else:
         base_val = len(dept) * 5
-        
+
     if report_type == "placement":
         return [
-            {"Company": "Tech Corp", "Role": "SDE", "Offers": base_val, "CTC": "12 LPA"},
-            {"Company": "Innovate LLC", "Role": "Analyst", "Offers": base_val + 2, "CTC": "8 LPA"}
+            {
+                "Company": "Tech Corp",
+                "Role": "SDE",
+                "Offers": base_val,
+                "CTC": "12 LPA",
+            },
+            {
+                "Company": "Innovate LLC",
+                "Role": "Analyst",
+                "Offers": base_val + 2,
+                "CTC": "8 LPA",
+            },
         ]
     elif report_type == "academic":
         return [
-            {"Batch": "2024", "Avg_CGPA": 8.1 + (base_val % 10)/100, "Pass_Percentage": "95%"},
-            {"Batch": "2025", "Avg_CGPA": 7.9 + (base_val % 10)/100, "Pass_Percentage": "92%"}
+            {
+                "Batch": "2024",
+                "Avg_CGPA": 8.1 + (base_val % 10) / 100,
+                "Pass_Percentage": "95%",
+            },
+            {
+                "Batch": "2025",
+                "Avg_CGPA": 7.9 + (base_val % 10) / 100,
+                "Pass_Percentage": "92%",
+            },
         ]
     elif report_type == "activity":
         return [
-            {"Event_Type": "Technical", "Count": 10 + base_val, "Participants": 150 + base_val * 10},
-            {"Event_Type": "Cultural", "Count": 5 + base_val, "Participants": 200 + base_val * 5}
+            {
+                "Event_Type": "Technical",
+                "Count": 10 + base_val,
+                "Participants": 150 + base_val * 10,
+            },
+            {
+                "Event_Type": "Cultural",
+                "Count": 5 + base_val,
+                "Participants": 200 + base_val * 5,
+            },
         ]
     elif report_type == "alumni":
         return [
-            {"Location": "India", "Count": 500 + base_val * 20, "Mentors": 50 + base_val},
-            {"Location": "Abroad", "Count": 100 + base_val * 5, "Mentors": 10 + base_val}
+            {
+                "Location": "India",
+                "Count": 500 + base_val * 20,
+                "Mentors": 50 + base_val,
+            },
+            {
+                "Location": "Abroad",
+                "Count": 100 + base_val * 5,
+                "Mentors": 10 + base_val,
+            },
         ]
     return []
+
 
 @router.get("/department-stats")
 async def get_department_stats(department: str = Query("All")):
@@ -149,37 +186,43 @@ async def get_department_stats(department: str = Query("All")):
     stats = generate_department_stats(department)
     return APIResponse(data=stats)
 
+
 @router.get("/reports")
 async def get_department_reports(
-    type: str = Query(..., description="Report type: placement, academic, activity, alumni"),
-    department: str = Query("All")
+    type: str = Query(
+        ..., description="Report type: placement, academic, activity, alumni"
+    ),
+    department: str = Query("All"),
 ):
     """Get dynamic report data generated based on department."""
     data = generate_report_data(department, type)
     return APIResponse(data=data)
 
+
 @router.get("/reports/export")
 async def export_department_reports(
-    type: str = Query(..., description="Report type: placement, academic, activity, alumni"),
-    department: str = Query("All")
+    type: str = Query(
+        ..., description="Report type: placement, academic, activity, alumni"
+    ),
+    department: str = Query("All"),
 ):
     """Generate and stream a CSV (Excel compatible) report based on department."""
     data = generate_report_data(department, type)
-    
+
     if not data:
         data = [{"Message": "No data available"}]
-    
+
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=data[0].keys())
     writer.writeheader()
     writer.writerows(data)
-    
+
     output.seek(0)
-    
+
     filename = f"{department}_{type}_report.csv".lower().replace(" ", "_")
-    
+
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

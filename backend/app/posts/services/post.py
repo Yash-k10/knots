@@ -179,7 +179,12 @@ class PostService:
         """Delete a post (author, Admin, or Super Admin can delete)."""
         post = await self.get_post(post_id)
         role_str = (user_role or "").lower().strip()
-        is_admin_or_superadmin = role_str in ("admin", "super admin", "superadmin", "controller")
+        is_admin_or_superadmin = role_str in (
+            "admin",
+            "super admin",
+            "superadmin",
+            "controller",
+        )
         if post.author_id != user_id and not is_admin_or_superadmin:
             raise AuthorizationError(
                 message="You do not have permission to delete this post"
