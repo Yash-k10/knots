@@ -177,7 +177,6 @@ class ResumeGeneratorService:
             ]
             full_name = " ".join(parts) if parts else "Student Candidate"
 
-        department = profile_data.get("department") or "Computer Science & Engineering"
         grad_year = profile_data.get("graduation_year")
 
         # -------------------------------------------------------------
@@ -199,19 +198,11 @@ class ResumeGeneratorService:
         contact_p.paragraph_format.space_before = Pt(0)
         contact_p.paragraph_format.space_after = Pt(6)
 
-        clean_handle = "".join(e for e in full_name.lower() if e.isalnum())
-        if not clean_handle:
-            clean_handle = (
-                user_email.split("@")[0].lower() if user_email else "candidate"
-            )
-
-        email_val = profile_data.get("email") or user_email
-        phone_val = profile_data.get("phone_number") or "+91 9876543210"
-        linkedin_val = (
-            profile_data.get("linkedin_url") or f"linkedin.com/in/{clean_handle}"
-        )
-        github_val = profile_data.get("github_url") or f"github.com/{clean_handle}"
-        leetcode_val = profile_data.get("leetcode_url")
+        email_val = (profile_data.get("email") or user_email or "").strip()
+        phone_val = (profile_data.get("phone_number") or "").strip()
+        linkedin_val = (profile_data.get("linkedin_url") or "").strip()
+        github_val = (profile_data.get("github_url") or "").strip()
+        leetcode_val = (profile_data.get("leetcode_url") or "").strip()
 
         assets_dir = os.path.join(os.path.dirname(__file__), "..", "assets")
         email_icon_path = os.path.join(assets_dir, "email_icon.png")
@@ -219,12 +210,15 @@ class ResumeGeneratorService:
         linkedin_icon_path = os.path.join(assets_dir, "linkedin_icon.png")
         github_icon_path = os.path.join(assets_dir, "github_icon.jpg")
 
-        items_to_add = [
-            ("phone", phone_val, phone_icon_path),
-            ("email", email_val, email_icon_path),
-            ("linkedin", linkedin_val, linkedin_icon_path),
-            ("github", github_val, github_icon_path),
-        ]
+        items_to_add = []
+        if phone_val:
+            items_to_add.append(("phone", phone_val, phone_icon_path))
+        if email_val:
+            items_to_add.append(("email", email_val, email_icon_path))
+        if linkedin_val:
+            items_to_add.append(("linkedin", linkedin_val, linkedin_icon_path))
+        if github_val:
+            items_to_add.append(("github", github_val, github_icon_path))
         if leetcode_val:
             items_to_add.append(("leetcode", leetcode_val, None))
 
@@ -250,25 +244,18 @@ class ResumeGeneratorService:
             text_run.font.color.rgb = TEXT_MUTED
 
         # -------------------------------------------------------------
-        # OBJECTIVE SECTION
+        # OBJECTIVE SECTION (Only if bio is provided by candidate)
         # -------------------------------------------------------------
-        add_section_header(doc, "Objective")
-        obj_p = doc.add_paragraph()
-        obj_p.paragraph_format.space_before = Pt(4)
-        obj_p.paragraph_format.space_after = Pt(4)
         bio_text = (profile_data.get("bio") or "").strip()
         if bio_text:
-            objective_str = bio_text
-        else:
-            objective_str = (
-                f"Motivated and detail-oriented candidate specializing in {department}. "
-                "Eager to leverage technical skills, academic projects, and software engineering knowledge "
-                "to contribute effectively to innovative technology teams."
-            )
-        obj_run = obj_p.add_run(objective_str)
-        obj_run.font.name = "Calibri"
-        obj_run.font.size = Pt(9.5)
-        obj_run.font.color.rgb = TEXT_DARK
+            add_section_header(doc, "Objective")
+            obj_p = doc.add_paragraph()
+            obj_p.paragraph_format.space_before = Pt(4)
+            obj_p.paragraph_format.space_after = Pt(4)
+            obj_run = obj_p.add_run(bio_text)
+            obj_run.font.name = "Calibri"
+            obj_run.font.size = Pt(9.5)
+            obj_run.font.color.rgb = TEXT_DARK
 
         # -------------------------------------------------------------
         # 2. WORK EXPERIENCE
@@ -277,8 +264,8 @@ class ResumeGeneratorService:
         if employment:
             add_section_header(doc, "Work Experience")
             for emp in employment:
-                company = emp.get("company_name", "").strip() or "Tech Company"
-                title = emp.get("title", "").strip() or "Software Engineer"
+                company = emp.get("company_name", "").strip() or "Company"
+                title = emp.get("title", "").strip() or "Role"
                 date_str = format_date_range(emp.get("start_date"), emp.get("end_date"))
                 location = emp.get("location", "").strip()
 
@@ -310,118 +297,112 @@ class ResumeGeneratorService:
                     ]
                     for line_item in lines:
                         add_bullet_point(doc, line_item)
-                else:
-                    add_bullet_point(
-                        doc,
-                        f"Contributed to core development, system architecture, and feature delivery for {company}.",
-                    )
-                    add_bullet_point(
-                        doc,
-                        "Collaborated with cross-functional teams to design scalable solutions and improve user experience.",
-                    )
 
         # -------------------------------------------------------------
         # 3. EDUCATION
         # -------------------------------------------------------------
         education_list = profile_data.get("education") or []
-        add_section_header(doc, "Education")
-        role_name = profile_data.get("role_name") or ""
+        tenth_pct = profile_data.get("tenth_percentage")
+        twelfth_pct = profile_data.get("twelfth_diploma_percentage")
+        has_dept_or_grad = bool(profile_data.get("department") or grad_year)
 
-        if education_list:
-            for edu in education_list:
+        if (
+            education_list
+            or has_dept_or_grad
+            or tenth_pct is not None
+            or twelfth_pct is not None
+        ):
+            add_section_header(doc, "Education")
+
+            if education_list:
+                for edu in education_list:
+                    inst = (
+                        edu.get("institution_name", "").strip()
+                        or "S.B. Jain Institute of Technology, Management & Research"
+                    )
+                    degree = edu.get("degree", "").strip() or "Bachelor of Technology"
+                    field = edu.get("field_of_study", "").strip()
+                    gpa = edu.get("gpa")
+                    pct = edu.get("percentage")
+                    date_str = format_date_range(
+                        edu.get("start_date"), edu.get("end_date")
+                    )
+
+                    degree_full = f"{degree} in {field}" if field else degree
+                    if pct is not None:
+                        degree_full += f" - {pct}%"
+                    elif gpa is not None:
+                        degree_full += f" - {gpa} GPA"
+
+                    # Line 1: Institution (Bold)
+                    add_two_column_line(
+                        doc, inst, "", is_bold_left=True, space_before=4, space_after=1
+                    )
+                    # Line 2: Degree, Marks, Date Range
+                    add_two_column_line(
+                        doc,
+                        degree_full,
+                        date_str,
+                        is_bold_left=False,
+                        space_before=0,
+                        space_after=2,
+                    )
+
+                    desc = edu.get("description") or ""
+                    if desc:
+                        lines = [
+                            line.strip().lstrip("•-*").strip()
+                            for line in desc.split("\n")
+                            if line.strip()
+                        ]
+                        for line_item in lines:
+                            add_bullet_point(doc, line_item)
+            elif has_dept_or_grad:
+                # Real profile department and grad year
                 inst = (
-                    edu.get("institution_name", "").strip()
-                    or "S.B. Jain Institute of Technology, Management & Research"
+                    "S.B. Jain Institute of Technology, Management & Research, Nagpur"
                 )
-                degree = edu.get("degree", "").strip() or "Bachelor of Technology"
-                field = edu.get("field_of_study", "").strip()
-                gpa = edu.get("gpa")
-                pct = edu.get("percentage")
-                date_str = format_date_range(edu.get("start_date"), edu.get("end_date"))
-
-                degree_full = f"{degree} in {field}" if field else degree
-                if pct is not None:
-                    degree_full += f" - {pct}%"
-                elif gpa is not None:
-                    degree_full += f" - {gpa} GPA"
-
-                # Line 1: Institution (Bold)
+                dept_name = profile_data.get("department")
+                degree_full = (
+                    f"Bachelor of Technology in {dept_name}"
+                    if dept_name
+                    else "Bachelor of Technology"
+                )
+                year_label = f"Class of {grad_year}" if grad_year else ""
                 add_two_column_line(
                     doc, inst, "", is_bold_left=True, space_before=4, space_after=1
                 )
-                # Line 2: Degree, Marks, Date Range
                 add_two_column_line(
                     doc,
                     degree_full,
-                    date_str,
+                    year_label,
                     is_bold_left=False,
                     space_before=0,
                     space_after=2,
                 )
 
-                desc = edu.get("description") or ""
-                if desc:
-                    lines = [
-                        line.strip().lstrip("•-*").strip()
-                        for line in desc.split("\n")
-                        if line.strip()
-                    ]
-                    for line_item in lines:
-                        add_bullet_point(doc, line_item)
-        else:
-            # Fallback based on profile department and grad year
-            inst = "S.B. Jain Institute of Technology, Management & Research, Nagpur"
-            degree_full = f"Bachelor of Technology in {department}"
-            is_alumni = role_name.lower() == "alumni"
-            year_label = (
-                f"Batch {grad_year - 4 if grad_year else ''}"
-                if is_alumni
-                else f"Class of {grad_year}"
-            )
-            grad_str = year_label if grad_year else "2023 - 2027"
-            add_two_column_line(
-                doc, inst, "", is_bold_left=True, space_before=4, space_after=1
-            )
-            add_two_column_line(
-                doc,
-                degree_full,
-                grad_str,
-                is_bold_left=False,
-                space_before=0,
-                space_after=2,
-            )
-            add_bullet_point(
-                doc,
-                "Relevant Coursework: Data Structures, Object-Oriented Programming, Database Systems, Web Technologies.",
-            )
-
-        tenth_pct = profile_data.get("tenth_percentage")
-        twelfth_pct = profile_data.get("twelfth_diploma_percentage")
-        if tenth_pct is not None or twelfth_pct is not None:
-            # Add line for 10th and 12th percentage
-            add_two_column_line(
-                doc,
-                "Prior Education",
-                "",
-                is_bold_left=True,
-                space_before=4,
-                space_after=1,
-            )
-            if twelfth_pct is not None:
-                add_bullet_point(doc, f"12th / Diploma: {twelfth_pct}%")
-            if tenth_pct is not None:
-                add_bullet_point(doc, f"10th Standard: {tenth_pct}%")
+            if tenth_pct is not None or twelfth_pct is not None:
+                add_two_column_line(
+                    doc,
+                    "Prior Education",
+                    "",
+                    is_bold_left=True,
+                    space_before=4,
+                    space_after=1,
+                )
+                if twelfth_pct is not None:
+                    add_bullet_point(doc, f"12th / Diploma: {twelfth_pct}%")
+                if tenth_pct is not None:
+                    add_bullet_point(doc, f"10th Standard: {tenth_pct}%")
 
         # -------------------------------------------------------------
         # 4. PROJECTS
         # -------------------------------------------------------------
         projects = profile_data.get("projects") or []
         if projects:
-            add_section_header(doc, "Project")
+            add_section_header(doc, "Projects")
             for proj in projects:
-                p_title = (
-                    proj.get("title") or proj.get("name") or "Key Software Project"
-                )
+                p_title = proj.get("title") or proj.get("name") or "Key Project"
                 tech_stack = proj.get("tech_stack") or []
                 highlights = proj.get("highlights") or []
                 p_desc = proj.get("description") or ""
@@ -453,41 +434,28 @@ class ResumeGeneratorService:
                     add_hyperlink(link_p, p_url, p_url)
 
                 if highlights:
-                    for h in highlights:
-                        add_bullet_point(doc, h)
+                    for hl in highlights:
+                        if isinstance(hl, str) and hl.strip():
+                            add_bullet_point(doc, hl.strip().lstrip("•-*").strip())
                 elif p_desc:
-                    lines = [
-                        line.strip().lstrip("•-*").strip()
-                        for line in p_desc.split("\n")
-                        if line.strip()
-                    ]
-                    for line_item in lines:
-                        add_bullet_point(doc, line_item)
-                else:
-                    tech_str = (
-                        ", ".join(tech_stack) if tech_stack else "modern technologies"
-                    )
-                    add_bullet_point(
-                        doc,
-                        f"Designed and developed full-stack application using {tech_str}.",
-                    )
-                    add_bullet_point(
-                        doc,
-                        "Implemented secure user authentication, responsive UI, and optimized database queries.",
-                    )
+                    for line in p_desc.split("\n"):
+                        if line.strip():
+                            add_bullet_point(doc, line.strip().lstrip("•-*").strip())
 
-                if tech_stack and not highlights and not p_desc:
+                if tech_stack:
                     add_bullet_point(
                         doc, f"Technologies used: {', '.join(tech_stack)}."
                     )
 
         # -------------------------------------------------------------
-        # 5. SKILLS
+        # 5. SKILLS (Rendered strictly from profile)
         # -------------------------------------------------------------
         raw_skills = profile_data.get("skills")
-        add_section_header(doc, "Skills")
 
-        if isinstance(raw_skills, dict) and raw_skills:
+        if isinstance(raw_skills, dict) and any(
+            isinstance(v, list) and len(v) > 0 for v in raw_skills.values()
+        ):
+            add_section_header(doc, "Skills")
             for category, skill_list in raw_skills.items():
                 if isinstance(skill_list, list) and skill_list:
                     cat_name = category.strip()
@@ -495,95 +463,15 @@ class ResumeGeneratorService:
                         str(s).strip() for s in skill_list if str(s).strip()
                     )
                     add_bullet_point(doc, skills_str, prefix_bold=f"{cat_name}: ")
-        elif isinstance(raw_skills, list) and raw_skills:
-            # Categorize flat list if possible or output categorized bullets
+        elif isinstance(raw_skills, list) and len(raw_skills) > 0:
             all_skills = [str(s).strip() for s in raw_skills if str(s).strip()]
-            frontend_kw = {
-                "html",
-                "css",
-                "javascript",
-                "typescript",
-                "react",
-                "react.js",
-                "angular",
-                "vue",
-                "tailwind",
-                "next.js",
-                "bootstrap",
-            }
-            backend_kw = {
-                "node",
-                "node.js",
-                "express",
-                "express.js",
-                "python",
-                "fastapi",
-                "django",
-                "java",
-                "spring",
-                "spring boot",
-                "c++",
-                "c#",
-                "rest",
-                "graphql",
-            }
-            db_tools_kw = {
-                "sql",
-                "postgresql",
-                "mysql",
-                "mongodb",
-                "redis",
-                "git",
-                "github",
-                "docker",
-                "aws",
-                "kubernetes",
-                "linux",
-                "ci/cd",
-            }
-
-            fe, be, tools, other = [], [], [], []
-            for s in all_skills:
-                sl = s.lower()
-                if any(k in sl for k in frontend_kw):
-                    fe.append(s)
-                elif any(k in sl for k in backend_kw):
-                    be.append(s)
-                elif any(k in sl for k in db_tools_kw):
-                    tools.append(s)
-                else:
-                    other.append(s)
-
-            if fe:
-                add_bullet_point(doc, ", ".join(fe) + ".", prefix_bold="Front-end: ")
-            if be:
-                add_bullet_point(doc, ", ".join(be) + ".", prefix_bold="Back-end: ")
-            if tools:
-                add_bullet_point(
-                    doc, ", ".join(tools) + ".", prefix_bold="Tools & Databases: "
-                )
-            if other or (not fe and not be and not tools):
+            if all_skills:
+                add_section_header(doc, "Skills")
                 add_bullet_point(
                     doc,
-                    ", ".join(other or all_skills) + ".",
-                    prefix_bold="Core Skills: ",
+                    ", ".join(all_skills) + ".",
+                    prefix_bold="Technical Skills: ",
                 )
-        else:
-            add_bullet_point(
-                doc,
-                "HTML, CSS, JavaScript, TypeScript, React.js, and Responsive Design.",
-                prefix_bold="Front-end: ",
-            )
-            add_bullet_point(
-                doc,
-                "Python, FastAPI, Node.js, Express.js, and RESTful API design.",
-                prefix_bold="Back-end: ",
-            )
-            add_bullet_point(
-                doc,
-                "Git, GitHub, PostgreSQL, Docker, and CI/CD pipelines.",
-                prefix_bold="Tools: ",
-            )
 
         # -------------------------------------------------------------
         # 6. CERTIFICATIONS

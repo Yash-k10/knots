@@ -408,14 +408,14 @@ export default function Jobs() {
         .map((s: string) => s.trim())
         .filter(Boolean);
       await createJobPosting({
-        title: postTitle,
+        title: postTitle.trim(),
         company_id: Number(postCompanyId),
-        job_type: postJobType,
-        workplace_type: postWorkplaceType,
-        location: postLocation || undefined,
-        salary_range: postSalaryRange || undefined,
+        job_type: (postJobType.toLowerCase().replace("_", "-")) as JobType,
+        workplace_type: (postWorkplaceType.toLowerCase().replace("_", "-")) as WorkplaceType,
+        location: postLocation.trim() || undefined,
+        salary_range: postSalaryRange.trim() || undefined,
         required_skills: skillsArray,
-        description: postDescription,
+        description: postDescription.trim(),
       });
 
       setSuccessMsg("Job opportunity posted successfully!");
@@ -428,7 +428,13 @@ export default function Jobs() {
       setActiveTab("explore");
       loadData();
     } catch (err: any) {
-      setError(err.message || "Failed to post job opportunity.");
+      const detailedMsg =
+        typeof err.detail === "string"
+          ? err.detail
+          : Array.isArray(err.detail)
+          ? err.detail.map((d: any) => d.msg || JSON.stringify(d)).join(", ")
+          : err.message || "Failed to post job opportunity.";
+      setError(detailedMsg);
     }
   };
 

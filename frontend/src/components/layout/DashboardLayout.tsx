@@ -195,13 +195,13 @@ export default function DashboardLayout() {
     switch (roleName) {
       case "alumni":
         return [
-          { name: "Alumni Hub", path: "/", icon: LayoutDashboard, section: "main" },
-          { name: "Campus Network", path: "/feed", icon: Rss, section: "main" },
-          { name: "Batchmates & Ties", path: "/connections", icon: Users, section: "main" },
-          { name: "Jobs & Referrals", path: "/jobs", icon: Briefcase, section: "main" },
-          { name: "Campus Meets & Events", path: "/events", icon: Calendar, section: "main" },
-          { name: "Direct Guidance", path: "/messaging", icon: MessageSquare, badge: unreadMessages, section: "communication" },
-          { name: "Activity Alerts", path: "/notifications", icon: Bell, badge: unreadNotifications, section: "communication" },
+          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          baseEvents,
+          baseMessages,
+          baseNotifications,
         ];
       case "student":
         return [

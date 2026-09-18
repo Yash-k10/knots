@@ -60,6 +60,30 @@ class TestResumeGenerator(unittest.TestCase):
         # Verify ZIP/DOCX magic bytes
         self.assertTrue(raw_bytes.startswith(b"PK\x03\x04"))
 
+    def test_generate_docx_empty_profile(self):
+        empty_profile = {
+            "first_name": "Priya",
+            "last_name": "Verma",
+            "department": "Computer Science",
+            "graduation_year": 2023,
+            "bio": "Batch of 2023 Alumna, currently Software Engineer II at Microsoft Azure Core.",
+            "skills": None,
+            "education": None,
+            "employment_history": None,
+            "projects": None,
+            "certifications": None,
+            "phone_number": None,
+            "linkedin_url": None,
+            "github_url": None,
+        }
+        stream = ResumeGeneratorService.generate_docx(
+            empty_profile, user_email="alumni@sbjit.edu.in"
+        )
+        self.assertIsNotNone(stream)
+        raw_bytes = stream.getvalue()
+        self.assertGreater(len(raw_bytes), 1000)
+        self.assertTrue(raw_bytes.startswith(b"PK\x03\x04"))
+
 
 if __name__ == "__main__":
     unittest.main()

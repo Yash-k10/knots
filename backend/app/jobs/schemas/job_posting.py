@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.schemas.company import CompanyResponse
@@ -23,6 +24,40 @@ class JobPostingBase(BaseModel):
     application_deadline: datetime | None = None
     status: JobStatusEnum = Field(default=JobStatusEnum.OPEN)
 
+    @field_validator("job_type", mode="before")
+    @classmethod
+    def normalize_job_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower().replace("_", "-").replace(" ", "-")
+            for member in JobTypeEnum:
+                if member.value == clean or member.name.lower() == clean.replace(
+                    "-", "_"
+                ):
+                    return member
+        return v
+
+    @field_validator("workplace_type", mode="before")
+    @classmethod
+    def normalize_workplace_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower().replace("_", "-").replace(" ", "-")
+            for member in WorkplaceTypeEnum:
+                if member.value == clean or member.name.lower() == clean.replace(
+                    "-", "_"
+                ):
+                    return member
+        return v
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            for member in JobStatusEnum:
+                if member.value == clean or member.name.lower() == clean:
+                    return member
+        return v
+
 
 class JobPostingCreate(JobPostingBase):
     company_id: int = Field(..., description="ID of the company posting the job")
@@ -41,6 +76,40 @@ class JobPostingUpdate(BaseModel):
     required_skills: list[str] | None = None
     application_deadline: datetime | None = None
     status: JobStatusEnum | None = None
+
+    @field_validator("job_type", mode="before")
+    @classmethod
+    def normalize_job_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower().replace("_", "-").replace(" ", "-")
+            for member in JobTypeEnum:
+                if member.value == clean or member.name.lower() == clean.replace(
+                    "-", "_"
+                ):
+                    return member
+        return v
+
+    @field_validator("workplace_type", mode="before")
+    @classmethod
+    def normalize_workplace_type(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower().replace("_", "-").replace(" ", "-")
+            for member in WorkplaceTypeEnum:
+                if member.value == clean or member.name.lower() == clean.replace(
+                    "-", "_"
+                ):
+                    return member
+        return v
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            for member in JobStatusEnum:
+                if member.value == clean or member.name.lower() == clean:
+                    return member
+        return v
 
 
 class JobPostingResponse(JobPostingBase):
