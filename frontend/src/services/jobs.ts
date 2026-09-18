@@ -72,12 +72,17 @@ export interface JobFilters {
 export async function fetchJobs(filters?: JobFilters): Promise<JobPosting[]> {
   const queryParams = new URLSearchParams();
   if (filters?.search) queryParams.set("search", filters.search);
-  if (filters?.job_type) queryParams.set("job_type", filters.job_type);
-  if (filters?.workplace_type)
-    queryParams.set("workplace_type", filters.workplace_type);
+  if (filters?.job_type && filters.job_type !== ("ALL" as any)) {
+    queryParams.set("job_type", filters.job_type.toLowerCase().replace(/_/g, "-"));
+  }
+  if (filters?.workplace_type && filters.workplace_type !== ("ALL" as any)) {
+    queryParams.set("workplace_type", filters.workplace_type.toLowerCase().replace(/_/g, "-"));
+  }
   if (filters?.company_id)
     queryParams.set("company_id", filters.company_id.toString());
-  if (filters?.status) queryParams.set("status", filters.status);
+  if (filters?.status && filters.status !== ("ALL" as any)) {
+    queryParams.set("status", filters.status.toLowerCase());
+  }
 
   const queryStr = queryParams.toString();
   return apiRequest<JobPosting[]>(`/jobs${queryStr ? `?${queryStr}` : ""}`);

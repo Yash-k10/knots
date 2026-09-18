@@ -169,26 +169,52 @@ async def read_jobs(
     search: str | None = Query(
         None, description="Search keyword in title, description or location"
     ),
-    job_type: JobTypeEnum | None = Query(None, description="Filter by job type"),
-    workplace_type: WorkplaceTypeEnum | None = Query(
-        None, description="Filter by workplace type"
-    ),
+    job_type: str | None = Query(None, description="Filter by job type"),
+    workplace_type: str | None = Query(None, description="Filter by workplace type"),
     company_id: int | None = Query(None, description="Filter by company ID"),
-    status: JobStatusEnum | None = Query(
-        JobStatusEnum.OPEN, description="Filter by job status"
-    ),
+    status: str | None = Query(None, description="Filter by job status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve list of job opportunities with search and filtering."""
+    parsed_job_type: JobTypeEnum | None = None
+    if job_type and job_type.upper() != "ALL":
+        jt_norm = job_type.strip().lower().replace("_", "-")
+        for member in JobTypeEnum:
+            if (
+                member.value == jt_norm
+                or member.name.lower().replace("_", "-") == jt_norm
+            ):
+                parsed_job_type = member
+                break
+
+    parsed_workplace: WorkplaceTypeEnum | None = None
+    if workplace_type and workplace_type.upper() != "ALL":
+        wp_norm = workplace_type.strip().lower().replace("_", "-")
+        for member in WorkplaceTypeEnum:
+            if (
+                member.value == wp_norm
+                or member.name.lower().replace("_", "-") == wp_norm
+            ):
+                parsed_workplace = member
+                break
+
+    parsed_status: JobStatusEnum | None = JobStatusEnum.OPEN
+    if status and status.upper() != "ALL":
+        st_norm = status.strip().lower()
+        for member in JobStatusEnum:
+            if member.value == st_norm or member.name.lower() == st_norm:
+                parsed_status = member
+                break
+
     service = JobService(db)
     jobs = await service.list_jobs(
         search=search,
-        job_type=job_type,
-        workplace_type=workplace_type,
+        job_type=parsed_job_type,
+        workplace_type=parsed_workplace,
         company_id=company_id,
-        status=status,
+        status=parsed_status,
         skip=skip,
         limit=limit,
     )
