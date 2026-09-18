@@ -190,7 +190,9 @@ class ClubService:
         existing = await self.member_repo.get_by_club_and_user(club_id, user_id)
         if existing:
             if existing.role == "PENDING":
-                raise ConflictError(message="You already have a pending join request for this club")
+                raise ConflictError(
+                    message="You already have a pending join request for this club"
+                )
             raise ConflictError(message="You are already a member of this club")
 
         return await self.member_repo.create(
@@ -212,7 +214,10 @@ class ClubService:
             other_leaders = [
                 m for m in all_members if m.role == "LEADER" and m.user_id != user_id
             ]
-            if not other_leaders and len([m for m in all_members if m.role != "PENDING"]) > 1:
+            if (
+                not other_leaders
+                and len([m for m in all_members if m.role != "PENDING"]) > 1
+            ):
                 raise ValidationError(
                     message="You are the sole leader of this club. "
                     "Please promote another member to LEADER before leaving."
@@ -232,7 +237,8 @@ class ClubService:
                 club_id, current_user_id
             )
             if club.creator_id != current_user_id and (
-                not requester_membership or requester_membership.role not in ["LEADER", "OFFICER"]
+                not requester_membership
+                or requester_membership.role not in ["LEADER", "OFFICER"]
             ):
                 raise AuthorizationError(
                     message="Only club leaders or officers can remove members or reject requests"
@@ -278,9 +284,8 @@ class ClubService:
         requester_membership = await self.member_repo.get_by_club_and_user(
             club_id, current_user_id
         )
-        is_authorized = (
-            club.creator_id == current_user_id
-            or (requester_membership and requester_membership.role in ["LEADER", "OFFICER"])
+        is_authorized = club.creator_id == current_user_id or (
+            requester_membership and requester_membership.role in ["LEADER", "OFFICER"]
         )
         if not is_authorized:
             raise AuthorizationError(

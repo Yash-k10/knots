@@ -439,7 +439,9 @@ def send_application_alert_email(
 ) -> bool:
     """Send an automated email notification to the job/referral poster when an applicant applies."""
     normalized_recipient = poster_email.strip().lower()
-    subject = f"New Application: {applicant_name} applied for {job_title} at {company_name}"
+    subject = (
+        f"New Application: {applicant_name} applied for {job_title} at {company_name}"
+    )
 
     plain_text_body = (
         f"Hello {poster_name},\n\n"
@@ -498,26 +500,33 @@ def send_application_alert_email(
     try:
         if settings.EMAIL_WEBHOOK_URL:
             try:
-                return _send_via_webhook(normalized_recipient, subject, plain_text_body, html_body)
+                return _send_via_webhook(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
             except Exception:
                 pass
         if settings.RESEND_API_KEY:
             try:
-                return _send_via_resend(normalized_recipient, subject, plain_text_body, html_body)
+                return _send_via_resend(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
             except Exception:
                 pass
         if settings.BREVO_API_KEY:
             try:
-                return _send_via_brevo(normalized_recipient, subject, plain_text_body, html_body)
+                return _send_via_brevo(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
             except Exception:
                 pass
         if settings.SENDGRID_API_KEY:
             try:
-                return _send_via_sendgrid(normalized_recipient, subject, plain_text_body, html_body)
+                return _send_via_sendgrid(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
             except Exception:
                 pass
         return _send_via_smtp(normalized_recipient, subject, plain_text_body, html_body)
     except Exception as e:
         logger.warning(f"Failed to dispatch application notification email: {e}")
         return False
-

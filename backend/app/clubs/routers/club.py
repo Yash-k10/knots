@@ -198,4 +198,3 @@ async def remove_member(
         target_user_id=user_id,
     )
     return APIResponse(message="Member removed or request rejected successfully")
-

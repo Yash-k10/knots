@@ -59,7 +59,11 @@ class ApplicationService:
                     else poster.email.split("@")[0]
                 ) or poster.email.split("@")[0]
 
-                company_name = job.company.name if getattr(job, "company", None) else "Campus Opportunity"
+                company_name = (
+                    job.company.name
+                    if getattr(job, "company", None)
+                    else "Campus Opportunity"
+                )
 
                 send_application_alert_email(
                     poster_email=poster.email,
@@ -73,7 +77,10 @@ class ApplicationService:
                 )
         except Exception as email_err:
             import logging
-            logging.getLogger(__name__).warning(f"Could not dispatch application alert email: {email_err}")
+
+            logging.getLogger(__name__).warning(
+                f"Could not dispatch application alert email: {email_err}"
+            )
 
         return await self.repository.get(app_obj.id)
 
