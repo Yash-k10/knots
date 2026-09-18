@@ -23,9 +23,9 @@ class EventCategoryResponse(BaseModel):
 
 
 class RSVPCreate(BaseModel):
-    """Payload to RSVP to an event."""
+    """Payload to RSVP or request to join an event."""
 
-    status: RSVPStatus = RSVPStatus.GOING
+    status: RSVPStatus = RSVPStatus.PENDING
     note: str | None = Field(None, max_length=300)
 
 
@@ -36,11 +36,22 @@ class RSVPUpdate(BaseModel):
     note: str | None = Field(None, max_length=300)
 
 
+class RSVPStatusUpdate(BaseModel):
+    """Payload for event leads to accept or decline a student's join request."""
+
+    status: RSVPStatus
+
+
 class RSVPUserInfo(BaseModel):
     """Compact user info embedded in RSVP responses."""
 
     id: int
     email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    department: str | None = None
+    graduation_year: int | None = None
+    profile_picture: str | None = None
 
     class Config:
         from_attributes = True
@@ -65,6 +76,29 @@ class RSVPResponse(BaseModel):
 # ── Event Schemas ────────────────────────────────────────────────────────────
 
 
+class EventLeadUser(BaseModel):
+    """Compact info for appointed Event Head or Co-Head."""
+
+    id: int
+    email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    department: str | None = None
+    graduation_year: int | None = None
+    profile_picture: str | None = None
+    role_name: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class EventLeadsUpdate(BaseModel):
+    """Payload to appoint or update event head and co-head."""
+
+    head_id: int | None = None
+    co_head_id: int | None = None
+
+
 class EventCreate(BaseModel):
     """Payload to create a new event."""
 
@@ -78,6 +112,8 @@ class EventCreate(BaseModel):
     max_capacity: int | None = Field(None, ge=1)
     is_rsvp_enabled: bool = True
     category_id: int | None = None
+    head_id: int | None = None
+    co_head_id: int | None = None
 
 
 class EventUpdate(BaseModel):
@@ -94,6 +130,8 @@ class EventUpdate(BaseModel):
     is_rsvp_enabled: bool | None = None
     status: EventStatus | None = None
     category_id: int | None = None
+    head_id: int | None = None
+    co_head_id: int | None = None
 
 
 class EventOrganizerInfo(BaseModel):
@@ -124,7 +162,12 @@ class EventResponse(BaseModel):
     organizer: EventOrganizerInfo | None = None
     category_id: int | None = None
     category: EventCategoryResponse | None = None
+    head_id: int | None = None
+    co_head_id: int | None = None
+    head: EventLeadUser | None = None
+    co_head: EventLeadUser | None = None
     rsvp_count: int = 0
+    pending_requests_count: int = 0
     user_rsvp_status: RSVPStatus | None = None
     created_at: datetime
     updated_at: datetime

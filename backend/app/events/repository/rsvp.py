@@ -6,6 +6,9 @@ from app.core.repository import BaseRepository
 from app.events.models.rsvp import RSVP, RSVPStatus
 
 
+from app.users.models.user import User
+
+
 class RSVPRepository(BaseRepository[RSVP]):
     """Repository for RSVP operations."""
 
@@ -13,18 +16,20 @@ class RSVPRepository(BaseRepository[RSVP]):
         super().__init__(RSVP, db)
 
     async def get_with_user(self, rsvp_id: int) -> RSVP | None:
-        """Fetch RSVP with user relationship eagerly loaded."""
+        """Fetch RSVP with user and profile relationships eagerly loaded."""
         result = await self.db.execute(
-            select(RSVP).options(selectinload(RSVP.user)).filter(RSVP.id == rsvp_id)
+            select(RSVP)
+            .options(selectinload(RSVP.user).selectinload(User.profile))
+            .filter(RSVP.id == rsvp_id)
         )
         return result.scalars().first()
 
     async def get_by_event_and_user(self, event_id: int, user_id: int) -> RSVP | None:
         """Find an existing RSVP by a specific user for a specific event."""
         result = await self.db.execute(
-            select(RSVP).filter(
-                and_(RSVP.event_id == event_id, RSVP.user_id == user_id)
-            )
+            select(RSVP)
+            .options(selectinload(RSVP.user).selectinload(User.profile))
+            .filter(and_(RSVP.event_id == event_id, RSVP.user_id == user_id))
         )
         return result.scalars().first()
 
@@ -34,11 +39,24 @@ class RSVPRepository(BaseRepository[RSVP]):
         """Fetch all RSVPs for an event, ordered by creation date."""
         result = await self.db.execute(
             select(RSVP)
-            .options(selectinload(RSVP.user))
+            .options(selectinload(RSVP.user).selectinload(User.profile))
             .filter(RSVP.event_id == event_id)
             .order_by(RSVP.created_at.asc())
             .offset(skip)
             .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_pending_by_event(self, event_id: int) -> list[RSVP]:
+        """Fetch all PENDING join requests for an event."""
+        result = await self.db.execute(
+            select(RSVP)
+            .options(selectinload(RSVP.user).selectinload(User.profile))
+            .filter(
+                RSVP.event_id == event_id,
+                RSVP.status == RSVPStatus.PENDING,
+            )
+            .order_by(RSVP.created_at.asc())
         )
         return list(result.scalars().all())
 

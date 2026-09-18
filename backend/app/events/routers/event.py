@@ -10,10 +10,12 @@ from app.events.models.event import EventStatus
 from app.events.schemas.event import (
     EventCategoryResponse,
     EventCreate,
+    EventLeadsUpdate,
     EventResponse,
     EventUpdate,
     RSVPCreate,
     RSVPResponse,
+    RSVPStatusUpdate,
 )
 from app.events.services.event import EventService
 from app.users.models.user import User
@@ -121,11 +123,27 @@ async def update_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update event details (organizer only)."""
+    """Update event details (organizer, controller, or admin)."""
     service = EventService(db)
-    await service.update_event(event_id, current_user.id, payload)
+    await service.update_event(event_id, current_user, payload)
     detail = await service.get_event_detail(event_id, current_user_id=current_user.id)
     return APIResponse(message="Event updated successfully", data=detail)
+
+
+@router.put("/{event_id}/leads", response_model=APIResponse[EventResponse])
+async def update_event_leads(
+    event_id: int = Path(..., ge=1),
+    payload: EventLeadsUpdate = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Appoint or update Event Head and Co-Head (Organizer or Controller only)."""
+    service = EventService(db)
+    await service.update_event_leads(
+        event_id, current_user, payload.head_id, payload.co_head_id
+    )
+    detail = await service.get_event_detail(event_id, current_user_id=current_user.id)
+    return APIResponse(message="Event leads updated successfully", data=detail)
 
 
 @router.delete("/{event_id}", response_model=APIResponse)
@@ -134,9 +152,9 @@ async def delete_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete an event (organizer only)."""
+    """Delete an event (organizer, controller, or admin)."""
     service = EventService(db)
-    await service.delete_event(event_id, current_user.id)
+    await service.delete_event(event_id, current_user)
     return APIResponse(message="Event deleted successfully")
 
 
@@ -150,10 +168,40 @@ async def rsvp_to_event(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create or update user's RSVP status to an event."""
+    """Create or update user's RSVP status or join request to an event."""
     service = EventService(db)
     rsvp = await service.rsvp_to_event(event_id, current_user.id, payload)
     return APIResponse(message="RSVP submitted successfully", data=rsvp)
+
+
+@router.get("/{event_id}/requests", response_model=APIResponse[list[RSVPResponse]])
+async def get_event_requests(
+    event_id: int = Path(..., ge=1),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve list of pending join requests for an event (Event Heads and Controllers only)."""
+    service = EventService(db)
+    requests = await service.get_event_requests(event_id, current_user)
+    return APIResponse(data=requests)
+
+
+@router.put(
+    "/{event_id}/rsvps/{user_id}/status", response_model=APIResponse[RSVPResponse]
+)
+async def update_rsvp_status(
+    event_id: int = Path(..., ge=1),
+    user_id: int = Path(..., ge=1),
+    payload: RSVPStatusUpdate = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Accept or decline a student's join request to an event."""
+    service = EventService(db)
+    rsvp = await service.update_rsvp_status(
+        event_id, current_user, user_id, payload.status
+    )
+    return APIResponse(message=f"Request updated to {payload.status.value}", data=rsvp)
 
 
 @router.delete("/{event_id}/rsvp", response_model=APIResponse)

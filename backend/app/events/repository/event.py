@@ -8,6 +8,9 @@ from app.core.repository import BaseRepository
 from app.events.models.event import Event, EventStatus
 
 
+from app.users.models.user import User
+
+
 class EventRepository(BaseRepository[Event]):
     """Repository for Event CRUD and filtered queries."""
 
@@ -15,11 +18,13 @@ class EventRepository(BaseRepository[Event]):
         super().__init__(Event, db)
 
     async def get_with_details(self, event_id: int) -> Event | None:
-        """Fetch a single event with organizer, category, and RSVPs."""
+        """Fetch a single event with organizer, category, head, co_head, and RSVPs."""
         result = await self.db.execute(
             select(Event)
             .options(
                 selectinload(Event.organizer),
+                selectinload(Event.head).selectinload(User.profile),
+                selectinload(Event.co_head).selectinload(User.profile),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -34,6 +39,8 @@ class EventRepository(BaseRepository[Event]):
             select(Event)
             .options(
                 selectinload(Event.organizer),
+                selectinload(Event.head).selectinload(User.profile),
+                selectinload(Event.co_head).selectinload(User.profile),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -116,6 +123,8 @@ class EventRepository(BaseRepository[Event]):
         """Fetch all events with details under the specified filters."""
         query = select(Event).options(
             selectinload(Event.organizer),
+            selectinload(Event.head).selectinload(User.profile),
+            selectinload(Event.co_head).selectinload(User.profile),
             selectinload(Event.category),
             selectinload(Event.rsvps),
         )

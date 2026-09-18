@@ -21,6 +21,7 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.users.models.user import User
 
 
 class ClubService:
@@ -231,17 +232,33 @@ class ClubService:
         """Remove a member or reject a pending join request (LEADER/Creator or self)."""
         club = await self.get_club(club_id)
 
-        # Allow self cancellation or leader/creator action
+        # Allow self cancellation or leader/creator/controller action
         if current_user_id != target_user_id:
             requester_membership = await self.member_repo.get_by_club_and_user(
                 club_id, current_user_id
             )
-            if club.creator_id != current_user_id and (
-                not requester_membership
-                or requester_membership.role not in ["LEADER", "OFFICER"]
+            req_user = await self.db.get(User, current_user_id)
+            req_role = (
+                req_user.role.name.lower().strip() if req_user and req_user.role else ""
+            )
+            is_admin_or_controller = req_role in [
+                "controller",
+                "admin",
+                "super admin",
+                "superadmin",
+                "management",
+                "central admin",
+            ]
+            if (
+                not is_admin_or_controller
+                and club.creator_id != current_user_id
+                and (
+                    not requester_membership
+                    or requester_membership.role not in ["LEADER", "OFFICER"]
+                )
             ):
                 raise AuthorizationError(
-                    message="Only club leaders or officers can remove members or reject requests"
+                    message="Only club leaders, officers, or controllers can remove members or reject requests"
                 )
 
         target_membership = await self.member_repo.get_by_club_and_user(
@@ -277,19 +294,36 @@ class ClubService:
         target_user_id: int,
         payload: ClubMemberUpdateRole,
     ) -> ClubMember:
-        """Update a member's role (LEADER/Creator/Officer). Accepts PENDING, MEMBER, OFFICER, LEADER."""
+        """Update a member's role (LEADER/Creator/Officer/Controller). Accepts PENDING, MEMBER, OFFICER, LEADER."""
         club = await self.get_club(club_id)
 
-        # 1. Authorizing requester (must be LEADER, Creator, or OFFICER)
+        # 1. Authorizing requester (must be LEADER, Creator, OFFICER, Controller, or Admin)
         requester_membership = await self.member_repo.get_by_club_and_user(
             club_id, current_user_id
         )
-        is_authorized = club.creator_id == current_user_id or (
-            requester_membership and requester_membership.role in ["LEADER", "OFFICER"]
+        req_user = await self.db.get(User, current_user_id)
+        req_role = (
+            req_user.role.name.lower().strip() if req_user and req_user.role else ""
+        )
+        is_admin_or_controller = req_role in [
+            "controller",
+            "admin",
+            "super admin",
+            "superadmin",
+            "management",
+            "central admin",
+        ]
+        is_authorized = (
+            is_admin_or_controller
+            or club.creator_id == current_user_id
+            or (
+                requester_membership
+                and requester_membership.role in ["LEADER", "OFFICER"]
+            )
         )
         if not is_authorized:
             raise AuthorizationError(
-                message="Only club leaders or controllers can update member roles"
+                message="Only club leaders, officers, or controllers can update member roles"
             )
 
         # 2. Get target member

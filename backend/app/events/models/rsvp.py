@@ -18,11 +18,14 @@ from app.core.database import Base
 
 
 class RSVPStatus(str, enum.Enum):
-    """Status of a user's RSVP to an event."""
+    """Status of a user's RSVP or join request to an event."""
 
-    GOING = "GOING"  # User confirmed attendance
+    PENDING = (
+        "PENDING"  # Registration requested, awaiting Event Head / Co-Head approval
+    )
+    GOING = "GOING"  # User confirmed attendance / request accepted
     MAYBE = "MAYBE"  # User is tentative
-    NOT_GOING = "NOT_GOING"  # User declined
+    NOT_GOING = "NOT_GOING"  # User declined or request rejected
 
 
 class RSVP(Base):
