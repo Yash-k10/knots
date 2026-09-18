@@ -137,13 +137,28 @@ export async function apiRequest<T = any>(
   }
 
   if (!response.ok || json.success === false) {
-    const errorMessage =
+    let errorMessage =
       json.error?.message ||
       json.detail ||
       json.message ||
       "Something went wrong";
     const errorCode = json.error?.code || "HTTP_ERROR";
     const errorDetails = json.error?.details;
+
+    if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
+      const fieldErrors = errorDetails
+        .map((d: any) => {
+          if (typeof d === "string") return d;
+          if (d?.field && d?.message) return `${d.field}: ${d.message}`;
+          return d?.message || JSON.stringify(d);
+        })
+        .filter(Boolean)
+        .join("; ");
+      if (fieldErrors && (!errorMessage || errorMessage === "Input validation failed.")) {
+        errorMessage = fieldErrors;
+      }
+    }
+
     throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
   }
 

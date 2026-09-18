@@ -108,18 +108,35 @@ def register_exception_handlers(app: FastAPI):
     ):
         logger.warning(f"Validation error: {exc.errors()}")
         errors_list = []
+        field_messages = []
         for error in exc.errors():
+            loc_parts = [
+                str(loc)
+                for loc in error["loc"]
+                if str(loc) not in ("body", "query", "path")
+            ]
+            field_name = (
+                ".".join(loc_parts)
+                if loc_parts
+                else (
+                    ".".join([str(loc) for loc in error["loc"][1:]])
+                    if len(error["loc"]) > 1
+                    else str(error["loc"][0])
+                )
+            )
+            msg = error.get("msg", "Invalid value")
+            field_messages.append(f"{field_name}: {msg}")
             errors_list.append(
                 {
-                    "field": (
-                        ".".join([str(loc) for loc in error["loc"][1:]])
-                        if len(error["loc"]) > 1
-                        else str(error["loc"][0])
-                    ),
-                    "message": error["msg"],
-                    "type": error["type"],
+                    "field": field_name,
+                    "message": msg,
+                    "type": error.get("type", "value_error"),
                 }
             )
+
+        summary_message = (
+            "; ".join(field_messages) if field_messages else "Input validation failed."
+        )
 
         return JSONResponse(
             status_code=422,
@@ -127,7 +144,7 @@ def register_exception_handlers(app: FastAPI):
                 "success": False,
                 "error": {
                     "code": "VALIDATION_ERROR",
-                    "message": "Input validation failed.",
+                    "message": summary_message,
                     "details": errors_list,
                 },
             },
