@@ -9,6 +9,7 @@ from app.jobs.schemas.application import ApplicationCreate, ApplicationUpdate
 
 class ApplicationService:
     def __init__(self, db: AsyncSession):
+        self.db = db
         self.repository = ApplicationRepository(db)
         self.job_repository = JobPostingRepository(db)
 

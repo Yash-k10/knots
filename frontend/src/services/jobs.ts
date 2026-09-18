@@ -4,7 +4,16 @@ export type JobType = "FULL_TIME" | "PART_TIME" | "INTERNSHIP" | "CONTRACT";
 export type WorkplaceType = "ON_SITE" | "HYBRID" | "REMOTE";
 export type JobStatus = "OPEN" | "CLOSED" | "DRAFT";
 export type ApplicationStatus =
-  "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED";
+  | "pending"
+  | "reviewed"
+  | "shortlisted"
+  | "rejected"
+  | "accepted"
+  | "PENDING"
+  | "REVIEWING"
+  | "SHORTLISTED"
+  | "ACCEPTED"
+  | "REJECTED";
 
 export interface Company {
   id: number;
@@ -163,6 +172,6 @@ export async function updateApplicationStatus(
 ): Promise<Application> {
   return apiRequest<Application>(`/jobs/applications/${applicationId}`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status: status.toLowerCase() }),
   });
 }

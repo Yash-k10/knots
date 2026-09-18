@@ -1301,19 +1301,19 @@ export default function Jobs() {
                 <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 text-center">
                   <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Pending Review</span>
                   <span className="text-xl font-black text-amber-900">
-                    {candidateApplications.filter((a) => (a.status || "PENDING").toUpperCase() === "PENDING").length}
+                    {candidateApplications.filter((a) => (a.status || "pending").toLowerCase() === "pending").length}
                   </span>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200 text-center">
                   <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">Shortlisted</span>
                   <span className="text-xl font-black text-blue-900">
-                    {candidateApplications.filter((a) => (a.status || "").toUpperCase() === "REVIEWING").length}
+                    {candidateApplications.filter((a) => ["shortlisted", "reviewed", "reviewing", "under_review"].includes((a.status || "").toLowerCase())).length}
                   </span>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 text-center">
                   <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Accepted / Offer</span>
                   <span className="text-xl font-black text-emerald-900">
-                    {candidateApplications.filter((a) => (a.status || "").toUpperCase() === "ACCEPTED").length}
+                    {candidateApplications.filter((a) => (a.status || "").toLowerCase() === "accepted").length}
                   </span>
                 </div>
               </div>
@@ -1342,10 +1342,10 @@ export default function Jobs() {
               return (
                 <div className="space-y-4">
                   {filteredCandidates.map((app: Application) => {
-                    const normStatus = (app.status || "PENDING").toUpperCase();
-                    const isReviewing = normStatus === "REVIEWING" || normStatus === "UNDER_REVIEW";
-                    const isAccepted = normStatus === "ACCEPTED";
-                    const isRejected = normStatus === "REJECTED";
+                    const normStatus = (app.status || "pending").toLowerCase();
+                    const isShortlisted = ["shortlisted", "reviewed", "reviewing", "under_review"].includes(normStatus);
+                    const isAccepted = normStatus === "accepted";
+                    const isRejected = normStatus === "rejected";
 
                     return (
                       <div
@@ -1362,14 +1362,14 @@ export default function Jobs() {
                                 className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                                   isAccepted
                                     ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                    : isReviewing
+                                    : isShortlisted
                                     ? "bg-blue-50 text-blue-800 border-blue-200"
                                     : isRejected
                                     ? "bg-rose-50 text-rose-800 border-rose-200"
                                     : "bg-amber-50 text-amber-800 border-amber-200"
                                 }`}
                               >
-                                {normStatus}
+                                {isAccepted ? "ACCEPTED" : isShortlisted ? "SHORTLISTED" : isRejected ? "REJECTED" : "PENDING"}
                               </span>
                             </div>
 
@@ -1396,10 +1396,10 @@ export default function Jobs() {
                           {/* Action Controls for Status Advancement */}
                           <div className="flex flex-wrap items-center gap-2">
                             <button
-                              onClick={() => handleUpdateCandidateStatus(app.id, "REVIEWING")}
-                              disabled={updatingAppId === app.id || isReviewing}
+                              onClick={() => handleUpdateCandidateStatus(app.id, "shortlisted")}
+                              disabled={updatingAppId === app.id || isShortlisted}
                               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                isReviewing
+                                isShortlisted
                                   ? "bg-blue-100 text-blue-700 border border-blue-200 cursor-default"
                                   : "bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200"
                               }`}
@@ -1409,7 +1409,7 @@ export default function Jobs() {
                             </button>
 
                             <button
-                              onClick={() => handleUpdateCandidateStatus(app.id, "ACCEPTED")}
+                              onClick={() => handleUpdateCandidateStatus(app.id, "accepted")}
                               disabled={updatingAppId === app.id || isAccepted}
                               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                                 isAccepted
@@ -1422,7 +1422,7 @@ export default function Jobs() {
                             </button>
 
                             <button
-                              onClick={() => handleUpdateCandidateStatus(app.id, "REJECTED")}
+                              onClick={() => handleUpdateCandidateStatus(app.id, "rejected")}
                               disabled={updatingAppId === app.id || isRejected}
                               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                                 isRejected
