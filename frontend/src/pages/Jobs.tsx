@@ -99,7 +99,7 @@ export default function Jobs() {
     roleName === "controller" ||
     roleName === "alumni";
   const canApplyJob = roleName === "student" || roleName === "alumni";
-  const canViewApplications = roleName === "student" || roleName === "alumni";
+  const canViewApplications = roleName === "student";
 
 
   // Search and filter states for Jobs
@@ -762,7 +762,7 @@ export default function Jobs() {
               >
                 <option value="ALL">All Job Types</option>
                 <option value="FULL_TIME">Full Time</option>
-                <option value="INTERNSHIP">Internship</option>
+                {roleName === "student" && <option value="INTERNSHIP">Internship</option>}
                 <option value="PART_TIME">Part Time</option>
                 <option value="CONTRACT">Contract</option>
               </select>
@@ -1575,7 +1575,7 @@ export default function Jobs() {
                   className="w-full px-3 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
                 >
                   <option value="FULL_TIME">Full-time</option>
-                  <option value="INTERNSHIP">Internship</option>
+                  {roleName === "student" && <option value="INTERNSHIP">Internship</option>}
                   <option value="PART_TIME">Part-time</option>
                   <option value="CONTRACT">Contract</option>
                 </select>

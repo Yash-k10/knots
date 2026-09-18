@@ -8,6 +8,7 @@ import {
   X,
   Sparkles,
   Loader2,
+  Briefcase,
 } from "lucide-react";
 import { ProfileResponse } from "../../services/profile";
 import { profileService } from "../../services/profile";
@@ -62,6 +63,9 @@ export default function ProfileHeader({
   const [twelfthDiplomaPercentage, setTwelfthDiplomaPercentage] = useState(
     profile.twelfth_diploma_percentage?.toString() || ""
   );
+  const [designation, setDesignation] = useState(profile.designation || "");
+  const [degree, setDegree] = useState(profile.degree || "");
+  const [experience, setExperience] = useState(profile.experience || "");
 
   useEffect(() => {
     setFirstName(profile.first_name || "");
@@ -76,6 +80,9 @@ export default function ProfileHeader({
     setLinkedinUrl(profile.linkedin_url || "");
     setTenthPercentage(profile.tenth_percentage?.toString() || "");
     setTwelfthDiplomaPercentage(profile.twelfth_diploma_percentage?.toString() || "");
+    setDesignation(profile.designation || "");
+    setDegree(profile.degree || "");
+    setExperience(profile.experience || "");
   }, [profile]);
 
   const handleGenerateResume = async () => {
@@ -102,6 +109,9 @@ export default function ProfileHeader({
     setLinkedinUrl(profile.linkedin_url || "");
     setTenthPercentage(profile.tenth_percentage?.toString() || "");
     setTwelfthDiplomaPercentage(profile.twelfth_diploma_percentage?.toString() || "");
+    setDesignation(profile.designation || "");
+    setDegree(profile.degree || "");
+    setExperience(profile.experience || "");
     setIsEditing(false);
   };
 
@@ -140,6 +150,9 @@ export default function ProfileHeader({
         linkedin_url: linkedinUrl.trim() || null,
         tenth_percentage: tenthPctNum,
         twelfth_diploma_percentage: twelfthPctNum,
+        designation: designation.trim() || null,
+        degree: degree.trim() || null,
+        experience: experience.trim() || null,
       });
       onUpdate(updated);
       setIsEditing(false);
@@ -231,6 +244,46 @@ export default function ProfileHeader({
                   placeholder="e.g. 2023"
                   min={1990}
                   max={2035}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Designation
+                </label>
+                <input
+                  type="text"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. Software Engineer"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Degree
+                </label>
+                <input
+                  type="text"
+                  value={degree}
+                  onChange={(e) => setDegree(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. B.Tech"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                  Experience
+                </label>
+                <input
+                  type="text"
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                  placeholder="e.g. 5+ Years"
+                  maxLength={100}
                 />
               </div>
 
@@ -416,6 +469,24 @@ export default function ProfileHeader({
                   <span className="flex items-center gap-1.5 font-bold">
                     <Building2 className="h-4 w-4 text-[#4B63D2]" />
                     {profile.department}
+                  </span>
+                )}
+                {profile.designation && (
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <Briefcase className="h-4 w-4 text-[#4B63D2]" />
+                    {profile.designation}
+                  </span>
+                )}
+                {profile.degree && (
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
+                    {profile.degree}
+                  </span>
+                )}
+                {profile.experience && (
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <Briefcase className="h-4 w-4 text-[#4B63D2]" />
+                    {profile.experience}
                   </span>
                 )}
                 {profile.connection_count !== undefined && (

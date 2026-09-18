@@ -77,6 +77,9 @@ class ProfileBase(BaseModel):
     bio: str | None = None
     graduation_year: int | None = None
     department: str | None = None
+    designation: str | None = None
+    degree: str | None = None
+    experience: str | None = None
     skills: list[str] | dict[str, list[str]] | None = None
     profile_picture: str | None = None
     certifications: list[dict[str, Any]] | None = None

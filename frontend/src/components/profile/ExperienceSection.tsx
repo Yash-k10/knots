@@ -518,7 +518,7 @@ export default function ExperienceSection({
       {/* Experience List */}
       <div className="space-y-6">
         {profile.employment_history && profile.employment_history.length > 0 ? (
-          profile.employment_history
+          [...profile.employment_history]
             .sort(
               (a, b) =>
                 new Date(b.start_date).getTime() -

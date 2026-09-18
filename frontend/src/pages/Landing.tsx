@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ThemeToggle from "../components/common/ThemeToggle";
 import InfoModal, { ModalType } from "../components/common/InfoModal";
 import KnotsLogo from "../components/common/KnotsLogo";
@@ -10,8 +10,6 @@ import {
   Users,
   GraduationCap,
   Award,
-  FileDown,
-  FileCheck2,
   Building,
   Target,
   CheckCircle2,
@@ -21,7 +19,6 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
-  const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const isAuthenticated = Boolean(localStorage.getItem("knots_token"));
 
@@ -94,12 +91,6 @@ export default function Landing() {
               className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
             >
               Campus Network
-            </a>
-            <a
-              href="#resume-builder"
-              className="hover:text-[#4B63D2] dark:hover:text-white transition-colors whitespace-nowrap"
-            >
-              Instant Resume
             </a>
             <a
               href="#college-opportunities"
@@ -187,7 +178,7 @@ export default function Landing() {
           </div>
 
           {/* Hero Floating Quick Highlights */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
             {[
               {
                 icon: ShieldCheck,
@@ -209,13 +200,6 @@ export default function Landing() {
                 desc: "Direct guidance from graduates",
                 color: "text-purple-500",
                 bg: "bg-purple-500/10",
-              },
-              {
-                icon: FileCheck2,
-                title: "Instant Resume",
-                desc: "1-Click ATS profile export",
-                color: "text-emerald-500",
-                bg: "bg-emerald-500/10",
               },
             ].map((card, idx) => (
               <div
@@ -569,158 +553,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* SECTION 3: Create and Download Your Resume Instantly */}
-        <section
-          id="resume-builder"
-          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
-        >
-          <div className="rounded-3xl bg-gradient-to-br from-white/90 via-[#FAF9FD]/95 to-white/90 dark:from-[#111827]/90 dark:via-[#131C2E]/95 dark:to-[#111827]/90 backdrop-blur-xl border border-[#EAE4F7] dark:border-[#1F2937] p-8 sm:p-12 lg:p-16 shadow-xl shadow-[#4B63D2]/5 dark:shadow-black/40">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              {/* Left Column Text & Feature Checklist */}
-              <div className="lg:col-span-7 space-y-6">
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
-                  Create and Download Your Resume Instantly
-                </h2>
-                <p className="text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed">
-                  Eliminate formatting headaches. KNOTS compiles your verified
-                  academic journey, achievements, and projects into a
-                  recruiter-ready, ATS-compliant professional resume in seconds.
-                </p>
 
-                <div className="space-y-4 pt-2">
-                  {[
-                    {
-                      title: "Build a resume from the KNOTS profile",
-                      desc: "One-click auto-population pulling your verified branch, CGPA, coursework, and contact credentials directly.",
-                    },
-                    {
-                      title:
-                        "Include skills, projects, certifications and achievements",
-                      desc: "Dynamic categorization of technical frameworks, hackathon accolades, capstone GitHub repos, and certificates.",
-                    },
-                    {
-                      title: "Generate a professional structured resume",
-                      desc: "Engineered with strict ATS industry typography standards to breeze past enterprise applicant tracking filters.",
-                    },
-                    {
-                      title: "Download with one click",
-                      desc: "Instant export to clean, print-ready PDF format tailored for campus drives and off-campus opportunities.",
-                    },
-                  ].map((feat, idx) => (
-                    <div key={idx} className="flex items-start gap-3.5">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-black text-[#1E2746] dark:text-white">
-                          {feat.title}
-                        </h4>
-                        <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-medium mt-0.5">
-                          {feat.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 flex flex-wrap items-center gap-4">
-                  <Link
-                    to="/register"
-                    className="px-6 py-3 rounded-2xl bg-[#4B63D2] hover:bg-[#3f53b5] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all flex items-center gap-2"
-                  >
-                    <span>Build My Resume Now</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                  <span className="text-xs font-semibold text-[#5851A4] dark:text-[#94A3B8]">
-                    No external software required
-                  </span>
-                </div>
-              </div>
-
-              {/* Right Column Interactive Resume Card Preview */}
-              <div className="lg:col-span-5">
-                <div className="relative p-6 sm:p-7 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] shadow-2xl shadow-[#4B63D2]/10 space-y-4">
-                  {/* Decorative Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[#EAE4F7] dark:border-[#334155]">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-rose-400" />
-                      <div className="w-3 h-3 rounded-full bg-amber-400" />
-                      <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <span className="text-[10px] font-extrabold text-[#4B63D2] dark:text-[#818CF8] uppercase tracking-wider bg-[#EEF2FF] dark:bg-[#312E81] px-2.5 py-0.5 rounded-full">
-                      ATS Verified Resume
-                    </span>
-                  </div>
-
-                  {/* Mock Resume Header */}
-                  <div>
-                    <h3 className="text-base font-black text-[#1E2746] dark:text-white">
-                      Aditya Sharma
-                    </h3>
-                    <p className="text-xs text-[#5851A4] dark:text-[#94A3B8] font-medium">
-                      B.Tech Computer Science & Engineering | CGPA: 9.12
-                    </p>
-                    <p className="text-[11px] text-[#5851A4] dark:text-[#64748B] mt-0.5">
-                      aditya.sharma@sbjit.edu.in • Nagpur, India
-                    </p>
-                  </div>
-
-                  {/* Mock Skills Section */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase text-[#4B63D2] dark:text-[#818CF8] tracking-wider">
-                      Technical Competencies
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {[
-                        "React.js",
-                        "TypeScript",
-                        "Python / FastAPI",
-                        "PostgreSQL",
-                        "Docker",
-                        "Machine Learning",
-                      ].map((skill, sIdx) => (
-                        <span
-                          key={sIdx}
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FAF9FD] dark:bg-[#0B0F19] text-[#1E2746] dark:text-[#E2E8F0] border border-[#EAE4F7] dark:border-[#334155]"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Mock Projects Section */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase text-[#4B63D2] dark:text-[#818CF8] tracking-wider">
-                      Academic Capstone
-                    </span>
-                    <div className="p-2.5 rounded-xl bg-[#FAF9FD] dark:bg-[#0B0F19] border border-[#EAE4F7] dark:border-[#334155]">
-                      <h4 className="text-xs font-bold text-[#1E2746] dark:text-white">
-                        KNOTS: Campus Academic & Career Network
-                      </h4>
-                      <p className="text-[10px] text-[#5851A4] dark:text-[#94A3B8] mt-0.5">
-                        Built high-throughput FastAPI & React infrastructure with
-                        real-time WebSockets and multi-role RBAC.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Download Action Bar */}
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => navigate("/register")}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <FileDown className="w-4 h-4" />
-                      <span>Download ATS Formatted PDF</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* SECTION 4: Discover Opportunities Through Your College Network */}
         <section

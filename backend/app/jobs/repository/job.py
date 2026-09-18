@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from app.core.repository import BaseRepository
 from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.models.job_posting import JobPosting
-
+from app.users.models.user import User
 
 class JobPostingRepository(BaseRepository[JobPosting]):
     def __init__(self, db: AsyncSession):
@@ -16,7 +16,7 @@ class JobPostingRepository(BaseRepository[JobPosting]):
             select(JobPosting)
             .options(
                 selectinload(JobPosting.company),
-                selectinload(JobPosting.posted_by),
+                selectinload(JobPosting.posted_by).selectinload(User.profile),
                 selectinload(JobPosting.applications),
                 selectinload(JobPosting.referrals),
             )
@@ -37,7 +37,7 @@ class JobPostingRepository(BaseRepository[JobPosting]):
     ) -> list[JobPosting]:
         stmt = select(JobPosting).options(
             selectinload(JobPosting.company),
-            selectinload(JobPosting.posted_by),
+            selectinload(JobPosting.posted_by).selectinload(User.profile),
         )
 
         filters = []

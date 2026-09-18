@@ -114,6 +114,38 @@ export default function Dashboard() {
   const [hodAchievements, setHodAchievements] = useState<DepartmentAchievementItem[]>([]);
   const [hodReports, setHodReports] = useState<DepartmentReportItem[]>([]);
 
+  // Admin & TPO Shared States
+  const [dashboardDept, setDashboardDept] = useState<string>("All");
+  const DEPARTMENTS = ["All", "CSE", "AIML", "AIDS", "MCA", "BCA", "MBA", "IT", "Mechanical", "Electrical"];
+  
+  const handleExportExcel = () => {
+    // Mock generate CSV export based on selected department
+    const rows = [
+      ["Department", "Students", "Placed", "Highest CTC", "Average CTC", "Recruiters"],
+      ["CSE", 450, 410, "32.5 LPA", "8.4 LPA", 12],
+      ["IT", 320, 290, "24.0 LPA", "7.8 LPA", 8],
+      ["AIML", 180, 160, "28.0 LPA", "8.1 LPA", 6],
+      ["AIDS", 150, 130, "22.0 LPA", "7.2 LPA", 5],
+      ["MCA", 120, 95, "18.0 LPA", "6.5 LPA", 4],
+      ["BCA", 160, 110, "12.0 LPA", "5.0 LPA", 3],
+      ["MBA", 200, 175, "16.0 LPA", "6.8 LPA", 7],
+      ["Mechanical", 140, 90, "10.0 LPA", "4.5 LPA", 4],
+      ["Electrical", 130, 85, "11.0 LPA", "4.8 LPA", 3],
+    ];
+    let exportRows = rows;
+    if (dashboardDept !== "All") {
+      exportRows = [rows[0], ...rows.filter(r => r[0] === dashboardDept)];
+    }
+    const csvContent = "data:text/csv;charset=utf-8," + exportRows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `placement_report_${dashboardDept}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -1510,6 +1542,31 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Department Filters & Export */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#EAE4F7] p-3 rounded-2xl shadow-sm mb-6">
+          <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide flex-1">
+            {DEPARTMENTS.map(dept => (
+              <button
+                key={dept}
+                onClick={() => setDashboardDept(dept)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                  dashboardDept === dept
+                    ? "bg-[#4B63D2] text-white shadow-sm"
+                    : "bg-[#F8F6FD] text-[#5851A4] hover:bg-[#EAE4F7]"
+                }`}
+              >
+                {dept}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" /> Export Report (Excel)
+          </button>
+        </div>
+
         {/* Action Pipelines */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
@@ -1602,6 +1659,31 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-[#FFD21A]" /> User & Roles Console
             </Link>
           </div>
+        </div>
+
+        {/* Department Filters & Export */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#EAE4F7] p-3 rounded-2xl shadow-sm mb-6">
+          <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide flex-1">
+            {DEPARTMENTS.map(dept => (
+              <button
+                key={dept}
+                onClick={() => setDashboardDept(dept)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                  dashboardDept === dept
+                    ? "bg-[#4B63D2] text-white shadow-sm"
+                    : "bg-[#F8F6FD] text-[#5851A4] hover:bg-[#EAE4F7]"
+                }`}
+              >
+                {dept}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" /> Export Report (Excel)
+          </button>
         </div>
 
         {/* Master Metrics Grid */}

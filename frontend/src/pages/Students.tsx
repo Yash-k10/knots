@@ -25,6 +25,7 @@ interface StudentRecord {
   skills?: string[];
   projects_count?: number;
   status?: "Seeking Internship" | "Placed" | "Available" | "Interviewing";
+  company?: string;
 }
 
 export default function Students() {
@@ -36,6 +37,7 @@ export default function Students() {
   const [selectedBatch, setSelectedBatch] = useState("ALL");
   const [minCgpa, setMinCgpa] = useState<number>(0);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [companyFilter, setCompanyFilter] = useState("ALL");
 
   // Email blast modal state (for TPO)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -72,12 +74,17 @@ export default function Students() {
           )
           .map((u: any, idx: number) => {
             const depts = [
-              "Computer Science",
-              "Information Technology",
-              "Electronics & Comm.",
-              "Mechanical Eng.",
-              "Data Science",
+              "CSE",
+              "AIML",
+              "AIDS",
+              "MCA",
+              "BCA",
+              "MBA",
+              "IT",
+              "Mechanical",
+              "Electrical",
             ];
+            const companies = ["Unplaced", "TCS", "Infosys", "Google", "Amazon", "Microsoft", "Accenture"];
             const batches = ["2025", "2026", "2027", "2028"];
             const statuses: StudentRecord["status"][] = [
               "Available",
@@ -117,6 +124,7 @@ export default function Students() {
               skills,
               projects_count: 2 + (idx % 5),
               status,
+              company: status === "Placed" ? companies[1 + (idx % (companies.length - 1))] : "Unplaced",
             };
           });
 
@@ -149,10 +157,12 @@ export default function Students() {
       const matchCgpa = (s.cgpa || 0) >= minCgpa;
       const matchStatus =
         statusFilter === "ALL" || s.status === statusFilter;
+      const matchCompany =
+        companyFilter === "ALL" || s.company === companyFilter;
 
-      return matchQuery && matchDept && matchBatch && matchCgpa && matchStatus;
+      return matchQuery && matchDept && matchBatch && matchCgpa && matchStatus && matchCompany;
     });
-  }, [students, searchQuery, selectedDept, selectedBatch, minCgpa, statusFilter]);
+  }, [students, searchQuery, selectedDept, selectedBatch, minCgpa, statusFilter, companyFilter]);
 
   const isTPO =
     currentUserRole.toLowerCase() === "tpo" ||
@@ -245,13 +255,33 @@ export default function Students() {
               className="bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-3 py-2 text-xs font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer"
             >
               <option value="ALL">All Departments</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Information Technology">Information Technology</option>
-              <option value="Electronics & Comm.">Electronics & Comm.</option>
-              <option value="Mechanical Eng.">Mechanical Eng.</option>
-              <option value="Data Science">Data Science</option>
+              <option value="CSE">CSE</option>
+              <option value="AIML">AIML</option>
+              <option value="AIDS">AIDS</option>
+              <option value="MCA">MCA</option>
+              <option value="BCA">BCA</option>
+              <option value="MBA">MBA</option>
+              <option value="IT">IT</option>
+              <option value="Mechanical">Mechanical</option>
+              <option value="Electrical">Electrical</option>
             </select>
           )}
+
+          {/* Company Filter */}
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-3 py-2 text-xs font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer"
+          >
+            <option value="ALL">All Companies</option>
+            <option value="Unplaced">Unplaced</option>
+            <option value="TCS">TCS</option>
+            <option value="Infosys">Infosys</option>
+            <option value="Google">Google</option>
+            <option value="Amazon">Amazon</option>
+            <option value="Microsoft">Microsoft</option>
+            <option value="Accenture">Accenture</option>
+          </select>
 
           {/* Batch Filter */}
           <select
@@ -403,7 +433,7 @@ export default function Students() {
                     to={`/profile/${student.id}`}
                     className="text-xs font-bold text-[#4B63D2] hover:text-[#3E53BE] flex items-center gap-1 transition"
                   >
-                    View Portfolio <ExternalLink className="h-3.5 w-3.5" />
+                    View Profile <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
 
                   <div className="flex items-center gap-2">

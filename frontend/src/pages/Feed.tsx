@@ -167,7 +167,7 @@ export default function Feed() {
 
   // Create post states
   const [newPostContent, setNewPostContent] = useState("");
-  const [newPostVisibility, setNewPostVisibility] = useState("PUBLIC");
+  const [newPostVisibility, setNewPostVisibility] = useState("STUDENTS_AND_ALUMNI");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [attachedDoc, setAttachedDoc] = useState<{
@@ -668,7 +668,7 @@ export default function Feed() {
 
       // Reset form states
       setNewPostContent("");
-      setNewPostVisibility("PUBLIC");
+      setNewPostVisibility("STUDENTS_AND_ALUMNI");
       handleRemoveImage();
       setAttachedDoc(null);
       if (docInputRef.current) {
@@ -884,11 +884,11 @@ export default function Feed() {
       default:
         return (
           <span
-            title="Visible to everyone"
+            title="Visible campus wide"
             className="inline-flex items-center gap-1 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-0.5 rounded-full"
           >
             <Globe className="w-3 h-3 text-[#4B63D2]" />
-            <span>Everyone</span>
+            <span>Campus Wide</span>
           </span>
         );
     }
@@ -1075,9 +1075,6 @@ export default function Feed() {
                     }
                     className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#1E2746] font-bold text-xs py-2 px-3 rounded-xl bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] transition-all cursor-pointer"
                   >
-                    {newPostVisibility === "PUBLIC" && (
-                      <Globe className="w-3.5 h-3.5 text-[#4B63D2]" />
-                    )}
                     {newPostVisibility === "STUDENTS_ONLY" && (
                       <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
                     )}
@@ -1085,7 +1082,6 @@ export default function Feed() {
                       <UsersIcon className="w-3.5 h-3.5 text-purple-600" />
                     )}
                     <span>
-                      {newPostVisibility === "PUBLIC" && "Everyone"}
                       {newPostVisibility === "STUDENTS_ONLY" && "Students Only"}
                       {newPostVisibility === "STUDENTS_AND_ALUMNI" &&
                         "Students & Alumni"}
@@ -1103,34 +1099,7 @@ export default function Feed() {
                           Who can see this post?
                         </div>
 
-                        {/* Option 1: For Everyone */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewPostVisibility("PUBLIC");
-                            setShowVisibilityDropdown(false);
-                          }}
-                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                            newPostVisibility === "PUBLIC" ? "bg-[#FAF9FD]" : ""
-                          }`}
-                        >
-                          <div className="p-2 rounded-xl bg-blue-50 text-[#4B63D2] shrink-0 mt-0.5">
-                            <Globe className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-[#1E2746]">
-                                For Everyone
-                              </span>
-                              {newPostVisibility === "PUBLIC" && (
-                                <Check className="w-3.5 h-3.5 text-[#4B63D2]" />
-                              )}
-                            </div>
-                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                              Visible across the entire campus community
-                            </p>
-                          </div>
-                        </button>
+
 
                         {/* Option 2: Students Only */}
                         <button

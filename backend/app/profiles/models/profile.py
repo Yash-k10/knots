@@ -14,6 +14,9 @@ class Profile(Base):
     bio = Column(Text, nullable=True)
     graduation_year = Column(Integer, nullable=True)
     department = Column(String(100), nullable=True)
+    designation = Column(String(100), nullable=True)
+    degree = Column(String(100), nullable=True)
+    experience = Column(String(100), nullable=True)
     skills = Column(
         JSON, nullable=True
     )  # Grouped/categorized skills or list of strings

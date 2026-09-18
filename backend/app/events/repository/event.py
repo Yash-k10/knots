@@ -38,8 +38,8 @@ class EventRepository(BaseRepository[Event]):
         result = await self.db.execute(
             select(Event)
             .options(
-                selectinload(Event.organizer),
-                selectinload(Event.head).selectinload(User.profile),
+        selectinload(Event.organizer).selectinload(User.profile),
+        selectinload(Event.head).selectinload(User.profile),
                 selectinload(Event.co_head).selectinload(User.profile),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
@@ -122,7 +122,7 @@ class EventRepository(BaseRepository[Event]):
     ) -> list[Event]:
         """Fetch all events with details under the specified filters."""
         query = select(Event).options(
-            selectinload(Event.organizer),
+            selectinload(Event.organizer).selectinload(User.profile),
             selectinload(Event.head).selectinload(User.profile),
             selectinload(Event.co_head).selectinload(User.profile),
             selectinload(Event.category),

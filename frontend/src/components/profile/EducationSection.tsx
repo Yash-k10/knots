@@ -399,7 +399,7 @@ export default function EducationSection({
       {/* Education List */}
       <div className="space-y-4">
         {profile.education && profile.education.length > 0 ? (
-          profile.education
+          [...profile.education]
             .sort(
               (a, b) =>
                 new Date(b.start_date).getTime() -

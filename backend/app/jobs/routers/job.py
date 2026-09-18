@@ -175,6 +175,7 @@ async def read_jobs(
     status: str | None = Query(None, description="Filter by job status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve list of job opportunities with search and filtering."""
@@ -218,6 +219,21 @@ async def read_jobs(
         skip=skip,
         limit=limit,
     )
+    
+    # Filter out internships if not student
+    role_name = getattr(current_user, "role", None)
+    role_str = role_name.name.lower().strip() if role_name else "student"
+    
+    if role_str != "student":
+        jobs = [j for j in jobs if getattr(j, "job_type", None) != JobTypeEnum.INTERNSHIP]
+        
+    if role_str == "controller":
+        user_dept = getattr(current_user.profile, "department", None) if getattr(current_user, "profile", None) else None
+        jobs = [
+            j for j in jobs
+            if getattr(j.posted_by, "profile", None) and getattr(j.posted_by.profile, "department", None) == user_dept
+        ]
+
     return APIResponse(data=jobs)
 
 

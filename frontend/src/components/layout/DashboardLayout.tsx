@@ -222,7 +222,6 @@ export default function DashboardLayout() {
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Campus Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
-          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,
@@ -243,7 +242,6 @@ export default function DashboardLayout() {
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
-          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
           baseEvents,
           baseMessages,
@@ -281,10 +279,12 @@ export default function DashboardLayout() {
       case "controller":
         return [
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
           { name: "My Department", path: "/department", icon: Layers, section: "role" },
-          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
-          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
           baseEvents,
           baseMessages,
@@ -298,6 +298,7 @@ export default function DashboardLayout() {
         return [
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Users", path: "/admin", icon: UserCog, section: "role" },
           { name: "Departments", path: "/department", icon: Layers, section: "role" },
           { name: "Reports", path: "/reports", icon: BarChart3, section: "role" },
@@ -308,8 +309,9 @@ export default function DashboardLayout() {
       case "tpo":
         return [
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
-          { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
+          { name: "Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
           { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
           { name: "Placements", path: "/placements", icon: Award, section: "role" },
           baseEvents,

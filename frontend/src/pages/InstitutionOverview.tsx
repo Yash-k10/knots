@@ -10,19 +10,37 @@ import {
   Send,
   CheckCircle2,
 } from "lucide-react";
+import { apiRequest } from "../services/api";
 
 export default function InstitutionOverview() {
   const [directiveText, setDirectiveText] = useState("");
   const [directiveSent, setDirectiveSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePostDirective = (e: React.FormEvent) => {
+  const handlePostDirective = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!directiveText.trim()) return;
-    setDirectiveSent(true);
-    setTimeout(() => {
-      setDirectiveSent(false);
-      setDirectiveText("");
-    }, 2000);
+    
+    setIsSubmitting(true);
+    try {
+      await apiRequest("/posts", {
+        method: "POST",
+        body: JSON.stringify({
+          content: `**Institutional Directive:**\n\n${directiveText.trim()}`,
+          visibility: "BROADCAST",
+        }),
+      });
+      setDirectiveSent(true);
+      setTimeout(() => {
+        setDirectiveSent(false);
+        setDirectiveText("");
+      }, 3000);
+    } catch (err) {
+      console.error("Failed to broadcast directive", err);
+      alert("Failed to broadcast directive. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -115,7 +133,7 @@ export default function InstitutionOverview() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={!directiveText.trim()}
+                disabled={!directiveText.trim() || isSubmitting}
                 className="px-5 py-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl text-xs font-black transition flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <Send className="h-4 w-4" /> Issue Campus Directive

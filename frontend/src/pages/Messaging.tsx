@@ -544,6 +544,7 @@ export default function Messaging() {
       setConversations((prev) =>
         prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
       );
+      window.dispatchEvent(new Event("refresh-unread-messages"));
     } catch (err) {
       console.error("Failed to load messages for conversation:", err);
     } finally {

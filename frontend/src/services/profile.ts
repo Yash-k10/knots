@@ -93,6 +93,9 @@ export interface ProfileResponse {
   bio: string | null;
   graduation_year: number | null;
   department: string | null;
+  designation?: string | null;
+  degree?: string | null;
+  experience?: string | null;
   skills: Record<string, string[]> | null;
   profile_picture: string | null;
   certifications?: Certification[] | null;
@@ -117,6 +120,9 @@ export interface ProfileUpdate {
   bio?: string | null;
   graduation_year?: number | null;
   department?: string | null;
+  designation?: string | null;
+  degree?: string | null;
+  experience?: string | null;
   skills?: Record<string, string[]> | null;
   profile_picture?: string | null;
   certifications?: Certification[] | null;

@@ -12,7 +12,9 @@ class Club(Base):
     description = Column(Text, nullable=True)
     category = Column(String(50), nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True)
 
+    conversation = relationship("Conversation")
     members = relationship(
         "ClubMember", back_populates="club", cascade="all, delete-orphan"
     )
