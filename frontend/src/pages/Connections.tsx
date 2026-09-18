@@ -243,8 +243,25 @@ export default function Connections() {
     return `Peer #${user.id}`;
   };
 
-  // Filter items based on search query
+  const [roleFilter, setRoleFilter] = useState<'all' | 'students' | 'alumni' | 'faculty'>('all');
+
+  // Filter items based on search query and role filter
   const query = searchQuery.toLowerCase().trim();
+
+  const matchesRoleFilter = (text: string, email: string) => {
+    if (roleFilter === 'all') return true;
+    const combined = `${text} ${email}`.toLowerCase();
+    if (roleFilter === 'students') {
+      return combined.includes('student') || combined.includes('btech') || combined.includes('cse') || combined.includes('mentee');
+    }
+    if (roleFilter === 'alumni') {
+      return combined.includes('alumni') || combined.includes('alumnus') || combined.includes('class of') || combined.includes('batch') || combined.includes('engineer') || combined.includes('developer');
+    }
+    if (roleFilter === 'faculty') {
+      return combined.includes('faculty') || combined.includes('prof') || combined.includes('teacher') || combined.includes('hod');
+    }
+    return true;
+  };
 
   const filteredRequests = requests.filter((req) => {
     const name = getUserProfileName(req.requester, req.requester_id).toLowerCase();
@@ -271,13 +288,16 @@ export default function Connections() {
     const name = getSuggestionDisplayName(sugg).toLowerCase();
     const email = (sugg.email || '').toLowerCase();
     const reason = (sugg.recommendation_reason || '').toLowerCase();
-    return name.includes(query) || email.includes(query) || reason.includes(query);
+    const matchesSearch = name.includes(query) || email.includes(query) || reason.includes(query);
+    const matchesRole = matchesRoleFilter(`${name} ${reason} ${sugg.department || ''}`, email);
+    return matchesSearch && matchesRole;
   });
 
   const filteredUsers = users.filter(
     (u) =>
       u.id !== currentUser?.id &&
       u.email.toLowerCase().includes(query) &&
+      matchesRoleFilter(u.email, u.email) &&
       !suggestions.some((s) => s.user_id === u.id) &&
       !connections.some((c) => c.requester_id === u.id || c.addressee_id === u.id) &&
       !sentRequests.some((s) => s.addressee_id === u.id) &&
@@ -426,6 +446,31 @@ export default function Connections() {
             </span>
           </button>
         </div>
+
+        {/* Role Filter Chips for Discover Tab */}
+        {activeTab === 'discover' && (
+          <div className="flex items-center gap-2 pt-4 overflow-x-auto no-scrollbar">
+            <span className="text-xs font-bold text-[#5851A4] uppercase tracking-wider mr-1 shrink-0">Find:</span>
+            {[
+              { id: 'all', label: 'All Members' },
+              { id: 'students', label: '🎓 Students (Mentees)' },
+              { id: 'alumni', label: '💼 Alumni (Peers)' },
+              { id: 'faculty', label: '🏛️ Faculty & Mentors' }
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setRoleFilter(f.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                  roleFilter === f.id
+                    ? 'bg-[#1E2746] text-[#FFD21A] shadow-sm'
+                    : 'bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Grid Content */}

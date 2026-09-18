@@ -295,38 +295,42 @@ export default function ProfileHeader({
                   placeholder="https://leetcode.com/u/username"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                  10th Percentage <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={tenthPercentage}
-                  onChange={(e) => setTenthPercentage(e.target.value)}
-                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
-                  placeholder="e.g. 88.5"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
-                  12th / Diploma Percentage <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={twelfthDiplomaPercentage}
-                  onChange={(e) => setTwelfthDiplomaPercentage(e.target.value)}
-                  className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
-                  placeholder="e.g. 85.0"
-                  required
-                />
-              </div>
+              {!isAlumni && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                      10th Percentage <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={tenthPercentage}
+                      onChange={(e) => setTenthPercentage(e.target.value)}
+                      className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                      placeholder="e.g. 88.5"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
+                      12th / Diploma Percentage <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={twelfthDiplomaPercentage}
+                      onChange={(e) => setTwelfthDiplomaPercentage(e.target.value)}
+                      className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition font-medium text-sm"
+                      placeholder="e.g. 85.0"
+                      required
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
