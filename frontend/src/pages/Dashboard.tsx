@@ -429,6 +429,7 @@ export default function Dashboard() {
   if (roleName === "alumni") {
     return (
       <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        {/* Alumni Header Console */}
         <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFD21A]/20 border border-[#FFD21A]/50 text-[#1E2746] text-xs font-black">
@@ -438,18 +439,90 @@ export default function Dashboard() {
               Welcome Back{greetingName} 🎓
             </h2>
             <p className="text-[#5851A4] text-sm max-w-2xl leading-relaxed font-medium">
-              Stay connected with your alma mater, mentor aspiring juniors, share career
-              referrals, and network with fellow alumni across global tech hubs.
+              Stay connected with your alma mater, mentor aspiring juniors, publish company
+              referrals, and accelerate your own career path.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3 shrink-0">
             <Link
-              to="/connections"
-              className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2"
+              to="/jobs"
+              className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 hover:opacity-95 transition-all"
             >
-              <Users className="h-4 w-4 text-[#FFD21A]" /> Alumni & Student Ties
+              <Briefcase className="h-4 w-4 text-[#FFD21A]" /> Post a Referral / Job
             </Link>
+            <Link
+              to="/connections"
+              className="px-4 py-2.5 bg-[#F8F6FD] border border-[#EAE4F7] text-[#1E2746] hover:bg-[#F0EDF9] rounded-xl font-bold text-xs transition-all flex items-center gap-2"
+            >
+              <Users className="h-4 w-4 text-[#4B63D2]" /> Alumni & Student Ties
+            </Link>
+          </div>
+        </div>
+
+        {/* Dual Action Cards for Alumni */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gradient-to-br from-indigo-50/70 to-purple-50/70 border border-indigo-100/80 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-[#4B63D2] text-white flex items-center justify-center font-black">
+                <Briefcase className="w-5 h-5 text-[#FFD21A]" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-[#1E2746]">
+                  Working in Industry? Share Referrals
+                </h3>
+                <p className="text-xs text-[#5851A4] font-medium">
+                  Help juniors and batchmates get placed at your organization.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Link
+                to="/jobs"
+                className="px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+              >
+                Post an Opportunity &rarr;
+              </Link>
+              <Link
+                to="/messaging"
+                className="px-4 py-2 bg-white border border-[#EAE4F7] hover:bg-[#FAF9FD] text-[#1E2746] text-xs font-bold rounded-xl transition-all"
+              >
+                Student Mentorship Chats
+              </Link>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/70 border border-emerald-100/80 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black">
+                <Sparkles className="w-5 h-5 text-[#FFD21A]" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-[#1E2746]">
+                  Looking for New Roles? AI Career Toolkit
+                </h3>
+                <p className="text-xs text-[#5851A4] font-medium">
+                  Apply for top openings, optimize ATS resume, and generate skills roadmaps.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <Link
+                to="/jobs"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+              >
+                Explore Top Openings &rarr;
+              </Link>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("alumni-ai-tools");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="px-4 py-2 bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-900 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                AI Resume Polish
+              </button>
+            </div>
           </div>
         </div>
 
@@ -461,7 +534,7 @@ export default function Dashboard() {
               <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
             </div>
             <span className="text-2xl font-black text-[#1E2746]">18 Students</span>
-            <p className="text-[10px] text-emerald-600 font-bold mt-1">Career Guidance</p>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">Active Career Guidance</p>
           </div>
 
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
@@ -470,7 +543,7 @@ export default function Dashboard() {
               <Briefcase className="h-4 w-4 text-[#4B63D2]" />
             </div>
             <span className="text-2xl font-black text-[#1E2746]">6 Opportunities</span>
-            <p className="text-[10px] text-indigo-600 font-bold mt-1">At your current company</p>
+            <p className="text-[10px] text-indigo-600 font-bold mt-1">At top tech firms</p>
           </div>
 
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
@@ -498,9 +571,209 @@ export default function Dashboard() {
           jobRecommendations={jobRecommendations}
           contentRecommendations={contentRecommendations}
         />
+
+        {/* Interactive AI Career Tools for Alumni (Resume Analyzer & Career Roadmap) */}
+        <div id="alumni-ai-tools" className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#EAE4F7] pb-6">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] text-xs font-bold">
+                <Brain className="h-3.5 w-3.5" /> AI Career Acceleration Suite
+              </div>
+              <h3 className="text-xl font-black text-[#1E2746]">
+                ATS Resume Optimizer & Career Transition Roadmap
+              </h3>
+              <p className="text-xs text-[#5851A4] font-medium">
+                Tailored for alumni looking to switch companies, step up to Senior/Lead roles, or break into new tech stacks.
+              </p>
+            </div>
+
+            {/* Sub-tool Category Switcher */}
+            <div className="flex bg-[#FAF9FD] p-1 rounded-2xl border border-[#EAE4F7] self-start sm:self-auto shrink-0">
+              <button
+                onClick={() => setAiToolCategory("resume")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  aiToolCategory === "resume"
+                    ? "bg-[#4B63D2] text-white shadow-sm"
+                    : "text-[#5851A4] hover:text-[#1E2746]"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>Resume Polish</span>
+              </button>
+              <button
+                onClick={() => setAiToolCategory("roadmap")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                  aiToolCategory === "roadmap"
+                    ? "bg-[#4B63D2] text-white shadow-sm"
+                    : "text-[#5851A4] hover:text-[#1E2746]"
+                }`}
+              >
+                <Compass className="h-3.5 w-3.5" />
+                <span>Role Roadmap</span>
+              </button>
+            </div>
+          </div>
+
+          {aiToolCategory === "resume" ? (
+            <div className="space-y-6">
+              <form onSubmit={handleAnalyzeResume} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                    Paste Resume Bullet Points or Work Experience Text
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    placeholder="e.g. Led backend migration to FastAPI microservices with PostgreSQL on AWS, improving latency by 35%..."
+                    className="w-full px-4 py-3 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-2xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
+                  />
+                </div>
+
+                {resumeError && (
+                  <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{resumeError}</span>
+                  </p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isAnalyzingResume}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl text-xs font-bold shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isAnalyzingResume ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
+                        <span>Analyzing with AI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 text-[#FFD21A]" />
+                        <span>Analyze & Polish Resume</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {resumeResult && (
+                <div className="p-5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#1E2746]">Resume ATS Assessment</h4>
+                      <p className="text-xs text-[#5851A4]">Target Role: {resumeResult.target_role || "Professional"}</p>
+                    </div>
+                    {resumeResult.score !== undefined && (
+                      <div className="px-4 py-2 bg-[#4B63D2] text-white rounded-xl font-black text-sm">
+                        {resumeResult.score} / 100
+                      </div>
+                    )}
+                  </div>
+                  {resumeResult.dimensions && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
+                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">ATS Compat</span>
+                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.ats_compatibility}%</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
+                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">Impact Metrics</span>
+                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.impact_metrics}%</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-[#EAE4F7] text-center">
+                        <span className="text-[10px] uppercase font-bold text-[#5851A4]">Tech Depth</span>
+                        <p className="text-base font-black text-[#1E2746]">{resumeResult.dimensions.tech_stack_depth}%</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <form onSubmit={handleGenerateRoadmap} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">Target Next Role *</label>
+                    <input
+                      type="text"
+                      value={targetRole}
+                      onChange={(e) => setTargetRole(e.target.value)}
+                      placeholder="e.g. Lead Engineer, Engineering Manager, AI Specialist"
+                      className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">Your Current Skills</label>
+                    <input
+                      type="text"
+                      value={skillsInput}
+                      onChange={(e) => setSkillsInput(e.target.value)}
+                      placeholder="e.g. Python, Docker, React, AWS, System Design"
+                      className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {roadmapError && (
+                  <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{roadmapError}</span>
+                  </p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isGeneratingRoadmap}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl text-xs font-bold shadow-md shadow-[#4B63D2]/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isGeneratingRoadmap ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-[#FFD21A]" />
+                        <span>Generating Roadmap...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Compass className="h-4 w-4 text-[#FFD21A]" />
+                        <span>Generate Career Roadmap</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {roadmapResult && (
+                <div className="p-5 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#1E2746]">Transition Plan to {roadmapResult.target_role}</h4>
+                      <p className="text-xs text-[#5851A4]">Estimated Timeframe: {roadmapResult.estimated_timeframe || "3-6 months"}</p>
+                    </div>
+                  </div>
+                  {roadmapResult.steps && (
+                    <div className="space-y-3 pt-2">
+                      {roadmapResult.steps.map((st: any, sIdx: number) => (
+                        <div key={sIdx} className="bg-white p-3.5 rounded-xl border border-[#EAE4F7] space-y-1">
+                          <h5 className="text-xs font-bold text-[#1E2746] flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#4B63D2] text-white text-[10px] flex items-center justify-center font-bold">{sIdx + 1}</span>
+                            {st.title || st.step_name}
+                          </h5>
+                          <p className="text-[11px] text-[#5851A4] pl-7">{st.description || st.details}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
+
 
   // =========================================================================
   // 4. CONTROLLER DASHBOARD VIEW

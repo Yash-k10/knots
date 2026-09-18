@@ -145,12 +145,20 @@ async def create_job(
     payload: JobPostingCreate,
     current_user: User = Depends(
         RoleRequired(
-            ["TPO", "Controller", "Admin", "Super Admin", "Central Admin", "Management"]
+            [
+                "TPO",
+                "Controller",
+                "Admin",
+                "Super Admin",
+                "Central Admin",
+                "Management",
+                "Alumni",
+            ]
         )
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    """Post a new job or internship opportunity (TPO, Controller, Admin only)."""
+    """Post a new job or company referral opportunity (TPO, Controller, Admin, Alumni)."""
     service = JobService(db)
     job = await service.create_job(current_user.id, payload)
     return APIResponse(message="Job posting created successfully", data=job)

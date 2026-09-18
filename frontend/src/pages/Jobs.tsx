@@ -84,9 +84,14 @@ export default function Jobs() {
     currentUser?.role_id === 1 ||
     ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName);
 
-  const canPostJob = isAdmin || roleName === "tpo" || roleName === "controller";
-  const canApplyJob = roleName === "student";
-  const canViewApplications = roleName === "student";
+  const canPostJob =
+    isAdmin ||
+    roleName === "tpo" ||
+    roleName === "controller" ||
+    roleName === "alumni";
+  const canApplyJob = roleName === "student" || roleName === "alumni";
+  const canViewApplications = roleName === "student" || roleName === "alumni";
+
 
   // Search and filter states for Jobs
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -1130,11 +1135,12 @@ export default function Jobs() {
             </div>
             <div>
               <h2 className="text-xl font-black text-[#1E2746]">
-                Post a Campus Job or Internship
+                Post a Campus Job or Company Referral
               </h2>
               <p className="text-xs text-[#5851A4] font-medium">
-                Publish verified recruitment drives for SBJIT students and alumni.
+                Publish verified recruitment drives & employee referral opportunities for SBJIT students and alumni.
               </p>
+
             </div>
           </div>
 
