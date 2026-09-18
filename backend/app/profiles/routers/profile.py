@@ -1,6 +1,4 @@
 import os
-import shutil
-import uuid
 
 from fastapi import APIRouter, Depends, File, Query, Response, UploadFile
 from sqlalchemy import select
@@ -21,6 +19,7 @@ from app.profiles.schemas.profile import (
     ProfileResponse,
     ProfileUpdate,
 )
+from app.core.storage import storage_service
 from app.profiles.services.profile import ProfileService
 from app.users.models.user import User
 
@@ -128,20 +127,12 @@ async def upload_profile_picture(
     db: AsyncSession = Depends(get_db),
 ):
     """Upload a profile picture for the currently logged in user."""
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-
     allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in allowed_extensions:
         raise ValidationError("Invalid file type. Only image files are allowed.")
 
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    picture_url = f"/static/profiles/{filename}"
+    picture_url = await storage_service.upload_file(file, folder="profiles")
 
     service = ProfileService(db)
     profile = await service.update_profile(
@@ -157,8 +148,6 @@ async def upload_certificate_file(
     current_user: User = Depends(get_current_user),
 ):
     """Upload a certificate document/image for the currently logged in user."""
-    os.makedirs(CERT_UPLOAD_DIR, exist_ok=True)
-
     allowed_extensions = {
         ".jpg",
         ".jpeg",
@@ -175,13 +164,7 @@ async def upload_certificate_file(
             "Invalid file type. Only images, PDF, and Word documents are allowed."
         )
 
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(CERT_UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    file_url = f"/static/certificates/{filename}"
+    file_url = await storage_service.upload_file(file, folder="certificates")
     return APIResponse(
         message="Certificate uploaded successfully", data={"file_url": file_url}
     )

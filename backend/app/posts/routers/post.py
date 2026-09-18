@@ -1,6 +1,4 @@
 import os
-import shutil
-import uuid
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +19,7 @@ from app.posts.schemas.post import (
     PostUpdate,
 )
 from app.posts.services.post import PostService
+from app.core.storage import storage_service
 from app.users.models.user import User
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -76,19 +75,12 @@ async def create_post(
     return APIResponse(message="Post created successfully", data=post)
 
 
-UPLOAD_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "posts")
-)
-
-
 @router.post("/upload-image", response_model=APIResponse[str])
 async def upload_post_image(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """Upload an image or document attachment for a post and return the relative static URL."""
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-
+    """Upload an image or document attachment for a post and return the public URL."""
     allowed_extensions = {
         ".jpg",
         ".jpeg",
@@ -111,13 +103,7 @@ async def upload_post_image(
             "Invalid file type. Only image and document files (PDF, DOCX, etc.) are allowed."
         )
 
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    picture_url = f"/static/posts/{filename}"
+    picture_url = await storage_service.upload_file(file, folder="posts")
     return APIResponse(message="File uploaded successfully", data=picture_url)
 
 

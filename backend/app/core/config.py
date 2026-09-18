@@ -84,6 +84,11 @@ class Settings(BaseSettings):
     # Gemini Configurations
     GEMINI_API_KEY: str | None = None
 
+    # Supabase Cloud Storage (Universal sync across all teammates and devices)
+    SUPABASE_URL: str | None = "https://lvbrfajzcglykgxthcqg.supabase.co"
+    SUPABASE_KEY: str | None = None
+    SUPABASE_STORAGE_BUCKET: str = "knots-media"
+
     @field_validator("DATABASE_URL", "SYNC_DATABASE_URL", mode="before")
     @classmethod
     def rewrite_supabase_pooler_port(cls, v: Any) -> Any:

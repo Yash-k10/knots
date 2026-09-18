@@ -1,6 +1,4 @@
 import os
-import shutil
-import uuid
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,14 +15,11 @@ from app.messaging.schemas.message import (
     MessageResponse,
 )
 from app.messaging.services.message import MessageService
+from app.core.storage import storage_service
 from app.messaging.websocket_manager import manager
 from app.users.models.user import User
 
 router = APIRouter(prefix="/messages", tags=["Messaging"])
-
-UPLOAD_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "static", "messages")
-)
 
 
 @router.post("/upload", response_model=APIResponse[str])
@@ -33,8 +28,6 @@ async def upload_chat_attachment(
     current_user: User = Depends(get_current_user),
 ):
     """Upload an attachment (image, voice note audio, document, PDF) for chat messages."""
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-
     allowed_extensions = {
         # Audio / Voice notes
         ".webm",
@@ -76,13 +69,7 @@ async def upload_chat_attachment(
             "Unsupported file type for chat attachments. Please upload supported media, document, or audio files."
         )
 
-    filename = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    attachment_url = f"/static/messages/{filename}"
+    attachment_url = await storage_service.upload_file(file, folder="messages")
     return APIResponse(message="Attachment uploaded successfully", data=attachment_url)
 
 
