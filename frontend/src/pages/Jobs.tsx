@@ -1161,62 +1161,24 @@ export default function Jobs() {
                     </div>
                   </div>
 
-                  {/* Visual Status Progression Tracker */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#5851A4]">
-                      Application Stage Progression
-                    </h4>
-
-                    {(() => {
-                      const st = (app.status || "PENDING").toUpperCase();
-                      const isSubmitted = true;
-                      const isReview =
-                        st === "REVIEWING" ||
-                        st === "UNDER_REVIEW" ||
-                        st === "REVIEW" ||
-                        st === "ACCEPTED";
-                      const isTech = st === "ACCEPTED";
-                      const isFinal = st === "ACCEPTED" || st === "REJECTED";
-
-                      return (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                          {[
-                            { label: "Submitted", active: isSubmitted },
-                            { label: "In Review", active: isReview },
-                            { label: "Technical Round", active: isTech },
-                            {
-                              label: st === "REJECTED" ? "Closed" : "Decision",
-                              active: isFinal,
-                              isRejected: st === "REJECTED",
-                            },
-                          ].map((step, idx) => (
-                            <div
-                              key={idx}
-                              className={`p-3 rounded-2xl border text-center transition-all ${
-                                step.active
-                                  ? step.isRejected
-                                    ? "bg-rose-50 border-rose-200 text-rose-800"
-                                    : "bg-emerald-50/70 border-emerald-300 text-emerald-800"
-                                  : "bg-[#FAF9FD] border-[#EAE4F7] text-slate-400"
-                              }`}
-                            >
-                              <div className="flex items-center justify-center gap-1 text-xs font-bold">
-                                {step.active ? (
-                                  step.isRejected ? (
-                                    <X className="w-3.5 h-3.5 text-rose-600" />
-                                  ) : (
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                  )
-                                ) : (
-                                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                )}
-                                <span>{step.label}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                  {/* Application Status Banner */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/60 to-[#FAF9FD] border border-emerald-200/80 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                          Applied Successfully
+                        </h4>
+                        <p className="text-[11px] text-emerald-800/80">
+                          Application has been submitted and delivered to the hiring team / alumni poster.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-extrabold text-emerald-800 bg-white px-3 py-1 rounded-xl border border-emerald-300 shrink-0">
+                      Applied
+                    </span>
                   </div>
 
                   {/* Timeline Notes Updates */}

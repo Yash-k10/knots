@@ -148,6 +148,14 @@ export default function Profile() {
   }
 
   const isOwnProfile = profile.user_id === ownProfile.user_id;
+  const [activityFilter, setActivityFilter] = useState<"5_DAYS" | "ALL">("5_DAYS");
+
+  const filteredUserPosts = userPosts.filter((p) => {
+    if (activityFilter === "ALL") return true;
+    const postTime = new Date(p.created_at || Date.now()).getTime();
+    const fiveDaysAgo = Date.now() - 5 * 24 * 60 * 60 * 1000;
+    return postTime >= fiveDaysAgo;
+  });
 
   return (
     <div className="space-y-6 relative">
@@ -232,24 +240,51 @@ export default function Profile() {
 
           {/* Recent Activity Feed */}
           <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAE4F7] pb-4">
               <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
                 <Activity className="h-5 w-5 text-[#4B63D2]" />
                 Recent Activity
               </h3>
-              {userPosts.length > 0 && (
-                <span className="text-xs bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#5851A4] font-bold px-3 py-1 rounded-full">
-                  {userPosts.length} {userPosts.length === 1 ? "Post" : "Posts"}
-                </span>
-              )}
+              
+              <div className="flex items-center gap-2">
+                <div className="flex bg-[#FAF9FD] border border-[#EAE4F7] p-1 rounded-xl text-xs font-bold">
+                  <button
+                    onClick={() => setActivityFilter("5_DAYS")}
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                      activityFilter === "5_DAYS"
+                        ? "bg-[#4B63D2] text-white shadow-xs"
+                        : "text-[#5851A4] hover:text-[#1E2746]"
+                    }`}
+                  >
+                    Last 5 Days
+                  </button>
+                  <button
+                    onClick={() => setActivityFilter("ALL")}
+                    className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                      activityFilter === "ALL"
+                        ? "bg-[#4B63D2] text-white shadow-xs"
+                        : "text-[#5851A4] hover:text-[#1E2746]"
+                    }`}
+                  >
+                    All Time
+                  </button>
+                </div>
+
+                {filteredUserPosts.length > 0 && (
+                  <span className="text-xs bg-[#C8B6E2]/25 border border-[#C8B6E2] text-[#5851A4] font-bold px-3 py-1 rounded-full">
+                    {filteredUserPosts.length} {filteredUserPosts.length === 1 ? "Post" : "Posts"}
+                  </span>
+                )}
+              </div>
             </div>
+
             {isLoadingPosts ? (
               <div className="flex justify-center py-6">
                 <Loader2 className="h-6 w-6 text-[#4B63D2] animate-spin" />
               </div>
-            ) : userPosts.length > 0 ? (
+            ) : filteredUserPosts.length > 0 ? (
               <div className="space-y-4">
-                {userPosts.map((post) => (
+                {filteredUserPosts.map((post) => (
                   <div
                     key={post.id}
                     className="bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl p-4 sm:p-5 transition duration-300 space-y-3"
@@ -289,10 +324,10 @@ export default function Profile() {
               <div className="text-center py-8 border border-dashed border-[#D5CBEE] rounded-2xl bg-[#FAF9FD]/50">
                 <MessageSquare className="h-8 w-8 text-[#9188BE] mx-auto mb-2" />
                 <p className="text-[#1E2746] text-sm font-bold">
-                  No recent activity yet
+                  {activityFilter === "5_DAYS" ? "No activity in the last 5 days" : "No activity yet"}
                 </p>
                 <p className="text-[#5851A4] text-xs mt-1 font-medium">
-                  Posts and discussions shared by this user will appear here.
+                  {activityFilter === "5_DAYS" ? "Switch to 'All Time' to view older posts and discussions." : "Posts and discussions shared by this user will appear here."}
                 </p>
               </div>
             )}

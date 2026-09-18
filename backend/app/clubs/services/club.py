@@ -68,7 +68,7 @@ class ClubService:
         if not club:
             raise NotFoundError(message=f"Club with id {club_id} not found")
 
-        members_count = len(club.members)
+        members_count = len([m for m in club.members if m.role != "PENDING"])
 
         user_role = None
         if current_user_id:
@@ -183,16 +183,18 @@ class ClubService:
     # ── Memberships ───────────────────────────────────────────────────────────
 
     async def join_club(self, club_id: int, user_id: int) -> ClubMember:
-        """Join a club as a MEMBER."""
+        """Join a club with PENDING role awaiting Leader/Controller approval."""
         await self.get_club(club_id)
 
-        # Check if already a member
+        # Check if already a member or pending
         existing = await self.member_repo.get_by_club_and_user(club_id, user_id)
         if existing:
+            if existing.role == "PENDING":
+                raise ConflictError(message="You already have a pending join request for this club")
             raise ConflictError(message="You are already a member of this club")
 
         return await self.member_repo.create(
-            {"club_id": club_id, "user_id": user_id, "role": "MEMBER"}
+            {"club_id": club_id, "user_id": user_id, "role": "PENDING"}
         )
 
     async def leave_club(self, club_id: int, user_id: int) -> None:
@@ -210,13 +212,41 @@ class ClubService:
             other_leaders = [
                 m for m in all_members if m.role == "LEADER" and m.user_id != user_id
             ]
-            if not other_leaders and len(all_members) > 1:
+            if not other_leaders and len([m for m in all_members if m.role != "PENDING"]) > 1:
                 raise ValidationError(
                     message="You are the sole leader of this club. "
                     "Please promote another member to LEADER before leaving."
                 )
 
         await self.member_repo.remove(membership.id)
+
+    async def remove_member(
+        self, club_id: int, current_user_id: int, target_user_id: int
+    ) -> None:
+        """Remove a member or reject a pending join request (LEADER/Creator or self)."""
+        club = await self.get_club(club_id)
+
+        # Allow self cancellation or leader/creator action
+        if current_user_id != target_user_id:
+            requester_membership = await self.member_repo.get_by_club_and_user(
+                club_id, current_user_id
+            )
+            if club.creator_id != current_user_id and (
+                not requester_membership or requester_membership.role not in ["LEADER", "OFFICER"]
+            ):
+                raise AuthorizationError(
+                    message="Only club leaders or officers can remove members or reject requests"
+                )
+
+        target_membership = await self.member_repo.get_by_club_and_user(
+            club_id, target_user_id
+        )
+        if not target_membership:
+            raise NotFoundError(
+                message=f"User with id {target_user_id} has no membership or request in this club"
+            )
+
+        await self.member_repo.remove(target_membership.id)
 
     async def get_club_members(
         self, club_id: int, skip: int = 0, limit: int = 100
@@ -241,16 +271,20 @@ class ClubService:
         target_user_id: int,
         payload: ClubMemberUpdateRole,
     ) -> ClubMember:
-        """Update a member's role (LEADER only)."""
-        await self.get_club(club_id)
+        """Update a member's role (LEADER/Creator/Officer). Accepts PENDING, MEMBER, OFFICER, LEADER."""
+        club = await self.get_club(club_id)
 
-        # 1. Authorizing requester (must be LEADER)
+        # 1. Authorizing requester (must be LEADER, Creator, or OFFICER)
         requester_membership = await self.member_repo.get_by_club_and_user(
             club_id, current_user_id
         )
-        if not requester_membership or requester_membership.role != "LEADER":
+        is_authorized = (
+            club.creator_id == current_user_id
+            or (requester_membership and requester_membership.role in ["LEADER", "OFFICER"])
+        )
+        if not is_authorized:
             raise AuthorizationError(
-                message="Only club leaders can update member roles"
+                message="Only club leaders or controllers can update member roles"
             )
 
         # 2. Get target member
@@ -263,9 +297,9 @@ class ClubService:
             )
 
         new_role = payload.role.upper()
-        if new_role not in ["MEMBER", "OFFICER", "LEADER"]:
+        if new_role not in ["PENDING", "MEMBER", "OFFICER", "LEADER"]:
             raise ValidationError(
-                message="Role must be one of MEMBER, OFFICER, or LEADER"
+                message="Role must be one of PENDING, MEMBER, OFFICER, or LEADER"
             )
 
         # 3. Perform update

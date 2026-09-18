@@ -212,26 +212,54 @@ export default function CertificationsSection({
                 <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                   Upload Certificate Document / Badge (Optional)
                 </label>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 px-3 py-2 bg-white border border-[#D5CBEE] hover:border-[#4B63D2] rounded-xl text-xs font-bold text-[#5851A4] cursor-pointer transition shadow-sm">
-                    {isUploadingFile ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-[#4B63D2]" />
-                    ) : (
-                      <Upload className="h-4 w-4 text-[#4B63D2]" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#D5CBEE] hover:border-[#4B63D2] rounded-xl text-xs font-bold text-[#5851A4] cursor-pointer transition shadow-sm">
+                      {isUploadingFile ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-[#4B63D2]" />
+                      ) : (
+                        <Upload className="h-4 w-4 text-[#4B63D2]" />
+                      )}
+                      <span>{isUploadingFile ? "Uploading..." : "Choose File (PDF/Image/DOCX)"}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        disabled={isUploadingFile}
+                      />
+                    </label>
+                    {certificateUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setCertificateUrl("")}
+                        className="text-[11px] text-rose-600 hover:text-rose-700 font-bold"
+                      >
+                        Remove Attachment
+                      </button>
                     )}
-                    <span>{isUploadingFile ? "Uploading..." : "Choose File (PDF/Image/DOCX)"}</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      disabled={isUploadingFile}
-                    />
-                  </label>
+                  </div>
+
                   {certificateUrl && (
-                    <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                      <FileText className="h-3.5 w-3.5" /> File Attached
-                    </span>
+                    <div className="flex items-center justify-between p-2.5 bg-white border border-emerald-200 rounded-xl text-xs">
+                      <div className="flex items-center gap-2 truncate">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <span className="font-bold text-[#1E2746] truncate">
+                          {certificateUrl.split("/").pop() || "Uploaded Certificate"}
+                        </span>
+                      </div>
+                      <a
+                        href={getMediaUrl(certificateUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-[11px] font-bold text-[#4B63D2] hover:underline shrink-0 ml-2"
+                      >
+                        <span>Preview</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>

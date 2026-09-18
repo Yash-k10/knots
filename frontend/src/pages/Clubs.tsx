@@ -24,6 +24,12 @@ import {
   FileText,
   Video,
   Share2,
+  Copy,
+  Check,
+  Lock,
+  Clock,
+  UserX,
+  Building2,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
 
@@ -44,7 +50,7 @@ export interface ClubMemberResponse {
   id: number;
   club_id: number;
   user_id: number;
-  role: "MEMBER" | "OFFICER" | "LEADER";
+  role: "PENDING" | "MEMBER" | "OFFICER" | "LEADER";
   user?: ClubMemberUser | null;
 }
 
@@ -63,7 +69,7 @@ export interface ClubDetailResponse {
   category?: string | null;
   creator_id: number;
   members_count: number;
-  user_role?: "MEMBER" | "OFFICER" | "LEADER" | null;
+  user_role?: "PENDING" | "MEMBER" | "OFFICER" | "LEADER" | null;
   members: ClubMemberResponse[];
 }
 
@@ -73,8 +79,44 @@ export interface ExtractedResource {
   url: string;
 }
 
-export function extractResourceLinks(text?: string | null): ExtractedResource[] {
-  if (!text) return [];
+export interface ParsedClubDetails {
+  classroomCode?: string;
+  classroomUrl?: string;
+  meetUrl?: string;
+  driveUrl?: string;
+  cleanDescription: string;
+  resources: ExtractedResource[];
+}
+
+export function parseClubDescription(text?: string | null): ParsedClubDetails {
+  if (!text) {
+    return { cleanDescription: "", resources: [] };
+  }
+
+  let classroomCode: string | undefined;
+  let classroomUrl: string | undefined;
+  let meetUrl: string | undefined;
+  let driveUrl: string | undefined;
+
+  // Extract explicit prefixes if present
+  const lines = text.split("\n");
+  const cleanLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.toLowerCase().startsWith("classroom code:") || trimmed.toLowerCase().startsWith("code:")) {
+      classroomCode = trimmed.split(":")[1]?.trim();
+    } else if (trimmed.toLowerCase().startsWith("classroom link:") || trimmed.toLowerCase().startsWith("classroom url:")) {
+      classroomUrl = trimmed.substring(trimmed.indexOf(":") + 1).trim();
+    } else if (trimmed.toLowerCase().startsWith("meet link:") || trimmed.toLowerCase().startsWith("zoom link:") || trimmed.toLowerCase().startsWith("meeting link:")) {
+      meetUrl = trimmed.substring(trimmed.indexOf(":") + 1).trim();
+    } else if (trimmed.toLowerCase().startsWith("drive link:") || trimmed.toLowerCase().startsWith("notes link:")) {
+      driveUrl = trimmed.substring(trimmed.indexOf(":") + 1).trim();
+    } else {
+      cleanLines.push(line);
+    }
+  }
+
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const matches = text.match(urlRegex) || [];
   const resources: ExtractedResource[] = [];
@@ -87,8 +129,10 @@ export function extractResourceLinks(text?: string | null): ExtractedResource[] 
 
     const lower = cleanUrl.toLowerCase();
     if (lower.includes("classroom.google.com")) {
+      classroomUrl = classroomUrl || cleanUrl;
       resources.push({ type: "classroom", label: "Google Classroom", url: cleanUrl });
     } else if (lower.includes("drive.google.com") || lower.includes("docs.google.com")) {
+      driveUrl = driveUrl || cleanUrl;
       resources.push({ type: "drive", label: "Shared Drive / Notes", url: cleanUrl });
     } else if (lower.includes("github.com")) {
       resources.push({ type: "github", label: "GitHub Repository", url: cleanUrl });
@@ -97,7 +141,8 @@ export function extractResourceLinks(text?: string | null): ExtractedResource[] 
       lower.includes("zoom.us") ||
       lower.includes("teams.microsoft.com")
     ) {
-      resources.push({ type: "meet", label: "Live Meetup / AMA Room", url: cleanUrl });
+      meetUrl = meetUrl || cleanUrl;
+      resources.push({ type: "meet", label: "Live Meeting Room", url: cleanUrl });
     } else if (lower.includes("notion.so") || lower.includes("notion.site")) {
       resources.push({ type: "notion", label: "Notion Roadmap", url: cleanUrl });
     } else {
@@ -105,7 +150,14 @@ export function extractResourceLinks(text?: string | null): ExtractedResource[] 
     }
   });
 
-  return resources;
+  return {
+    classroomCode,
+    classroomUrl,
+    meetUrl,
+    driveUrl,
+    cleanDescription: cleanLines.join("\n").trim() || text,
+    resources,
+  };
 }
 
 export default function Clubs() {
@@ -125,11 +177,13 @@ export default function Clubs() {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [memberRoleFilter, setMemberRoleFilter] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<"overview" | "requests" | "members">("overview");
 
   // Detailed view of selected club
   const [selectedClubId, setSelectedClubId] = useState<number | null>(null);
   const [clubDetail, setClubDetail] = useState<ClubDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Modals
   const [showFormModal, setShowFormModal] = useState(false);
@@ -138,8 +192,22 @@ export default function Clubs() {
 
   // Form Fields
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Academic");
-  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Computer Science & Engineering");
+  const [formDescription, setFormDescription] = useState("");
+  const [formClassroomCode, setFormClassroomCode] = useState("");
+  const [formClassroomUrl, setFormClassroomUrl] = useState("");
+  const [formMeetUrl, setFormMeetUrl] = useState("");
+  const [formDriveUrl, setFormDriveUrl] = useState("");
+
+  const isControllerOrAdmin = useMemo(() => {
+    const roleName = currentUser?.role?.name?.toLowerCase() || "";
+    return (
+      roleName.includes("controller") ||
+      roleName.includes("admin") ||
+      roleName.includes("hod") ||
+      roleName.includes("faculty")
+    );
+  }, [currentUser]);
 
   // ── Initial Fetching ───────────────────────────────────────────────────────
 
@@ -206,6 +274,7 @@ export default function Clubs() {
   useEffect(() => {
     if (selectedClubId !== null) {
       loadClubDetail(selectedClubId);
+      setActiveTab("overview");
     } else {
       setClubDetail(null);
     }
@@ -216,17 +285,26 @@ export default function Clubs() {
   const openCreateModal = () => {
     setIsEditing(false);
     setName("");
-    setCategory("Alumni Chapter");
-    setDescription("");
+    setCategory("Computer Science & Engineering");
+    setFormDescription("");
+    setFormClassroomCode("");
+    setFormClassroomUrl("");
+    setFormMeetUrl("");
+    setFormDriveUrl("");
     setShowFormModal(true);
   };
 
   const openEditModal = () => {
     if (!clubDetail) return;
+    const parsed = parseClubDescription(clubDetail.description);
     setIsEditing(true);
     setName(clubDetail.name);
-    setCategory(clubDetail.category || "Alumni Chapter");
-    setDescription(clubDetail.description || "");
+    setCategory(clubDetail.category || "Computer Science & Engineering");
+    setFormDescription(parsed.cleanDescription);
+    setFormClassroomCode(parsed.classroomCode || "");
+    setFormClassroomUrl(parsed.classroomUrl || "");
+    setFormMeetUrl(parsed.meetUrl || "");
+    setFormDriveUrl(parsed.driveUrl || "");
     setShowFormModal(true);
   };
 
@@ -240,10 +318,19 @@ export default function Clubs() {
     }
 
     setSubmittingForm(true);
+
+    // Build structured description with classroom and links
+    const descParts: string[] = [];
+    if (formDescription.trim()) descParts.push(formDescription.trim());
+    if (formClassroomCode.trim()) descParts.push(`Classroom Code: ${formClassroomCode.trim()}`);
+    if (formClassroomUrl.trim()) descParts.push(`Classroom Link: ${formClassroomUrl.trim()}`);
+    if (formMeetUrl.trim()) descParts.push(`Meet Link: ${formMeetUrl.trim()}`);
+    if (formDriveUrl.trim()) descParts.push(`Drive Link: ${formDriveUrl.trim()}`);
+
     const payload = {
       name: name.trim(),
       category: category.trim() || null,
-      description: description.trim() || null,
+      description: descParts.join("\n\n") || null,
     };
 
     try {
@@ -275,7 +362,7 @@ export default function Clubs() {
     if (!clubDetail) return;
     if (
       !window.confirm(
-        `Are you sure you want to delete "${clubDetail.name}"? This action deletes the club and its member roster permanently.`,
+        `Are you sure you want to delete "${clubDetail.name}"? This action permanently removes the club, links, and student membership roster.`,
       )
     ) {
       return;
@@ -291,37 +378,76 @@ export default function Clubs() {
     }
   };
 
-  // ── Member Operations (Join / Leave / Promote) ──────────────────────────────
+  // ── Member Operations (Join Request / Leave / Approve / Reject) ────────────
 
   const handleJoinClub = async () => {
     if (!clubDetail) return;
     try {
       await apiRequest(`/clubs/${clubDetail.id}/join`, { method: "POST" });
+      alert("Your join request has been submitted to the Department Controller / Club Lead for review.");
       loadClubDetail(clubDetail.id);
       refreshClubs();
     } catch (err: any) {
-      alert(err.message || "Failed to join the club.");
+      alert(err.message || "Failed to request club membership.");
     }
   };
 
-  const handleLeaveClub = async () => {
+  const handleLeaveOrCancelRequest = async () => {
     if (!clubDetail) return;
-    if (!window.confirm("Are you sure you want to leave this club?")) {
-      return;
-    }
+    const isPending = clubDetail.user_role === "PENDING";
+    const msg = isPending
+      ? "Are you sure you want to cancel your join request?"
+      : "Are you sure you want to leave this club?";
+
+    if (!window.confirm(msg)) return;
 
     try {
-      await apiRequest(`/clubs/${clubDetail.id}/leave`, { method: "POST" });
+      if (isPending && currentUser) {
+        await apiRequest(`/clubs/${clubDetail.id}/members/${currentUser.id}`, {
+          method: "DELETE",
+        });
+      } else {
+        await apiRequest(`/clubs/${clubDetail.id}/leave`, { method: "POST" });
+      }
       loadClubDetail(clubDetail.id);
       refreshClubs();
     } catch (err: any) {
-      alert(err.message || "Failed to leave the club.");
+      alert(err.message || "Failed to process action.");
+    }
+  };
+
+  const handleApproveRequest = async (targetUserId: number) => {
+    if (!clubDetail) return;
+    try {
+      await apiRequest(`/clubs/${clubDetail.id}/members/${targetUserId}/role`, {
+        method: "PUT",
+        body: JSON.stringify({ role: "MEMBER" }),
+      });
+      loadClubDetail(clubDetail.id);
+      refreshClubs();
+    } catch (err: any) {
+      alert(err.message || "Failed to approve student request.");
+    }
+  };
+
+  const handleRejectOrRemoveMember = async (targetUserId: number, targetName: string) => {
+    if (!clubDetail) return;
+    if (!window.confirm(`Are you sure you want to remove or reject ${targetName}?`)) return;
+
+    try {
+      await apiRequest(`/clubs/${clubDetail.id}/members/${targetUserId}`, {
+        method: "DELETE",
+      });
+      loadClubDetail(clubDetail.id);
+      refreshClubs();
+    } catch (err: any) {
+      alert(err.message || "Failed to reject or remove member.");
     }
   };
 
   const handleUpdateMemberRole = async (
     targetUserId: number,
-    newRole: "MEMBER" | "OFFICER" | "LEADER",
+    newRole: "PENDING" | "MEMBER" | "OFFICER" | "LEADER",
   ) => {
     if (!clubDetail) return;
     try {
@@ -335,16 +461,27 @@ export default function Clubs() {
     }
   };
 
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   // ── Categories & Filtering ─────────────────────────────────────────────────
 
   const categoriesList = [
-    "Alumni Chapter",
-    "Technical",
-    "Academic",
-    "Cultural",
-    "Sports",
-    "Social",
-    "Other",
+    "Computer Science & Engineering",
+    "Information Technology",
+    "Mechanical Engineering",
+    "Electrical Engineering",
+    "Electronics & Communication",
+    "Civil Engineering",
+    "Technical & Coding",
+    "Alumni Mentorship Guild",
+    "Career & Placement Cell",
+    "Cultural & Arts",
+    "Sports & Athletics",
+    "Other Department",
   ];
 
   const filteredClubs = useMemo(() => {
@@ -362,55 +499,76 @@ export default function Clubs() {
     });
   }, [clubs, searchQuery, selectedCategory]);
 
-  // Group Leaders, Officers, and Members for the active club
-  const clubLeaders = useMemo(() => {
+  // Split members by status
+  const pendingRequests = useMemo(() => {
     if (!clubDetail?.members) return [];
-    return clubDetail.members.filter((m) => m.role === "LEADER");
+    return clubDetail.members.filter((m) => m.role === "PENDING");
   }, [clubDetail]);
+
+  const activeMembers = useMemo(() => {
+    if (!clubDetail?.members) return [];
+    return clubDetail.members.filter((m) => m.role !== "PENDING");
+  }, [clubDetail]);
+
+  const clubLeaders = useMemo(() => {
+    return activeMembers.filter((m) => m.role === "LEADER");
+  }, [activeMembers]);
 
   const clubOfficers = useMemo(() => {
-    if (!clubDetail?.members) return [];
-    return clubDetail.members.filter((m) => m.role === "OFFICER");
-  }, [clubDetail]);
+    return activeMembers.filter((m) => m.role === "OFFICER");
+  }, [activeMembers]);
 
-  const filteredClubMembers = useMemo(() => {
-    if (!clubDetail?.members) return [];
-    return clubDetail.members.filter((m) => {
+  const isLeaderOrController = useMemo(() => {
+    if (!clubDetail) return false;
+    if (isControllerOrAdmin) return true;
+    if (clubDetail.creator_id === currentUser?.id) return true;
+    return clubDetail.user_role === "LEADER" || clubDetail.user_role === "OFFICER";
+  }, [clubDetail, currentUser, isControllerOrAdmin]);
+
+  const isConfirmedMember = useMemo(() => {
+    if (!clubDetail) return false;
+    if (isLeaderOrController) return true;
+    return (
+      clubDetail.user_role === "MEMBER" ||
+      clubDetail.user_role === "OFFICER" ||
+      clubDetail.user_role === "LEADER"
+    );
+  }, [clubDetail, isLeaderOrController]);
+
+  const filteredActiveMembers = useMemo(() => {
+    return activeMembers.filter((m) => {
       const u = m.user;
       const fullName = `${u?.first_name || ""} ${u?.last_name || ""}`.trim();
       const searchTarget = `${fullName} ${u?.email || ""} ${u?.department || ""} ${m.role}`.toLowerCase();
       const matchesSearch = searchTarget.includes(memberSearchQuery.toLowerCase());
-
-      const matchesRole =
-        memberRoleFilter === "ALL" || m.role === memberRoleFilter;
-
+      const matchesRole = memberRoleFilter === "ALL" || m.role === memberRoleFilter;
       return matchesSearch && matchesRole;
     });
-  }, [clubDetail, memberSearchQuery, memberRoleFilter]);
+  }, [activeMembers, memberSearchQuery, memberRoleFilter]);
 
-  // Styling helper for category tag labels
+  const parsedActiveClub = useMemo(() => {
+    return parseClubDescription(clubDetail?.description);
+  }, [clubDetail]);
+
+  // Category styling helper
   const getCategoryBadgeStyle = (catName?: string | null) => {
     const name = catName?.toUpperCase() || "OTHER";
-    switch (name) {
-      case "ALUMNI CHAPTER":
-      case "ALUMNI MENTORSHIP CHAPTER":
-        return "bg-amber-50 text-amber-800 border-amber-200";
-      case "TECHNICAL":
-      case "TECHNICAL & CODING CLUB":
-        return "bg-[#FAF9FD] text-[#4B63D2] border-[#D5CBEE]";
-      case "ACADEMIC":
-      case "ACADEMIC SOCIETY":
-        return "bg-sky-50 text-sky-800 border-sky-200";
-      case "CAREER & PLACEMENT CELL":
-        return "bg-emerald-50 text-emerald-800 border-emerald-200";
-      case "SPORTS":
-        return "bg-orange-50 text-orange-800 border-orange-200";
-      case "CULTURAL":
-      case "SOCIAL":
-        return "bg-pink-50 text-pink-800 border-pink-200";
-      default:
-        return "bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7]";
+    if (name.includes("COMPUTER") || name.includes("INFORMATION") || name.includes("TECHNICAL")) {
+      return "bg-[#FAF9FD] text-[#4B63D2] border-[#D5CBEE]";
     }
+    if (name.includes("ALUMNI")) {
+      return "bg-amber-50 text-amber-800 border-amber-200";
+    }
+    if (name.includes("CAREER") || name.includes("PLACEMENT")) {
+      return "bg-emerald-50 text-emerald-800 border-emerald-200";
+    }
+    if (name.includes("MECHANICAL") || name.includes("ELECTRICAL") || name.includes("CIVIL")) {
+      return "bg-sky-50 text-sky-800 border-sky-200";
+    }
+    if (name.includes("SPORTS")) {
+      return "bg-orange-50 text-orange-800 border-orange-200";
+    }
+    return "bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7]";
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -419,6 +577,8 @@ export default function Clubs() {
         return "bg-amber-50 text-amber-800 border-amber-200";
       case "OFFICER":
         return "bg-[#4B63D2]/10 text-[#4B63D2] border-[#4B63D2]/20";
+      case "PENDING":
+        return "bg-amber-50 text-amber-700 border-amber-300";
       default:
         return "bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7]";
     }
@@ -434,8 +594,8 @@ export default function Clubs() {
           <Compass className="w-6 h-6 text-[#4B63D2] absolute inset-0 m-auto" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-bold text-[#1E2746]">Loading Clubs & Alumni Chapters...</p>
-          <p className="text-xs text-[#5851A4] mt-0.5">Connecting with campus network and leadership rosters</p>
+          <p className="text-sm font-bold text-[#1E2746]">Loading Department Clubs & Chapters...</p>
+          <p className="text-xs text-[#5851A4] mt-0.5">Syncing classroom codes, resources, and membership requests</p>
         </div>
       </div>
     );
@@ -443,9 +603,8 @@ export default function Clubs() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* ── 1. Hero Banner with Executive Stats ────────────────────────────── */}
+      {/* ── 1. Hero Banner with Department & Leadership Overview ────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#1E2746] via-[#2A3558] to-[#182038] text-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-800/80">
-        {/* Glow Effects */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#4B63D2]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-[#FFD21A]/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -453,49 +612,51 @@ export default function Clubs() {
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-amber-300">
               <Crown className="w-3.5 h-3.5 text-[#FFD21A]" />
-              <span>Campus Communities &amp; Alumni Mentorship Guilds</span>
+              <span>Controller-Verified Department Clubs &amp; Alumni Chapters</span>
             </div>
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
-              Clubs, Chapters &amp; Mentorship Hub
+              Department Clubs &amp; Classrooms
             </h1>
             <p className="text-slate-300 text-xs md:text-sm leading-relaxed font-normal">
-              Alumni mentorship chapters, technical guilds, and student committees. Create or join chapters to share Google Classroom notes, career roadmaps, and connect 1-on-1 with mentors.
+              Official clubs organized by department and category. Join verified chapters to access Google Classroom codes, live meeting sessions, shared notes, and connect with mentors.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              onClick={openCreateModal}
-              className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-3 rounded-2xl text-xs md:text-sm shadow-lg shadow-[#4B63D2]/30 transition-all duration-200 flex items-center gap-2 cursor-pointer border border-white/15"
-            >
-              <Plus className="w-4 h-4 text-[#FFD21A]" />
-              <span>+ Create Club or Chapter</span>
-            </button>
+            {isControllerOrAdmin && (
+              <button
+                onClick={openCreateModal}
+                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white font-bold px-5 py-3 rounded-2xl text-xs md:text-sm shadow-lg shadow-[#4B63D2]/30 transition-all duration-200 flex items-center gap-2 cursor-pointer border border-white/15 active:scale-95"
+              >
+                <Plus className="w-4 h-4 text-[#FFD21A]" />
+                <span>+ Create Department Club</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Quick KPI stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mt-8 pt-6 border-t border-white/10 relative z-10">
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Total Communities</div>
+            <div className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">Active Clubs</div>
             <div className="text-xl md:text-2xl font-black text-white mt-1">{clubs.length}</div>
           </div>
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">Alumni Chapters</div>
+            <div className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">Enrolled Members</div>
             <div className="text-xl md:text-2xl font-black text-amber-400 mt-1">
-              {clubs.filter((c) => c.category?.toLowerCase().includes("alumni")).length}
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">Enrolled Mentees</div>
-            <div className="text-xl md:text-2xl font-black text-emerald-400 mt-1">
               {clubDetail ? clubDetail.members_count : "—"}
             </div>
           </div>
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
-            <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">Your Chapter Role</div>
+            <div className="text-[11px] font-semibold text-emerald-300 uppercase tracking-wider">Pending Requests</div>
+            <div className="text-xl md:text-2xl font-black text-emerald-400 mt-1">
+              {pendingRequests.length}
+            </div>
+          </div>
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-3.5">
+            <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">Your Status</div>
             <div className="text-sm font-bold text-indigo-300 mt-1 truncate">
-              {clubDetail?.user_role ? `${clubDetail.user_role}` : "Discovering"}
+              {clubDetail?.user_role ? `${clubDetail.user_role}` : "Not Joined"}
             </div>
           </div>
         </div>
@@ -509,7 +670,7 @@ export default function Clubs() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5851A4]" />
             <input
               type="text"
-              placeholder="Search chapters by name, mission, category, or mentor..."
+              placeholder="Search clubs by name, department, classroom code, or mentor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-8 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none transition-all"
@@ -527,7 +688,7 @@ export default function Clubs() {
           {/* Results count */}
           <div className="text-xs text-[#5851A4] font-medium px-2 flex items-center gap-1.5 shrink-0">
             <Filter className="w-3.5 h-3.5 text-[#4B63D2]" />
-            <span>Showing <strong>{filteredClubs.length}</strong> communities</span>
+            <span>Showing <strong>{filteredClubs.length}</strong> department clubs</span>
           </div>
         </div>
 
@@ -541,7 +702,7 @@ export default function Clubs() {
                 : "bg-[#FAF9FD] hover:bg-white text-[#5851A4] border border-[#EAE4F7]"
             }`}
           >
-            All Communities
+            All Departments
           </button>
           {categoriesList.map((cat) => {
             const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
@@ -555,7 +716,7 @@ export default function Clubs() {
                     : "bg-[#FAF9FD] hover:bg-white text-[#5851A4] border border-[#EAE4F7]"
                 }`}
               >
-                {cat.toLowerCase().includes("alumni") && <Crown className="w-3 h-3 text-[#FFD21A]" />}
+                <Building2 className="w-3 h-3 text-[#5851A4]" />
                 {cat}
               </button>
             );
@@ -584,22 +745,26 @@ export default function Clubs() {
               <div className="w-12 h-12 bg-[#FAF9FD] text-[#4B63D2] rounded-2xl flex items-center justify-center mx-auto border border-[#EAE4F7]">
                 <Compass className="w-6 h-6" />
               </div>
-              <p className="font-bold text-sm text-[#1E2746]">No matching chapters found</p>
+              <p className="font-bold text-sm text-[#1E2746]">No matching clubs found</p>
               <p className="text-xs text-[#5851A4]">
-                Register a new alumni chapter or campus club to start building a mentorship community.
+                {isControllerOrAdmin
+                  ? "Create a new department club with Classroom code and meeting links."
+                  : "No clubs created for this category yet. Check back soon!"}
               </p>
-              <button
-                onClick={openCreateModal}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Create One Now</span>
-              </button>
+              {isControllerOrAdmin && (
+                <button
+                  onClick={openCreateModal}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Club Now</span>
+                </button>
+              )}
             </div>
           ) : (
             filteredClubs.map((club) => {
               const isSelected = selectedClubId === club.id;
-              const isAlumniChapter = club.category?.toLowerCase().includes("alumni");
+              const parsed = parseClubDescription(club.description);
 
               return (
                 <div
@@ -618,13 +783,13 @@ export default function Clubs() {
                           club.category,
                         )}`}
                       >
-                        {club.category || "General"}
+                        {club.category || "General Department"}
                       </span>
 
-                      {isAlumniChapter && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          <Crown className="w-3 h-3 text-[#FFD21A]" />
-                          Alumni Led
+                      {parsed.classroomCode && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <GraduationCap className="w-3 h-3 text-emerald-600" />
+                          Code Available
                         </span>
                       )}
                     </div>
@@ -633,17 +798,17 @@ export default function Clubs() {
                       {club.name}
                     </h3>
                     <p className="text-[#5851A4] text-xs line-clamp-2 mt-1.5 leading-relaxed font-normal">
-                      {club.description || "No mission description provided yet."}
+                      {parsed.cleanDescription || "No detailed description provided yet."}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-3.5 mt-3.5 border-t border-[#EAE4F7] text-xs font-bold text-[#4B63D2]">
                     <span className="text-[11px] text-[#9188BE] font-medium flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      View leadership &amp; mentees
+                      Classroom &amp; Members
                     </span>
                     <div className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                      <span className="text-[11px]">Explore</span>
+                      <span className="text-[11px]">View Details</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -653,24 +818,24 @@ export default function Clubs() {
           )}
         </div>
 
-        {/* Right Column: Selected Club Leadership & Member Roster (7 cols) */}
+        {/* Right Column: Selected Club Details, Join Flow, & Controller Approvals (7 cols) */}
         <div className="lg:col-span-7">
           {selectedClubId === null ? (
             <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center text-[#5851A4] shadow-sm space-y-3">
               <Compass className="w-12 h-12 text-[#C8B6E2] mx-auto" />
-              <h3 className="text-base font-bold text-[#1E2746]">Select a Club or Chapter</h3>
+              <h3 className="text-base font-bold text-[#1E2746]">Select a Club</h3>
               <p className="text-xs text-[#5851A4] max-w-sm mx-auto">
-                Choose any chapter from the list to view its leadership, Google Classroom notes, and connect with students and mentors.
+                Choose any department club from the list to view its Google Classroom codes, join requests, meeting links, and member roster.
               </p>
             </div>
           ) : detailLoading || !clubDetail ? (
             <div className="bg-white border border-[#EAE4F7] rounded-3xl p-16 flex flex-col items-center justify-center space-y-3 text-[#5851A4] shadow-sm">
               <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
-              <p className="text-xs font-bold text-[#1E2746]">Loading chapter details &amp; leadership roster...</p>
+              <p className="text-xs font-bold text-[#1E2746]">Loading club details &amp; classroom access...</p>
             </div>
           ) : (
             <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
-              {/* Header Details of the selected club */}
+              {/* Header Details */}
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -679,50 +844,78 @@ export default function Clubs() {
                         clubDetail.category,
                       )}`}
                     >
-                      {clubDetail.category || "General"}
+                      {clubDetail.category || "General Department"}
                     </span>
-                    {clubDetail.user_role && (
+
+                    {clubDetail.user_role === "MEMBER" && (
                       <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold uppercase tracking-wider flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        You are {clubDetail.user_role}
+                        Member
+                      </span>
+                    )}
+
+                    {clubDetail.user_role === "PENDING" && (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-600" />
+                        Request Pending Approval
+                      </span>
+                    )}
+
+                    {(clubDetail.user_role === "LEADER" || isControllerOrAdmin) && (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/30 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-[#4B63D2]" />
+                        Club Controller / Head
                       </span>
                     )}
                   </div>
 
-                  {/* Actions for current user (Join / Leave / Edit / Delete) */}
+                  {/* Actions for current user (Join Request / Leave / Cancel / Controller Controls) */}
                   <div className="flex items-center gap-2">
-                    {!clubDetail.user_role ? (
+                    {!clubDetail.user_role && (
                       <button
                         onClick={handleJoinClub}
                         className="bg-[#4B63D2] hover:bg-[#3E53BE] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
                       >
                         <UserCheck className="w-3.5 h-3.5" />
-                        Join Chapter &amp; Connect
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleLeaveClub}
-                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        Leave
+                        Request to Join Club
                       </button>
                     )}
 
-                    {/* Leader / Admin Controls */}
-                    {clubDetail.user_role === "LEADER" && (
+                    {clubDetail.user_role === "PENDING" && (
+                      <button
+                        onClick={handleLeaveOrCancelRequest}
+                        className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        title="Cancel Pending Request"
+                      >
+                        <UserX className="w-3.5 h-3.5 text-amber-700" />
+                        Cancel Request
+                      </button>
+                    )}
+
+                    {clubDetail.user_role === "MEMBER" && (
+                      <button
+                        onClick={handleLeaveOrCancelRequest}
+                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Leave Club
+                      </button>
+                    )}
+
+                    {/* Leader / Controller Actions */}
+                    {isLeaderOrController && (
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={openEditModal}
                           className="bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] text-[#5851A4] p-2 rounded-xl transition-colors cursor-pointer"
-                          title="Edit Chapter Settings"
+                          title="Edit Club Resources & Settings"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={handleDeleteClub}
                           className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 p-2 rounded-xl transition-colors cursor-pointer"
-                          title="Delete Chapter"
+                          title="Delete Club"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -734,340 +927,577 @@ export default function Clubs() {
                 <div>
                   <h2 className="text-xl md:text-2xl font-black text-[#1E2746]">{clubDetail.name}</h2>
                   <p className="text-[#5851A4] text-xs md:text-sm mt-2 leading-relaxed">
-                    {clubDetail.description || "No detailed mission description available for this community."}
+                    {parsedActiveClub.cleanDescription || "No detailed mission description available for this club."}
                   </p>
+                </div>
+              </div>
 
-                  {/* 📚 Mentorship & Resource Vault (Google Classroom / Drive / GitHub / Meet) */}
-                  {(() => {
-                    const resources = extractResourceLinks(clubDetail.description);
-                    if (resources.length === 0) return null;
+              {/* ── Sub-navigation Tabs (Overview / Pending Requests / Members) ── */}
+              <div className="flex items-center gap-2 border-b border-[#EAE4F7] pb-2">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === "overview"
+                      ? "bg-[#4B63D2] text-white shadow-xs"
+                      : "text-[#5851A4] hover:bg-[#FAF9FD]"
+                  }`}
+                >
+                  Classroom &amp; Resources
+                </button>
 
-                    return (
-                      <div className="mt-4 p-4 bg-gradient-to-br from-[#FAF9FD] to-indigo-50/50 border border-[#D5CBEE] rounded-2xl space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4 text-[#4B63D2]" />
-                            <h4 className="text-xs font-black text-[#1E2746] uppercase tracking-wider">
-                              Mentorship Notes &amp; Classroom Links
-                            </h4>
+                {isLeaderOrController && (
+                  <button
+                    onClick={() => setActiveTab("requests")}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      activeTab === "requests"
+                        ? "bg-[#4B63D2] text-white shadow-xs"
+                        : "text-[#5851A4] hover:bg-[#FAF9FD]"
+                    }`}
+                  >
+                    <span>Pending Requests</span>
+                    {pendingRequests.length > 0 && (
+                      <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-black">
+                        {pendingRequests.length}
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeTab === "members"
+                      ? "bg-[#4B63D2] text-white shadow-xs"
+                      : "text-[#5851A4] hover:bg-[#FAF9FD]"
+                  }`}
+                >
+                  <span>Members</span>
+                  <span className="bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    {activeMembers.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* ── TAB 1: OVERVIEW & CLASSROOM RESOURCE VAULT ── */}
+              {activeTab === "overview" && (
+                <div className="space-y-5">
+                  {/* Classroom Code & Direct Invite Card */}
+                  {isConfirmedMember ? (
+                    <div className="p-5 bg-gradient-to-br from-indigo-50/70 via-[#FAF9FD] to-indigo-50/40 border border-[#D5CBEE] rounded-2xl space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D5CBEE]/60 pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-[#4B63D2] text-white flex items-center justify-center">
+                            <GraduationCap className="w-4 h-4" />
                           </div>
-                          <span className="text-[10px] font-bold text-[#4B63D2] bg-white px-2.5 py-0.5 rounded-full border border-[#D5CBEE]">
-                            {resources.length} Links Attached
-                          </span>
+                          <div>
+                            <h4 className="text-xs font-black text-[#1E2746] uppercase tracking-wider">
+                              Google Classroom Access
+                            </h4>
+                            <p className="text-[11px] text-[#5851A4]">
+                              Unlocked for approved department members
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {resources.map((res, idx) => (
+                        {parsedActiveClub.classroomCode && (
+                          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#D5CBEE] shadow-xs">
+                            <span className="text-[10px] font-bold text-[#5851A4] uppercase">Code:</span>
+                            <code className="text-xs font-black text-[#4B63D2] tracking-wider">
+                              {parsedActiveClub.classroomCode}
+                            </code>
+                            <button
+                              onClick={() => handleCopyCode(parsedActiveClub.classroomCode!)}
+                              className="text-[#5851A4] hover:text-[#4B63D2] p-1 rounded-md transition-colors cursor-pointer"
+                              title="Copy Classroom Code"
+                            >
+                              {copiedCode ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Resource Links Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {parsedActiveClub.classroomUrl && (
+                          <a
+                            href={parsedActiveClub.classroomUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3.5 bg-white hover:bg-[#4B63D2] group border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl transition-all shadow-xs cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 group-hover:bg-white/20 text-[#4B63D2] group-hover:text-white flex items-center justify-center shrink-0">
+                                <GraduationCap className="w-4 h-4" />
+                              </div>
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-[#1E2746] group-hover:text-white truncate">
+                                  Google Classroom Link
+                                </p>
+                                <p className="text-[10px] text-[#9188BE] group-hover:text-indigo-100 truncate">
+                                  Open class dashboard
+                                </p>
+                              </div>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-white shrink-0 ml-2" />
+                          </a>
+                        )}
+
+                        {parsedActiveClub.meetUrl && (
+                          <a
+                            href={parsedActiveClub.meetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3.5 bg-white hover:bg-[#4B63D2] group border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl transition-all shadow-xs cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-50 group-hover:bg-white/20 text-emerald-600 group-hover:text-white flex items-center justify-center shrink-0">
+                                <Video className="w-4 h-4" />
+                              </div>
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-[#1E2746] group-hover:text-white truncate">
+                                  Live Meet / Zoom Room
+                                </p>
+                                <p className="text-[10px] text-[#9188BE] group-hover:text-indigo-100 truncate">
+                                  Join scheduled AMA / sessions
+                                </p>
+                              </div>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-white shrink-0 ml-2" />
+                          </a>
+                        )}
+
+                        {parsedActiveClub.driveUrl && (
+                          <a
+                            href={parsedActiveClub.driveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3.5 bg-white hover:bg-[#4B63D2] group border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl transition-all shadow-xs cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-sky-50 group-hover:bg-white/20 text-sky-600 group-hover:text-white flex items-center justify-center shrink-0">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-[#1E2746] group-hover:text-white truncate">
+                                  Shared Drive &amp; Notes
+                                </p>
+                                <p className="text-[10px] text-[#9188BE] group-hover:text-indigo-100 truncate">
+                                  Access lecture notes &amp; code
+                                </p>
+                              </div>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-white shrink-0 ml-2" />
+                          </a>
+                        )}
+
+                        {parsedActiveClub.resources
+                          .filter(
+                            (r) =>
+                              r.type !== "classroom" &&
+                              r.type !== "meet" &&
+                              r.type !== "drive",
+                          )
+                          .map((res, idx) => (
                             <a
                               key={idx}
                               href={res.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center justify-between p-3 bg-white hover:bg-[#4B63D2] group border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl transition-all shadow-xs cursor-pointer"
+                              className="flex items-center justify-between p-3.5 bg-white hover:bg-[#4B63D2] group border border-[#EAE4F7] hover:border-[#4B63D2] rounded-xl transition-all shadow-xs cursor-pointer"
                             >
-                              <div className="flex items-center gap-2.5 overflow-hidden">
-                                <div className="w-8 h-8 rounded-lg bg-[#FAF9FD] group-hover:bg-white/20 text-[#4B63D2] group-hover:text-white flex items-center justify-center shrink-0 transition-colors border border-[#EAE4F7] group-hover:border-transparent">
-                                  {res.type === "classroom" && <GraduationCap className="w-4 h-4" />}
-                                  {res.type === "drive" && <FileText className="w-4 h-4" />}
-                                  {res.type === "github" && <Share2 className="w-4 h-4" />}
-                                  {res.type === "meet" && <Video className="w-4 h-4" />}
-                                  {res.type !== "classroom" &&
-                                    res.type !== "drive" &&
-                                    res.type !== "github" &&
-                                    res.type !== "meet" && <ExternalLink className="w-4 h-4" />}
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-[#FAF9FD] group-hover:bg-white/20 text-[#4B63D2] group-hover:text-white flex items-center justify-center shrink-0">
+                                  {res.type === "github" ? (
+                                    <Share2 className="w-4 h-4" />
+                                  ) : (
+                                    <BookOpen className="w-4 h-4" />
+                                  )}
                                 </div>
                                 <div className="truncate">
-                                  <p className="text-xs font-bold text-[#1E2746] group-hover:text-white transition-colors truncate">
+                                  <p className="text-xs font-bold text-[#1E2746] group-hover:text-white truncate">
                                     {res.label}
                                   </p>
-                                  <p className="text-[10px] text-[#9188BE] group-hover:text-indigo-100 transition-colors truncate">
+                                  <p className="text-[10px] text-[#9188BE] group-hover:text-indigo-100 truncate">
                                     {res.url}
                                   </p>
                                 </div>
                               </div>
-                              <ExternalLink className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-white shrink-0 ml-2 transition-colors" />
+                              <ExternalLink className="w-3.5 h-3.5 text-[#9188BE] group-hover:text-white shrink-0 ml-2" />
                             </a>
                           ))}
-                        </div>
                       </div>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* ── Spotlight Section: 👑 Club Leadership & Alumni Heads ── */}
-              <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/40 rounded-3xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center">
-                      <Crown className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs md:text-sm font-black text-amber-950">
-                        Chapter Mentors &amp; Alumni Heads
-                      </h4>
-                      <p className="text-[11px] text-amber-800/80">
-                        Primary leaders, mentors, and student officers guiding this community
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-amber-900 bg-white/80 px-2.5 py-0.5 rounded-full border border-amber-300">
-                    {clubLeaders.length + clubOfficers.length} Leaders
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[...clubLeaders, ...clubOfficers].map((head) => {
-                    const u = head.user;
-                    const fullName =
-                      `${u?.first_name || ""} ${u?.last_name || ""}`.trim() ||
-                      (u?.email ? u.email.split("@")[0] : `User #${head.user_id}`);
-                    const avatar = u?.profile_picture ? getMediaUrl(u.profile_picture) : null;
-                    const isAlumni =
-                      u?.user_role?.toLowerCase() === "alumni" ||
-                      clubDetail.category?.toLowerCase().includes("alumni");
-
-                    return (
-                      <div
-                        key={head.id}
-                        className="bg-white/95 backdrop-blur-sm border border-amber-200/80 rounded-2xl p-3.5 shadow-sm flex items-start gap-3 relative group"
-                      >
-                        {/* Avatar */}
-                        <div className="relative shrink-0">
-                          {avatar ? (
-                            <img
-                              src={avatar}
-                              alt={fullName}
-                              className="w-11 h-11 rounded-full object-cover border-2 border-amber-400/50"
-                            />
-                          ) : (
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#4B63D2] to-[#5851A4] text-white font-black flex items-center justify-center text-sm shadow-sm">
-                              {fullName.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div
-                            className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                              head.role === "LEADER"
-                                ? "bg-amber-500 text-white"
-                                : "bg-[#4B63D2] text-white"
-                            }`}
-                            title={head.role}
-                          >
-                            {head.role === "LEADER" ? (
-                              <Crown className="w-2.5 h-2.5" />
-                            ) : (
-                              <ShieldCheck className="w-2.5 h-2.5" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <Link
-                              to={`/profile/${head.user_id}`}
-                              className="text-xs font-black text-[#1E2746] hover:text-[#4B63D2] truncate block transition-colors"
-                            >
-                              {fullName}
-                            </Link>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                            <span
-                              className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase border ${getRoleBadgeStyle(
-                                head.role,
-                              )}`}
-                            >
-                              {head.role === "LEADER" ? "Chapter Head" : "Officer"}
-                            </span>
-
-                            {isAlumni && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-0.5">
-                                <GraduationCap className="w-2.5 h-2.5" />
-                                Alumni
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-[10px] text-[#5851A4] mt-1 truncate">
-                            {u?.department ? `${u.department}` : u?.email}
-                            {u?.graduation_year ? ` • Class of '${String(u.graduation_year).slice(-2)}` : ""}
-                          </div>
-                        </div>
-
-                        {/* Direct Chat / Message */}
-                        <Link
-                          to="/messaging"
-                          state={{ recipientId: head.user_id, recipientName: fullName }}
-                          className="text-[#5851A4] hover:text-[#4B63D2] hover:bg-[#FAF9FD] p-1.5 rounded-xl transition-colors shrink-0 border border-transparent hover:border-[#EAE4F7]"
-                          title={`Message ${fullName}`}
-                        >
-                          <MessageSquare className="w-4 h-4 text-[#4B63D2]" />
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* ── 👥 Active Member & Mentee Roster Directory ── */}
-              <div className="space-y-4 pt-2 border-t border-[#EAE4F7]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#4B63D2]" />
-                      Connected Mentees &amp; Student Members
-                    </h4>
-                    <p className="text-xs text-[#5851A4]">
-                      Total <strong>{clubDetail.members_count}</strong> enrolled community members
-                    </p>
-                  </div>
-
-                  {/* Search and Filter inside member roster */}
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#5851A4]" />
-                      <input
-                        type="text"
-                        placeholder="Filter members..."
-                        value={memberSearchQuery}
-                        onChange={(e) => setMemberSearchQuery(e.target.value)}
-                        className="pl-7 pr-3 py-1.5 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-[11px] text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] w-36 sm:w-44"
-                      />
-                    </div>
-
-                    <select
-                      value={memberRoleFilter}
-                      onChange={(e) => setMemberRoleFilter(e.target.value)}
-                      className="bg-[#FAF9FD] border border-[#D5CBEE] text-[#1E2746] text-[11px] font-bold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer"
-                    >
-                      <option value="ALL">All Roles</option>
-                      <option value="LEADER">Leaders</option>
-                      <option value="OFFICER">Officers</option>
-                      <option value="MEMBER">Members</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Member Roster List */}
-                <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                  {filteredClubMembers.length === 0 ? (
-                    <div className="p-8 text-center bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] text-[#5851A4] text-xs">
-                      No members match your search criteria.
                     </div>
                   ) : (
-                    filteredClubMembers.map((member) => {
-                      const u = member.user;
-                      const fullName =
-                        `${u?.first_name || ""} ${u?.last_name || ""}`.trim() ||
-                        (u?.email ? u.email.split("@")[0] : `User #${member.user_id}`);
-                      const avatar = u?.profile_picture ? getMediaUrl(u.profile_picture) : null;
-                      const isCurrentUser = currentUser?.id === member.user_id;
+                    /* Locked state for non-members */
+                    <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-3">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto text-[#5851A4] border border-slate-200 shadow-xs">
+                        <Lock className="w-6 h-6 text-[#4B63D2]" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-[#1E2746]">
+                          Classroom Code &amp; Resource Vault Locked
+                        </h4>
+                        <p className="text-xs text-[#5851A4] max-w-md mx-auto mt-1">
+                          {clubDetail.user_role === "PENDING"
+                            ? "Your join request is awaiting Controller approval. Once approved, Google Classroom code and links will be unlocked automatically."
+                            : "Submit a join request to the Department Controller to unlock Google Classroom code, lecture notes, and meeting links."}
+                        </p>
+                      </div>
 
-                      return (
-                        <div
-                          key={member.id}
-                          className="flex items-center justify-between p-3.5 bg-white hover:bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl transition-all shadow-xs"
+                      {!clubDetail.user_role && (
+                        <button
+                          onClick={handleJoinClub}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {avatar ? (
-                              <img
-                                src={avatar}
-                                alt={fullName}
-                                className="w-10 h-10 rounded-full object-cover border border-[#EAE4F7] shrink-0"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4B63D2] to-[#5851A4] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                                {fullName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Request Access Now</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
+                  {/* 👑 Club Leadership & Mentors */}
+                  <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/40 rounded-3xl p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center">
+                          <Crown className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs md:text-sm font-black text-amber-950">
+                            Department Leads &amp; Chapter Heads
+                          </h4>
+                          <p className="text-[11px] text-amber-800/80">
+                            Authorized leaders managing classroom materials and memberships
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-amber-900 bg-white/80 px-2.5 py-0.5 rounded-full border border-amber-300">
+                        {clubLeaders.length + clubOfficers.length} Heads
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[...clubLeaders, ...clubOfficers].map((head) => {
+                        const u = head.user;
+                        const fullName =
+                          `${u?.first_name || ""} ${u?.last_name || ""}`.trim() ||
+                          (u?.email ? u.email.split("@")[0] : `User #${head.user_id}`);
+                        const avatar = u?.profile_picture ? getMediaUrl(u.profile_picture) : null;
+
+                        return (
+                          <div
+                            key={head.id}
+                            className="bg-white/95 backdrop-blur-sm border border-amber-200/80 rounded-2xl p-3.5 shadow-sm flex items-start gap-3 relative group"
+                          >
+                            <div className="relative shrink-0">
+                              {avatar ? (
+                                <img
+                                  src={avatar}
+                                  alt={fullName}
+                                  className="w-10 h-10 rounded-full object-cover border-2 border-amber-400/50"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4B63D2] to-[#5851A4] text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                  {fullName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div
+                                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] bg-amber-500 text-white"
+                                title={head.role}
+                              >
+                                <Crown className="w-2.5 h-2.5" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <Link
+                                to={`/profile/${head.user_id}`}
+                                className="text-xs font-black text-[#1E2746] hover:text-[#4B63D2] truncate block transition-colors"
+                              >
+                                {fullName}
+                              </Link>
+                              <div className="text-[10px] text-[#5851A4] mt-0.5 truncate">
+                                {u?.department || u?.email}
+                              </div>
+                            </div>
+
+                            <Link
+                              to="/messaging"
+                              state={{ recipientId: head.user_id, recipientName: fullName }}
+                              className="text-[#5851A4] hover:text-[#4B63D2] hover:bg-[#FAF9FD] p-1.5 rounded-xl transition-colors shrink-0"
+                              title={`Message ${fullName}`}
+                            >
+                              <MessageSquare className="w-4 h-4 text-[#4B63D2]" />
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── TAB 2: PENDING JOIN REQUESTS (CONTROLLER APPROVAL HUB) ── */}
+              {activeTab === "requests" && isLeaderOrController && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-600" />
+                        Pending Student Join Requests
+                      </h4>
+                      <p className="text-xs text-[#5851A4]">
+                        Review and approve students who want to join this club and access the Google Classroom
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                      {pendingRequests.length} Pending
+                    </span>
+                  </div>
+
+                  {pendingRequests.length === 0 ? (
+                    <div className="p-8 text-center bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] text-[#5851A4] text-xs space-y-1">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
+                      <p className="font-bold text-[#1E2746]">No Pending Requests</p>
+                      <p>All student membership requests have been processed.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pendingRequests.map((req) => {
+                        const u = req.user;
+                        const fullName =
+                          `${u?.first_name || ""} ${u?.last_name || ""}`.trim() ||
+                          (u?.email ? u.email.split("@")[0] : `Student #${req.user_id}`);
+                        const avatar = u?.profile_picture ? getMediaUrl(u.profile_picture) : null;
+
+                        return (
+                          <div
+                            key={req.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-amber-200 hover:border-amber-300 rounded-2xl shadow-xs transition-all"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {avatar ? (
+                                <img
+                                  src={avatar}
+                                  alt={fullName}
+                                  className="w-10 h-10 rounded-full object-cover border border-[#EAE4F7] shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4B63D2] to-[#5851A4] text-white font-bold flex items-center justify-center text-xs shrink-0">
+                                  {fullName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+
+                              <div className="min-w-0">
                                 <Link
-                                  to={`/profile/${member.user_id}`}
-                                  className="text-xs font-bold text-[#1E2746] hover:text-[#4B63D2] truncate transition-colors"
+                                  to={`/profile/${req.user_id}`}
+                                  className="text-xs font-bold text-[#1E2746] hover:text-[#4B63D2] truncate block"
                                 >
                                   {fullName}
                                 </Link>
-                                {isCurrentUser && (
-                                  <span className="text-[9px] font-bold bg-[#4B63D2]/10 text-[#4B63D2] px-1.5 py-0.2 rounded-md">
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[10px] text-[#5851A4] truncate">
-                                {u?.department ? `${u.department}` : u?.email}
-                                {u?.graduation_year ? ` • Class of '${String(u.graduation_year).slice(-2)}` : ""}
+                                <div className="text-[10px] text-[#5851A4] truncate">
+                                  {u?.department || "Student"} • {u?.email}
+                                  {u?.graduation_year ? ` • Class '${String(u.graduation_year).slice(-2)}` : ""}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Role tag / Promotion controls + Direct Connect */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            {!isCurrentUser && (
-                              <Link
-                                to="/messaging"
-                                state={{ recipientId: member.user_id, recipientName: fullName }}
-                                className="px-2.5 py-1.5 bg-[#FAF9FD] hover:bg-[#4B63D2] text-[#4B63D2] hover:text-white border border-[#D5CBEE] hover:border-[#4B63D2] rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                                title={`Chat with ${fullName}`}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => handleApproveRequest(req.user_id)}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                               >
-                                <MessageSquare className="w-3 h-3" />
-                                <span className="hidden sm:inline">Connect</span>
-                              </Link>
-                            )}
-
-                            {clubDetail.user_role === "LEADER" && !isCurrentUser ? (
-                              <select
-                                value={member.role}
-                                onChange={(e) =>
-                                  handleUpdateMemberRole(
-                                    member.user_id,
-                                    e.target.value as any,
-                                  )
-                                }
-                                className="bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl px-2 py-1 text-[10px] font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer shadow-xs"
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Accept</span>
+                              </button>
+                              <button
+                                onClick={() => handleRejectOrRemoveMember(req.user_id, fullName)}
+                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                               >
-                                <option value="MEMBER">Member</option>
-                                <option value="OFFICER">Officer</option>
-                                <option value="LEADER">Chapter Lead</option>
-                              </select>
-                            ) : (
-                              <span
-                                className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase border ${getRoleBadgeStyle(
-                                  member.role,
-                                )}`}
-                              >
-                                {member.role}
-                              </span>
-                            )}
+                                <UserX className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {/* ── TAB 3: CONFIRMED MEMBERS ROSTER ── */}
+              {activeTab === "members" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-black text-[#1E2746] flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#4B63D2]" />
+                        Active Enrolled Members
+                      </h4>
+                      <p className="text-xs text-[#5851A4]">
+                        Total <strong>{activeMembers.length}</strong> verified department members
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#5851A4]" />
+                        <input
+                          type="text"
+                          placeholder="Filter members..."
+                          value={memberSearchQuery}
+                          onChange={(e) => setMemberSearchQuery(e.target.value)}
+                          className="pl-7 pr-3 py-1.5 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-[11px] text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] w-36 sm:w-44"
+                        />
+                      </div>
+
+                      <select
+                        value={memberRoleFilter}
+                        onChange={(e) => setMemberRoleFilter(e.target.value)}
+                        className="bg-[#FAF9FD] border border-[#D5CBEE] text-[#1E2746] text-[11px] font-bold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer"
+                      >
+                        <option value="ALL">All Roles</option>
+                        <option value="LEADER">Leaders</option>
+                        <option value="OFFICER">Officers</option>
+                        <option value="MEMBER">Members</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Member Roster List */}
+                  <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                    {filteredActiveMembers.length === 0 ? (
+                      <div className="p-8 text-center bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] text-[#5851A4] text-xs">
+                        No active members match your search criteria.
+                      </div>
+                    ) : (
+                      filteredActiveMembers.map((member) => {
+                        const u = member.user;
+                        const fullName =
+                          `${u?.first_name || ""} ${u?.last_name || ""}`.trim() ||
+                          (u?.email ? u.email.split("@")[0] : `User #${member.user_id}`);
+                        const avatar = u?.profile_picture ? getMediaUrl(u.profile_picture) : null;
+                        const isCurrentUser = currentUser?.id === member.user_id;
+
+                        return (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between p-3.5 bg-white hover:bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl transition-all shadow-xs"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {avatar ? (
+                                <img
+                                  src={avatar}
+                                  alt={fullName}
+                                  className="w-10 h-10 rounded-full object-cover border border-[#EAE4F7] shrink-0"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4B63D2] to-[#5851A4] text-white font-bold flex items-center justify-center text-xs shrink-0">
+                                  {fullName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <Link
+                                    to={`/profile/${member.user_id}`}
+                                    className="text-xs font-bold text-[#1E2746] hover:text-[#4B63D2] truncate transition-colors"
+                                  >
+                                    {fullName}
+                                  </Link>
+                                  {isCurrentUser && (
+                                    <span className="text-[9px] font-bold bg-[#4B63D2]/10 text-[#4B63D2] px-1.5 py-0.2 rounded-md">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-[#5851A4] truncate">
+                                  {u?.department ? `${u.department}` : u?.email}
+                                  {u?.graduation_year ? ` • Class of '${String(u.graduation_year).slice(-2)}` : ""}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {!isCurrentUser && (
+                                <Link
+                                  to="/messaging"
+                                  state={{ recipientId: member.user_id, recipientName: fullName }}
+                                  className="px-2.5 py-1.5 bg-[#FAF9FD] hover:bg-[#4B63D2] text-[#4B63D2] hover:text-white border border-[#D5CBEE] hover:border-[#4B63D2] rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                  title={`Chat with ${fullName}`}
+                                >
+                                  <MessageSquare className="w-3 h-3" />
+                                  <span className="hidden sm:inline">Connect</span>
+                                </Link>
+                              )}
+
+                              {isLeaderOrController && !isCurrentUser ? (
+                                <div className="flex items-center gap-1.5">
+                                  <select
+                                    value={member.role}
+                                    onChange={(e) =>
+                                      handleUpdateMemberRole(
+                                        member.user_id,
+                                        e.target.value as any,
+                                      )
+                                    }
+                                    className="bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl px-2 py-1 text-[10px] font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer shadow-xs"
+                                  >
+                                    <option value="MEMBER">Member</option>
+                                    <option value="OFFICER">Officer</option>
+                                    <option value="LEADER">Lead</option>
+                                  </select>
+                                  <button
+                                    onClick={() => handleRejectOrRemoveMember(member.user_id, fullName)}
+                                    className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-[10px] transition-colors cursor-pointer"
+                                    title="Remove from club"
+                                  >
+                                    <UserX className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span
+                                  className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase border ${getRoleBadgeStyle(
+                                    member.role,
+                                  )}`}
+                                >
+                                  {member.role}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── 4. Create / Edit Club Modal ─────────────────────────────────────── */}
+      {/* ── 4. Create / Edit Club Modal (Controller Access) ───────────────── */}
       {showFormModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150">
           <div
-            className="w-full max-w-lg bg-white border border-[#EAE4F7] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+            className="w-full max-w-xl bg-white border border-[#EAE4F7] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-gradient-to-r from-[#1E2746] to-[#2A3558] text-white flex items-center justify-between">
+            <div className="px-6 py-5 bg-gradient-to-r from-[#1E2746] to-[#2A3558] text-white flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-base md:text-lg font-black">
-                  {isEditing ? "Modify Chapter Settings" : "Register Campus Club or Alumni Chapter"}
+                  {isEditing ? "Modify Club & Classroom Setup" : "Register Department Club"}
                 </h3>
                 <p className="text-xs text-slate-300 mt-0.5">
-                  Set up community name, category, and mentorship description
+                  Set up department category, Google Classroom code, and live meeting links
                 </p>
               </div>
               <button
@@ -1083,23 +1513,23 @@ export default function Clubs() {
               {/* Name */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
-                  Community / Chapter Name <span className="text-rose-500">*</span>
+                  Club / Chapter Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   maxLength={100}
-                  placeholder="e.g. Cloud & AI Mentorship Chapter or Web3 Coding Club"
+                  placeholder="e.g. AI & Cloud Computing Club"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none font-medium"
                 />
               </div>
 
-              {/* Category */}
+              {/* Department Category */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
-                  Category
+                  Department Category <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={category}
@@ -1114,67 +1544,79 @@ export default function Clubs() {
                 </select>
               </div>
 
-              {/* Description with Quick Resource Chips */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
-                    Mission &amp; Activities Description
+              {/* Google Classroom Code & Invite Link Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746] flex items-center gap-1">
+                    <GraduationCap className="w-3.5 h-3.5 text-[#4B63D2]" />
+                    <span>Classroom Code</span>
                   </label>
-                  <span className="text-[10px] text-[#9188BE] font-medium">Supports links</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. c7x-9kd"
+                    value={formClassroomCode}
+                    onChange={(e) => setFormClassroomCode(e.target.value)}
+                    className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-3.5 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none font-mono"
+                  />
                 </div>
 
-                {/* Quick Helper Chips for Alumni & Mentors */}
-                <div className="flex flex-wrap gap-1.5 pb-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDescription(
-                        (prev) =>
-                          prev +
-                          (prev ? "\n" : "") +
-                          "Google Classroom: https://classroom.google.com/c/your-code",
-                      )
-                    }
-                    className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-[#4B63D2] rounded-lg transition-colors cursor-pointer border border-[#D5CBEE] flex items-center gap-1"
-                  >
-                    + Google Classroom
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDescription(
-                        (prev) =>
-                          prev +
-                          (prev ? "\n" : "") +
-                          "Shared Notes & Drive: https://drive.google.com/drive/folders/your-folder",
-                      )
-                    }
-                    className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer border border-emerald-200 flex items-center gap-1"
-                  >
-                    + Drive Notes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDescription(
-                        (prev) =>
-                          prev +
-                          (prev ? "\n" : "") +
-                          "GitHub Repository: https://github.com/organization/repo",
-                      )
-                    }
-                    className="text-[10px] font-bold px-2 py-0.5 bg-[#FAF9FD] hover:bg-[#F0EDF9] text-[#5851A4] rounded-lg transition-colors cursor-pointer border border-[#EAE4F7] flex items-center gap-1"
-                  >
-                    + GitHub Repo
-                  </button>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746] flex items-center gap-1">
+                    <ExternalLink className="w-3.5 h-3.5 text-[#4B63D2]" />
+                    <span>Classroom Link</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://classroom.google.com/c/..."
+                    value={formClassroomUrl}
+                    onChange={(e) => setFormClassroomUrl(e.target.value)}
+                    className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-3.5 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Meet URL & Drive URL Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746] flex items-center gap-1">
+                    <Video className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Meet / Zoom URL</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/..."
+                    value={formMeetUrl}
+                    onChange={(e) => setFormMeetUrl(e.target.value)}
+                    className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-3.5 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none font-medium"
+                  />
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746] flex items-center gap-1">
+                    <FileText className="w-3.5 h-3.5 text-sky-600" />
+                    <span>Drive / Notes URL</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/drive/..."
+                    value={formDriveUrl}
+                    onChange={(e) => setFormDriveUrl(e.target.value)}
+                    className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-3.5 py-2 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
+                  Club Mission &amp; Overview
+                </label>
                 <textarea
-                  rows={4}
-                  maxLength={2000}
-                  placeholder="Describe your alumni chapter or club's goals, meeting schedules, projects, and paste Google Classroom / Drive links..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  maxLength={1500}
+                  placeholder="Describe club activities, eligibility, workshops, and weekly meet schedules..."
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
                   className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] outline-none resize-none font-medium"
                 />
               </div>
@@ -1196,7 +1638,7 @@ export default function Clubs() {
                   {submittingForm && (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   )}
-                  {isEditing ? "Save Changes" : "Register Community"}
+                  {isEditing ? "Save Club Details" : "Register Club"}
                 </button>
               </div>
             </form>

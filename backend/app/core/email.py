@@ -425,3 +425,99 @@ def send_otp_email(
             f"[ERROR] Failed to dispatch OTP email to {normalized_recipient}: {e}"
         )
         raise RuntimeError(f"Unable to send verification email: {e}")
+
+
+def send_application_alert_email(
+    poster_email: str,
+    poster_name: str,
+    applicant_name: str,
+    applicant_email: str,
+    job_title: str,
+    company_name: str,
+    resume_url: str | None = None,
+    cover_note: str | None = None,
+) -> bool:
+    """Send an automated email notification to the job/referral poster when an applicant applies."""
+    normalized_recipient = poster_email.strip().lower()
+    subject = f"New Application: {applicant_name} applied for {job_title} at {company_name}"
+
+    plain_text_body = (
+        f"Hello {poster_name},\n\n"
+        f"{applicant_name} ({applicant_email}) has just applied for your opportunity: '{job_title}' at {company_name}.\n\n"
+        f"Cover Note: {cover_note or 'No cover note provided'}\n"
+        f"Resume Link: {resume_url or 'Attached in KNOTS profile'}\n\n"
+        f"You can review this application and connect with the candidate directly on KNOTS.\n\n"
+        f"Best regards,\n"
+        f"KNOTS Placement Hub"
+    )
+
+    resume_html = (
+        f'<div style="font-size: 12px; color: #5851A4; margin-top: 6px;">Resume / Portfolio: <a href="{resume_url}" style="color: #4B63D2; font-weight: bold;">View Resume</a></div>'
+        if resume_url
+        else ""
+    )
+    cover_html = (
+        f'<div style="font-size: 12px; color: #5851A4; margin-top: 8px; font-style: italic;">"{cover_note}"</div>'
+        if cover_note
+        else ""
+    )
+
+    html_body = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>{subject}</title></head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FAF9FD; margin: 0; padding: 30px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #EAE4F7; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(75, 99, 210, 0.08);">
+    <div style="background: linear-gradient(135deg, #1E2746 0%, #2A3558 100%); padding: 24px; color: #ffffff;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 800;">KNOTS Career Network</h2>
+      <p style="margin: 4px 0 0 0; color: #FFD21A; font-size: 13px; font-weight: 600;">New Candidate Application Received</p>
+    </div>
+    <div style="padding: 28px; color: #1E2746;">
+      <p style="font-size: 15px; line-height: 1.6;">Hello <strong>{poster_name}</strong>,</p>
+      <p style="font-size: 14px; line-height: 1.6; color: #5851A4;">
+        A candidate has submitted an application for your posted opportunity:
+      </p>
+      <div style="background: #FAF9FD; border: 1px solid #D5CBEE; border-radius: 12px; padding: 16px; margin: 18px 0;">
+        <div style="font-size: 15px; font-weight: 800; color: #1E2746;">{job_title}</div>
+        <div style="font-size: 13px; font-weight: 600; color: #4B63D2; margin-top: 2px;">{company_name}</div>
+        <hr style="border: 0; border-top: 1px solid #EAE4F7; margin: 12px 0;">
+        <div style="font-size: 12px; color: #5851A4;">Candidate: <strong>{applicant_name}</strong> ({applicant_email})</div>
+        {resume_html}
+        {cover_html}
+      </div>
+      <p style="font-size: 13px; line-height: 1.6; color: #5851A4;">
+        Log into the KNOTS platform to review candidate qualifications, message the applicant, or update application status.
+      </p>
+    </div>
+    <div style="background: #FAF9FD; border-top: 1px solid #EAE4F7; padding: 16px; text-align: center; font-size: 11px; color: #9188BE;">
+      KNOTS Placement &amp; Opportunities Hub • S. B. Jain Institute of Technology, Management &amp; Research
+    </div>
+  </div>
+</body>
+</html>"""
+
+    try:
+        if settings.EMAIL_WEBHOOK_URL:
+            try:
+                return _send_via_webhook(normalized_recipient, subject, plain_text_body, html_body)
+            except Exception:
+                pass
+        if settings.RESEND_API_KEY:
+            try:
+                return _send_via_resend(normalized_recipient, subject, plain_text_body, html_body)
+            except Exception:
+                pass
+        if settings.BREVO_API_KEY:
+            try:
+                return _send_via_brevo(normalized_recipient, subject, plain_text_body, html_body)
+            except Exception:
+                pass
+        if settings.SENDGRID_API_KEY:
+            try:
+                return _send_via_sendgrid(normalized_recipient, subject, plain_text_body, html_body)
+            except Exception:
+                pass
+        return _send_via_smtp(normalized_recipient, subject, plain_text_body, html_body)
+    except Exception as e:
+        logger.warning(f"Failed to dispatch application notification email: {e}")
+        return False
+

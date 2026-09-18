@@ -242,6 +242,7 @@ export default function DashboardLayout() {
         return [
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           { name: "Department", path: "/department", icon: Layers, section: "role" },
           { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
           baseEvents,

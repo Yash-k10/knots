@@ -8,6 +8,7 @@ interface ConnectionCardProps {
   targetId: number; // The user ID we are interacting with
   email?: string;
   name?: string;
+  role?: string | null;
   profilePicture?: string | null;
   subtitle: string;
   mutualCount?: number;
@@ -27,6 +28,7 @@ export default function ConnectionCard({
   targetId,
   email,
   name,
+  role,
   profilePicture,
   subtitle,
   mutualCount,
@@ -58,6 +60,33 @@ export default function ConnectionCard({
 
   const resolvedAvatar = getMediaUrl(profilePicture);
 
+  // Normalize role tag
+  const normalizedRole = role || (
+    email?.includes('prof') ? 'Faculty' :
+    email?.includes('hod') ? 'HOD' :
+    email?.includes('controller') ? 'Controller' :
+    email?.includes('alumni') ? 'Alumni' : 'Student'
+  );
+
+  const getRolePill = (r: string) => {
+    const lower = r.toLowerCase();
+    if (lower.includes('alumni')) {
+      return { label: 'Alumni', style: 'bg-amber-50 text-amber-800 border-amber-200' };
+    }
+    if (lower.includes('faculty') || lower.includes('prof')) {
+      return { label: 'Faculty', style: 'bg-purple-50 text-purple-800 border-purple-200' };
+    }
+    if (lower.includes('hod') || lower.includes('head')) {
+      return { label: 'HOD', style: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    }
+    if (lower.includes('controller') || lower.includes('admin')) {
+      return { label: 'Controller', style: 'bg-indigo-50 text-[#4B63D2] border-[#D5CBEE]' };
+    }
+    return { label: 'Student', style: 'bg-[#FAF9FD] text-[#5851A4] border-[#EAE4F7]' };
+  };
+
+  const rolePill = getRolePill(normalizedRole);
+
   return (
     <div className="group relative bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 text-center space-y-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
       <div>
@@ -80,12 +109,20 @@ export default function ConnectionCard({
         </Link>
 
         {/* Text Info */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <Link to={`/profile/${targetId}`} className="block">
             <h4 className="text-base font-bold text-[#1E2746] truncate px-2 transition-colors group-hover:text-[#4B63D2]" title={email || displayName}>
               {displayName}
             </h4>
           </Link>
+
+          {/* Explicit Role Pill */}
+          <div>
+            <span className={`inline-block text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${rolePill.style}`}>
+              {rolePill.label}
+            </span>
+          </div>
+
           <p className={`text-xs font-semibold tracking-wide ${
             type === 'request' ? 'text-[#4B63D2]' :
             type === 'connection' ? 'text-emerald-600' :

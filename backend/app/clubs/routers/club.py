@@ -181,3 +181,21 @@ async def update_member_role(
         user=user_info,
     )
     return APIResponse(message="Member role updated successfully", data=response_data)
+
+
+@router.delete("/{club_id}/members/{user_id}", response_model=APIResponse)
+async def remove_member(
+    club_id: int = Path(..., ge=1),
+    user_id: int = Path(..., ge=1, description="The target user's ID"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a member or reject a pending join request (Leader/Controller or self)."""
+    service = ClubService(db)
+    await service.remove_member(
+        club_id=club_id,
+        current_user_id=current_user.id,
+        target_user_id=user_id,
+    )
+    return APIResponse(message="Member removed or request rejected successfully")
+

@@ -33,6 +33,48 @@ class ApplicationService:
         data["applicant_id"] = applicant_id
         data["job_posting_id"] = job_posting_id
         app_obj = await self.repository.create(data)
+
+        # Trigger email notification to job poster
+        try:
+            import logging
+            from app.core.email import send_application_alert_email
+            from app.users.repository.user import UserRepository
+
+            user_repo = UserRepository(self.db)
+            poster = await user_repo.get(job.posted_by_id)
+            applicant = await user_repo.get(applicant_id)
+
+            if poster and poster.email and applicant:
+                applicant_profile = getattr(applicant, "profile", None)
+                app_name = (
+                    f"{applicant_profile.first_name or ''} {applicant_profile.last_name or ''}".strip()
+                    if applicant_profile
+                    else applicant.email.split("@")[0]
+                ) or applicant.email.split("@")[0]
+
+                poster_profile = getattr(poster, "profile", None)
+                p_name = (
+                    f"{poster_profile.first_name or ''} {poster_profile.last_name or ''}".strip()
+                    if poster_profile
+                    else poster.email.split("@")[0]
+                ) or poster.email.split("@")[0]
+
+                company_name = job.company.name if getattr(job, "company", None) else "Campus Opportunity"
+
+                send_application_alert_email(
+                    poster_email=poster.email,
+                    poster_name=p_name,
+                    applicant_name=app_name,
+                    applicant_email=applicant.email,
+                    job_title=job.title,
+                    company_name=company_name,
+                    resume_url=data.get("resume_url"),
+                    cover_note=data.get("cover_letter"),
+                )
+        except Exception as email_err:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not dispatch application alert email: {email_err}")
+
         return await self.repository.get(app_obj.id)
 
     async def get_user_applications(

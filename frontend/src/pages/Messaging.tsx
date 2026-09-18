@@ -377,6 +377,11 @@ export default function Messaging() {
   const typingTimeoutRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const currentUserRef = useRef(currentUser);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   // Close emoji picker on outside click
   useEffect(() => {
@@ -456,14 +461,21 @@ export default function Messaging() {
         }
         return prevConvs.map((conv) => {
           if (conv.id === incoming.conversation_id) {
+            const isFromOtherUser =
+              currentUserRef.current?.id &&
+              incoming.sender_id !== currentUserRef.current.id;
+            const isNotCurrentChat = conv.id !== activeConvId;
+
             return {
               ...conv,
               last_message: incoming,
               updated_at: incoming.created_at,
               unread_count:
-                conv.id === activeConvId
+                isFromOtherUser && isNotCurrentChat
+                  ? (conv.unread_count || 0) + 1
+                  : isNotCurrentChat
                   ? conv.unread_count
-                  : conv.unread_count + 1,
+                  : 0,
             };
           }
           return conv;

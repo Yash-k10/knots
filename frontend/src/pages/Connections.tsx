@@ -492,6 +492,7 @@ export default function Connections() {
                     targetId={sugg.user_id}
                     email={sugg.email}
                     name={getSuggestionDisplayName(sugg)}
+                    role={(sugg as any).role_name || (sugg.email?.includes('prof') ? 'Faculty' : sugg.email?.includes('alumni') ? 'Alumni' : 'Student')}
                     profilePicture={sugg.profile_picture || sugg.profile?.profile_picture}
                     subtitle={sugg.department || 'Suggested for You'}
                     mutualCount={sugg.mutual_count}
@@ -507,6 +508,7 @@ export default function Connections() {
                     targetId={user.id}
                     email={user.email}
                     name={getUserSimpleDisplayName(user)}
+                    role={user.email?.includes('prof') ? 'Faculty' : user.email?.includes('alumni') ? 'Alumni' : 'Student'}
                     subtitle="Campus Member"
                     onConnect={handleConnect}
                   />
@@ -535,6 +537,7 @@ export default function Connections() {
                     targetId={req.requester_id}
                     email={targetUser?.email}
                     name={name}
+                    role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
                     profilePicture={targetUser?.profile?.profile_picture}
                     subtitle="Wants to connect"
                     isAccepted={!!acceptedRequestIds[req.id]}
@@ -567,6 +570,7 @@ export default function Connections() {
                     targetId={req.addressee_id}
                     email={targetUser?.email}
                     name={name}
+                    role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
                     profilePicture={targetUser?.profile?.profile_picture}
                     subtitle="Request Sent (Pending)"
                     onWithdraw={handleWithdraw}
@@ -599,6 +603,7 @@ export default function Connections() {
                     targetId={otherUserId}
                     email={otherUser?.email}
                     name={name}
+                    role={otherUser?.email?.includes('prof') ? 'Faculty' : otherUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
                     profilePicture={otherUser?.profile?.profile_picture}
                     subtitle="Connected"
                     onMessage={handleSendMessage}
