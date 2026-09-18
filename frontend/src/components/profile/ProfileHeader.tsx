@@ -388,17 +388,30 @@ export default function ProfileHeader({
                 />
               </h2>
 
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[#5851A4] text-sm">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-[#5851A4] text-sm">
+                {isAlumni ? (
+                  <span className="flex items-center gap-1.5 font-black bg-gradient-to-r from-amber-500/15 to-purple-500/15 border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 text-xs px-3 py-1 rounded-full shadow-xs">
+                    <span>🎓</span>
+                    <span>Alumnus • {profile.graduation_year ? `Class of ${profile.graduation_year}` : "SBJIT Alumni"}</span>
+                  </span>
+                ) : displayYear ? (
+                  <span className="flex items-center gap-1.5 font-bold">
+                    <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
+                    {yearBadgeLabel} {displayYear}
+                  </span>
+                ) : null}
+
+                {isAlumni && (
+                  <span className="flex items-center gap-1.5 font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs px-3 py-1 rounded-full">
+                    <span>🌟</span>
+                    <span>Open to Provide Referrals & Mentorship</span>
+                  </span>
+                )}
+
                 {profile.department && (
                   <span className="flex items-center gap-1.5 font-bold">
                     <Building2 className="h-4 w-4 text-[#4B63D2]" />
                     {profile.department}
-                  </span>
-                )}
-                {displayYear && (
-                  <span className="flex items-center gap-1.5 font-bold">
-                    <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
-                    {yearBadgeLabel} {displayYear}
                   </span>
                 )}
                 {profile.connection_count !== undefined && (
@@ -410,7 +423,7 @@ export default function ProfileHeader({
                       : "Connections"}
                   </span>
                 )}
-                {!profile.department && !profile.graduation_year && (
+                {!profile.department && !profile.graduation_year && !isAlumni && (
                   <span className="text-[#9188BE] italic font-medium">
                     No department or batch year specified
                   </span>

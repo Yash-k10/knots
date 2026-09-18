@@ -1422,17 +1422,22 @@ export default function Feed() {
                               <span
                                 className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                                   post.author?.email?.includes("alumni")
-                                    ? "bg-purple-50 border border-purple-200 text-purple-700"
+                                    ? "bg-gradient-to-r from-purple-50 to-amber-50 border border-purple-200 text-purple-800 shadow-xs flex items-center gap-1"
                                     : post.author?.email?.includes("prof")
                                     ? "bg-blue-50 border border-blue-200 text-blue-700"
                                     : "bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2]"
                                 }`}
                               >
-                                {post.author?.email?.includes("alumni")
-                                  ? "Alumni"
-                                  : post.author?.email?.includes("prof")
-                                  ? "Faculty"
-                                  : "Student"}
+                                {post.author?.email?.includes("alumni") ? (
+                                  <>
+                                    <span>🎓</span>
+                                    <span>Alumni • SBJIT</span>
+                                  </>
+                                ) : post.author?.email?.includes("prof") ? (
+                                  "Faculty"
+                                ) : (
+                                  "Student"
+                                )}
                               </span>
                             </div>
 

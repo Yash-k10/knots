@@ -195,13 +195,13 @@ export default function DashboardLayout() {
     switch (roleName) {
       case "alumni":
         return [
-          { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
-          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
-          { name: "Ties", path: "/connections", icon: Users, section: "main" },
-          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
-          baseEvents,
-          baseMessages,
-          baseNotifications,
+          { name: "Alumni Hub", path: "/", icon: LayoutDashboard, section: "main" },
+          { name: "Campus Network", path: "/feed", icon: Rss, section: "main" },
+          { name: "Batchmates & Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Jobs & Referrals", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Campus Meets & Events", path: "/events", icon: Calendar, section: "main" },
+          { name: "Direct Guidance", path: "/messaging", icon: MessageSquare, badge: unreadMessages, section: "communication" },
+          { name: "Activity Alerts", path: "/notifications", icon: Bell, badge: unreadNotifications, section: "communication" },
         ];
       case "student":
         return [
@@ -316,7 +316,10 @@ export default function DashboardLayout() {
     (user?.email ? user.email.split("@")[0] : "Student");
   const avatarUrl = getMediaUrl(user?.profile?.profile_picture);
   const userInitial = fullName.charAt(0).toUpperCase();
-  const roleBadgeLabel = user?.role?.name || (isAdmin ? "Admin" : "Student");
+  const roleBadgeLabel =
+    roleName === "alumni"
+      ? "Alumni • SBJIT"
+      : user?.role?.name || (isAdmin ? "Admin" : "Student");
 
   // Reusable Sidebar Navigation Content Component
   const renderSidebarLinks = () => (
