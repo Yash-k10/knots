@@ -24,6 +24,10 @@ import {
   DollarSign,
   Globe,
   Sliders,
+  Download,
+  Search,
+  Eye,
+  Filter,
 } from "lucide-react";
 import {
   analyticsService,
@@ -88,6 +92,13 @@ export default function Dashboard() {
   const [roadmapError, setRoadmapError] = useState<string | null>(null);
   const [roadmapResult, setRoadmapResult] = useState<CareerRoadmapResult | null>(null);
 
+  // Department Controller Console States
+  const [controllerStats, setControllerStats] = useState<any>(null);
+  const [controllerStudents, setControllerStudents] = useState<any[]>([]);
+  const [controllerFaculty, setControllerFaculty] = useState<any[]>([]);
+  const [controllerBatchFilter, setControllerBatchFilter] = useState<string>("all");
+  const [controllerSearchQuery, setControllerSearchQuery] = useState<string>("");
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -147,6 +158,17 @@ export default function Dashboard() {
         setContentRecommendations(contentRecs || []);
         setAlumniConnections(Array.isArray(userConns) ? userConns : []);
         setAlumniJobs(Array.isArray(allJobsList) ? allJobsList : []);
+
+        if (userMe?.role?.name?.toLowerCase().trim() === "controller") {
+          const [deptStats, deptStudents, deptFaculty] = await Promise.all([
+            apiRequest<any>("/departments/stats").catch(() => null),
+            apiRequest<any[]>("/departments/students?limit=100").catch(() => []),
+            apiRequest<any[]>("/departments/faculty").catch(() => []),
+          ]);
+          setControllerStats(deptStats);
+          setControllerStudents(Array.isArray(deptStudents) ? deptStudents : []);
+          setControllerFaculty(Array.isArray(deptFaculty) ? deptFaculty : []);
+        }
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -227,6 +249,395 @@ export default function Dashboard() {
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "student";
   const greetingName = profile?.first_name ? `, ${profile.first_name}` : "";
+
+  const handleExportStudentsCSV = () => {
+    if (!controllerStudents || controllerStudents.length === 0) return;
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Department",
+      "Graduation Year",
+      "CGPA",
+      "Placement Status",
+      "Skills",
+    ];
+    const rows = controllerStudents.map((s) => [
+      s.id,
+      `"${((s.first_name || "") + " " + (s.last_name || "")).trim()}"`,
+      s.email || "",
+      `"${s.department || ""}"`,
+      s.graduation_year || "",
+      s.cgpa ?? "",
+      s.placement_status || "",
+      `"${(s.skills || []).join("; ")}"`,
+    ]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `${(controllerStats?.department || "department")
+        .toLowerCase()
+        .replace(/[\s&]+/g, "_")}_students.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // =========================================================================
+  // 0. DEPARTMENT CONTROLLER DASHBOARD VIEW
+  // =========================================================================
+  if (roleName === "controller") {
+    const filteredStudents = controllerStudents.filter((s) => {
+      const matchesBatch =
+        controllerBatchFilter === "all" ||
+        String(s.graduation_year) === controllerBatchFilter;
+      const query = controllerSearchQuery.toLowerCase().trim();
+      const fullName = `${s.first_name || ""} ${s.last_name || ""}`.toLowerCase();
+      const matchesQuery =
+        !query ||
+        fullName.includes(query) ||
+        (s.email && s.email.toLowerCase().includes(query)) ||
+        (s.skills && s.skills.some((sk: string) => sk.toLowerCase().includes(query)));
+      return matchesBatch && matchesQuery;
+    });
+
+    const activeDeptName =
+      controllerStats?.department || profile?.department || "Computer Science & Engineering";
+
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+        {/* Banner */}
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-sm relative overflow-hidden">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
+              <ShieldCheck className="h-3.5 w-3.5" /> Department Controller Console
+            </div>
+            <h2 className="text-3xl font-black text-[#1E2746] tracking-tight">
+              Welcome Back{greetingName} 👋
+            </h2>
+            <p className="text-[#5851A4] text-sm max-w-2xl leading-relaxed font-medium">
+              Administrative & Academic Operations for{" "}
+              <strong className="text-[#1E2746]">{activeDeptName}</strong>. Inspect cohort
+              batches, monitor placement statistics, and manage departmental student talent.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <button
+              onClick={handleExportStudentsCSV}
+              disabled={controllerStudents.length === 0}
+              className="px-4 py-2.5 bg-white hover:bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition disabled:opacity-50"
+            >
+              <Download className="h-4 w-4 text-[#4B63D2]" /> Export Talent Roster (CSV)
+            </button>
+            <Link
+              to="/department"
+              className="px-5 py-2.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-xl font-bold text-xs shadow-md shadow-[#4B63D2]/20 flex items-center gap-2"
+            >
+              <Layers className="h-4 w-4 text-[#FFD21A]" /> Department Overview
+            </Link>
+          </div>
+        </div>
+
+        {/* 4 Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Enrolled Students</span>
+              <GraduationCap className="h-4 w-4 text-[#4B63D2]" />
+            </div>
+            <span className="text-2xl font-black text-[#1E2746]">
+              {controllerStats?.total_students ?? 0}
+            </span>
+            <p className="text-[10px] text-indigo-600 font-bold mt-1">
+              {controllerStats?.batches?.length ?? 0} active cohort batches
+            </p>
+          </div>
+
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Department Faculty</span>
+              <Users className="h-4 w-4 text-[#4B63D2]" />
+            </div>
+            <span className="text-2xl font-black text-[#1E2746]">
+              {controllerStats?.faculty_count ?? 0}
+            </span>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">Mentors & Research Guides</p>
+          </div>
+
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Placement Rate</span>
+              <Briefcase className="h-4 w-4 text-[#4B63D2]" />
+            </div>
+            <span className="text-2xl font-black text-[#1E2746]">
+              {controllerStats?.placement_rate ?? 0}%
+            </span>
+            <p className="text-[10px] text-emerald-600 font-bold mt-1">
+              {controllerStats?.placed_count ?? 0} placed / interning
+            </p>
+          </div>
+
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between text-[#5851A4] mb-2">
+              <span className="text-xs font-bold uppercase">Clubs & Events</span>
+              <Compass className="h-4 w-4 text-[#FFD21A]" />
+            </div>
+            <span className="text-2xl font-black text-[#1E2746]">
+              {(controllerStats?.club_count ?? 0) + (controllerStats?.event_count ?? 0)}
+            </span>
+            <p className="text-[10px] text-indigo-600 font-bold mt-1">
+              {controllerStats?.club_count ?? 0} clubs • {controllerStats?.event_count ?? 0} events
+            </p>
+          </div>
+        </div>
+
+        {/* Cohort Batches Progress Breakdown */}
+        {controllerStats?.batches && controllerStats.batches.length > 0 && (
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E2746] flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-[#4B63D2]" /> Cohort Batches Distribution
+              </h3>
+              <span className="text-xs text-[#5851A4] font-medium">
+                Showing all active student academic batches
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {controllerStats.batches.map((b: any, idx: number) => {
+                const pct =
+                  b.total_students > 0
+                    ? Math.round((b.placed_students / b.total_students) * 100)
+                    : 0;
+                return (
+                  <div
+                    key={idx}
+                    className="p-4 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] space-y-2"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-extrabold text-[#1E2746]">
+                        Batch {b.graduation_year}
+                      </span>
+                      <span className="text-[11px] font-bold text-[#4B63D2] px-2 py-0.5 bg-[#4B63D2]/10 rounded-full">
+                        {b.avg_cgpa ? `${b.avg_cgpa} CGPA` : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs text-[#5851A4]">
+                      <span>{b.total_students} Students</span>
+                      <span>
+                        {b.placed_students} Placed ({pct}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#EAE4F7] h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="bg-[#4B63D2] h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Department Student Talent Roster Table */}
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-black text-[#1E2746] flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#4B63D2]" /> Department Student Talent Roster
+              </h3>
+              <p className="text-xs text-[#5851A4] mt-0.5 font-medium">
+                Displaying enrolled students for {activeDeptName}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Batch Filter */}
+              <div className="flex items-center gap-1.5 bg-[#FAF9FD] px-3 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#1E2746]">
+                <Filter className="h-3.5 w-3.5 text-[#4B63D2]" />
+                <select
+                  value={controllerBatchFilter}
+                  onChange={(e) => setControllerBatchFilter(e.target.value)}
+                  className="bg-transparent border-none focus:outline-none text-xs text-[#1E2746] font-bold cursor-pointer"
+                >
+                  <option value="all">All Cohorts</option>
+                  {(controllerStats?.batches || []).map((b: any, idx: number) => (
+                    <option key={idx} value={String(b.graduation_year)}>
+                      Batch {b.graduation_year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5851A4]" />
+                <input
+                  type="text"
+                  placeholder="Search students, skills..."
+                  value={controllerSearchQuery}
+                  onChange={(e) => setControllerSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded-xl text-xs text-[#1E2746] focus:outline-none focus:border-[#4B63D2] w-48 sm:w-56"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Student Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#EAE4F7] text-[11px] font-black text-[#5851A4] uppercase tracking-wider">
+                  <th className="pb-3 px-2">Student</th>
+                  <th className="pb-3 px-2">Batch</th>
+                  <th className="pb-3 px-2">CGPA</th>
+                  <th className="pb-3 px-2">Status</th>
+                  <th className="pb-3 px-2">Top Skills</th>
+                  <th className="pb-3 px-2 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EAE4F7] text-xs">
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((s: any) => (
+                    <tr key={s.id} className="hover:bg-[#FAF9FD] transition-colors">
+                      <td className="py-3 px-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#4B63D2] to-[#5851A4] text-white flex items-center justify-center font-black text-xs shrink-0">
+                            {s.first_name ? s.first_name[0].toUpperCase() : "S"}
+                          </div>
+                          <div>
+                            <div className="font-bold text-[#1E2746]">
+                              {s.first_name || ""} {s.last_name || ""}
+                            </div>
+                            <div className="text-[11px] text-[#5851A4]">{s.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 font-medium text-[#1E2746]">
+                        {s.graduation_year ? `Batch ${s.graduation_year}` : "N/A"}
+                      </td>
+                      <td className="py-3 px-2">
+                        {s.cgpa ? (
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                              s.cgpa >= 8.5
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : s.cgpa >= 7.5
+                                ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                : "bg-slate-50 text-slate-700 border border-slate-200"
+                            }`}
+                          >
+                            {s.cgpa}
+                          </span>
+                        ) : (
+                          <span className="text-[#5851A4]">N/A</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            s.placement_status === "Placed"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : s.placement_status === "Interning"
+                              ? "bg-indigo-100 text-indigo-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {s.placement_status || "Seeking"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {(s.skills || []).slice(0, 3).map((sk: string, i: number) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 bg-[#FAF9FD] border border-[#EAE4F7] text-[10px] font-semibold text-[#5851A4] rounded-md"
+                            >
+                              {sk}
+                            </span>
+                          ))}
+                          {(s.skills || []).length > 3 && (
+                            <span className="text-[10px] text-[#5851A4] font-bold self-center">
+                              +{s.skills.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <Link
+                          to={`/profile/${s.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#4B63D2] hover:bg-[#4B63D2]/10 rounded-lg transition"
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-[#5851A4]">
+                      No students found matching current filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Faculty Directory Preview */}
+        {controllerFaculty && controllerFaculty.length > 0 && (
+          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E2746] flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#4B63D2]" /> Department Faculty & Mentors
+              </h3>
+              <span className="text-xs text-[#5851A4] font-medium">
+                {controllerFaculty.length} Faculty Members
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {controllerFaculty.map((f: any) => (
+                <div
+                  key={f.id}
+                  className="p-4 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7] flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center font-black text-sm">
+                      {f.first_name ? f.first_name[0] : "F"}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#1E2746]">
+                        {f.first_name || ""} {f.last_name || ""}
+                      </h4>
+                      <p className="text-[11px] text-[#5851A4]">
+                        {f.designation || "Faculty Mentor"}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to={`/messaging?userId=${f.id}`}
+                    className="px-3 py-1 bg-white border border-[#EAE4F7] text-[#4B63D2] hover:bg-[#4B63D2] hover:text-white rounded-lg text-xs font-bold transition shrink-0"
+                  >
+                    Message
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // =========================================================================
   // 1. FACULTY DASHBOARD VIEW

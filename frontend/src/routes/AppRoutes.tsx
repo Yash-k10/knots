@@ -314,7 +314,7 @@ export default function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="profile/:userId" element={<Profile />} />
         <Route path="connections" element={<Connections />} />
-        <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo"]}><Students /></RoleAllowedRoute>} />
+        <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo", "controller"]}><Students /></RoleAllowedRoute>} />
         <Route path="department" element={<RoleAllowedRoute allowedRoles={["hod", "controller"]}><DepartmentPage /></RoleAllowedRoute>} />
         <Route path="departments" element={<RoleAllowedRoute allowedRoles={["hod", "controller"]}><DepartmentPage /></RoleAllowedRoute>} />
         <Route path="applications" element={<RoleAllowedRoute allowedRoles={["controller", "tpo"]}><ApplicationsPage /></RoleAllowedRoute>} />

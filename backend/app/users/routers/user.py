@@ -65,15 +65,42 @@ async def list_roles(
 async def list_users(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=100),
+    department: str | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve a paginated list of users (Super Admin is stealth to regular users)."""
+    """Retrieve a paginated list of users with departmental isolation for Controllers."""
     service = UserService(db)
     users = await service.list_users(skip=skip, limit=limit)
     is_viewer_superadmin = current_user.role and current_user.role.name == "Super Admin"
     if not is_viewer_superadmin:
         users = [u for u in users if not (u.role and u.role.name == "Super Admin")]
+
+    role_name = current_user.role.name.lower().strip() if current_user.role else ""
+    if role_name == "controller":
+        dept_target = (
+            (current_user.profile.department or "").strip().lower()
+            if current_user.profile
+            else ""
+        )
+        if dept_target:
+            users = [
+                u
+                for u in users
+                if u.profile
+                and u.profile.department
+                and dept_target in u.profile.department.lower()
+            ]
+    elif department and department.strip() and department.upper() != "ALL":
+        filter_dept = department.strip().lower()
+        users = [
+            u
+            for u in users
+            if u.profile
+            and u.profile.department
+            and filter_dept in u.profile.department.lower()
+        ]
+
     return APIResponse(data=users)
 
 
