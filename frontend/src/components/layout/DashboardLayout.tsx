@@ -241,9 +241,10 @@ export default function DashboardLayout() {
       case "controller":
         return [
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
-          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
+          { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
+          { name: "My Department", path: "/department", icon: Layers, section: "role" },
           { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
-          { name: "Department", path: "/department", icon: Layers, section: "role" },
+          { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Applications", path: "/applications", icon: FileCheck2, section: "role" },
           baseEvents,
           baseMessages,

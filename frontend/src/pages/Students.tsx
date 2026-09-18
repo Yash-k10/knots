@@ -49,12 +49,16 @@ export default function Students() {
       try {
         setLoading(true);
         const [meRes, usersRes] = await Promise.all([
-          apiRequest<{ role?: { name: string } }>("/users/me").catch(() => null),
+          apiRequest<{ role?: { name: string }; profile?: { department: string } }>("/users/me").catch(() => null),
           apiRequest<any[]>("/users?limit=100").catch(() => []),
         ]);
 
         if (meRes?.role?.name) {
           setCurrentUserRole(meRes.role.name);
+          if (meRes.role.name.toLowerCase() === "controller") {
+            const userDept = meRes.profile?.department || "Computer Science";
+            setSelectedDept(userDept);
+          }
         }
 
         // Transform students data from user database with deterministic enrichment
@@ -135,7 +139,11 @@ export default function Students() {
           sk.toLowerCase().includes(searchQuery.toLowerCase()),
         );
 
-      const matchDept = selectedDept === "ALL" || s.department === selectedDept;
+      const matchDept =
+        selectedDept === "ALL" ||
+        s.department === selectedDept ||
+        Boolean(s.department && selectedDept && s.department.toLowerCase().includes(selectedDept.toLowerCase())) ||
+        Boolean(s.department && selectedDept && selectedDept.toLowerCase().includes(s.department.toLowerCase()));
       const matchBatch = selectedBatch === "ALL" || s.batch === selectedBatch;
       const matchCgpa = (s.cgpa || 0) >= minCgpa;
       const matchStatus =
@@ -168,21 +176,27 @@ export default function Students() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
-            <GraduationCap className="h-4 w-4" /> Academic & Placement Roster
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
+            <GraduationCap className="h-4 w-4" />
+            <span>
+              {currentUserRole?.toLowerCase() === "controller"
+                ? `${selectedDept} Controller Console`
+                : "Student Talent Directory"}
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
-            Student Talent Directory
+            Campus Student Talent Roster
           </h1>
           <p className="text-[#5851A4] text-xs sm:text-sm max-w-xl font-medium">
-            Explore student profiles, review academic performance, track placement
-            readiness, and send targeted communication blasts.
+            {currentUserRole?.toLowerCase() === "controller"
+              ? `Departmental student directory strictly locked to ${selectedDept}. Monitor student cohort readiness, certifications, and academic progression.`
+              : "Explore student profiles, review academic performance, track placement readiness, and inspect verified skills."}
           </p>
         </div>
 
-        {/* TPO Action / Stats */}
+        {/* Action / Stats */}
         <div className="flex flex-wrap items-center gap-3">
           {isTPO && (
             <button
@@ -217,19 +231,26 @@ export default function Students() {
             />
           </div>
 
-          {/* Department Filter */}
-          <select
-            value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            className="bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-3 py-2 text-xs font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer"
-          >
-            <option value="ALL">All Departments</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="Information Technology">Information Technology</option>
-            <option value="Electronics & Comm.">Electronics & Comm.</option>
-            <option value="Mechanical Eng.">Mechanical Eng.</option>
-            <option value="Data Science">Data Science</option>
-          </select>
+          {/* Department Filter (Locked for Controller) */}
+          {currentUserRole?.toLowerCase() === "controller" ? (
+            <div className="flex items-center gap-2 bg-[#4B63D2]/10 border border-[#4B63D2]/30 rounded-xl px-3.5 py-2 text-xs font-black text-[#4B63D2] shrink-0">
+              <span className="h-2 w-2 rounded-full bg-[#4B63D2] animate-pulse" />
+              <span>Dept: {selectedDept} (Locked)</span>
+            </div>
+          ) : (
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              className="bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-3 py-2 text-xs font-bold text-[#1E2746] focus:outline-none focus:border-[#4B63D2] cursor-pointer"
+            >
+              <option value="ALL">All Departments</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics & Comm.">Electronics & Comm.</option>
+              <option value="Mechanical Eng.">Mechanical Eng.</option>
+              <option value="Data Science">Data Science</option>
+            </select>
+          )}
 
           {/* Batch Filter */}
           <select
