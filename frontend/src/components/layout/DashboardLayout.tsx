@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   User as UserIcon,
+  Compass,
 } from "lucide-react";
 
 import { wsClient } from "../../services/websocket";
@@ -199,6 +200,7 @@ export default function DashboardLayout() {
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,
@@ -209,6 +211,7 @@ export default function DashboardLayout() {
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
           { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
+          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,
@@ -218,6 +221,7 @@ export default function DashboardLayout() {
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
+          { name: "Clubs", path: "/clubs", icon: Compass, section: "main" },
           { name: "Students", path: "/students", icon: GraduationCap, section: "role" },
           baseEvents,
           baseMessages,

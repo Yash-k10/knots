@@ -19,6 +19,11 @@ import {
   Filter,
   CheckCircle2,
   MessageSquare,
+  ExternalLink,
+  BookOpen,
+  FileText,
+  Video,
+  Share2,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
 
@@ -60,6 +65,47 @@ export interface ClubDetailResponse {
   members_count: number;
   user_role?: "MEMBER" | "OFFICER" | "LEADER" | null;
   members: ClubMemberResponse[];
+}
+
+export interface ExtractedResource {
+  type: "classroom" | "drive" | "github" | "meet" | "notion" | "generic";
+  label: string;
+  url: string;
+}
+
+export function extractResourceLinks(text?: string | null): ExtractedResource[] {
+  if (!text) return [];
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex) || [];
+  const resources: ExtractedResource[] = [];
+  const seen = new Set<string>();
+
+  matches.forEach((rawUrl) => {
+    const cleanUrl = rawUrl.replace(/[),.;]+$/, "");
+    if (seen.has(cleanUrl)) return;
+    seen.add(cleanUrl);
+
+    const lower = cleanUrl.toLowerCase();
+    if (lower.includes("classroom.google.com")) {
+      resources.push({ type: "classroom", label: "Google Classroom", url: cleanUrl });
+    } else if (lower.includes("drive.google.com") || lower.includes("docs.google.com")) {
+      resources.push({ type: "drive", label: "Shared Drive / Notes", url: cleanUrl });
+    } else if (lower.includes("github.com")) {
+      resources.push({ type: "github", label: "GitHub Repository", url: cleanUrl });
+    } else if (
+      lower.includes("meet.google.com") ||
+      lower.includes("zoom.us") ||
+      lower.includes("teams.microsoft.com")
+    ) {
+      resources.push({ type: "meet", label: "Live Meetup / AMA Room", url: cleanUrl });
+    } else if (lower.includes("notion.so") || lower.includes("notion.site")) {
+      resources.push({ type: "notion", label: "Notion Roadmap", url: cleanUrl });
+    } else {
+      resources.push({ type: "generic", label: "Resource Link", url: cleanUrl });
+    }
+  });
+
+  return resources;
 }
 
 export default function Clubs() {
@@ -685,6 +731,62 @@ export default function Clubs() {
                   <p className="text-slate-600 text-xs md:text-sm mt-2 leading-relaxed">
                     {clubDetail.description || "No detailed mission description available for this community."}
                   </p>
+
+                  {/* 📚 Mentorship & Resource Vault (Google Classroom / Drive / GitHub / Meet) */}
+                  {(() => {
+                    const resources = extractResourceLinks(clubDetail.description);
+                    if (resources.length === 0) return null;
+
+                    return (
+                      <div className="mt-4 p-4 bg-gradient-to-br from-indigo-50/80 to-purple-50/50 border border-indigo-100 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                              Mentorship Notes &amp; Classroom Links
+                            </h4>
+                          </div>
+                          <span className="text-[10px] font-bold text-indigo-700 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">
+                            {resources.length} Links Attached
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {resources.map((res, idx) => (
+                            <a
+                              key={idx}
+                              href={res.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between p-3 bg-white hover:bg-indigo-600 group border border-indigo-100/80 hover:border-indigo-600 rounded-xl transition-all shadow-xs cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2.5 overflow-hidden">
+                                <div className="w-8 h-8 rounded-lg bg-indigo-50 group-hover:bg-white/20 text-indigo-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                                  {res.type === "classroom" && <GraduationCap className="w-4 h-4" />}
+                                  {res.type === "drive" && <FileText className="w-4 h-4" />}
+                                  {res.type === "github" && <Share2 className="w-4 h-4" />}
+                                  {res.type === "meet" && <Video className="w-4 h-4" />}
+                                  {res.type !== "classroom" &&
+                                    res.type !== "drive" &&
+                                    res.type !== "github" &&
+                                    res.type !== "meet" && <ExternalLink className="w-4 h-4" />}
+                                </div>
+                                <div className="truncate">
+                                  <p className="text-xs font-bold text-slate-800 group-hover:text-white transition-colors truncate">
+                                    {res.label}
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 group-hover:text-indigo-100 transition-colors truncate">
+                                    {res.url}
+                                  </p>
+                                </div>
+                              </div>
+                              <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-white shrink-0 ml-2 transition-colors" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -994,15 +1096,65 @@ export default function Clubs() {
                 </select>
               </div>
 
-              {/* Description */}
+              {/* Description with Quick Resource Chips */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Mission &amp; Activities Description
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Mission &amp; Activities Description
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">Supports links</span>
+                </div>
+
+                {/* Quick Helper Chips for Alumni & Mentors */}
+                <div className="flex flex-wrap gap-1.5 pb-1">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDescription(
+                        (prev) =>
+                          prev +
+                          (prev ? "\n" : "") +
+                          "Google Classroom: https://classroom.google.com/c/your-code",
+                      )
+                    }
+                    className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors cursor-pointer border border-indigo-200/60 flex items-center gap-1"
+                  >
+                    + Google Classroom
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDescription(
+                        (prev) =>
+                          prev +
+                          (prev ? "\n" : "") +
+                          "Shared Notes & Drive: https://drive.google.com/drive/folders/your-folder",
+                      )
+                    }
+                    className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors cursor-pointer border border-emerald-200/60 flex items-center gap-1"
+                  >
+                    + Drive Notes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDescription(
+                        (prev) =>
+                          prev +
+                          (prev ? "\n" : "") +
+                          "GitHub Repository: https://github.com/organization/repo",
+                      )
+                    }
+                    className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer border border-slate-300/60 flex items-center gap-1"
+                  >
+                    + GitHub Repo
+                  </button>
+                </div>
+
                 <textarea
                   rows={4}
                   maxLength={2000}
-                  placeholder="Describe your alumni chapter or club's goals, meeting schedules, projects, and collaboration opportunities..."
+                  placeholder="Describe your alumni chapter or club's goals, meeting schedules, projects, and paste Google Classroom / Drive links..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-600 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/10 resize-none font-medium"
