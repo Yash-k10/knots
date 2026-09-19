@@ -34,6 +34,7 @@ import { apiRequest, getMediaUrl } from "../../services/api";
 import GlobalSearchBar from "./GlobalSearchBar";
 import KnotsLogo from "../common/KnotsLogo";
 import ThemeToggle from "../common/ThemeToggle";
+import { formatRoleLabel } from "../../utils/role";
 
 interface UserProfile {
   first_name?: string | null;
@@ -185,12 +186,6 @@ export default function DashboardLayout() {
   };
 
   const roleName = user?.role?.name?.toLowerCase().trim() || "";
-  const isAdmin =
-    user?.role_id === 1 ||
-    roleName === "admin" ||
-    roleName === "super admin" ||
-    roleName === "superadmin" ||
-    roleName === "central admin";
 
   const getRoleNavLinks = (): NavLinkItem[] => {
     const baseNotifications: NavLinkItem = {
@@ -392,13 +387,10 @@ export default function DashboardLayout() {
 
   const fullName =
     `${user?.profile?.first_name || ""} ${user?.profile?.last_name || ""}`.trim() ||
-    (user?.email ? user.email.split("@")[0] : "Student");
+    (user?.email ? user.email.split("@")[0] : "Campus Member");
   const avatarUrl = getMediaUrl(user?.profile?.profile_picture);
   const userInitial = fullName.charAt(0).toUpperCase();
-  const roleBadgeLabel =
-    roleName === "alumni"
-      ? "Alumni • SBJIT"
-      : user?.role?.name || (isAdmin ? "Admin" : "Student");
+  const roleBadgeLabel = formatRoleLabel(user);
 
   // Reusable Sidebar Navigation Content Component
   const renderSidebarLinks = (collapsedRail: boolean = false) => {

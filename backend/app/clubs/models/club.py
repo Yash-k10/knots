@@ -15,8 +15,12 @@ class Club(Base):
     conversation_id = Column(
         Integer, ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True
     )
+    head_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    co_head_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
     conversation = relationship("Conversation")
+    head = relationship("User", foreign_keys=[head_id])
+    co_head = relationship("User", foreign_keys=[co_head_id])
     members = relationship(
         "ClubMember", back_populates="club", cascade="all, delete-orphan"
     )

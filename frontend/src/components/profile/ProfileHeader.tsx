@@ -9,10 +9,12 @@ import {
   Sparkles,
   Loader2,
   Briefcase,
+  Shield,
 } from "lucide-react";
 import { ProfileResponse } from "../../services/profile";
 import { profileService } from "../../services/profile";
 import ProfilePictureUploader from "./ProfilePictureUploader";
+import { formatRoleLabel } from "../../utils/role";
 
 interface ProfileHeaderProps {
   profile: ProfileResponse;
@@ -446,6 +448,17 @@ export default function ProfileHeader({
               </h2>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-[#5851A4] text-sm">
+                {profile.role_name && (
+                  <span className="flex items-center gap-1.5 font-bold bg-[#4B63D2]/10 border border-[#4B63D2]/25 text-[#4B63D2] text-xs px-3 py-1 rounded-full shadow-xs">
+                    <Shield className="h-3.5 w-3.5 text-[#4B63D2]" />
+                    <span>
+                      {formatRoleLabel({
+                        role_name: profile.role_name,
+                        profile: { department: profile.department },
+                      })}
+                    </span>
+                  </span>
+                )}
                 {isAlumni ? (
                   <span className="flex items-center gap-1.5 font-black bg-gradient-to-r from-amber-500/15 to-purple-500/15 border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 text-xs px-3 py-1 rounded-full shadow-xs">
                     <span>🎓</span>

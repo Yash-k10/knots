@@ -18,11 +18,18 @@ import {
 } from "lucide-react";
 import { apiRequest, ApiError } from "../services/api";
 import { useTheme } from "../context/ThemeContext";
+import { formatRoleLabel } from "../utils/role";
 
 interface UserData {
   id: number;
   email: string;
   role_id: number;
+  role?: { id: number; name: string };
+  profile?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    department?: string | null;
+  } | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -242,23 +249,6 @@ export default function Settings() {
     setTimeout(() => setPrefSuccess(false), 3000);
   };
 
-  const getRoleName = (roleId?: number) => {
-    switch (roleId) {
-      case 1:
-        return "Admin";
-      case 2:
-        return "Student";
-      case 3:
-        return "Alumni";
-      case 4:
-        return "Recruiter";
-      case 5:
-        return "Faculty";
-      default:
-        return "User";
-    }
-  };
-
   // Password strength calculation
   const getPasswordStrength = (pwd: string) => {
     if (!pwd) return { level: 0, label: "", color: "" };
@@ -322,7 +312,7 @@ export default function Settings() {
             </p>
           </div>
           <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#C8B6E2]/25 text-[#5851A4] border border-[#C8B6E2] flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-[#4B63D2]" /> {getRoleName(user?.role_id)}
+            <User className="h-3.5 w-3.5 text-[#4B63D2]" /> {formatRoleLabel(user)}
           </span>
         </div>
 

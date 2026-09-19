@@ -31,7 +31,21 @@ async def create_club(
     """Create a new college club (current user automatically becomes LEADER)."""
     service = ClubService(db)
     club = await service.create_club(current_user.id, payload)
-    return APIResponse(message="Club created successfully", data=club)
+    loaded = await service.club_repo.get_with_details(club.id)
+    from app.clubs.services.club import _map_club_lead_user
+
+    res = ClubResponse(
+        id=club.id,
+        name=club.name,
+        description=club.description,
+        category=club.category,
+        creator_id=club.creator_id,
+        head_id=club.head_id,
+        co_head_id=club.co_head_id,
+        head=_map_club_lead_user(loaded.head if loaded else None),
+        co_head=_map_club_lead_user(loaded.co_head if loaded else None),
+    )
+    return APIResponse(message="Club created successfully", data=res)
 
 
 @router.get("", response_model=APIResponse[list[ClubResponse]])
@@ -78,7 +92,22 @@ async def update_club(
     """Update club details (LEADER only)."""
     service = ClubService(db)
     club = await service.update_club(club_id, current_user.id, payload)
-    return APIResponse(message="Club details updated successfully", data=club)
+    from app.clubs.repository.club import ClubRepository
+    from app.clubs.services.club import _map_club_lead_user
+
+    loaded = await ClubRepository(db).get_with_details(club.id)
+    res = ClubResponse(
+        id=club.id,
+        name=club.name,
+        description=club.description,
+        category=club.category,
+        creator_id=club.creator_id,
+        head_id=club.head_id,
+        co_head_id=club.co_head_id,
+        head=_map_club_lead_user(loaded.head if loaded else None),
+        co_head=_map_club_lead_user(loaded.co_head if loaded else None),
+    )
+    return APIResponse(message="Club details updated successfully", data=res)
 
 
 @router.delete("/{club_id}", response_model=APIResponse)

@@ -12,6 +12,7 @@ import {
 
 import KnotsLogo from "../common/KnotsLogo";
 import { apiRequest, getMediaUrl } from "../../services/api";
+import { formatRoleLabel } from "../../utils/role";
 
 interface UserProfileSummary {
   id: number;
@@ -69,7 +70,7 @@ export default function FeedNavbar() {
 
   const fullName =
     `${user?.profile?.first_name || ""} ${user?.profile?.last_name || ""}`.trim() ||
-    (user?.email ? user.email.split("@")[0] : "Student");
+    (user?.email ? user.email.split("@")[0] : "Campus Member");
   const avatarUrl = getMediaUrl(user?.profile?.profile_picture);
   const initial = fullName.charAt(0).toUpperCase();
 
@@ -130,7 +131,7 @@ export default function FeedNavbar() {
                 {fullName}
               </p>
               <p className="text-[10px] font-medium text-[#5851A4] truncate max-w-[120px]">
-                {user?.role?.name || "Student"}
+                {formatRoleLabel(user)}
               </p>
             </div>
 

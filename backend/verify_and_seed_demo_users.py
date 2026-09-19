@@ -30,6 +30,7 @@ async def seed_and_verify():
     for item in DEMO_USERS:
         clean_email = item["email"].strip().lower()
         role_name = item["role"]
+        item_password = item.get("password", password)
 
         async with SessionLocal() as db:
             try:
@@ -45,7 +46,7 @@ async def seed_and_verify():
                     print(f"[+] Creating {clean_email} ({role_name})")
                     user = User(
                         email=clean_email,
-                        hashed_password=hash_password(password),
+                        hashed_password=hash_password(item_password),
                         role_id=role_obj.id if role_obj else None,
                         is_active=True,
                         is_verified=True,
@@ -63,7 +64,7 @@ async def seed_and_verify():
                     db.add(profile)
                     await db.commit()
                 else:
-                    user.hashed_password = hash_password(password)
+                    user.hashed_password = hash_password(item_password)
                     user.role_id = role_obj.id if role_obj else user.role_id
                     user.is_active = True
                     user.is_verified = True
@@ -76,6 +77,7 @@ async def seed_and_verify():
     async with SessionLocal() as db:
         for item in DEMO_USERS:
             clean_email = item["email"].strip().lower()
+            item_password = item.get("password", password)
             stmt = (
                 select(User, Role)
                 .outerjoin(Role, User.role_id == Role.id)
@@ -85,7 +87,7 @@ async def seed_and_verify():
             row = res.first()
             if row:
                 u, r = row
-                pwd_ok = verify_password(password, u.hashed_password)
+                pwd_ok = verify_password(item_password, u.hashed_password)
                 role_str = r.name if r else "No Role"
                 print(
                     f"Verified: {u.email} | Role: {role_str} | Active: {u.is_active} | Verified: {u.is_verified} | Pwd Check: {'PASS' if pwd_ok else 'FAIL'}"

@@ -316,20 +316,103 @@ DEMO_USERS = [
         "department": "Computer Science",
     },
     {
-        "email": "controller.demo@sbjit.edu.in",
+        "email": "controller.fy@sbjit.edu.in",
         "role": "Controller",
-        "first_name": "Prof. Sanjay",
+        "first_name": "Prof. Snehal",
         "last_name": "Deshmukh",
-        "bio": "Department Controller overseeing applications pipeline, audit compliance, and campus event permissions.",
-        "department": "Administration",
+        "bio": "Department Controller overseeing First Year engineering curriculum, orientation, and student activities.",
+        "department": "First Year",
+        "password": "Password@123",
     },
     {
-        "email": "controller@sbjit.edu.in",
+        "email": "controller.cse@sbjit.edu.in",
         "role": "Controller",
         "first_name": "Prof. Sanjay",
         "last_name": "Deshmukh",
-        "bio": "Department Controller overseeing applications pipeline, audit compliance, and campus event permissions.",
-        "department": "Administration",
+        "bio": "Department Controller overseeing Computer Science & Engineering department approvals, clubs, and academic pipelines.",
+        "department": "CSE",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.aiml@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Amit",
+        "last_name": "Sharma",
+        "bio": "Department Controller overseeing AI & Machine Learning department events, student clubs, and industry collaborations.",
+        "department": "CSE(AIML)",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.aids@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Neha",
+        "last_name": "Gupta",
+        "bio": "Department Controller overseeing AI & Data Science activities, hackathons, and departmental permissions.",
+        "department": "CSE(AIDS)",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.it@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Rajesh",
+        "last_name": "Patel",
+        "bio": "Department Controller overseeing Information Technology departmental programs and student development.",
+        "department": "IT",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.etc@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Meera",
+        "last_name": "Kulkarni",
+        "bio": "Department Controller overseeing Electronics & Telecommunication Engineering departmental initiatives.",
+        "department": "ETC",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.ee@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Vivek",
+        "last_name": "Joshi",
+        "bio": "Department Controller overseeing Electrical Engineering student clubs, labs, and event management.",
+        "department": "EE",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.me@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Rahul",
+        "last_name": "Verma",
+        "bio": "Department Controller overseeing Mechanical Engineering student forums, projects, and departmental oversight.",
+        "department": "ME",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.bca@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Pooja",
+        "last_name": "Nair",
+        "bio": "Department Controller overseeing Bachelor of Computer Applications events, seminars, and student approvals.",
+        "department": "BCA",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.mca@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Anand",
+        "last_name": "Rao",
+        "bio": "Department Controller overseeing Master of Computer Applications workshops, hackathons, and activities.",
+        "department": "MCA",
+        "password": "Password@123",
+    },
+    {
+        "email": "controller.mba@sbjit.edu.in",
+        "role": "Controller",
+        "first_name": "Prof. Sunita",
+        "last_name": "Patil",
+        "bio": "Department Controller overseeing Master of Business Administration programs, conclaves, and corporate sessions.",
+        "department": "MBA",
+        "password": "Password@123",
     },
     {
         "email": "centraladmin.demo@sbjit.edu.in",
@@ -423,12 +506,13 @@ DEMO_USERS = [
 
 
 async def seed_demo_users():
-    print("Seeding pre-configured Demo Accounts for all 10 roles...")
-    password = "password123"
+    print("Seeding pre-configured Demo Accounts for all roles...")
+    default_password = "password123"
     async with SessionLocal() as db:
         for item in DEMO_USERS:
             clean_email = item["email"].strip().lower()
             role_name = item["role"]
+            user_password = item.get("password", default_password)
 
             role_stmt = select(Role).filter(Role.name == role_name)
             role_res = await db.execute(role_stmt)
@@ -450,7 +534,7 @@ async def seed_demo_users():
                 print(f"Creating demo user: {clean_email} ({role_name})...")
                 new_user = User(
                     email=clean_email,
-                    hashed_password=hash_password(password),
+                    hashed_password=hash_password(user_password),
                     role_id=role_obj.id,
                     is_active=True,
                     is_verified=True,
@@ -470,10 +554,10 @@ async def seed_demo_users():
                 existing_user.role_id = role_obj.id
                 existing_user.is_active = True
                 existing_user.is_verified = True
-                existing_user.hashed_password = hash_password(password)
+                existing_user.hashed_password = hash_password(user_password)
 
         await db.commit()
-    print("All 10 Demo Accounts seeded successfully.")
+    print("All Demo Accounts seeded successfully.")
 
 
 async def main():

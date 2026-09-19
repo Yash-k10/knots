@@ -46,11 +46,22 @@ export interface ClubMemberUser {
   user_role?: string | null;
 }
 
+export interface ClubLeadUser {
+  id: number;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  profile_picture?: string | null;
+  department?: string | null;
+  graduation_year?: number | null;
+  user_role?: string | null;
+}
+
 export interface ClubMemberResponse {
   id: number;
   club_id: number;
   user_id: number;
-  role: "PENDING" | "MEMBER" | "OFFICER" | "LEADER";
+  role: "PENDING" | "MEMBER" | "OFFICER" | "LEADER" | "HEAD" | "CO-HEAD";
   user?: ClubMemberUser | null;
 }
 
@@ -60,6 +71,10 @@ export interface ClubResponse {
   description?: string | null;
   category?: string | null;
   creator_id: number;
+  head_id?: number | null;
+  co_head_id?: number | null;
+  head?: ClubLeadUser | null;
+  co_head?: ClubLeadUser | null;
 }
 
 export interface ClubDetailResponse {
@@ -68,8 +83,12 @@ export interface ClubDetailResponse {
   description?: string | null;
   category?: string | null;
   creator_id: number;
+  head_id?: number | null;
+  co_head_id?: number | null;
+  head?: ClubLeadUser | null;
+  co_head?: ClubLeadUser | null;
   members_count: number;
-  user_role?: "PENDING" | "MEMBER" | "OFFICER" | "LEADER" | null;
+  user_role?: "PENDING" | "MEMBER" | "OFFICER" | "LEADER" | "HEAD" | "CO-HEAD" | null;
   members: ClubMemberResponse[];
 }
 
@@ -195,6 +214,8 @@ export default function Clubs() {
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     email: string;
+    department?: string;
+    profile?: { department?: string; graduation_year?: number };
     role?: { name: string };
   } | null>(null);
 
@@ -214,6 +235,11 @@ export default function Clubs() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  // Department students for appointing Club Head & Co-Head
+  const [departmentStudents, setDepartmentStudents] = useState<
+    { id: number; name: string; email: string; department?: string; graduation_year?: number }[]
+  >([]);
+
   // Modals
   const [showFormModal, setShowFormModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -222,11 +248,27 @@ export default function Clubs() {
   // Form Fields
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Computer Science & Engineering");
+  const [formHeadId, setFormHeadId] = useState<number | null>(null);
+  const [formCoHeadId, setFormCoHeadId] = useState<number | null>(null);
   const [formDescription, setFormDescription] = useState("");
   const [formClassroomCode, setFormClassroomCode] = useState("");
   const [formClassroomUrl, setFormClassroomUrl] = useState("");
   const [formMeetUrl, setFormMeetUrl] = useState("");
   const [formDriveUrl, setFormDriveUrl] = useState("");
+
+  const getControllerDefaultCategory = (user: any): string => {
+    const email = (user?.email || "").toLowerCase();
+    const profileDept = (user?.department || user?.profile?.department || "").toLowerCase();
+
+    if (email.includes("cse") || profileDept.includes("computer")) return "Computer Science & Engineering";
+    if (email.includes("aiml") || profileDept.includes("ai") || profileDept.includes("intelligence")) return "Computer Science & Engineering";
+    if (email.includes("it") || profileDept.includes("information")) return "Information Technology";
+    if (email.includes("mech") || profileDept.includes("mechanical")) return "Mechanical Engineering";
+    if (email.includes("ece") || profileDept.includes("electronics")) return "Electronics & Communication";
+    if (email.includes("ee") || profileDept.includes("electrical")) return "Electrical Engineering";
+    if (email.includes("civil") || profileDept.includes("civil")) return "Civil Engineering";
+    return "Computer Science & Engineering";
+  };
 
   const isControllerOrAdmin = useMemo(() => {
     const roleName = currentUser?.role?.name?.toLowerCase() || "";
@@ -293,6 +335,8 @@ export default function Clubs() {
       const userRes = await apiRequest<{
         id: number;
         email: string;
+        department?: string;
+        profile?: { department?: string; graduation_year?: number };
         role?: { name: string };
       }>("/users/me");
       setCurrentUser(userRes);
@@ -314,6 +358,23 @@ export default function Clubs() {
       });
 
       setClubs(mergedClubs);
+
+      // Fetch department students for appointing Head & Co-Head
+      const studentsData =
+        (await apiRequest<any[]>("/departments/students").catch(() => null)) ||
+        (await apiRequest<any[]>("/users?limit=100").catch(() => []));
+      if (Array.isArray(studentsData)) {
+        const cleanStudents = studentsData
+          .map((s) => ({
+            id: s.id,
+            name: `${s.first_name || ""} ${s.last_name || ""}`.trim() || s.email,
+            email: s.email,
+            department: s.department || s.profile?.department || "Engineering",
+            graduation_year: s.graduation_year || s.profile?.graduation_year,
+          }))
+          .filter((s) => s.name && !s.name.toLowerCase().includes("admin"));
+        setDepartmentStudents(cleanStudents);
+      }
 
       // If clubs exist, select the first one by default on desktop
       if (mergedClubs.length > 0 && selectedClubId === null) {
@@ -454,7 +515,9 @@ export default function Clubs() {
   const openCreateModal = () => {
     setIsEditing(false);
     setName("");
-    setCategory("Computer Science & Engineering");
+    setCategory(getControllerDefaultCategory(currentUser));
+    setFormHeadId(null);
+    setFormCoHeadId(null);
     setFormDescription("");
     setFormClassroomCode("");
     setFormClassroomUrl("");
@@ -468,7 +531,9 @@ export default function Clubs() {
     const parsed = parseClubDescription(clubDetail.description);
     setIsEditing(true);
     setName(clubDetail.name);
-    setCategory(clubDetail.category || "Computer Science & Engineering");
+    setCategory(clubDetail.category || getControllerDefaultCategory(currentUser));
+    setFormHeadId(clubDetail.head_id || null);
+    setFormCoHeadId(clubDetail.co_head_id || null);
     setFormDescription(parsed.cleanDescription);
     setFormClassroomCode(parsed.classroomCode || "");
     setFormClassroomUrl(parsed.classroomUrl || "");
@@ -486,6 +551,11 @@ export default function Clubs() {
       return;
     }
 
+    if (formHeadId && formCoHeadId && formHeadId === formCoHeadId) {
+      alert("Club Head and Club Co-Head cannot be the same student.");
+      return;
+    }
+
     setSubmittingForm(true);
 
     // Build structured description with classroom and links
@@ -500,6 +570,8 @@ export default function Clubs() {
       name: name.trim(),
       category: category.trim() || null,
       description: descParts.join("\n\n") || null,
+      head_id: formHeadId || null,
+      co_head_id: formCoHeadId || null,
     };
 
     try {
@@ -691,17 +763,15 @@ export default function Clubs() {
     if (!clubDetail) return false;
     if (isControllerOrAdmin) return true;
     if (clubDetail.creator_id === currentUser?.id) return true;
-    return clubDetail.user_role === "LEADER" || clubDetail.user_role === "OFFICER";
+    if (clubDetail.head_id && clubDetail.head_id === currentUser?.id) return true;
+    if (clubDetail.co_head_id && clubDetail.co_head_id === currentUser?.id) return true;
+    return ["LEADER", "OFFICER", "HEAD", "CO-HEAD"].includes(clubDetail.user_role || "");
   }, [clubDetail, currentUser, isControllerOrAdmin]);
 
   const isConfirmedMember = useMemo(() => {
     if (!clubDetail) return false;
     if (isLeaderOrController) return true;
-    return (
-      clubDetail.user_role === "MEMBER" ||
-      clubDetail.user_role === "OFFICER" ||
-      clubDetail.user_role === "LEADER"
-    );
+    return ["MEMBER", "OFFICER", "LEADER", "HEAD", "CO-HEAD"].includes(clubDetail.user_role || "");
   }, [clubDetail, isLeaderOrController]);
 
   const filteredActiveMembers = useMemo(() => {
@@ -742,6 +812,10 @@ export default function Clubs() {
 
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
+      case "HEAD":
+        return "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+      case "CO-HEAD":
+        return "bg-indigo-100 text-indigo-900 border-indigo-300 font-bold";
       case "LEADER":
         return "bg-amber-50 text-amber-800 border-amber-200";
       case "OFFICER":
@@ -974,6 +1048,33 @@ export default function Clubs() {
                     <h3 className="text-base font-black text-[#1E2746] group-hover:text-[#4B63D2] transition-colors">
                       {club.name}
                     </h3>
+
+                    {/* Appointed Leads Badges */}
+                    {(club.head || club.co_head) && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        {club.head && (
+                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 flex items-center gap-1">
+                            <Crown className="w-2.5 h-2.5 text-amber-600" />
+                            Head: {club.head.first_name || club.head.email.split("@")[0]}
+                          </span>
+                        )}
+                        {club.co_head && (
+                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-200 flex items-center gap-1">
+                            <Crown className="w-2.5 h-2.5 text-indigo-600" />
+                            Co-Head: {club.co_head.first_name || club.co_head.email.split("@")[0]}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Personal Role Tag if current user is Head or Co-Head */}
+                    {(currentUser?.id === club.head_id || currentUser?.id === club.co_head_id) && (
+                      <div className="mt-2 text-[10px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md inline-flex items-center gap-1">
+                        <Crown className="w-3 h-3 text-amber-600" />
+                        {currentUser?.id === club.head_id ? "🎖️ You are Club Head" : "🎖️ You are Club Co-Head"}
+                      </div>
+                    )}
+
                     <p className="text-[#5851A4] text-xs line-clamp-2 mt-1.5 leading-relaxed font-normal">
                       {parsed.cleanDescription || "No detailed description provided yet."}
                     </p>
@@ -1024,6 +1125,20 @@ export default function Clubs() {
                       {clubDetail.category || "General Department"}
                     </span>
 
+                    {(clubDetail.user_role === "HEAD" || currentUser?.id === clubDetail.head_id) && (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Crown className="w-3 h-3 text-amber-600" />
+                        🎖️ Club Head
+                      </span>
+                    )}
+
+                    {(clubDetail.user_role === "CO-HEAD" || currentUser?.id === clubDetail.co_head_id) && (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-900 border border-indigo-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Crown className="w-3 h-3 text-indigo-600" />
+                        🎖️ Club Co-Head
+                      </span>
+                    )}
+
                     {clubDetail.user_role === "MEMBER" && (
                       <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold uppercase tracking-wider flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -1038,10 +1153,17 @@ export default function Clubs() {
                       </span>
                     )}
 
-                    {(clubDetail.user_role === "LEADER" || isControllerOrAdmin) && (
+                    {clubDetail.user_role === "LEADER" && (
                       <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/30 font-bold uppercase tracking-wider flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-[#4B63D2]" />
-                        {isControllerOrAdmin ? "Department Overseer / HOD" : "Club Controller / Head"}
+                        Club Leader / Creator
+                      </span>
+                    )}
+
+                    {isControllerOrAdmin && clubDetail.user_role !== "LEADER" && (
+                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/30 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-[#4B63D2]" />
+                        Department Controller
                       </span>
                     )}
                   </div>
@@ -1107,6 +1229,27 @@ export default function Clubs() {
                     {parsedActiveClub.cleanDescription || "No detailed mission description available for this club."}
                   </p>
                 </div>
+
+                {/* Personal Role Banner for Appointed Head & Co-Head */}
+                {(currentUser?.id === clubDetail.head_id ||
+                  currentUser?.id === clubDetail.co_head_id ||
+                  clubDetail.user_role === "HEAD" ||
+                  clubDetail.user_role === "CO-HEAD") && (
+                  <div
+                    className={`p-3.5 rounded-2xl text-xs font-black flex items-center gap-2 border shadow-xs ${
+                      currentUser?.id === clubDetail.head_id || clubDetail.user_role === "HEAD"
+                        ? "bg-amber-500/15 border-amber-400/50 text-amber-950"
+                        : "bg-indigo-500/15 border-indigo-400/50 text-indigo-950"
+                    }`}
+                  >
+                    <Crown className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      {currentUser?.id === clubDetail.head_id || clubDetail.user_role === "HEAD"
+                        ? "🎖️ You are the appointed Club Head for this club (Authorized to accept/decline join requests)"
+                        : "🎖️ You are the appointed Club Co-Head for this club (Authorized to accept/decline join requests)"}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* ── Sub-navigation Tabs (Overview / Pending Requests / Members) ── */}
@@ -1337,7 +1480,7 @@ export default function Clubs() {
                     </div>
                   )}
 
-                  {/* 👑 Club Leadership & Mentors */}
+                  {/* 👑 Club Appointed Leads & Leadership */}
                   <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/40 rounded-3xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1346,17 +1489,109 @@ export default function Clubs() {
                         </div>
                         <div>
                           <h4 className="text-xs md:text-sm font-black text-amber-950">
-                            Department Leads &amp; Chapter Heads
+                            Appointed Student Leads &amp; Chapter Heads
                           </h4>
                           <p className="text-[11px] text-amber-800/80">
-                            Authorized leaders managing classroom materials and memberships
+                            Student Head &amp; Co-Head authorized to manage memberships and classroom resources
                           </p>
                         </div>
                       </div>
-                      <span className="text-[11px] font-bold text-amber-900 bg-white/80 px-2.5 py-0.5 rounded-full border border-amber-300">
-                        {clubLeaders.length + clubOfficers.length} Heads
-                      </span>
                     </div>
+
+                    {/* Prominent Appointed Student Leads (Head & Co-Head) */}
+                    {(clubDetail.head || clubDetail.co_head) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-amber-200/60">
+                        {clubDetail.head && (
+                          <div className="bg-white/95 backdrop-blur-sm border-2 border-amber-300/80 rounded-2xl p-3.5 shadow-sm flex items-start gap-3 relative group">
+                            <div className="relative shrink-0">
+                              {clubDetail.head.profile_picture ? (
+                                <img
+                                  src={getMediaUrl(clubDetail.head.profile_picture)}
+                                  alt="Club Head"
+                                  className="w-10 h-10 rounded-full object-cover border-2 border-amber-400"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                  {clubDetail.head.first_name ? clubDetail.head.first_name.charAt(0).toUpperCase() : "H"}
+                                </div>
+                              )}
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] bg-amber-600 text-white shadow-xs">
+                                <Crown className="w-2.5 h-2.5" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[9px] font-black uppercase text-amber-900 tracking-wider bg-amber-100 px-2 py-0.5 rounded-md inline-block mb-1">
+                                🎖️ Club Head
+                              </span>
+                              <Link
+                                to={`/profile/${clubDetail.head.id}`}
+                                className="text-xs font-black text-[#1E2746] hover:text-[#4B63D2] truncate block"
+                              >
+                                {`${clubDetail.head.first_name || ""} ${clubDetail.head.last_name || ""}`.trim() || clubDetail.head.email}
+                              </Link>
+                              <div className="text-[10px] text-[#5851A4] truncate">
+                                {clubDetail.head.department || "Student"} {clubDetail.head.graduation_year ? `• Class '${String(clubDetail.head.graduation_year).slice(-2)}` : ""}
+                              </div>
+                            </div>
+
+                            <Link
+                              to="/messaging"
+                              state={{ recipientId: clubDetail.head.id, recipientName: clubDetail.head.first_name || clubDetail.head.email }}
+                              className="text-[#5851A4] hover:text-[#4B63D2] hover:bg-[#FAF9FD] p-1.5 rounded-xl transition-colors shrink-0"
+                              title="Message Head"
+                            >
+                              <MessageSquare className="w-4 h-4 text-[#4B63D2]" />
+                            </Link>
+                          </div>
+                        )}
+
+                        {clubDetail.co_head && (
+                          <div className="bg-white/95 backdrop-blur-sm border-2 border-indigo-300/80 rounded-2xl p-3.5 shadow-sm flex items-start gap-3 relative group">
+                            <div className="relative shrink-0">
+                              {clubDetail.co_head.profile_picture ? (
+                                <img
+                                  src={getMediaUrl(clubDetail.co_head.profile_picture)}
+                                  alt="Club Co-Head"
+                                  className="w-10 h-10 rounded-full object-cover border-2 border-indigo-400"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-sm">
+                                  {clubDetail.co_head.first_name ? clubDetail.co_head.first_name.charAt(0).toUpperCase() : "C"}
+                                </div>
+                              )}
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] bg-indigo-600 text-white shadow-xs">
+                                <Crown className="w-2.5 h-2.5" />
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[9px] font-black uppercase text-indigo-900 tracking-wider bg-indigo-100 px-2 py-0.5 rounded-md inline-block mb-1">
+                                🎖️ Club Co-Head
+                              </span>
+                              <Link
+                                to={`/profile/${clubDetail.co_head.id}`}
+                                className="text-xs font-black text-[#1E2746] hover:text-[#4B63D2] truncate block"
+                              >
+                                {`${clubDetail.co_head.first_name || ""} ${clubDetail.co_head.last_name || ""}`.trim() || clubDetail.co_head.email}
+                              </Link>
+                              <div className="text-[10px] text-[#5851A4] truncate">
+                                {clubDetail.co_head.department || "Student"} {clubDetail.co_head.graduation_year ? `• Class '${String(clubDetail.co_head.graduation_year).slice(-2)}` : ""}
+                              </div>
+                            </div>
+
+                            <Link
+                              to="/messaging"
+                              state={{ recipientId: clubDetail.co_head.id, recipientName: clubDetail.co_head.first_name || clubDetail.co_head.email }}
+                              className="text-[#5851A4] hover:text-[#4B63D2] hover:bg-[#FAF9FD] p-1.5 rounded-xl transition-colors shrink-0"
+                              title="Message Co-Head"
+                            >
+                              <MessageSquare className="w-4 h-4 text-[#4B63D2]" />
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[...clubLeaders, ...clubOfficers].map((head) => {
@@ -1719,6 +1954,55 @@ export default function Clubs() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Appoint Student Leadership (Head & Co-Head) */}
+              <div className="bg-gradient-to-r from-[#FAF9FD] to-amber-50/50 p-4 rounded-2xl border border-amber-200 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-black text-[#1E2746]">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span>Appoint Student Club Leadership (Optional)</span>
+                </div>
+                <p className="text-[11px] text-[#5851A4]">
+                  Appointed students will receive <strong>Club Head</strong> and <strong>Club Co-Head</strong> leadership badges and authority to accept or decline student join requests.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-bold text-amber-900 mb-1">
+                      🎖️ Appoint Club Head (Student)
+                    </label>
+                    <select
+                      value={formHeadId || ""}
+                      onChange={(e) => setFormHeadId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full px-3.5 py-2 bg-white border border-amber-200 focus:border-amber-500 rounded-xl text-xs font-semibold text-[#1E2746] focus:outline-none"
+                    >
+                      <option value="">-- Select Student Head --</option>
+                      {departmentStudents.map((s) => (
+                        <option key={`head-${s.id}`} value={s.id} disabled={s.id === formCoHeadId}>
+                          {s.name} ({s.department || "Student"}{s.graduation_year ? ` '${String(s.graduation_year).slice(-2)}` : ""})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-indigo-900 mb-1">
+                      🎖️ Appoint Club Co-Head (Student)
+                    </label>
+                    <select
+                      value={formCoHeadId || ""}
+                      onChange={(e) => setFormCoHeadId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full px-3.5 py-2 bg-white border border-indigo-200 focus:border-indigo-500 rounded-xl text-xs font-semibold text-[#1E2746] focus:outline-none"
+                    >
+                      <option value="">-- Select Student Co-Head --</option>
+                      {departmentStudents.map((s) => (
+                        <option key={`cohead-${s.id}`} value={s.id} disabled={s.id === formHeadId}>
+                          {s.name} ({s.department || "Student"}{s.graduation_year ? ` '${String(s.graduation_year).slice(-2)}` : ""})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* Google Classroom Code & Invite Link Grid */}

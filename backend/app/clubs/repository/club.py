@@ -25,6 +25,10 @@ class ClubRepository(BaseRepository[Club]):
         result = await self.db.execute(
             select(Club)
             .options(
+                selectinload(Club.head).selectinload(User.profile),
+                selectinload(Club.head).selectinload(User.role),
+                selectinload(Club.co_head).selectinload(User.profile),
+                selectinload(Club.co_head).selectinload(User.role),
                 selectinload(Club.members)
                 .selectinload(ClubMember.user)
                 .selectinload(User.profile),
@@ -44,7 +48,12 @@ class ClubRepository(BaseRepository[Club]):
         limit: int = 20,
     ) -> list[Club]:
         """Fetch clubs matching optional category or search text."""
-        query = select(Club)
+        query = select(Club).options(
+            selectinload(Club.head).selectinload(User.profile),
+            selectinload(Club.head).selectinload(User.role),
+            selectinload(Club.co_head).selectinload(User.profile),
+            selectinload(Club.co_head).selectinload(User.role),
+        )
         if category:
             query = query.filter(Club.category == category)
         if search:
