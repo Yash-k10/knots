@@ -18,6 +18,7 @@ class JobPostingRepository(BaseRepository[JobPosting]):
             .options(
                 selectinload(JobPosting.company),
                 selectinload(JobPosting.posted_by).selectinload(User.profile),
+                selectinload(JobPosting.posted_by).selectinload(User.role),
                 selectinload(JobPosting.applications),
                 selectinload(JobPosting.referrals),
             )
@@ -39,6 +40,7 @@ class JobPostingRepository(BaseRepository[JobPosting]):
         stmt = select(JobPosting).options(
             selectinload(JobPosting.company),
             selectinload(JobPosting.posted_by).selectinload(User.profile),
+            selectinload(JobPosting.posted_by).selectinload(User.role),
         )
 
         filters = []

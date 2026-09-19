@@ -223,7 +223,11 @@ async def read_jobs(
 
     # Role-Based Access Control for Opportunities section
     role_name = getattr(current_user, "role", None)
-    role_str = role_name.name.lower().strip() if role_name else "student"
+    role_str = (
+        role_name.name.lower().strip()
+        if (role_name and getattr(role_name, "name", None))
+        else "student"
+    )
     is_admin = current_user.role_id == 1 or role_str in (
         "admin",
         "super admin",
@@ -232,7 +236,18 @@ async def read_jobs(
         "central admin",
     )
 
-    allowed_roles = ["controller", "tpo", "alumni", "student"]
+    allowed_roles = [
+        "controller",
+        "tpo",
+        "alumni",
+        "student",
+        "faculty",
+        "hod",
+        "recruiter",
+        "dean",
+        "principal",
+        "ceo",
+    ]
     if not is_admin and role_str not in allowed_roles:
         raise AuthorizationError(
             message="Your role is not authorized to access Opportunities."
@@ -255,11 +270,13 @@ async def read_jobs(
             poster = getattr(j, "posted_by", None)
             poster_role = (
                 poster.role.name.lower().strip()
-                if poster and getattr(poster, "role", None)
+                if (poster and getattr(poster, "role", None) and poster.role.name)
                 else ""
             )
             # If posted by a controller, it's specific to that controller's department
-            if poster_role == "controller":
+            if poster_role == "controller" or (
+                poster and getattr(poster, "role_id", None) == 8
+            ):
                 poster_dept = (
                     poster.profile.department.strip().lower()
                     if poster
