@@ -240,7 +240,7 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
     return () => {
       isMounted = false;
     };
-  }, [allowedRoles]);
+  }, [allowedRoles.join(",")]);
 
   if (isAuthorized === null) {
     return (
@@ -330,6 +330,7 @@ export default function AppRoutes() {
         <Route path="institution" element={<RoleAllowedRoute allowedRoles={["principal", "ceo"]}><InstitutionOverview /></RoleAllowedRoute>} />
         <Route path="academic-overview" element={<RoleAllowedRoute allowedRoles={["dean"]}><InstitutionOverview /></RoleAllowedRoute>} />
         <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo"]}><Jobs /></RoleAllowedRoute>} />
+        <Route path="opportunities" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo"]}><Jobs /></RoleAllowedRoute>} />
         <Route path="events" element={<Events />} />
         <Route path="clubs" element={<RoleAllowedRoute allowedRoles={["student", "controller", "central admin", "admin", "super admin", "management"]}><Clubs /></RoleAllowedRoute>} />
         <Route path="messaging" element={<Messaging />} />

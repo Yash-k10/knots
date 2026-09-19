@@ -349,7 +349,6 @@ export default function DashboardLayout() {
           { name: "Dashboard", path: "/", icon: LayoutDashboard, section: "main" },
           { name: "Feed", path: "/feed", icon: Rss, section: "main" },
           { name: "Ties", path: "/connections", icon: Users, section: "main" },
-          { name: "Opportunities", path: "/jobs", icon: Briefcase, section: "main" },
           baseEvents,
           baseMessages,
           baseNotifications,

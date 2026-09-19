@@ -1490,7 +1490,7 @@ export default function Jobs() {
             </div>
             <h3 className="text-xl font-bold text-[#1E2746]">Job Posting Restricted</h3>
             <p className="text-sm text-[#5851A4] font-medium max-w-md mx-auto leading-relaxed">
-              Job and internship opportunities can only be posted by verified <strong>Alumni</strong>, <strong>Faculty</strong>, and <strong>Administrators</strong>.
+              Job and internship opportunities can only be posted by authorized <strong>Controllers</strong>, <strong>TPO</strong>, <strong>Alumni</strong>, and <strong>Administrators</strong>.
             </p>
             <p className="text-xs text-[#9188BE] max-w-sm mx-auto">
               As a student, you can explore campus openings, submit direct applications, and request referrals from alumni!

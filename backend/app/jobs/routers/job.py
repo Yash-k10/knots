@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies.auth import RoleRequired, get_current_user
 from app.core.database import get_db
+from app.core.exceptions import AuthorizationError
 from app.core.response_models import APIResponse
 from app.jobs.models.enums import JobStatusEnum, JobTypeEnum, WorkplaceTypeEnum
 from app.jobs.schemas.application import (
@@ -220,27 +221,65 @@ async def read_jobs(
         limit=limit,
     )
 
-    # Filter out internships if not student
+    # Role-Based Access Control for Opportunities section
     role_name = getattr(current_user, "role", None)
     role_str = role_name.name.lower().strip() if role_name else "student"
+    is_admin = current_user.role_id == 1 or role_str in (
+        "admin",
+        "super admin",
+        "superadmin",
+        "management",
+        "central admin",
+    )
 
-    if role_str != "student":
-        jobs = [
-            j for j in jobs if getattr(j, "job_type", None) != JobTypeEnum.INTERNSHIP
-        ]
+    allowed_roles = ["controller", "tpo", "alumni", "student"]
+    if not is_admin and role_str not in allowed_roles:
+        raise AuthorizationError(
+            message="Your role is not authorized to access Opportunities."
+        )
 
-    if role_str == "controller":
+    # Departmental Opportunity Isolation:
+    # If a job was posted by a Controller, it is specific to that Controller's department.
+    # - If viewer is a Controller: they see their department's controller jobs + all campus-wide (TPO/Alumni/Admin) jobs.
+    # - If viewer is a Student: they see their department's controller jobs + all campus-wide (TPO/Alumni/Admin) jobs.
+    # - If viewer is TPO / Alumni / Admin: they see all opportunities.
+    if role_str in ("controller", "student"):
         user_dept = (
-            getattr(current_user.profile, "department", None)
+            current_user.profile.department.strip().lower()
             if getattr(current_user, "profile", None)
+            and current_user.profile.department
             else None
         )
-        jobs = [
-            j
-            for j in jobs
-            if getattr(j.posted_by, "profile", None)
-            and getattr(j.posted_by.profile, "department", None) == user_dept
-        ]
+        filtered_jobs = []
+        for j in jobs:
+            poster = getattr(j, "posted_by", None)
+            poster_role = (
+                poster.role.name.lower().strip()
+                if poster and getattr(poster, "role", None)
+                else ""
+            )
+            # If posted by a controller, it's specific to that controller's department
+            if poster_role == "controller":
+                poster_dept = (
+                    poster.profile.department.strip().lower()
+                    if poster
+                    and getattr(poster, "profile", None)
+                    and poster.profile.department
+                    else ""
+                )
+                if user_dept:
+                    if (
+                        poster_dept == user_dept
+                        or user_dept in poster_dept
+                        or poster_dept in user_dept
+                    ):
+                        filtered_jobs.append(j)
+                else:
+                    filtered_jobs.append(j)
+            else:
+                # Posted by TPO, Alumni, Admin, etc. -> campus-wide, available to all
+                filtered_jobs.append(j)
+        jobs = filtered_jobs
 
     return APIResponse(data=jobs)
 

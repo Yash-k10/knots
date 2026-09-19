@@ -164,6 +164,7 @@ export default function Feed() {
     currentUser?.role_id === 1 ||
     roleName === "admin" ||
     isSuperAdmin;
+  const isController = roleName === "controller" || isSuperAdminOrAdmin;
 
   // Create post states
   const [newPostContent, setNewPostContent] = useState("");
@@ -1195,142 +1196,144 @@ export default function Feed() {
             </div>
           </form>
 
-          {/* Department-wise Student Sorting Bar (HOD & Leadership Specification) */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4F7] pb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-1 rounded-lg">
-                  {selectedDeptFilter === "ALL"
-                    ? "All Departments Feed"
-                    : selectedDeptFilter === "OTHER"
-                    ? "Other Departments Feed"
-                    : `${selectedDeptFilter} Department Feed`}
-                </span>
-                <span className="text-xs font-bold text-[#1E2746]">
-                  {selectedDeptFilter === "ALL"
-                    ? "All Departments Student & Faculty Activity"
-                    : selectedDeptFilter === "OTHER"
-                    ? "Interdisciplinary & Other Department Activity"
-                    : `${selectedDeptFilter} Student & Faculty Activity`}
-                </span>
-              </div>
-              {selectedDeptFilter !== "ALL" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDeptFilter("ALL");
-                    setSelectedCohortFilter("ALL");
-                    setSelectedSectionFilter("ALL");
-                    setSelectedRoleFilter("ALL");
-                    setSelectedPostTypeFilter("ALL");
-                  }}
-                  className="text-[11px] text-[#4B63D2] hover:underline font-bold self-start sm:self-auto cursor-pointer"
-                >
-                  Reset to All Departments
-                </button>
-              )}
-            </div>
-
-            {/* Department Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
-              {[
-                { id: "ALL", label: "🌐 All Departments" },
-                { id: "CSE", label: "💻 CSE" },
-                { id: "AIML", label: "🤖 AIML" },
-                { id: "IT", label: "⚡ IT" },
-                { id: "ECE", label: "📡 ECE" },
-                { id: "OTHER", label: "🏛️ Other Departments" },
-              ].map((dept) => {
-                const isActive = selectedDeptFilter === dept.id;
-                return (
+          {/* Department-wise Student Sorting Bar (Only visible to Controller & Admin) */}
+          {isController && (
+            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4F7] pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-1 rounded-lg">
+                    {selectedDeptFilter === "ALL"
+                      ? "All Departments Feed"
+                      : selectedDeptFilter === "OTHER"
+                      ? "Other Departments Feed"
+                      : `${selectedDeptFilter} Department Feed`}
+                  </span>
+                  <span className="text-xs font-bold text-[#1E2746]">
+                    {selectedDeptFilter === "ALL"
+                      ? "All Departments Student & Faculty Activity"
+                      : selectedDeptFilter === "OTHER"
+                      ? "Interdisciplinary & Other Department Activity"
+                      : `${selectedDeptFilter} Student & Faculty Activity`}
+                  </span>
+                </div>
+                {selectedDeptFilter !== "ALL" && (
                   <button
-                    key={dept.id}
                     type="button"
-                    onClick={() => setSelectedDeptFilter(dept.id)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
-                      isActive
-                        ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
-                        : "bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:border-[#D5CBEE] hover:text-[#1E2746]"
-                    }`}
+                    onClick={() => {
+                      setSelectedDeptFilter("ALL");
+                      setSelectedCohortFilter("ALL");
+                      setSelectedSectionFilter("ALL");
+                      setSelectedRoleFilter("ALL");
+                      setSelectedPostTypeFilter("ALL");
+                    }}
+                    className="text-[11px] text-[#4B63D2] hover:underline font-bold self-start sm:self-auto cursor-pointer"
                   >
-                    {dept.label}
+                    Reset to All Departments
                   </button>
-                );
-              })}
+                )}
+              </div>
+
+              {/* Department Filter Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
+                {[
+                  { id: "ALL", label: "🌐 All Departments" },
+                  { id: "CSE", label: "💻 CSE" },
+                  { id: "AIML", label: "🤖 AIML" },
+                  { id: "IT", label: "⚡ IT" },
+                  { id: "ECE", label: "📡 ECE" },
+                  { id: "OTHER", label: "🏛️ Other Departments" },
+                ].map((dept) => {
+                  const isActive = selectedDeptFilter === dept.id;
+                  return (
+                    <button
+                      key={dept.id}
+                      type="button"
+                      onClick={() => setSelectedDeptFilter(dept.id)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                        isActive
+                          ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
+                          : "bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:border-[#D5CBEE] hover:text-[#1E2746]"
+                      }`}
+                    >
+                      {dept.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Additional Sub-Filters: Year, Section, Role, Post Type */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#FAF9FD] text-[11px]">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                    Academic Year:
+                  </span>
+                  <select
+                    value={selectedCohortFilter}
+                    onChange={(e) => setSelectedCohortFilter(e.target.value)}
+                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                  >
+                    <option value="ALL">All Years</option>
+                    <option value="First Year">First Year</option>
+                    <option value="Second Year">Second Year</option>
+                    <option value="Third Year">Third Year</option>
+                    <option value="Fourth Year">Final Year</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                    Section:
+                  </span>
+                  <select
+                    value={selectedSectionFilter}
+                    onChange={(e) => setSelectedSectionFilter(e.target.value)}
+                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                  >
+                    <option value="ALL">All Sections</option>
+                    <option value="Section A">Section A</option>
+                    <option value="Section B">Section B</option>
+                    <option value="Section C">Section C</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                    User Role:
+                  </span>
+                  <select
+                    value={selectedRoleFilter}
+                    onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                  >
+                    <option value="ALL">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="alumni">Alumni</option>
+                    <option value="admin">Management / Admin</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
+                    Post Type:
+                  </span>
+                  <select
+                    value={selectedPostTypeFilter}
+                    onChange={(e) => setSelectedPostTypeFilter(e.target.value)}
+                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
+                  >
+                    <option value="ALL">All Types</option>
+                    <option value="achievements">Achievements 🏆</option>
+                    <option value="opportunities">Opportunities 💼</option>
+                    <option value="projects">Projects 🚀</option>
+                    <option value="events">Events & Notices 📢</option>
+                    <option value="docs">PDF & Notes 📄</option>
+                    <option value="photos">Photos 📸</option>
+                  </select>
+                </div>
+              </div>
             </div>
-
-            {/* Additional Sub-Filters: Year, Section, Role, Post Type */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#FAF9FD] text-[11px]">
-              <div className="flex flex-col gap-1">
-                <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                  Academic Year:
-                </span>
-                <select
-                  value={selectedCohortFilter}
-                  onChange={(e) => setSelectedCohortFilter(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                >
-                  <option value="ALL">All Years</option>
-                  <option value="First Year">First Year</option>
-                  <option value="Second Year">Second Year</option>
-                  <option value="Third Year">Third Year</option>
-                  <option value="Fourth Year">Final Year</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                  Section:
-                </span>
-                <select
-                  value={selectedSectionFilter}
-                  onChange={(e) => setSelectedSectionFilter(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                >
-                  <option value="ALL">All Sections</option>
-                  <option value="Section A">Section A</option>
-                  <option value="Section B">Section B</option>
-                  <option value="Section C">Section C</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                  User Role:
-                </span>
-                <select
-                  value={selectedRoleFilter}
-                  onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                >
-                  <option value="ALL">All Roles</option>
-                  <option value="student">Student</option>
-                  <option value="faculty">Faculty</option>
-                  <option value="alumni">Alumni</option>
-                  <option value="admin">Management / Admin</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                  Post Type:
-                </span>
-                <select
-                  value={selectedPostTypeFilter}
-                  onChange={(e) => setSelectedPostTypeFilter(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                >
-                  <option value="ALL">All Types</option>
-                  <option value="achievements">Achievements 🏆</option>
-                  <option value="opportunities">Opportunities 💼</option>
-                  <option value="projects">Projects 🚀</option>
-                  <option value="events">Events & Notices 📢</option>
-                  <option value="docs">PDF & Notes 📄</option>
-                  <option value="photos">Photos 📸</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Feed Filter Chips Bar */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
