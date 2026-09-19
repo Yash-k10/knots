@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,15 +18,16 @@ from app.profiles.models.profile import Profile
 from app.users.models.role import Role
 from app.users.models.user import User
 
+_stats_cache: dict[str, Any] = {"data": None, "timestamp": 0.0}
+
 
 class AnalyticsRepository(BaseRepository[User]):
     def __init__(self, db: AsyncSession):
         super().__init__(User, db)
 
     async def get_system_stats(self) -> dict:
-        """Fetch actual database counts for users, connections, jobs, posts, events, clubs, likes, comments, and views."""
-        # 1. Total users (stealth: exclude Super Admin)
-        users_result = await self.db.execute(
+        """Fetch actual database counts for users, connections, jobs, posts, events, clubs, likes, comments, and views in a single database round-trip."""
+        stmt = select(
             select(func.count(User.id))
             .outerjoin(Role, User.role_id == Role.id)
             .where(
@@ -38,68 +40,56 @@ class AnalyticsRepository(BaseRepository[User]):
                     ),
                 )
             )
+            .scalar_subquery()
+            .label("total_users"),
+            select(func.count(Connection.id))
+            .where(Connection.status == ConnectionStatus.ACCEPTED)
+            .scalar_subquery()
+            .label("total_connections"),
+            select(func.count(JobPosting.id))
+            .where(JobPosting.status == JobStatusEnum.OPEN)
+            .scalar_subquery()
+            .label("total_jobs"),
+            select(func.count(Post.id)).scalar_subquery().label("total_posts"),
+            select(func.count(Event.id)).scalar_subquery().label("total_events"),
+            select(func.count(Club.id)).scalar_subquery().label("total_clubs"),
+            select(func.count(Like.id)).scalar_subquery().label("total_likes"),
+            select(func.count(Comment.id)).scalar_subquery().label("total_comments"),
+            select(func.count(PostEngagement.id))
+            .where(PostEngagement.engagement_type == "view")
+            .scalar_subquery()
+            .label("total_post_views"),
+            select(func.count(ProfileView.id))
+            .scalar_subquery()
+            .label("total_profile_views"),
         )
-        total_users = users_result.scalar() or 0
-
-        # 2. Total accepted connections
-        connections_result = await self.db.execute(
-            select(func.count(Connection.id)).where(
-                Connection.status == ConnectionStatus.ACCEPTED
-            )
-        )
-        total_connections = connections_result.scalar() or 0
-
-        # 3. Total jobs (open/active)
-        jobs_result = await self.db.execute(
-            select(func.count(JobPosting.id)).where(
-                JobPosting.status == JobStatusEnum.OPEN
-            )
-        )
-        total_jobs = jobs_result.scalar() or 0
-
-        # 4. Total posts
-        posts_result = await self.db.execute(select(func.count(Post.id)))
-        total_posts = posts_result.scalar() or 0
-
-        # 5. Total events
-        events_result = await self.db.execute(select(func.count(Event.id)))
-        total_events = events_result.scalar() or 0
-
-        # 6. Total clubs
-        clubs_result = await self.db.execute(select(func.count(Club.id)))
-        total_clubs = clubs_result.scalar() or 0
-
-        # 7. Total likes
-        likes_result = await self.db.execute(select(func.count(Like.id)))
-        total_likes = likes_result.scalar() or 0
-
-        # 8. Total comments
-        comments_result = await self.db.execute(select(func.count(Comment.id)))
-        total_comments = comments_result.scalar() or 0
-
-        # 9. Total post views
-        post_views_result = await self.db.execute(
-            select(func.count(PostEngagement.id)).where(
-                PostEngagement.engagement_type == "view"
-            )
-        )
-        total_post_views = post_views_result.scalar() or 0
-
-        # 10. Total profile views
-        profile_views_result = await self.db.execute(select(func.count(ProfileView.id)))
-        total_profile_views = profile_views_result.scalar() or 0
+        result = await self.db.execute(stmt)
+        row = result.first()
+        if row is None:
+            return {
+                "total_users": 0,
+                "total_connections": 0,
+                "total_jobs": 0,
+                "total_posts": 0,
+                "total_events": 0,
+                "total_clubs": 0,
+                "total_likes": 0,
+                "total_comments": 0,
+                "total_post_views": 0,
+                "total_profile_views": 0,
+            }
 
         return {
-            "total_users": total_users,
-            "total_connections": total_connections,
-            "total_jobs": total_jobs,
-            "total_posts": total_posts,
-            "total_events": total_events,
-            "total_clubs": total_clubs,
-            "total_likes": total_likes,
-            "total_comments": total_comments,
-            "total_post_views": total_post_views,
-            "total_profile_views": total_profile_views,
+            "total_users": row.total_users or 0,
+            "total_connections": row.total_connections or 0,
+            "total_jobs": row.total_jobs or 0,
+            "total_posts": row.total_posts or 0,
+            "total_events": row.total_events or 0,
+            "total_clubs": row.total_clubs or 0,
+            "total_likes": row.total_likes or 0,
+            "total_comments": row.total_comments or 0,
+            "total_post_views": row.total_post_views or 0,
+            "total_profile_views": row.total_profile_views or 0,
         }
 
     async def get_profile_views_history(self, profile_id: int, days: int = 7) -> list:

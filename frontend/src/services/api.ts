@@ -39,6 +39,24 @@ export class ApiError extends Error {
 // In-flight refresh promise to prevent duplicate refresh requests
 let refreshPromise: Promise<string | null> | null = null;
 
+// In-flight GET request deduplication to prevent duplicate concurrent network calls
+const inFlightRequests = new Map<string, Promise<any>>();
+
+// Micro-cache for frequently accessed identity/meta endpoints (TTL: 10 seconds)
+const apiCache = new Map<string, { data: any; expiry: number }>();
+
+export function clearApiCache(prefix?: string) {
+  if (!prefix) {
+    apiCache.clear();
+  } else {
+    for (const key of apiCache.keys()) {
+      if (key.startsWith(prefix)) {
+        apiCache.delete(key);
+      }
+    }
+  }
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = localStorage.getItem("knots_refresh_token");
   if (!refreshToken) {
@@ -55,6 +73,7 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!res.ok) {
       localStorage.removeItem("knots_token");
       localStorage.removeItem("knots_refresh_token");
+      clearApiCache();
       return null;
     }
 
@@ -70,6 +89,7 @@ async function refreshAccessToken(): Promise<string | null> {
   } catch {
     localStorage.removeItem("knots_token");
     localStorage.removeItem("knots_refresh_token");
+    clearApiCache();
     return null;
   }
 }
@@ -78,89 +98,141 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
-  const token = localStorage.getItem("knots_token");
-  const headers = new Headers(options?.headers);
+  const method = (options?.method || "GET").toUpperCase();
+  const isGet = method === "GET";
 
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
+  // Invalidate cache on mutations
+  if (!isGet) {
+    clearApiCache();
   }
 
-  if (!(options?.body instanceof FormData) && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  let response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  // Handle 401 Unauthorized by trying silent token refresh
-  if (
-    response.status === 401 &&
-    !endpoint.includes("/auth/login") &&
-    !endpoint.includes("/auth/refresh") &&
-    !endpoint.includes("/auth/register")
-  ) {
-    if (!refreshPromise) {
-      refreshPromise = refreshAccessToken().finally(() => {
-        refreshPromise = null;
-      });
+  // Check micro-cache for idempotent GET endpoints
+  const cacheKey = `${endpoint}`;
+  if (isGet) {
+    const cached = apiCache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.data as T;
     }
 
-    const newAccessToken = await refreshPromise;
-    if (newAccessToken) {
-      headers.set("Authorization", `Bearer ${newAccessToken}`);
-      response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
+    // Return in-flight promise if an identical GET is already resolving
+    const inFlight = inFlightRequests.get(cacheKey);
+    if (inFlight) {
+      return inFlight as Promise<T>;
+    }
+  }
+
+  const execRequest = async (): Promise<T> => {
+    const token = localStorage.getItem("knots_token");
+    const headers = new Headers(options?.headers);
+
+    if (token && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    if (!(options?.body instanceof FormData) && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    let response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    // Handle 401 Unauthorized by trying silent token refresh
+    if (
+      response.status === 401 &&
+      !endpoint.includes("/auth/login") &&
+      !endpoint.includes("/auth/refresh") &&
+      !endpoint.includes("/auth/register")
+    ) {
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+
+      const newAccessToken = await refreshPromise;
+      if (newAccessToken) {
+        headers.set("Authorization", `Bearer ${newAccessToken}`);
+        response = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers,
+        });
+      } else {
+        // Refresh failed or no refresh token - clear credentials and redirect to login
+        localStorage.removeItem("knots_token");
+        localStorage.removeItem("knots_refresh_token");
+        clearApiCache();
+        if (
+          window.location.pathname !== "/login" &&
+          window.location.pathname !== "/register"
+        ) {
+          window.location.href = "/login";
+        }
+      }
+    }
+
+    const contentType = response.headers.get("content-type");
+    let json: any = {};
+    if (contentType && contentType.includes("application/json")) {
+      json = await response.json();
     } else {
-      // Refresh failed or no refresh token - clear credentials and redirect to login
-      localStorage.removeItem("knots_token");
-      localStorage.removeItem("knots_refresh_token");
-      if (
-        window.location.pathname !== "/login" &&
-        window.location.pathname !== "/register"
-      ) {
-        window.location.href = "/login";
-      }
-    }
-  }
-
-  const contentType = response.headers.get("content-type");
-  let json: any = {};
-  if (contentType && contentType.includes("application/json")) {
-    json = await response.json();
-  } else {
-    const text = await response.text();
-    json = { success: response.ok, message: text };
-  }
-
-  if (!response.ok || json.success === false) {
-    let errorMessage =
-      json.error?.message ||
-      json.detail ||
-      json.message ||
-      "Something went wrong";
-    const errorCode = json.error?.code || "HTTP_ERROR";
-    const errorDetails = json.error?.details;
-
-    if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
-      const fieldErrors = errorDetails
-        .map((d: any) => {
-          if (typeof d === "string") return d;
-          if (d?.field && d?.message) return `${d.field}: ${d.message}`;
-          return d?.message || JSON.stringify(d);
-        })
-        .filter(Boolean)
-        .join("; ");
-      if (fieldErrors && (!errorMessage || errorMessage === "Input validation failed.")) {
-        errorMessage = fieldErrors;
-      }
+      const text = await response.text();
+      json = { success: response.ok, message: text };
     }
 
-    throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
+    if (!response.ok || json.success === false) {
+      let errorMessage =
+        json.error?.message ||
+        json.detail ||
+        json.message ||
+        "Something went wrong";
+      const errorCode = json.error?.code || "HTTP_ERROR";
+      const errorDetails = json.error?.details;
+
+      if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
+        const fieldErrors = errorDetails
+          .map((d: any) => {
+            if (typeof d === "string") return d;
+            if (d?.field && d?.message) return `${d.field}: ${d.message}`;
+            return d?.message || JSON.stringify(d);
+          })
+          .filter(Boolean)
+          .join("; ");
+        if (fieldErrors && (!errorMessage || errorMessage === "Input validation failed.")) {
+          errorMessage = fieldErrors;
+        }
+      }
+
+      throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
+    }
+
+    const result = json.data as T;
+
+    // Cache lightweight GET requests for 10 seconds
+    if (isGet) {
+      const cacheableEndpoints = [
+        "/users/me",
+        "/notifications/unread-count",
+        "/messages/unread/count",
+        "/analytics/stats",
+        "/analytics/platform/engagement-summary",
+      ];
+      if (cacheableEndpoints.some((ep) => endpoint.startsWith(ep))) {
+        apiCache.set(cacheKey, { data: result, expiry: Date.now() + 10000 });
+      }
+    }
+
+    return result;
+  };
+
+  if (isGet) {
+    const p = execRequest().finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
+    inFlightRequests.set(cacheKey, p);
+    return p;
   }
 
-  return json.data as T;
+  return execRequest();
 }
