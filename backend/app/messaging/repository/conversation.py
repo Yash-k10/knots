@@ -49,7 +49,11 @@ class ConversationRepository(BaseRepository[Conversation]):
 
         stmt = (
             select(self.model)
-            .options(selectinload(self.model.participants))
+            .options(
+                selectinload(self.model.participants)
+                .selectinload(ConversationParticipant.user)
+                .selectinload(User.role)
+            )
             .where(
                 and_(
                     self.model.is_group == False,

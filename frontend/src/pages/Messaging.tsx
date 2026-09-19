@@ -378,10 +378,15 @@ export default function Messaging() {
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const currentUserRef = useRef(currentUser);
+  const activeConvIdRef = useRef(activeConvId);
 
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
+
+  useEffect(() => {
+    activeConvIdRef.current = activeConvId;
+  }, [activeConvId]);
 
   // Close emoji picker on outside click
   useEffect(() => {
@@ -429,7 +434,7 @@ export default function Messaging() {
         status: "delivered",
       };
       setMessages((prevMsgs) => {
-        if (incoming.conversation_id === activeConvId) {
+        if (incoming.conversation_id === activeConvIdRef.current) {
           if (prevMsgs.some((m) => m.id === incoming.id)) {
             return prevMsgs;
           }
@@ -464,7 +469,7 @@ export default function Messaging() {
             const isFromOtherUser =
               currentUserRef.current?.id &&
               incoming.sender_id !== currentUserRef.current.id;
-            const isNotCurrentChat = conv.id !== activeConvId;
+            const isNotCurrentChat = conv.id !== activeConvIdRef.current;
 
             return {
               ...conv,
@@ -484,7 +489,7 @@ export default function Messaging() {
     });
 
     const unsubTyping = wsClient.onTyping(({ conversation_id, is_typing }) => {
-      if (conversation_id === activeConvId) {
+      if (conversation_id === activeConvIdRef.current) {
         setTypingUsers((prev) => ({ ...prev, [conversation_id]: is_typing }));
       }
     });
@@ -494,7 +499,7 @@ export default function Messaging() {
       unsubMessage();
       unsubTyping();
     };
-  }, [activeConvId]);
+  }, []);
 
   // Handle route state targetUserId (e.g. from profiles / directory)
   useEffect(() => {
@@ -787,9 +792,9 @@ export default function Messaging() {
         return [conv, ...prev];
       });
       selectConversation(conv.id);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to initiate direct conversation:", err);
-      alert("Could not start conversation. Please try again.");
+      alert(err.message || "Could not start conversation. Please try again.");
     }
   };
 

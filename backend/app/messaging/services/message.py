@@ -17,82 +17,35 @@ from app.messaging.schemas.message import (
 )
 
 COMMUNICATION_HIERARCHY: dict[str, set[str]] = {
-    "student": {"student", "students", "faculty", "alumni"},
-    "faculty": {"student", "students", "faculty", "hod", "controller", "alumni"},
-    "hod": {
-        "faculty",
-        "controller",
-        "alumni",
-        "tpo",
-        "dean",
-        "hod",
-        "student",
-        "students",
-    },
-    "controller": {"faculty", "hod", "alumni", "controller"},
-    "alumni": {"student", "students", "faculty", "controller", "tpo", "alumni"},
-    "tpo": {
-        "central admin",
-        "admin",
-        "super admin",
-        "superadmin",
-        "management",
-        "dean",
-        "principal",
-        "alumni",
-        "hod",
-    },
-    "dean": {"hod", "tpo", "principal", "ceo"},
-    "principal": {"tpo", "dean", "ceo"},
-    "ceo": {"principal"},
-    "central admin": {
-        "tpo",
-        "dean",
-        "principal",
-        "controller",
-        "hod",
-        "admin",
-        "super admin",
-        "superadmin",
-        "ceo",
-        "management",
-        "faculty",
-        "student",
-        "students",
-        "alumni",
-    },
-    "admin": {
-        "tpo",
-        "dean",
-        "principal",
-        "controller",
-        "hod",
-        "central admin",
-        "super admin",
-        "superadmin",
-        "ceo",
-        "management",
-        "faculty",
-        "student",
-        "students",
-        "alumni",
-    },
+    "student": {"*"},
+    "students": {"*"},
+    "faculty": {"*"},
+    "hod": {"*"},
+    "controller": {"*"},
+    "alumni": {"*"},
+    "tpo": {"*"},
+    "dean": {"*"},
+    "principal": {"*"},
+    "ceo": {"*"},
+    "central admin": {"*"},
+    "admin": {"*"},
     "super admin": {"*"},
     "superadmin": {"*"},
     "management": {"*"},
+    "recruiter": {"*"},
 }
 
 
 def validate_communication_hierarchy(
     sender_role: str | None, recipient_role: str | None
 ) -> bool:
-    """Validate if sender role is authorized to communicate with recipient role."""
+    """Validate if sender role is authorized to communicate with recipient role (open communication)."""
     if not sender_role or not recipient_role:
-        return False
+        return True
     s_role = sender_role.strip().lower()
     r_role = recipient_role.strip().lower()
 
-    allowed = COMMUNICATION_HIERARCHY.get(s_role, set())
+    allowed = COMMUNICATION_HIERARCHY.get(s_role, {"*"})
     if "*" in allowed:
         return True
     return r_role in allowed
