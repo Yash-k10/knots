@@ -31,6 +31,7 @@ class OpportunityRepository:
             select(Opportunity)
             .options(
                 selectinload(Opportunity.posted_by).selectinload(User.profile),
+                selectinload(Opportunity.posted_by).selectinload(User.role),
                 selectinload(Opportunity.applications)
                 .selectinload(OpportunityApplication.applicant)
                 .selectinload(User.profile),
@@ -53,6 +54,7 @@ class OpportunityRepository:
             select(Opportunity)
             .options(
                 selectinload(Opportunity.posted_by).selectinload(User.profile),
+                selectinload(Opportunity.posted_by).selectinload(User.role),
                 selectinload(Opportunity.applications)
                 .selectinload(OpportunityApplication.applicant)
                 .selectinload(User.profile),
@@ -93,6 +95,7 @@ class OpportunityRepository:
             select(Opportunity)
             .options(
                 selectinload(Opportunity.posted_by).selectinload(User.profile),
+                selectinload(Opportunity.posted_by).selectinload(User.role),
                 selectinload(Opportunity.applications)
                 .selectinload(OpportunityApplication.applicant)
                 .selectinload(User.profile),

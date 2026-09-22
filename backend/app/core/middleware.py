@@ -66,10 +66,16 @@ def register_middlewares(app: FastAPI):
     """Register all middlewares on the FastAPI application.
 
     Middleware execution order is bottom-to-top (last added runs first),
-    so RequestIDMiddleware is added last to run first and assign the ID
-    before the logging middleware reads it.
+    so CORSMiddleware is added last to run outermost and ensure that all
+    responses (including 4xx/5xx error responses) always have proper CORS headers.
     """
-    # CORS Middleware
+    # Audit & Process time logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
+
+    # Request ID middleware (assigns request ID before logging)
+    app.add_middleware(RequestIDMiddleware)
+
+    # CORS Middleware (outermost, added last to wrap all responses)
     origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
     app.add_middleware(
         CORSMiddleware,
@@ -79,9 +85,3 @@ def register_middlewares(app: FastAPI):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Audit & Process time logging middleware
-    app.add_middleware(RequestLoggingMiddleware)
-
-    # Request ID middleware (runs first due to LIFO ordering)
-    app.add_middleware(RequestIDMiddleware)

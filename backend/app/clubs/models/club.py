@@ -27,6 +27,7 @@ class Club(Base):
     )
 
     conversation = relationship("Conversation")
+    creator = relationship("User", foreign_keys=[creator_id])
     head = relationship("User", foreign_keys=[head_id])
     co_head = relationship("User", foreign_keys=[co_head_id])
     faculty_coordinator = relationship("User", foreign_keys=[faculty_coordinator_id])

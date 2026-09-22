@@ -22,10 +22,14 @@ class EventRepository(BaseRepository[Event]):
         result = await self.db.execute(
             select(Event)
             .options(
-                selectinload(Event.organizer),
+                selectinload(Event.organizer).selectinload(User.profile),
+                selectinload(Event.organizer).selectinload(User.role),
                 selectinload(Event.head).selectinload(User.profile),
+                selectinload(Event.head).selectinload(User.role),
                 selectinload(Event.co_head).selectinload(User.profile),
+                selectinload(Event.co_head).selectinload(User.role),
                 selectinload(Event.faculty_coordinator).selectinload(User.profile),
+                selectinload(Event.faculty_coordinator).selectinload(User.role),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -40,9 +44,13 @@ class EventRepository(BaseRepository[Event]):
             select(Event)
             .options(
                 selectinload(Event.organizer).selectinload(User.profile),
+                selectinload(Event.organizer).selectinload(User.role),
                 selectinload(Event.head).selectinload(User.profile),
+                selectinload(Event.head).selectinload(User.role),
                 selectinload(Event.co_head).selectinload(User.profile),
+                selectinload(Event.co_head).selectinload(User.role),
                 selectinload(Event.faculty_coordinator).selectinload(User.profile),
+                selectinload(Event.faculty_coordinator).selectinload(User.role),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -125,9 +133,13 @@ class EventRepository(BaseRepository[Event]):
         """Fetch all events with details under the specified filters."""
         query = select(Event).options(
             selectinload(Event.organizer).selectinload(User.profile),
+            selectinload(Event.organizer).selectinload(User.role),
             selectinload(Event.head).selectinload(User.profile),
+            selectinload(Event.head).selectinload(User.role),
             selectinload(Event.co_head).selectinload(User.profile),
+            selectinload(Event.co_head).selectinload(User.role),
             selectinload(Event.faculty_coordinator).selectinload(User.profile),
+            selectinload(Event.faculty_coordinator).selectinload(User.role),
             selectinload(Event.category),
             selectinload(Event.rsvps),
         )

@@ -70,6 +70,8 @@ export interface OpportunityFilters {
   department?: string;
   search?: string;
   skills?: string;
+  limit?: number;
+  skip?: number;
 }
 
 // ── API Functions ───────────────────────────────────────────────────────────
@@ -83,6 +85,8 @@ export async function fetchOpportunities(
   if (filters?.department) params.set("department", filters.department);
   if (filters?.search) params.set("search", filters.search);
   if (filters?.skills) params.set("skills", filters.skills);
+  if (filters?.limit) params.set("limit", filters.limit.toString());
+  if (filters?.skip) params.set("skip", filters.skip.toString());
   const qs = params.toString();
   return apiRequest<Opportunity[]>(`/opportunities${qs ? `?${qs}` : ""}`);
 }

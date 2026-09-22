@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
@@ -38,17 +40,44 @@ class OpportunityService:
 
     # ── Helpers ──────────────────────────────────────────────────────────────
 
-    @staticmethod
-    def _get_user_role(user: User) -> str:
-        if hasattr(user, "role") and user.role:
-            return user.role.name.lower().strip()
+    ROLE_ID_MAP = {
+        1: "super admin",
+        2: "admin",
+        3: "student",
+        4: "alumni",
+        5: "recruiter",
+        6: "faculty",
+        7: "management",
+        8: "controller",
+        9: "central admin",
+        10: "hod",
+        11: "tpo",
+        12: "dean",
+        13: "principal",
+        14: "ceo",
+    }
+
+    @classmethod
+    def _get_user_role(cls, user: User) -> str:
+        role_id = getattr(user, "role_id", None)
+        if role_id in cls.ROLE_ID_MAP:
+            return cls.ROLE_ID_MAP[role_id]
+        if "role" in user.__dict__ and user.__dict__["role"]:
+            return (
+                getattr(user.__dict__["role"], "name", "").lower().strip() or "student"
+            )
+        try:
+            if hasattr(user, "role") and user.role:
+                return user.role.name.lower().strip()
+        except Exception:
+            pass
         return "student"
 
-    @staticmethod
-    def _is_faculty_or_admin(user: User) -> bool:
-        if getattr(user, "role_id", None) in (1, 2, 9):
+    @classmethod
+    def _is_faculty_or_admin(cls, user: User) -> bool:
+        if getattr(user, "role_id", None) in (1, 2, 6, 8, 9, 10, 11):
             return True
-        role = OpportunityService._get_user_role(user)
+        role = cls._get_user_role(user)
         return (
             role
             in (
@@ -68,11 +97,11 @@ class OpportunityService:
             or "tpo" in role
         )
 
-    @staticmethod
-    def _is_admin(user: User) -> bool:
+    @classmethod
+    def _is_admin(cls, user: User) -> bool:
         if getattr(user, "role_id", None) in (1, 2, 9):
             return True
-        role = OpportunityService._get_user_role(user)
+        role = cls._get_user_role(user)
         return role in (
             "admin",
             "super admin",
@@ -83,10 +112,19 @@ class OpportunityService:
 
     def _build_opportunity_response(self, opp: Opportunity) -> OpportunityResponse:
         posted_by_name = None
+        posted_by_email = None
         posted_by_department = None
+        posted_by_role = None
         posted_by_avatar = None
 
         if opp.posted_by:
+            posted_by_email = opp.posted_by.email
+            role_obj = getattr(opp.posted_by, "role", None)
+            if role_obj:
+                posted_by_role = getattr(role_obj, "name", None)
+            elif getattr(opp.posted_by, "role_id", None):
+                posted_by_role = self.ROLE_ID_MAP.get(opp.posted_by.role_id)
+
             profile = getattr(opp.posted_by, "profile", None)
             if profile:
                 first = profile.first_name or ""
@@ -116,7 +154,9 @@ class OpportunityService:
             updated_at=opp.updated_at,
             applications_count=len(opp.applications) if opp.applications else 0,
             posted_by_name=posted_by_name,
+            posted_by_email=posted_by_email,
             posted_by_department=posted_by_department,
+            posted_by_role=posted_by_role,
             posted_by_avatar=posted_by_avatar,
         )
 
@@ -128,8 +168,6 @@ class OpportunityService:
         applicant_department = None
         applicant_skills = None
         applicant_avatar = None
-        opportunity_title = None
-        opportunity_type = None
 
         if app.applicant:
             applicant_email = app.applicant.email
@@ -143,10 +181,6 @@ class OpportunityService:
                 applicant_avatar = profile.profile_picture
             else:
                 applicant_name = app.applicant.email
-
-        if app.opportunity:
-            opportunity_title = app.opportunity.title
-            opportunity_type = app.opportunity.opportunity_type
 
         return OpportunityApplicationResponse(
             id=app.id,
@@ -162,8 +196,23 @@ class OpportunityService:
             applicant_department=applicant_department,
             applicant_skills=applicant_skills,
             applicant_avatar=applicant_avatar,
-            opportunity_title=opportunity_title,
-            opportunity_type=opportunity_type,
+            opportunity_title=app.opportunity.title if app.opportunity else None,
+            opportunity_type=(
+                app.opportunity.opportunity_type if app.opportunity else None
+            ),
+        )
+
+    def _build_student_search_result(self, profile) -> StudentSearchResult:
+        return StudentSearchResult(
+            id=profile.user_id,
+            email=profile.user.email if profile.user else "",
+            first_name=profile.first_name,
+            last_name=profile.last_name,
+            department=profile.department,
+            graduation_year=profile.graduation_year,
+            skills=profile.skills,
+            profile_picture=profile.profile_picture,
+            bio=profile.bio,
         )
 
     @staticmethod
@@ -216,6 +265,10 @@ class OpportunityService:
                 message="Only faculty and admins can create opportunities"
             )
 
+        deadline = data.application_deadline
+        if deadline and getattr(deadline, "tzinfo", None) is not None:
+            deadline = deadline.astimezone(timezone.utc).replace(tzinfo=None)
+
         opportunity = Opportunity(
             title=data.title,
             description=data.description,
@@ -226,7 +279,7 @@ class OpportunityService:
             stipend_or_salary=data.stipend_or_salary,
             duration=data.duration,
             max_applicants=data.max_applicants,
-            application_deadline=data.application_deadline,
+            application_deadline=deadline,
             form_link=data.form_link,
             posted_by_id=user.id,
         )
@@ -252,16 +305,73 @@ class OpportunityService:
         department: str | None = None,
         search: str | None = None,
         skills: list[str] | None = None,
+        current_user: User | None = None,
     ) -> list[OpportunityResponse]:
-        opps = await self.opp_repo.list_opportunities(
-            skip=skip,
-            limit=limit,
-            opportunity_type=opportunity_type,
-            status=status,
-            department=department,
-            search=search,
-            skills=skills,
-        )
+        target_dept = department
+        if not target_dept and current_user:
+            role = self._get_user_role(current_user)
+            if role == "controller":
+                target_dept = (
+                    getattr(getattr(current_user, "profile", None), "department", None)
+                    or ""
+                ).strip()
+
+        if target_dept:
+            opps = await self.opp_repo.list_opportunities(
+                skip=0,
+                limit=100,
+                opportunity_type=opportunity_type,
+                status=status,
+                department=None,
+                search=search,
+                skills=skills,
+            )
+            filtered = []
+            for o in opps:
+                poster_dept = (
+                    getattr(getattr(o.posted_by, "profile", None), "department", None)
+                    if getattr(o, "posted_by", None)
+                    else None
+                )
+                poster_role = (
+                    getattr(getattr(o.posted_by, "role", None), "name", "").lower()
+                    if getattr(o, "posted_by", None)
+                    else ""
+                )
+                # Match if opportunity is for this department
+                dept_match = bool(
+                    o.department and self._depts_match(target_dept, o.department)
+                )
+                # Match if posted by faculty, controller, alumni, or coordinator of this department
+                poster_match = bool(
+                    poster_dept and self._depts_match(target_dept, poster_dept)
+                )
+                # Campus-wide / TPO postings available to all
+                is_campus_wide = (
+                    not o.department
+                    or o.department
+                    in (
+                        "Central",
+                        "Campus-Wide",
+                        "All Departments",
+                        "Training & Placement Cell (TPO)",
+                    )
+                    or poster_role in ("tpo", "admin", "super admin")
+                )
+
+                if dept_match or poster_match or is_campus_wide:
+                    filtered.append(o)
+            opps = filtered[skip : skip + limit]
+        else:
+            opps = await self.opp_repo.list_opportunities(
+                skip=skip,
+                limit=limit,
+                opportunity_type=opportunity_type,
+                status=status,
+                department=department,
+                search=search,
+                skills=skills,
+            )
         return [self._build_opportunity_response(o) for o in opps]
 
     async def get_my_postings(self, user: User) -> list[OpportunityResponse]:
@@ -270,30 +380,42 @@ class OpportunityService:
             return [self._build_opportunity_response(o) for o in all_opps]
 
         role = self._get_user_role(user)
-        if role == "hod":
-            # For HOD, return opportunities relevant to HOD's department,
-            # with applications_count reflecting applicants from the HOD's department only.
-            hod_dept = (
+        if role in ("hod", "controller"):
+            # For HOD & Controller, return opportunities relevant to their department,
+            # or posted by faculty, controller, alumni of that department.
+            dept = (
                 user.profile.department if getattr(user, "profile", None) else None
             ) or ""
             all_opps = await self.opp_repo.list_opportunities(limit=100)
             result = []
             for opp in all_opps:
                 dept_match = (
-                    self._depts_match(hod_dept, opp.department)
-                    if opp.department
-                    else False
+                    self._depts_match(dept, opp.department) if opp.department else False
+                )
+                poster_dept = (
+                    getattr(getattr(opp.posted_by, "profile", None), "department", None)
+                    if getattr(opp, "posted_by", None)
+                    else None
+                )
+                poster_match = (
+                    self._depts_match(dept, poster_dept) if poster_dept else False
                 )
                 dept_apps = [
                     a
                     for a in (opp.applications or [])
                     if a.applicant
                     and getattr(a.applicant, "profile", None)
-                    and self._depts_match(hod_dept, a.applicant.profile.department)
+                    and self._depts_match(dept, a.applicant.profile.department)
                 ]
-                if dept_match or len(dept_apps) > 0:
+                if (
+                    dept_match
+                    or poster_match
+                    or len(dept_apps) > 0
+                    or opp.posted_by_id == user.id
+                ):
                     resp = self._build_opportunity_response(opp)
-                    resp.applications_count = len(dept_apps)
+                    if role == "hod":
+                        resp.applications_count = len(dept_apps)
                     result.append(resp)
             return result
 
@@ -316,6 +438,15 @@ class OpportunityService:
             )
 
         update_data = data.model_dump(exclude_unset=True)
+        if (
+            "application_deadline" in update_data
+            and update_data["application_deadline"]
+        ):
+            dl = update_data["application_deadline"]
+            if getattr(dl, "tzinfo", None) is not None:
+                update_data["application_deadline"] = dl.astimezone(
+                    timezone.utc
+                ).replace(tzinfo=None)
         for field, value in update_data.items():
             setattr(opp, field, value)
 

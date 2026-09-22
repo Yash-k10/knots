@@ -164,6 +164,7 @@ class ClubResponse(BaseModel):
     co_head_id: int | None = None
     faculty_coordinator_id: int | None = None
     alumni_mentor_id: int | None = None
+    creator: ClubLeadUser | None = None
     head: ClubLeadUser | None = None
     co_head: ClubLeadUser | None = None
     faculty_coordinator: ClubLeadUser | None = None
@@ -186,6 +187,7 @@ class ClubDetailResponse(BaseModel):
     co_head_id: int | None = None
     faculty_coordinator_id: int | None = None
     alumni_mentor_id: int | None = None
+    creator: ClubLeadUser | None = None
     head: ClubLeadUser | None = None
     co_head: ClubLeadUser | None = None
     faculty_coordinator: ClubLeadUser | None = None

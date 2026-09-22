@@ -21,7 +21,7 @@ class AuthRepository(BaseRepository[User]):
             )
         )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()
 
     async def get_by_email(self, email: str) -> User | None:
         """Fetch user by email (case-insensitive) with role and profile relationships loaded in a single JOIN."""
@@ -34,4 +34,4 @@ class AuthRepository(BaseRepository[User]):
             )
         )
         result = await self.db.execute(stmt)
-        return result.scalars().first()
+        return result.unique().scalars().first()

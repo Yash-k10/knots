@@ -64,6 +64,7 @@ async def list_opportunities(
         department=department,
         search=search,
         skills=skills_list,
+        current_user=current_user,
     )
     return APIResponse(data=results)
 

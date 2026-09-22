@@ -49,6 +49,10 @@ export interface JobPosting {
   created_at: string;
   updated_at: string;
   company?: Company;
+  is_faculty_opportunity?: boolean;
+  faculty_opportunity_id?: number;
+  faculty_opp_raw?: any;
+  department?: string;
 }
 
 export interface Application {

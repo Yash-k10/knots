@@ -137,6 +137,13 @@ export interface DepartmentEvent {
   registrationsCount: number;
   capacity: number;
   registrations: EventRegistration[];
+  organizerName?: string;
+  organizerEmail?: string;
+  organizerRole?: string;
+  organizerDepartment?: string;
+  facultyCoordinatorDepartment?: string;
+  headDepartment?: string;
+  coHeadDepartment?: string;
 }
 
 export interface DepartmentClub {
@@ -151,6 +158,14 @@ export interface DepartmentClub {
   membersCount: number;
   resourcesCount: number;
   galleryCount: number;
+  creatorName?: string;
+  creatorEmail?: string;
+  creatorRole?: string;
+  creatorDepartment?: string;
+  facultyMentorDepartment?: string;
+  alumniMentorDepartment?: string;
+  headDepartment?: string;
+  coHeadDepartment?: string;
 }
 
 export interface OpportunityApplicant {
@@ -174,6 +189,60 @@ export interface DepartmentOpportunity {
   deadline: string;
   applicantsCount: number;
   applicants: OpportunityApplicant[];
+  postedByName?: string;
+  postedByEmail?: string;
+  postedByRole?: string;
+  postedByDepartment?: string;
+}
+
+export function deptsMatch(userDept?: string | null, itemDept?: string | null): boolean {
+  if (!userDept || !itemDept) return false;
+  const u = userDept.toLowerCase().trim();
+  const i = itemDept.toLowerCase().trim();
+  if (u === i) return true;
+  if (["central", "central level", "campus-wide", "central club", "all departments", "all"].includes(i)) {
+    return true;
+  }
+  // Sub-department exact matching
+  if (u.includes("aiml") || u.includes("machine learning") || u.includes("ai & ml") || u.includes("ai and ml")) {
+    return i.includes("aiml") || i.includes("machine learning") || i.includes("ai & ml") || i.includes("ai and ml");
+  }
+  if (u.includes("aids") || u.includes("data science")) {
+    return i.includes("aids") || i.includes("data science");
+  }
+  // Plain CSE must NOT match AIML or AIDS
+  if (u === "cse" || u.includes("computer science")) {
+    return (
+      (i.includes("cse") || i.includes("computer science")) &&
+      !i.includes("aiml") &&
+      !i.includes("aids") &&
+      !i.includes("data science") &&
+      !i.includes("machine learning")
+    );
+  }
+  if (u === "it" || u.includes("information technology")) {
+    return i === "it" || i.includes("information technology");
+  }
+  if (u === "etc" || u === "ece" || (u.includes("electronics") && u.includes("telecommunication"))) {
+    return i === "etc" || i === "ece" || (i.includes("electronics") && i.includes("telecommunication"));
+  }
+  if (u === "ee" || u.includes("electrical")) {
+    return i === "ee" || i.includes("electrical");
+  }
+  if (u === "me" || u.includes("mechanical")) {
+    return i === "me" || i.includes("mechanical");
+  }
+  if (u === "civil" || u.includes("civil")) {
+    return i === "civil" || i.includes("civil");
+  }
+  if (u === "bca" || u.includes("bca")) return i.includes("bca");
+  if (u === "mca" || u.includes("mca")) return i.includes("mca");
+  if (u === "mba" || u.includes("mba")) return i.includes("mba");
+  if (u.includes("first") || u === "fy") return i.includes("first") || i.includes("fy");
+  if (u.includes("training") || u.includes("tpo") || u.includes("placement")) {
+    return i.includes("training") || i.includes("tpo") || i.includes("placement");
+  }
+  return u.includes(i) || i.includes(u);
 }
 
 export default function Controller() {
@@ -667,7 +736,7 @@ export default function Controller() {
     },
   ]);
 
-  const [opportunities] = useState<DepartmentOpportunity[]>([
+  const [opportunities, setOpportunities] = useState<DepartmentOpportunity[]>([
     {
       id: 601,
       title: "Computer Vision & Edge AI Research Intern",
@@ -823,6 +892,139 @@ export default function Controller() {
             });
           }
         }
+
+        // Fetch real department events
+        try {
+          const eventsResp = await apiRequest<any>("/events?limit=100");
+          const eventsList = Array.isArray(eventsResp) ? eventsResp : eventsResp?.items || [];
+          if (eventsList.length > 0) {
+            const mappedEvents: DepartmentEvent[] = eventsList.map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              department: e.department || e.organizer?.department || "Campus-Wide",
+              category: e.category || "General",
+              date: e.date || (e.start_time ? new Date(e.start_time).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "TBA"),
+              time: e.time || (e.start_time ? new Date(e.start_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "TBA"),
+              location: e.location || "Campus Venue",
+              headName: e.head ? `${e.head.first_name || ""} ${e.head.last_name || ""}`.trim() || e.head.email : "Student Lead",
+              coHeadName: e.co_head ? `${e.co_head.first_name || ""} ${e.co_head.last_name || ""}`.trim() || e.co_head.email : "Student Co-Lead",
+              facultyCoordinator: e.faculty_coordinator ? `${e.faculty_coordinator.first_name || ""} ${e.faculty_coordinator.last_name || ""}`.trim() || e.faculty_coordinator.email : "Faculty Lead",
+              registrationsCount: e.rsvp_count || e.rsvps_count || 0,
+              capacity: e.capacity || 100,
+              registrations: [],
+              organizerName: e.organizer ? `${e.organizer.first_name || ""} ${e.organizer.last_name || ""}`.trim() || e.organizer.email : undefined,
+              organizerEmail: e.organizer?.email,
+              organizerRole: e.organizer?.role_name,
+              organizerDepartment: e.organizer?.department,
+              facultyCoordinatorDepartment: e.faculty_coordinator?.department,
+              headDepartment: e.head?.department,
+              coHeadDepartment: e.co_head?.department,
+            }));
+            setEvents((prev) => {
+              const existingIds = new Set(prev.map((x) => x.id));
+              const additions = mappedEvents.filter((x) => !existingIds.has(x.id));
+              return [...prev, ...additions];
+            });
+          }
+        } catch (eErr) {
+          console.warn("Live events fetch fallback:", eErr);
+        }
+
+        // Fetch real department clubs
+        try {
+          const clubsResp = await apiRequest<any>("/clubs?skip=0&limit=100");
+          const clubsList = Array.isArray(clubsResp) ? clubsResp : clubsResp?.items || [];
+          if (clubsList.length > 0) {
+            const mappedClubs: DepartmentClub[] = clubsList.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              department: c.department || c.creator?.department || "Campus-Wide",
+              category: c.category || "General",
+              headName: c.lead_user ? `${c.lead_user.first_name || ""} ${c.lead_user.last_name || ""}`.trim() || c.lead_user.email : "Lead",
+              coHeadName: c.co_lead_user ? `${c.co_lead_user.first_name || ""} ${c.co_lead_user.last_name || ""}`.trim() || c.co_lead_user.email : "Co-Lead",
+              facultyMentor: c.faculty_mentor ? `${c.faculty_mentor.first_name || ""} ${c.faculty_mentor.last_name || ""}`.trim() || c.faculty_mentor.email : "Faculty Advisor",
+              alumniMentor: c.alumni_mentor ? `${c.alumni_mentor.first_name || ""} ${c.alumni_mentor.last_name || ""}`.trim() || c.alumni_mentor.email : "Alumni Mentor",
+              membersCount: c.members_count || 0,
+              resourcesCount: 0,
+              galleryCount: 0,
+              creatorName: c.creator ? `${c.creator.first_name || ""} ${c.creator.last_name || ""}`.trim() || c.creator.email : undefined,
+              creatorEmail: c.creator?.email,
+              creatorRole: c.creator?.role_name,
+              creatorDepartment: c.creator?.department,
+              facultyMentorDepartment: c.faculty_mentor?.department,
+              alumniMentorDepartment: c.alumni_mentor?.department,
+              headDepartment: c.lead_user?.department,
+              coHeadDepartment: c.co_lead_user?.department,
+            }));
+            setClubs((prev) => {
+              const existingIds = new Set(prev.map((x) => x.id));
+              const additions = mappedClubs.filter((x) => !existingIds.has(x.id));
+              return [...prev, ...additions];
+            });
+          }
+        } catch (cErr) {
+          console.warn("Live clubs fetch fallback:", cErr);
+        }
+
+        // Fetch real department opportunities
+        try {
+          const oppsResp = await apiRequest<any>("/opportunities?limit=100");
+          const oppsList = Array.isArray(oppsResp) ? oppsResp : oppsResp?.items || [];
+          if (oppsList.length > 0) {
+            const mappedOpps: DepartmentOpportunity[] = oppsList.map((o: any) => ({
+              id: o.id,
+              title: o.title,
+              department: o.department || o.posted_by_department || "Campus-Wide",
+              companyOrLab: o.company || "Campus Venture",
+              type: (o.type === "Internship" || o.type === "Research" || o.type === "Full-time") ? o.type : "Internship",
+              stipend: o.stipend || "Competitive",
+              deadline: o.deadline ? new Date(o.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Rolling",
+              applicantsCount: o.applicants_count || 0,
+              applicants: [],
+              postedByName: o.posted_by_name,
+              postedByEmail: o.posted_by_email,
+              postedByRole: o.posted_by_role,
+              postedByDepartment: o.posted_by_department,
+            }));
+            setOpportunities((prev) => {
+              const existingIds = new Set(prev.map((x) => x.id));
+              const additions = mappedOpps.filter((x) => !existingIds.has(x.id));
+              return [...prev, ...additions];
+            });
+          }
+        } catch (oErr) {
+          console.warn("Live opportunities fetch fallback:", oErr);
+        }
+
+        // Fetch real department jobs/placements if any
+        try {
+          const jobsResp = await apiRequest<any>("/jobs?limit=100");
+          const jobsList = Array.isArray(jobsResp) ? jobsResp : jobsResp?.items || [];
+          if (jobsList.length > 0) {
+            const mappedJobs: DepartmentOpportunity[] = jobsList.map((j: any) => ({
+              id: 10000 + j.id,
+              title: j.title,
+              department: j.department || j.poster?.department || "Training & Placement Cell (TPO)",
+              companyOrLab: j.company?.name || "Corporate Partner",
+              type: j.job_type === "INTERNSHIP" ? "Internship" : j.job_type === "RESEARCH" ? "Research" : "Full-time",
+              stipend: j.salary_min && j.salary_max ? `₹${j.salary_min.toLocaleString()} - ₹${j.salary_max.toLocaleString()}` : j.salary_max ? `₹${j.salary_max.toLocaleString()}` : "Competitive",
+              deadline: j.deadline ? new Date(j.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Open",
+              applicantsCount: j.applications_count || 0,
+              applicants: [],
+              postedByName: j.poster ? `${j.poster.first_name || ""} ${j.poster.last_name || ""}`.trim() || j.poster.email : undefined,
+              postedByEmail: j.poster?.email,
+              postedByRole: j.poster?.role_name,
+              postedByDepartment: j.poster?.department,
+            }));
+            setOpportunities((prev) => {
+              const existingIds = new Set(prev.map((x) => x.id));
+              const additions = mappedJobs.filter((x) => !existingIds.has(x.id));
+              return [...prev, ...additions];
+            });
+          }
+        } catch (jErr) {
+          // Ignored
+        }
       } catch (err) {
         // Fallback to rich pre-seeded department demo state
       }
@@ -857,17 +1059,43 @@ export default function Controller() {
   }, []);
 
   // Department / Unit matching helper
-  const matchScope = (itemDept?: string) => {
+  const targetScope = isCentralAdmin ? selectedScope : departmentName;
+
+  const matchScope = (itemDept?: string | null) => {
     if (!itemDept) return true;
-    if (!isCentralAdmin) {
-      const d = departmentName.toLowerCase().trim();
-      const id = itemDept.toLowerCase().trim();
-      return id.includes(d) || d.includes(id);
-    }
-    if (selectedScope === "ALL") return true;
-    const s = selectedScope.toLowerCase().trim();
-    const id = itemDept.toLowerCase().trim();
-    return id.includes(s) || s.includes(id);
+    if (isCentralAdmin && targetScope === "ALL") return true;
+    return deptsMatch(targetScope, itemDept);
+  };
+
+  const matchesEventScope = (evt: DepartmentEvent) => {
+    if (isCentralAdmin && targetScope === "ALL") return true;
+    return (
+      matchScope(evt.department) ||
+      matchScope(evt.organizerDepartment) ||
+      matchScope(evt.facultyCoordinatorDepartment) ||
+      matchScope(evt.headDepartment) ||
+      matchScope(evt.coHeadDepartment)
+    );
+  };
+
+  const matchesClubScope = (club: DepartmentClub) => {
+    if (isCentralAdmin && targetScope === "ALL") return true;
+    return (
+      matchScope(club.department) ||
+      matchScope(club.creatorDepartment) ||
+      matchScope(club.facultyMentorDepartment) ||
+      matchScope(club.alumniMentorDepartment) ||
+      matchScope(club.headDepartment) ||
+      matchScope(club.coHeadDepartment)
+    );
+  };
+
+  const matchesOpportunityScope = (opp: DepartmentOpportunity) => {
+    if (isCentralAdmin && targetScope === "ALL") return true;
+    return (
+      matchScope(opp.department) ||
+      matchScope(opp.postedByDepartment)
+    );
   };
 
   // Active Scope Label
@@ -1085,6 +1313,21 @@ export default function Controller() {
     showToast(`Club "${clb.name}" deleted successfully.`);
   };
 
+  const handleDeleteOpportunity = async (oppId: number) => {
+    const opp = opportunities.find((o) => o.id === oppId);
+    if (!opp) return;
+    if (!window.confirm(`Are you sure you want to delete opportunity "${opp.title}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await apiRequest(`/opportunities/${oppId}`, { method: "DELETE" });
+    } catch (err: any) {
+      console.warn("Opportunity delete notice:", err);
+    }
+    setOpportunities((prev) => prev.filter((o) => o.id !== oppId));
+    showToast(`Opportunity "${opp.title}" deleted successfully.`);
+  };
+
   // ── EXCEL EXPORTS ────────────────────────────────────────────────────────────
   const handleExportStudents = () => {
     const scopedStudents = students.filter((s) => matchScope(s.department));
@@ -1103,7 +1346,7 @@ export default function Controller() {
   };
 
   const handleExportEvents = () => {
-    const scopedEvents = events.filter((e) => matchScope(e.department));
+    const scopedEvents = events.filter(matchesEventScope);
     const headers = ["Event ID", "Event Title", "Department", "Category", "Scheduled Date", "Time", "Location", "Student Head", "Student Co-Head", "Coordinator", "Registrations", "Capacity"];
     const rows = scopedEvents.map((e) => [e.id, e.title, e.department, e.category, e.date, e.time, e.location, e.headName, e.coHeadName, e.facultyCoordinator, e.registrationsCount, e.capacity]);
     exportToCsv(`${currentScopeLabel.replace(/[^a-zA-Z0-9]/g, "_")}_Events_Summary_2026`, headers, rows);
@@ -1111,7 +1354,7 @@ export default function Controller() {
   };
 
   const handleExportOpportunities = () => {
-    const scopedOpps = opportunities.filter((o) => matchScope(o.department));
+    const scopedOpps = opportunities.filter(matchesOpportunityScope);
     const headers = ["Opportunity ID", "Role Title", "Department", "Company / Research Lab", "Opportunity Type", "Stipend / Package", "Deadline", "Total Applicants"];
     const rows = scopedOpps.map((o) => [o.id, o.title, o.department, o.companyOrLab, o.type, o.stipend, o.deadline, o.applicantsCount]);
     exportToCsv(`${currentScopeLabel.replace(/[^a-zA-Z0-9]/g, "_")}_Opportunities_Applications_2026`, headers, rows);
@@ -1143,17 +1386,17 @@ export default function Controller() {
     });
 
     // Events
-    events.filter((e) => matchScope(e.department)).forEach((e) => {
+    events.filter(matchesEventScope).forEach((e) => {
       rows.push(["EVENT", e.id, e.title, e.department, e.category, `Venue: ${e.location}`, `Coord: ${e.facultyCoordinator}`, `Registrations: ${e.registrationsCount}/${e.capacity}`]);
     });
 
     // Clubs
-    clubs.filter((c) => matchScope(c.department)).forEach((c) => {
+    clubs.filter(matchesClubScope).forEach((c) => {
       rows.push(["CLUB", c.id, c.name, c.department, c.category, `Mentor: ${c.facultyMentor}`, `Alumni: ${c.alumniMentor}`, `Members: ${c.membersCount}`]);
     });
 
     // Opportunities
-    opportunities.filter((o) => matchScope(o.department)).forEach((o) => {
+    opportunities.filter(matchesOpportunityScope).forEach((o) => {
       rows.push(["OPPORTUNITY", o.id, o.title, o.department, o.type, o.companyOrLab, `Stipend: ${o.stipend}`, `Applicants: ${o.applicantsCount}`]);
     });
 
@@ -1195,9 +1438,9 @@ export default function Controller() {
   });
 
   const visibleReportedPosts = reportedPosts.filter((r) => matchScope(r.department));
-  const visibleEvents = events.filter((e) => matchScope(e.department));
-  const visibleClubs = clubs.filter((c) => matchScope(c.department));
-  const visibleOpportunities = opportunities.filter((o) => matchScope(o.department));
+  const visibleEvents = events.filter(matchesEventScope);
+  const visibleClubs = clubs.filter(matchesClubScope);
+  const visibleOpportunities = opportunities.filter(matchesOpportunityScope);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -2038,7 +2281,23 @@ export default function Controller() {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-[#EAE4F7] dark:border-slate-800 space-y-1 text-xs">
+                  <div className="pt-2 border-t border-[#EAE4F7] dark:border-slate-800 space-y-1.5 text-xs">
+                    {evt.organizerName && (
+                      <div className="text-[11px] text-[#5851A4] flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">Posted by:</span>
+                        <span className="font-bold text-[#1E2746] dark:text-white">{evt.organizerName}</span>
+                        {evt.organizerRole && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+                            {evt.organizerRole}
+                          </span>
+                        )}
+                        {evt.organizerDepartment && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
+                            {evt.organizerDepartment}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="font-bold text-[#1E2746] dark:text-white">Appointed Leadership:</div>
                     <div className="text-[#5851A4] text-[11px]">
                       👑 Head: <strong className="text-[#1E2746] dark:text-slate-200">{evt.headName}</strong> • Co-Head: <strong className="text-[#1E2746] dark:text-slate-200">{evt.coHeadName}</strong>
@@ -2107,6 +2366,22 @@ export default function Controller() {
                 <h4 className="text-lg font-black text-[#1E2746] dark:text-white">{club.name}</h4>
 
                 <div className="space-y-2 text-xs pt-1 border-t border-[#EAE4F7] dark:border-slate-800">
+                  {club.creatorName && (
+                    <div className="text-[11px] text-[#5851A4] flex items-center gap-1.5 flex-wrap mb-1">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Created by:</span>
+                      <span className="font-bold text-[#1E2746] dark:text-white">{club.creatorName}</span>
+                      {club.creatorRole && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">
+                          {club.creatorRole}
+                        </span>
+                      )}
+                      {club.creatorDepartment && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
+                          {club.creatorDepartment}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="text-[11px] text-[#5851A4]">
                     👑 Student Head: <strong className="text-[#1E2746] dark:text-slate-200">{club.headName}</strong>
                   </div>
@@ -2187,9 +2462,26 @@ export default function Controller() {
                   <h4 className="text-lg font-black text-[#1E2746] dark:text-white">{opp.title}</h4>
                   <p className="text-xs font-bold text-[#5851A4]">{opp.companyOrLab}</p>
                   <p className="text-xs font-mono font-bold text-emerald-600">{opp.stipend}</p>
+
+                  {opp.postedByName && (
+                    <div className="text-[11px] text-[#5851A4] flex items-center gap-1.5 flex-wrap pt-2 border-t border-[#EAE4F7] dark:border-slate-800">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Posted by:</span>
+                      <span className="font-bold text-[#1E2746] dark:text-white">{opp.postedByName}</span>
+                      {opp.postedByRole && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">
+                          {opp.postedByRole}
+                        </span>
+                      )}
+                      {opp.postedByDepartment && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
+                          {opp.postedByDepartment}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                <div className="pt-3 border-t border-[#EAE4F7] dark:border-slate-800 flex items-center justify-between">
+                <div className="pt-3 border-t border-[#EAE4F7] dark:border-slate-800 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => setInspectOpportunityApplicants(opp)}
@@ -2199,7 +2491,18 @@ export default function Controller() {
                     <span>View Student Applicants ({opp.applicants.length})</span>
                   </button>
 
-                  <span className="text-xs font-bold text-[#5851A4]">{opp.applicantsCount} Total Applications</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#5851A4] hidden sm:inline">{opp.applicantsCount} Total Applications</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOpportunity(opp.id)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                      title={`Delete opportunity "${opp.title}"`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

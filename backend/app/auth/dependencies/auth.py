@@ -42,6 +42,24 @@ async def get_current_user(
     return user
 
 
+ROLE_ID_MAP = {
+    1: "super admin",
+    2: "admin",
+    3: "student",
+    4: "alumni",
+    5: "recruiter",
+    6: "faculty",
+    7: "management",
+    8: "controller",
+    9: "central admin",
+    10: "hod",
+    11: "tpo",
+    12: "dean",
+    13: "principal",
+    14: "ceo",
+}
+
+
 class RoleRequired:
     """Dependency checker for Role-Based Access Control."""
 
@@ -49,8 +67,17 @@ class RoleRequired:
         self.allowed_roles = allowed_roles
 
     def __call__(self, current_user: User = Depends(get_current_user)) -> User:
-        role_name = current_user.role.name if current_user.role else ""
         role_id = current_user.role_id
+        role_name = ""
+        if "role" in current_user.__dict__ and current_user.__dict__["role"]:
+            role_name = getattr(current_user.__dict__["role"], "name", "")
+        elif role_id in ROLE_ID_MAP:
+            role_name = ROLE_ID_MAP[role_id]
+        else:
+            try:
+                role_name = current_user.role.name if current_user.role else ""
+            except Exception:
+                pass
 
         if not role_name and role_id is None:
             raise AuthorizationError("User role not initialized")
@@ -86,17 +113,30 @@ class PermissionRequired:
         self.required_permission = required_permission
 
     def __call__(self, current_user: User = Depends(get_current_user)) -> User:
-        if not current_user.role:
-            raise AuthorizationError("User role permissions not initialized")
-        permissions = current_user.role.permissions or []
-        role_name = (current_user.role.name or "").lower().strip()
+        role = current_user.__dict__.get("role")
+        if not role:
+            try:
+                role = current_user.role
+            except Exception:
+                role = None
+        role_name = (getattr(role, "name", "") or "").lower().strip()
+        role_id = getattr(current_user, "role_id", None)
 
-        # Super Admin or universal wildcard '*' bypasses all granular permission checks
-        if (
-            "*" in permissions
-            or "superadmin_access" in permissions
-            or role_name in ("super admin", "superadmin")
+        # Super Admin or Central Admin bypasses all granular permission checks
+        if role_id in (1, 9) or role_name in (
+            "super admin",
+            "superadmin",
+            "central admin",
+            "central_admin",
         ):
+            return current_user
+
+        if not role:
+            raise AuthorizationError("User role permissions not initialized")
+        permissions = getattr(role, "permissions", None) or []
+
+        # Wildcard bypass
+        if "*" in permissions or "superadmin_access" in permissions:
             return current_user
 
         if self.required_permission not in permissions:

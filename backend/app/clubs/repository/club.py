@@ -54,6 +54,8 @@ class ClubRepository(BaseRepository[Club]):
     ) -> list[Club]:
         """Fetch clubs matching optional category or search text."""
         query = select(Club).options(
+            selectinload(Club.creator).selectinload(User.profile),
+            selectinload(Club.creator).selectinload(User.role),
             selectinload(Club.head).selectinload(User.profile),
             selectinload(Club.head).selectinload(User.role),
             selectinload(Club.co_head).selectinload(User.profile),

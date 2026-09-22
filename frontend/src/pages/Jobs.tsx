@@ -55,7 +55,9 @@ import {
 import {
   fetchOpportunities,
   applyToOpportunity,
+  fetchMyOpportunityApplications,
   Opportunity,
+  OpportunityApplication,
 } from "../services/opportunities";
 import { ApiError, apiRequest } from "../services/api";
 
@@ -89,7 +91,8 @@ export default function Jobs() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [applications, setApplications] = useState<ApplicationWithUpdates[]>([]);
   const [candidateApplications, setCandidateApplications] = useState<Application[]>([]);
-  const [researchCollaborations, setResearchCollaborations] = useState<Opportunity[]>([]);
+  const [facultyOpportunities, setFacultyOpportunities] = useState<Opportunity[]>([]);
+  const [selectedFacultyFilter, setSelectedFacultyFilter] = useState<"ALL" | "JOBS" | "RESEARCH" | "MENTORSHIP">("ALL");
   const [selectedResearchForApply, setSelectedResearchForApply] = useState<Opportunity | null>(null);
   const [researchApplyStatement, setResearchApplyStatement] = useState<string>("");
   const [submittingResearchApply, setSubmittingResearchApply] = useState<boolean>(false);
@@ -207,7 +210,7 @@ export default function Jobs() {
     return jobs.filter((job) => {
       if (selectedDepartmentFilter === "ALL") return true;
       const d = selectedDepartmentFilter.toLowerCase();
-      const content = `${job.title} ${job.description} ${(job.required_skills || []).join(" ")}`.toLowerCase();
+      const content = `${job.title} ${job.description} ${(job.required_skills || []).join(" ")} ${job.department || ""} ${job.company?.name || ""}`.toLowerCase();
       if (d === "cse(aiml)") {
         return content.includes("aiml") || content.includes("ai/ml") || content.includes("machine learning") || content.includes("artificial intelligence");
       }
@@ -611,7 +614,7 @@ export default function Jobs() {
     setLoading(true);
     setError(null);
     try {
-      const [fetchedJobs, fetchedCompanies, fetchedApps, userResp, fetchedResearch] =
+      const [fetchedJobs, fetchedCompanies, fetchedApps, userResp, fetchedOpps, fetchedFacultyApps] =
         await Promise.all([
           fetchJobs({
             search: searchQuery || undefined,
@@ -632,7 +635,8 @@ export default function Jobs() {
             role_id?: number;
             role?: { id: number; name: string };
           }>("/users/me").catch(() => null),
-          fetchOpportunities({ opportunity_type: "RESEARCH" }).catch(() => []),
+          fetchOpportunities({ limit: 100, search: searchQuery || undefined }).catch(() => []),
+          fetchMyOpportunityApplications().catch(() => []),
         ]);
 
       if (userResp) {
@@ -642,9 +646,47 @@ export default function Jobs() {
           setActiveTab("post");
         }
       }
-      setJobs(fetchedJobs);
+
+      const allFacultyOpps = fetchedOpps || [];
+      setFacultyOpportunities(allFacultyOpps);
+
+      const appliedIds = new Set<number>((fetchedFacultyApps || []).map((app: OpportunityApplication) => app.opportunity_id));
+      setAppliedResearchIds(appliedIds);
+
+      // Map faculty opportunities into unified JobPostings so they are immediately visible to students
+      const mappedFacultyJobs: JobPosting[] = allFacultyOpps.map((opp: Opportunity) => ({
+        id: -(opp.id + 100000),
+        title: opp.title,
+        description: opp.description,
+        company_id: -opp.id,
+        posted_by_id: opp.posted_by_id,
+        job_type: (opp.opportunity_type === "INTERNSHIP" ? "INTERNSHIP" : "FULL_TIME") as JobType,
+        workplace_type: "ON_SITE",
+        salary_range: opp.stipend_or_salary || (opp.opportunity_type === "RESEARCH" ? "Academic Project" : undefined),
+        location: opp.location || "Campus",
+        required_skills: opp.required_skills || [],
+        application_deadline: opp.application_deadline,
+        form_link: opp.form_link,
+        applications_count: opp.applications_count,
+        status: (opp.status === "OPEN" ? "OPEN" : "CLOSED") as any,
+        created_at: opp.created_at,
+        updated_at: opp.updated_at,
+        company: {
+          id: -opp.id,
+          name: opp.posted_by_name ? `Prof. ${opp.posted_by_name}` : "Campus Faculty",
+          industry: opp.department || "Academic Department",
+          location: opp.location || "Campus",
+          created_at: opp.created_at,
+          updated_at: opp.updated_at,
+        },
+        is_faculty_opportunity: true,
+        faculty_opportunity_id: opp.id,
+        faculty_opp_raw: opp,
+        department: opp.department,
+      }));
+
+      setJobs([...mappedFacultyJobs, ...(fetchedJobs || [])]);
       setCompanies(fetchedCompanies);
-      setResearchCollaborations(fetchedResearch || []);
 
       // Build authentic application lifecycle progression stages based strictly on real DB status
       const realApps: ApplicationWithUpdates[] = (fetchedApps || []).map(
@@ -707,7 +749,63 @@ export default function Jobs() {
         },
       );
 
-      setApplications(realApps);
+      const facultyRealApps: ApplicationWithUpdates[] = (fetchedFacultyApps || []).map((fApp: OpportunityApplication) => {
+        const normalizedStatus = (fApp.status || "APPLIED").toUpperCase();
+        return {
+          id: -(fApp.id + 100000),
+          job_posting_id: -(fApp.opportunity_id + 100000),
+          applicant_id: fApp.applicant_id,
+          resume_url: fApp.resume_url,
+          status: (normalizedStatus === "SHORTLISTED" ? "SHORTLISTED" : normalizedStatus === "ACCEPTED" ? "ACCEPTED" : normalizedStatus === "REJECTED" ? "REJECTED" : "APPLIED") as any,
+          applied_at: fApp.applied_at || new Date().toISOString(),
+          updated_at: fApp.updated_at || new Date().toISOString(),
+          job_posting: {
+            id: -(fApp.opportunity_id + 100000),
+            title: fApp.opportunity_title || "Faculty Opportunity",
+            description: "",
+            company_id: -fApp.opportunity_id,
+            posted_by_id: 0,
+            job_type: (fApp.opportunity_type === "INTERNSHIP" ? "INTERNSHIP" : "FULL_TIME") as any,
+            workplace_type: "ON_SITE",
+            status: "OPEN",
+            created_at: fApp.applied_at,
+            updated_at: fApp.updated_at,
+            company: {
+              id: -fApp.opportunity_id,
+              name: "Campus Faculty Department",
+              industry: "Academic Department",
+              created_at: "",
+              updated_at: "",
+            },
+            is_faculty_opportunity: true,
+            faculty_opportunity_id: fApp.opportunity_id,
+          },
+          updates: [
+            {
+              stage: "SUBMITTED",
+              updatedAt: fApp.applied_at || new Date().toISOString(),
+              note: `Submitted application to Faculty for ${fApp.opportunity_title || "opportunity"}.`,
+            },
+            ...(normalizedStatus === "SHORTLISTED" || normalizedStatus === "ACCEPTED" ? [{
+              stage: "REVIEW" as const,
+              updatedAt: fApp.updated_at || new Date().toISOString(),
+              note: "Shortlisted by Professor / Department review committee.",
+            }] : []),
+            ...(normalizedStatus === "ACCEPTED" ? [{
+              stage: "OFFER" as const,
+              updatedAt: fApp.updated_at || new Date().toISOString(),
+              note: "Accepted for faculty project/position!",
+            }] : []),
+            ...(normalizedStatus === "REJECTED" ? [{
+              stage: "REJECTED" as const,
+              updatedAt: fApp.updated_at || new Date().toISOString(),
+              note: "Application not selected for this position.",
+            }] : []),
+          ],
+        };
+      });
+
+      setApplications([...facultyRealApps, ...realApps]);
 
       // Fetch candidates for jobs posted by current user or all if admin
       if (userResp) {
@@ -995,16 +1093,14 @@ export default function Jobs() {
         message: researchApplyStatement.trim() || undefined,
       });
       setSuccessMsg(
-        `Join request for "${selectedResearchForApply.title}" successfully sent to faculty!`
+        `Application for "${selectedResearchForApply.title}" successfully sent to faculty!`
       );
       setAppliedResearchIds((prev) => new Set([...prev, selectedResearchForApply.id]));
       setSelectedResearchForApply(null);
       setResearchApplyStatement("");
-      // Refresh research
-      const updated = await fetchOpportunities({ opportunity_type: "RESEARCH" }).catch(() => []);
-      setResearchCollaborations(updated);
+      await loadData();
     } catch (err: any) {
-      setError(err.message || "Failed to submit research collaboration application.");
+      setError(err.message || "Failed to submit opportunity application.");
     } finally {
       setSubmittingResearchApply(false);
     }
@@ -1168,8 +1264,8 @@ export default function Jobs() {
                       : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
                   }`}
                 >
-                  <FlaskConical className="w-4 h-4 text-[#FFD21A]" />
-                  <span>Faculty Research ({researchCollaborations.length})</span>
+                  <GraduationCap className="w-4 h-4 text-[#FFD21A]" />
+                  <span>Faculty Opportunities ({facultyOpportunities.length})</span>
                 </button>
               )}
 
@@ -1362,9 +1458,16 @@ export default function Jobs() {
                     {/* Top Row: Job Type, Workplace Badges & Info Button */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20">
-                          {formatJobType(job.job_type)}
-                        </span>
+                        {job.is_faculty_opportunity ? (
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                            <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                            Faculty {job.faculty_opp_raw?.opportunity_type === "RESEARCH" ? "Research" : job.faculty_opp_raw?.opportunity_type === "INTERNSHIP" ? "Internship" : "Posting"}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#4B63D2]/10 text-[#4B63D2] border border-[#4B63D2]/20">
+                            {formatJobType(job.job_type)}
+                          </span>
+                        )}
                         <span
                           className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
                             job.workplace_type === "REMOTE"
@@ -1408,13 +1511,27 @@ export default function Jobs() {
                         {job.title}
                       </h3>
                       <p className="text-xs font-bold text-[#5851A4] flex items-center gap-1.5 mt-1">
-                        <Building className="w-3.5 h-3.5 text-[#4B63D2] shrink-0" />
-                        <span>{job.company?.name || "Verified Partner"}</span>
-                        {job.location && (
-                          <span className="text-[#9188BE] font-medium flex items-center gap-0.5">
-                            • <MapPin className="w-3 h-3 inline shrink-0" />
-                            {job.location}
-                          </span>
+                        {job.is_faculty_opportunity ? (
+                          <>
+                            <UserCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                            <span className="text-[#1E2746]">{job.company?.name || "Campus Faculty"}</span>
+                            {job.department && (
+                              <span className="text-[#5851A4] font-medium flex items-center gap-0.5">
+                                • {job.department}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <Building className="w-3.5 h-3.5 text-[#4B63D2] shrink-0" />
+                            <span>{job.company?.name || "Verified Partner"}</span>
+                            {job.location && (
+                              <span className="text-[#9188BE] font-medium flex items-center gap-0.5">
+                                • <MapPin className="w-3 h-3 inline shrink-0" />
+                                {job.location}
+                              </span>
+                            )}
+                          </>
                         )}
                       </p>
                     </div>
@@ -1511,6 +1628,28 @@ export default function Jobs() {
                             <Eye className="w-3.5 h-3.5 text-indigo-600" />
                             <span>Observer View</span>
                           </span>
+                        ) : job.is_faculty_opportunity ? (
+                          appliedResearchIds.has(job.faculty_opportunity_id || 0) ? (
+                            <div className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold text-center flex items-center justify-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              <span>Applied (Under Review)</span>
+                            </div>
+                          ) : canApplyJob ? (
+                            <button
+                              onClick={() => setSelectedResearchForApply(job.faculty_opp_raw)}
+                              className="w-full py-2.5 px-4 rounded-xl text-white text-xs sm:text-sm font-bold transition-all shadow-sm text-center cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-600/20"
+                            >
+                              <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                              <span>Apply to Faculty</span>
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="w-full py-2.5 px-4 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-[11px] font-bold text-center cursor-not-allowed"
+                            >
+                              View Only
+                            </button>
+                          )
                         ) : myAppliedJob ? (
                           <div className="w-full py-2.5 px-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold text-center flex items-center justify-center gap-1.5">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -3130,35 +3269,57 @@ export default function Jobs() {
                 Close
               </button>
               {canApplyJob && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const target = selectedJobDetails;
-                    setSelectedJobDetails(null);
-                    setSelectedJobForApply(target);
-                  }}
-                  className={`px-6 py-2 rounded-xl text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
-                    selectedJobDetails.form_link
-                      ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25"
-                      : "bg-[#4B63D2] hover:bg-[#3E53BE] shadow-[#4B63D2]/25"
-                  }`}
-                >
-                  {selectedJobDetails.form_link ? (
-                    <>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Apply via Form</span>
-                    </>
+                selectedJobDetails.is_faculty_opportunity ? (
+                  appliedResearchIds.has(selectedJobDetails.faculty_opportunity_id || 0) ? (
+                    <span className="px-5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Applied (Under Review)</span>
+                    </span>
                   ) : (
-                    <span>Apply Now</span>
-                  )}
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = selectedJobDetails;
+                        setSelectedJobDetails(null);
+                        setSelectedResearchForApply(target.faculty_opp_raw);
+                      }}
+                      className="px-6 py-2 rounded-xl text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-indigo-600/25"
+                    >
+                      <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                      <span>Apply to Faculty</span>
+                    </button>
+                  )
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedJobDetails;
+                      setSelectedJobDetails(null);
+                      setSelectedJobForApply(target);
+                    }}
+                    className={`px-6 py-2 rounded-xl text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                      selectedJobDetails.form_link
+                        ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25"
+                        : "bg-[#4B63D2] hover:bg-[#3E53BE] shadow-[#4B63D2]/25"
+                    }`}
+                  >
+                    {selectedJobDetails.form_link ? (
+                      <>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Apply via Form</span>
+                      </>
+                    ) : (
+                      <span>Apply Now</span>
+                    )}
+                  </button>
+                )
               )}
             </div>
           </div>
         </div>
       )}
       {/* ========================================================================= */}
-      {/* TAB 5: FACULTY RESEARCH COLLABORATIONS (Students can explore & apply)     */}
+      {/* TAB 5: FACULTY OPPORTUNITIES (Students can explore & apply)               */}
       {/* ========================================================================= */}
       {activeTab === "research" && !isFaculty && !isController && !isAlumni && (
         <div className="space-y-6">
@@ -3166,147 +3327,240 @@ export default function Jobs() {
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-md">
-                <FlaskConical className="w-3.5 h-3.5 text-[#FFD21A]" />
-                Campus Academic Nexus
+                <GraduationCap className="w-3.5 h-3.5 text-[#FFD21A]" />
+                Campus Academic & Research Nexus
               </span>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-                Faculty Research Papers & Collaborations
+                Faculty Postings, Internships & Research
               </h2>
               <p className="text-indigo-100 text-xs sm:text-sm max-w-2xl font-medium leading-relaxed">
-                Connect directly with professors and research faculty. Review ongoing research studies, required student skillsets, and submit collaboration applications to earn co-authorship and academic project experience.
+                Connect directly with professors and academic mentors. Explore department job openings, project internships, research studies, and faculty mentorships to accelerate your academic and professional profile.
               </p>
             </div>
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : researchCollaborations.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-[#EAE4F7] rounded-3xl p-8 space-y-3">
-              <FlaskConical className="w-12 h-12 text-indigo-400/40 mx-auto" />
-              <h3 className="text-base font-bold text-[#1E2746]">
-                No Research Collaborations Available
-              </h3>
-              <p className="text-xs text-[#5851A4] max-w-md mx-auto">
-                Faculty members have not posted any active research projects at the moment. Please check back later or reach out to your department coordinator.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {researchCollaborations.map((project) => {
-                const hasApplied = appliedResearchIds.has(project.id);
-                return (
-                  <div
-                    key={project.id}
-                    className="bg-white border border-[#EAE4F7] rounded-3xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all space-y-4"
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            <FlaskConical className="w-3 h-3" />
-                            Research Project
-                          </span>
-                          {project.posted_by_name && (
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-[#1E2746]">
-                              <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                              Prof. {project.posted_by_name}
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button
+              type="button"
+              onClick={() => setSelectedFacultyFilter("ALL")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedFacultyFilter === "ALL"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              All Opportunities ({facultyOpportunities.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFacultyFilter("JOBS")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedFacultyFilter === "JOBS"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              Jobs & Internships ({facultyOpportunities.filter(o => o.opportunity_type === "JOB" || o.opportunity_type === "INTERNSHIP").length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFacultyFilter("RESEARCH")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedFacultyFilter === "RESEARCH"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              Research Projects ({facultyOpportunities.filter(o => o.opportunity_type === "RESEARCH").length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedFacultyFilter("MENTORSHIP")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                selectedFacultyFilter === "MENTORSHIP"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD]"
+              }`}
+            >
+              Mentorship ({facultyOpportunities.filter(o => o.opportunity_type === "MENTORSHIP").length})
+            </button>
+          </div>
+
+          {(() => {
+            const displayedOpps = facultyOpportunities.filter((opp) => {
+              if (selectedFacultyFilter === "ALL") return true;
+              if (selectedFacultyFilter === "JOBS") return opp.opportunity_type === "JOB" || opp.opportunity_type === "INTERNSHIP";
+              if (selectedFacultyFilter === "RESEARCH") return opp.opportunity_type === "RESEARCH";
+              if (selectedFacultyFilter === "MENTORSHIP") return opp.opportunity_type === "MENTORSHIP";
+              return true;
+            });
+
+            if (loading) {
+              return (
+                <div className="flex items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              );
+            }
+
+            if (displayedOpps.length === 0) {
+              return (
+                <div className="text-center py-16 bg-white border border-[#EAE4F7] rounded-3xl p-8 space-y-3">
+                  <GraduationCap className="w-12 h-12 text-indigo-400/40 mx-auto" />
+                  <h3 className="text-base font-bold text-[#1E2746]">
+                    No Faculty Postings Found
+                  </h3>
+                  <p className="text-xs text-[#5851A4] max-w-md mx-auto">
+                    There are no faculty opportunities posted in this category at the moment. Please check back later or select another filter tab.
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid gap-4">
+                {displayedOpps.map((project) => {
+                  const hasApplied = appliedResearchIds.has(project.id);
+                  return (
+                    <div
+                      key={project.id}
+                      className="bg-white border border-[#EAE4F7] rounded-3xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all space-y-4"
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div className="space-y-1.5 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black border ${
+                              project.opportunity_type === "JOB"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : project.opportunity_type === "INTERNSHIP"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : project.opportunity_type === "MENTORSHIP"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-indigo-50 text-indigo-700 border-indigo-200"
+                            }`}>
+                              {project.opportunity_type === "JOB" ? (
+                                <>
+                                  <Briefcase className="w-3 h-3" />
+                                  Faculty Job Opening
+                                </>
+                              ) : project.opportunity_type === "INTERNSHIP" ? (
+                                <>
+                                  <GraduationCap className="w-3 h-3" />
+                                  Faculty Internship
+                                </>
+                              ) : project.opportunity_type === "MENTORSHIP" ? (
+                                <>
+                                  <UserCheck className="w-3 h-3" />
+                                  Mentorship Opportunity
+                                </>
+                              ) : (
+                                <>
+                                  <FlaskConical className="w-3 h-3" />
+                                  Research Project
+                                </>
+                              )}
                             </span>
-                          )}
-                          {project.department && (
-                            <span className="text-xs text-[#5851A4]">
-                              • {project.department}
-                            </span>
-                          )}
+                            {project.posted_by_name && (
+                              <span className="inline-flex items-center gap-1 text-xs font-bold text-[#1E2746]">
+                                <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+                                Prof. {project.posted_by_name}
+                              </span>
+                            )}
+                            {project.department && (
+                              <span className="text-xs text-[#5851A4]">
+                                • {project.department}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-lg font-black text-[#1E2746]">
+                            {project.title}
+                          </h3>
                         </div>
 
-                        <h3 className="text-lg font-black text-[#1E2746]">
-                          {project.title}
-                        </h3>
-                      </div>
-
-                      {hasApplied ? (
-                        <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold shrink-0">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          Join Request Sent
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedResearchForApply(project)}
-                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
-                        >
-                          <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
-                          Request to Join
-                        </button>
-                      )}
-                    </div>
-
-                    <p className="text-sm text-[#5851A4] whitespace-pre-line leading-relaxed">
-                      {project.description}
-                    </p>
-
-                    {/* Metadata */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#5851A4] pt-1">
-                      {project.stipend_or_salary && (
-                        <span className="font-bold text-indigo-700">
-                          🏆 {project.stipend_or_salary}
-                        </span>
-                      )}
-                      {project.duration && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          Duration: {project.duration}
-                        </span>
-                      )}
-                      {project.application_deadline && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          Deadline: {new Date(project.application_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Required Skills */}
-                    {project.required_skills && project.required_skills.length > 0 && (
-                      <div className="pt-2 border-t border-[#EAE4F7] flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-bold text-[#5851A4] mr-1">
-                          Prerequisites & Skills:
-                        </span>
-                        {project.required_skills.map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-0.5 bg-indigo-50/70 border border-indigo-100 rounded-lg text-[10px] font-bold text-indigo-800"
-                          >
-                            {skill}
+                        {hasApplied ? (
+                          <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold shrink-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            Application Submitted
                           </span>
-                        ))}
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedResearchForApply(project)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                          >
+                            <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                            {project.opportunity_type === "RESEARCH" ? "Request to Join" : "Apply Now"}
+                          </button>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+
+                      <p className="text-sm text-[#5851A4] whitespace-pre-line leading-relaxed">
+                        {project.description}
+                      </p>
+
+                      {/* Metadata */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#5851A4] pt-1">
+                        {project.stipend_or_salary && (
+                          <span className="font-bold text-indigo-700">
+                            🏆 {project.stipend_or_salary}
+                          </span>
+                        )}
+                        {project.duration && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            Duration: {project.duration}
+                          </span>
+                        )}
+                        {project.application_deadline && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            Deadline: {new Date(project.application_deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Required Skills */}
+                      {project.required_skills && project.required_skills.length > 0 && (
+                        <div className="pt-2 border-t border-[#EAE4F7] flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-[#5851A4] mr-1">
+                            Prerequisites & Skills:
+                          </span>
+                          {project.required_skills.map((skill, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-0.5 bg-indigo-50/70 border border-indigo-100 rounded-lg text-[10px] font-bold text-indigo-800"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
-      {/* ── Research Application Modal ────────────────────────────────────── */}
+      {/* ── Faculty Opportunity / Research Application Modal ────────────────────────────────────── */}
       {selectedResearchForApply && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-start gap-4 border-b border-[#EAE4F7] pb-4">
               <div>
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full mb-1">
-                  Request to Join Faculty Research
+                  Apply for Faculty {selectedResearchForApply.opportunity_type || "Opportunity"}
                 </span>
                 <h3 className="text-base font-black text-[#1E2746]">
                   {selectedResearchForApply.title}
                 </h3>
                 {selectedResearchForApply.posted_by_name && (
                   <p className="text-xs text-[#5851A4] mt-0.5">
-                    Faculty Lead: Prof. {selectedResearchForApply.posted_by_name} ({selectedResearchForApply.department || "Department Faculty"})
+                    Faculty Lead: Prof. {selectedResearchForApply.posted_by_name} ({selectedResearchForApply.department || "Academic Faculty"})
                   </p>
                 )}
               </div>
@@ -3322,14 +3576,14 @@ export default function Jobs() {
             <form onSubmit={handleApplyResearch} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-[#5851A4] mb-1.5 block">
-                  Statement of Interest & Relevant Background *
+                  Statement of Interest & Relevant Qualifications *
                 </label>
                 <textarea
                   value={researchApplyStatement}
                   onChange={(e) => setResearchApplyStatement(e.target.value)}
                   required
                   rows={4}
-                  placeholder="Introduce yourself, mention relevant coursework or projects, technical skills (e.g. Python, ML), and why you want to collaborate on this research..."
+                  placeholder="Introduce yourself, mention your branch/year, CGPA or relevant coursework, projects, technical skills, and why you are interested in this position..."
                   className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 resize-none leading-relaxed"
                 />
               </div>
@@ -3350,12 +3604,12 @@ export default function Jobs() {
                   {submittingResearchApply ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Sending Request...
+                      Submitting Application...
                     </>
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
-                      Send Join Request
+                      Submit Application
                     </>
                   )}
                 </button>

@@ -47,57 +47,72 @@ def _map_club_lead_user(user: User | None) -> ClubLeadUser | None:
     )
 
 
-def _depts_match(user_dept: str, club_cat: str) -> bool:
+def _depts_match(user_dept: str | None, club_cat: str | None) -> bool:
     """Exact canonical department matching so that CSE(AIML) never matches plain CSE, etc."""
-    u = user_dept.lower().strip()
-    c = club_cat.lower().strip()
+    if not user_dept or not club_cat:
+        return False
+    u = user_dept.strip().lower()
+    c = club_cat.strip().lower()
     if u == c:
         return True
     # Central clubs are managed by Central Admin only — never match dept controllers
     if c in ("central", "central level", "campus-wide", "central club"):
         return False
-    # Sub-department exact matching (CSE(AIML) vs CSE(AIDS) vs CSE)
-    if "aiml" in u:
-        return "aiml" in c
-    if "aids" in u:
-        return "aids" in c
-    # Plain CSE must NOT match CSE(AIML) or CSE(AIDS)
-    if u == "cse":
+    # AIML
+    if (
+        "aiml" in u
+        or "artificial intelligence & machine" in u
+        or "artificial intelligence and machine" in u
+    ):
         return (
-            c == "cse"
-            or c == "computer science"
-            or c == "computer science & engineering"
+            "aiml" in c
+            or "artificial intelligence & machine" in c
+            or "artificial intelligence and machine" in c
+        )
+    # AIDS
+    if "aids" in u or "data science" in u:
+        return "aids" in c or "data science" in c
+    # Generic AI / Artificial Intelligence if not AIDS
+    if "artificial intelligence" in u:
+        return "artificial intelligence" in c or "aiml" in c
+    # Plain CSE must NOT match CSE(AIML) or CSE(AIDS)
+    if u == "cse" or "computer science" in u:
+        return (
+            ("computer science" in c or "cse" in c)
+            and "aiml" not in c
+            and "aids" not in c
+            and "data science" not in c
+            and "artificial intelligence" not in c
         )
     # IT
-    if u == "it":
+    if u == "it" or "information technology" in u:
         return c == "it" or "information technology" in c
-    # ETC / ECE
-    if u in ("etc", "ece"):
-        return (
-            c in ("etc", "ece")
-            or ("electronics" in c and "telecommunication" in c)
-            or "ece" in c
-        )
-    # EE
-    if u == "ee":
-        return c == "ee" or "electrical" in c
-    # ME
-    if u == "me":
-        return c == "me" or "mechanical" in c
+    # ETC / ECE / Electronics
+    if "electronic" in u or "etc" in u or "ece" in u or "telecommunication" in u:
+        return "electronic" in c or "etc" in c or "ece" in c or "telecommunication" in c
+    # EE / Electrical
+    if "electric" in u or u == "ee":
+        return "electric" in c or c == "ee"
+    # ME / Mechanical
+    if "mechanic" in u or u == "me":
+        return "mechanic" in c or c == "me"
+    # Civil
+    if "civil" in u:
+        return "civil" in c
     # BCA / MCA / MBA
-    if u == "bca":
-        return c == "bca"
-    if u == "mca":
-        return c == "mca"
-    if u == "mba":
-        return c == "mba"
+    if "bca" in u:
+        return "bca" in c
+    if "mca" in u:
+        return "mca" in c
+    if "mba" in u:
+        return "mba" in c
     # First Year
     if "first" in u or u == "fy":
         return "first" in c or c == "fy"
     # Sports
     if "sport" in u:
         return "sport" in c
-    return False
+    return u in c or c in u
 
 
 class ClubService:
@@ -343,6 +358,7 @@ class ClubService:
             co_head_id=club.co_head_id,
             faculty_coordinator_id=club.faculty_coordinator_id,
             alumni_mentor_id=club.alumni_mentor_id,
+            creator=_map_club_lead_user(club.creator),
             head=_map_club_lead_user(club.head),
             co_head=_map_club_lead_user(club.co_head),
             faculty_coordinator=_map_club_lead_user(club.faculty_coordinator),
@@ -588,7 +604,7 @@ class ClubService:
                     )
                 ]
 
-            # 2. Controller: clubs in their department + Central level clubs
+            # 2. Controller: clubs in their department (by category or posted/mentored by dept faculty/alumni/controller/student) + Central level clubs
             elif role_name == "controller":
                 user_dept = (
                     getattr(current_user.profile, "department", None)
@@ -596,20 +612,63 @@ class ClubService:
                     else None
                 )
                 dept_str = user_dept.strip() if user_dept else ""
-                clubs = [
-                    c
-                    for c in clubs
-                    if (
-                        c.category
-                        and c.category.strip().lower()
-                        in ("central", "central level", "campus-wide", "central club")
+                matched_clubs = []
+                for c in clubs:
+                    cat = (c.category or "").strip()
+                    if cat.lower() in (
+                        "central",
+                        "central level",
+                        "campus-wide",
+                        "central club",
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                    if not dept_str:
+                        matched_clubs.append(c)
+                        continue
+                    # Match by category
+                    if _depts_match(dept_str, cat):
+                        matched_clubs.append(c)
+                        continue
+                    # Match by creator department (faculty, controller, alumni, student)
+                    creator_prof = getattr(getattr(c, "creator", None), "profile", None)
+                    if creator_prof and _depts_match(
+                        dept_str, getattr(creator_prof, "department", None)
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                    # Match by faculty_coordinator department
+                    fac_prof = getattr(
+                        getattr(c, "faculty_coordinator", None), "profile", None
                     )
-                    or (
-                        dept_str
-                        and c.category
-                        and _depts_match(dept_str, c.category.strip())
+                    if fac_prof and _depts_match(
+                        dept_str, getattr(fac_prof, "department", None)
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                    # Match by alumni_mentor department
+                    alum_prof = getattr(
+                        getattr(c, "alumni_mentor", None), "profile", None
                     )
-                ]
+                    if alum_prof and _depts_match(
+                        dept_str, getattr(alum_prof, "department", None)
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                    # Match by student head / co-head department
+                    head_prof = getattr(getattr(c, "head", None), "profile", None)
+                    if head_prof and _depts_match(
+                        dept_str, getattr(head_prof, "department", None)
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                    cohead_prof = getattr(getattr(c, "co_head", None), "profile", None)
+                    if cohead_prof and _depts_match(
+                        dept_str, getattr(cohead_prof, "department", None)
+                    ):
+                        matched_clubs.append(c)
+                        continue
+                clubs = matched_clubs
             # 3. Central admin: sees ALL clubs
             elif role_name in (
                 "central admin",
@@ -631,6 +690,7 @@ class ClubService:
                 co_head_id=c.co_head_id,
                 faculty_coordinator_id=c.faculty_coordinator_id,
                 alumni_mentor_id=c.alumni_mentor_id,
+                creator=_map_club_lead_user(c.creator),
                 head=_map_club_lead_user(c.head),
                 co_head=_map_club_lead_user(c.co_head),
                 faculty_coordinator=_map_club_lead_user(c.faculty_coordinator),

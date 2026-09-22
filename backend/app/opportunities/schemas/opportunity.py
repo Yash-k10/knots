@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.opportunities.models.opportunity import OpportunityStatus, OpportunityType
 from app.opportunities.models.opportunity_application import (
@@ -23,6 +23,27 @@ class OpportunityCreate(BaseModel):
     application_deadline: datetime | None = None
     form_link: str | None = None
 
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def normalize_deadline(cls, v):
+        if v is None or v == "":
+            return None
+        if isinstance(v, datetime):
+            if v.tzinfo is not None:
+                return v.astimezone(timezone.utc).replace(tzinfo=None)
+            return v
+        if isinstance(v, str):
+            try:
+                # Handle ISO formats with Z or offset
+                clean_v = v.replace("Z", "+00:00")
+                dt = datetime.fromisoformat(clean_v)
+                if dt.tzinfo is not None:
+                    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+                return dt
+            except Exception:
+                return v
+        return v
+
 
 class OpportunityUpdate(BaseModel):
     title: str | None = None
@@ -37,6 +58,26 @@ class OpportunityUpdate(BaseModel):
     application_deadline: datetime | None = None
     status: OpportunityStatus | None = None
     form_link: str | None = None
+
+    @field_validator("application_deadline", mode="before")
+    @classmethod
+    def normalize_deadline(cls, v):
+        if v is None or v == "":
+            return None
+        if isinstance(v, datetime):
+            if v.tzinfo is not None:
+                return v.astimezone(timezone.utc).replace(tzinfo=None)
+            return v
+        if isinstance(v, str):
+            try:
+                clean_v = v.replace("Z", "+00:00")
+                dt = datetime.fromisoformat(clean_v)
+                if dt.tzinfo is not None:
+                    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+                return dt
+            except Exception:
+                return v
+        return v
 
 
 class OpportunityResponse(BaseModel):
@@ -60,7 +101,9 @@ class OpportunityResponse(BaseModel):
 
     # Nested author info
     posted_by_name: str | None = None
+    posted_by_email: str | None = None
     posted_by_department: str | None = None
+    posted_by_role: str | None = None
     posted_by_avatar: str | None = None
 
     model_config = {"from_attributes": True}

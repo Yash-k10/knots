@@ -158,10 +158,20 @@ export async function apiRequest<T = any>(
       headers.set("Content-Type", "application/json");
     }
 
-    let response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    } catch (err: any) {
+      if (err instanceof ApiError) throw err;
+      throw new ApiError(
+        "Unable to connect to the backend server. Please verify the server is running on " + API_URL,
+        0,
+        "NETWORK_ERROR"
+      );
+    }
 
     // Handle 401 Unauthorized by trying silent token refresh
     if (
@@ -179,10 +189,19 @@ export async function apiRequest<T = any>(
       const newAccessToken = await refreshPromise;
       if (newAccessToken) {
         headers.set("Authorization", `Bearer ${newAccessToken}`);
-        response = await fetch(`${API_URL}${endpoint}`, {
-          ...options,
-          headers,
-        });
+        try {
+          response = await fetch(`${API_URL}${endpoint}`, {
+            ...options,
+            headers,
+          });
+        } catch (err: any) {
+          if (err instanceof ApiError) throw err;
+          throw new ApiError(
+            "Unable to connect to the backend server. Please verify the server is running on " + API_URL,
+            0,
+            "NETWORK_ERROR"
+          );
+        }
       } else {
         // Refresh failed or no refresh token - clear credentials and redirect to login
         localStorage.removeItem("knots_token");

@@ -142,6 +142,10 @@ class EventOrganizerInfo(BaseModel):
 
     id: int
     email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    department: str | None = None
+    role_name: str | None = None
 
     class Config:
         from_attributes = True

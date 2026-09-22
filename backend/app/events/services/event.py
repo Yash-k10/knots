@@ -62,43 +62,86 @@ def _map_rsvp_user(user: User | None) -> RSVPUserInfo | None:
     )
 
 
-def _depts_match(user_dept: str, other_dept: str) -> bool:
+def _map_organizer_info(organizer: User | None) -> EventOrganizerInfo | None:
+    if not organizer:
+        return None
+    prof = getattr(organizer, "profile", None)
+    role_obj = getattr(organizer, "role", None)
+    return EventOrganizerInfo(
+        id=organizer.id,
+        email=organizer.email,
+        first_name=prof.first_name if prof else None,
+        last_name=prof.last_name if prof else None,
+        department=prof.department if prof else None,
+        role_name=role_obj.name if role_obj else None,
+    )
+
+
+def _depts_match(user_dept: str | None, other_dept: str | None) -> bool:
     """Exact canonical department matching — CSE(AIML) never matches plain CSE, etc."""
-    u = user_dept.lower().strip()
-    o = other_dept.lower().strip()
+    if not user_dept or not other_dept:
+        return False
+    u = user_dept.strip().lower()
+    o = other_dept.strip().lower()
     if u == o:
         return True
     if o in ("central", "central level", "campus-wide", "central club"):
         return False
-    if "aiml" in u:
-        return "aiml" in o
-    if "aids" in u:
-        return "aids" in o
-    if u == "cse":
-        return o in ("cse", "computer science", "computer science & engineering")
-    if u == "it":
-        return o == "it" or "information technology" in o
-    if u in ("etc", "ece"):
+    # AIML
+    if (
+        "aiml" in u
+        or "artificial intelligence & machine" in u
+        or "artificial intelligence and machine" in u
+    ):
         return (
-            o in ("etc", "ece")
-            or ("electronics" in o and "telecommunication" in o)
-            or "ece" in o
+            "aiml" in o
+            or "artificial intelligence & machine" in o
+            or "artificial intelligence and machine" in o
         )
-    if u == "ee":
-        return o == "ee" or "electrical" in o
-    if u == "me":
-        return o == "me" or "mechanical" in o
-    if u == "bca":
-        return o == "bca"
-    if u == "mca":
-        return o == "mca"
-    if u == "mba":
-        return o == "mba"
+    # AIDS
+    if "aids" in u or "data science" in u:
+        return "aids" in o or "data science" in o
+    # Generic AI / Artificial Intelligence if not AIDS
+    if "artificial intelligence" in u:
+        return "artificial intelligence" in o or "aiml" in o
+    # Plain CSE must NOT match CSE(AIML) or CSE(AIDS)
+    if u == "cse" or "computer science" in u:
+        return (
+            ("computer science" in o or "cse" in o)
+            and "aiml" not in o
+            and "aids" not in o
+            and "data science" not in o
+            and "artificial intelligence" not in o
+        )
+    # IT
+    if u == "it" or "information technology" in u:
+        return o == "it" or "information technology" in o
+    # ETC / ECE / Electronics
+    if "electronic" in u or "etc" in u or "ece" in u or "telecommunication" in u:
+        return "electronic" in o or "etc" in o or "ece" in o or "telecommunication" in o
+    # EE / Electrical
+    if "electric" in u or u == "ee":
+        return "electric" in o or o == "ee"
+    # ME / Mechanical
+    if "mechanic" in u or u == "me":
+        return "mechanic" in o or o == "me"
+    # Civil
+    if "civil" in u:
+        return "civil" in o
+    # BCA / MCA / MBA
+    if "bca" in u:
+        return "bca" in o
+    if "mca" in u:
+        return "mca" in o
+    if "mba" in u:
+        return "mba" in o
+    # First Year
     if "first" in u or u == "fy":
         return "first" in o or o == "fy"
+    # Sports
     if "sport" in u:
         return "sport" in o
-    return False
+    return u in o or o in u
 
 
 class EventService:
@@ -218,11 +261,7 @@ class EventService:
             if user_rsvp:
                 user_rsvp_status = user_rsvp.status
 
-        organizer_info = None
-        if event.organizer:
-            organizer_info = EventOrganizerInfo(
-                id=event.organizer.id, email=event.organizer.email
-            )
+        organizer_info = _map_organizer_info(event.organizer)
 
         category_info = None
         if event.category:
@@ -312,14 +351,54 @@ class EventService:
                         else None
                     )
                     dept_str = user_dept.strip() if user_dept else ""
-                    events = [
-                        e
-                        for e in events
-                        if not getattr(e, "organizer", None)
-                        or not getattr(e.organizer, "profile", None)
-                        or not getattr(e.organizer.profile, "department", None)
-                        or _depts_match(dept_str, e.organizer.profile.department)
-                    ]
+                    matched_events = []
+                    for e in events:
+                        if not dept_str:
+                            matched_events.append(e)
+                            continue
+                        # Match organizer department
+                        org_dept = getattr(
+                            getattr(e, "organizer", None), "profile", None
+                        )
+                        if org_dept and _depts_match(
+                            dept_str, getattr(org_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match faculty coordinator department
+                        fac_dept = getattr(
+                            getattr(e, "faculty_coordinator", None), "profile", None
+                        )
+                        if fac_dept and _depts_match(
+                            dept_str, getattr(fac_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match student head / co-head department
+                        head_dept = getattr(getattr(e, "head", None), "profile", None)
+                        if head_dept and _depts_match(
+                            dept_str, getattr(head_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        cohead_dept = getattr(
+                            getattr(e, "co_head", None), "profile", None
+                        )
+                        if cohead_dept and _depts_match(
+                            dept_str, getattr(cohead_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match category name
+                        cat_name = getattr(getattr(e, "category", None), "name", None)
+                        if cat_name and _depts_match(dept_str, cat_name):
+                            matched_events.append(e)
+                            continue
+                        # If organizer profile department was None, include as fallback
+                        if not org_dept or not getattr(org_dept, "department", None):
+                            matched_events.append(e)
+                            continue
+                    events = matched_events
                 elif role_name in (
                     "central admin",
                     "central_admin",
@@ -344,11 +423,7 @@ class EventService:
             pending_count = counts["pending"]
             user_rsvp_status = user_rsvps_map.get(event.id)
 
-            organizer_info = None
-            if event.organizer:
-                organizer_info = EventOrganizerInfo(
-                    id=event.organizer.id, email=event.organizer.email
-                )
+            organizer_info = _map_organizer_info(event.organizer)
 
             category_info = None
             if event.category:
@@ -417,21 +492,60 @@ class EventService:
                         if getattr(user, "profile", None)
                         else None
                     )
-                    dept_str = user_dept.strip().lower() if user_dept else ""
-                    events = [
-                        e
-                        for e in events
+                    dept_str = user_dept.strip() if user_dept else ""
+                    matched_events = []
+                    for e in events:
+                        if not dept_str:
+                            matched_events.append(e)
+                            continue
+                        # Match organizer department (faculty, controller, alumni, student)
+                        org_dept = getattr(
+                            getattr(e, "organizer", None), "profile", None
+                        )
+                        if org_dept and _depts_match(
+                            dept_str, getattr(org_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match faculty coordinator department
+                        fac_dept = getattr(
+                            getattr(e, "faculty_coordinator", None), "profile", None
+                        )
+                        if fac_dept and _depts_match(
+                            dept_str, getattr(fac_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match student head / co-head department
+                        head_dept = getattr(getattr(e, "head", None), "profile", None)
+                        if head_dept and _depts_match(
+                            dept_str, getattr(head_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        cohead_dept = getattr(
+                            getattr(e, "co_head", None), "profile", None
+                        )
+                        if cohead_dept and _depts_match(
+                            dept_str, getattr(cohead_dept, "department", None)
+                        ):
+                            matched_events.append(e)
+                            continue
+                        # Match category name
+                        cat_name = getattr(getattr(e, "category", None), "name", None)
+                        if cat_name and _depts_match(dept_str, cat_name):
+                            matched_events.append(e)
+                            continue
+                        # If organizer profile department was None or Central, include as fallback
                         if (
-                            not getattr(e.organizer, "profile", None)
-                            or getattr(e.organizer.profile, "department", None)
+                            not org_dept
+                            or not getattr(org_dept, "department", None)
+                            or getattr(org_dept, "department", None)
                             in [None, "Central", ""]
-                        )
-                        or (
-                            dept_str
-                            and getattr(e.organizer.profile, "department", None)
-                            and dept_str in e.organizer.profile.department.lower()
-                        )
-                    ]
+                        ):
+                            matched_events.append(e)
+                            continue
+                    events = matched_events
                 elif role_name in (
                     "central admin",
                     "central_admin",
@@ -456,11 +570,7 @@ class EventService:
             pending_count = counts["pending"]
             user_rsvp_status = user_rsvps_map.get(event.id)
 
-            organizer_info = None
-            if event.organizer:
-                organizer_info = EventOrganizerInfo(
-                    id=event.organizer.id, email=event.organizer.email
-                )
+            organizer_info = _map_organizer_info(event.organizer)
 
             category_info = None
             if event.category:
