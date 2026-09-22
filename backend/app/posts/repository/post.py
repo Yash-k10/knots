@@ -1,10 +1,10 @@
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.repository import BaseRepository
 from app.posts.models.comment import Comment
-from app.posts.models.post import Post, PostVisibility
+from app.posts.models.post import Post
 from app.users.models.user import User
 
 
@@ -35,63 +35,49 @@ class PostRepository(BaseRepository[Post]):
         limit: int = 20,
         user_role: str | None = None,
         current_user_id: int | None = None,
-    ) -> list[Post]:
+    ) -> list[dict]:
         """
         Fetch posts for the feed filtered by the user's role visibility permissions,
-        ordered by newest first. Eager-loads author (+ profile), comments, and likes to avoid N+1 queries.
+        ordered by newest first. Uses SQL subqueries for counts to avoid
+        transferring all likes/comments over the network.
         """
+        from app.posts.models.comment import Comment
+        from app.posts.models.like import Like
+
+        # Subqueries for counts (executed in the DB, not in Python)
+        likes_count_sq = (
+            select(func.count())
+            .where(Like.post_id == Post.id)
+            .correlate(Post)
+            .scalar_subquery()
+            .label("likes_count")
+        )
+        comments_count_sq = (
+            select(func.count())
+            .where(Comment.post_id == Post.id)
+            .correlate(Post)
+            .scalar_subquery()
+            .label("comments_count")
+        )
+
         stmt = (
-            select(Post)
+            select(Post, likes_count_sq, comments_count_sq)
             .options(
-                selectinload(Post.author).selectinload(User.profile),
-                selectinload(Post.comments),
-                selectinload(Post.likes),
+                joinedload(Post.author).joinedload(User.profile),
             )
             .order_by(Post.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
 
-        role_str = user_role.lower().strip() if user_role else ""
-
-        # Admin / Super Admin can view all posts
-        if role_str in ("admin", "super admin", "superadmin"):
-            pass
-        elif role_str == "alumni":
-            # Alumni sees PUBLIC, STUDENTS_AND_ALUMNI, or their own posts
-            allowed_visibilities = [
-                PostVisibility.PUBLIC,
-                PostVisibility.STUDENTS_AND_ALUMNI,
-                PostVisibility.STUDENTS_ONLY,
-            ]
-            if current_user_id:
-                stmt = stmt.where(
-                    or_(
-                        Post.visibility.in_(allowed_visibilities),
-                        Post.author_id == current_user_id,
-                    )
-                )
-            else:
-                stmt = stmt.where(Post.visibility.in_(allowed_visibilities))
-        else:
-            # Students, Faculty, and all campus members see all campus posts (PUBLIC, STUDENTS_ONLY, STUDENTS_AND_ALUMNI)
-            allowed_visibilities = [
-                PostVisibility.PUBLIC,
-                PostVisibility.STUDENTS_ONLY,
-                PostVisibility.STUDENTS_AND_ALUMNI,
-            ]
-            if current_user_id:
-                stmt = stmt.where(
-                    or_(
-                        Post.visibility.in_(allowed_visibilities),
-                        Post.author_id == current_user_id,
-                    )
-                )
-            else:
-                stmt = stmt.where(Post.visibility.in_(allowed_visibilities))
+        # All posts are visible to everyone - no visibility filtering
 
         result = await self.db.execute(stmt)
-        return list(result.scalars().unique().all())
+        rows = result.unique().all()
+        return [
+            {"post": row[0], "likes_count": row[1] or 0, "comments_count": row[2] or 0}
+            for row in rows
+        ]
 
     async def get_by_author(
         self, author_id: int, skip: int = 0, limit: int = 20

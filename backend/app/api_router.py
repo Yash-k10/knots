@@ -9,6 +9,7 @@ from app.auth.routers.auth import router as auth_router
 from app.clubs.routers.club import router as clubs_router
 from app.connections.routers.connection import router as connections_router
 from app.department.routers.department import router as department_router
+from app.opportunities.routers.opportunity import router as opportunities_router
 from app.events.routers.event import router as events_router
 from app.jobs.routers.job import router as jobs_router
 from app.messaging.routers.conversation import router as conversations_router
@@ -40,3 +41,4 @@ v1_router.include_router(ai_router)
 v1_router.include_router(analytics_router)
 v1_router.include_router(search_router)
 v1_router.include_router(department_router)
+v1_router.include_router(opportunities_router)

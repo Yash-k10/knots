@@ -42,8 +42,13 @@ let refreshPromise: Promise<string | null> | null = null;
 // In-flight GET request deduplication to prevent duplicate concurrent network calls
 const inFlightRequests = new Map<string, Promise<any>>();
 
-// Micro-cache for frequently accessed identity/meta endpoints (TTL: 10 seconds)
-const apiCache = new Map<string, { data: any; expiry: number }>();
+// SWR Micro-cache for instantaneous tab switches & low latency
+interface CacheEntry {
+  data: any;
+  freshUntil: number;
+  staleUntil: number;
+}
+const apiCache = new Map<string, CacheEntry>();
 
 export function clearApiCache(prefix?: string) {
   if (!prefix) {
@@ -106,12 +111,32 @@ export async function apiRequest<T = any>(
     clearApiCache();
   }
 
-  // Check micro-cache for idempotent GET endpoints
+  // Check SWR micro-cache for idempotent GET endpoints
   const cacheKey = `${endpoint}`;
   if (isGet) {
     const cached = apiCache.get(cacheKey);
-    if (cached && cached.expiry > Date.now()) {
-      return cached.data as T;
+    const now = Date.now();
+    if (cached) {
+      if (now < cached.freshUntil) {
+        return cached.data as T;
+      }
+      if (now < cached.staleUntil) {
+        // Return stale data immediately so UI renders in 0ms, revalidate in background
+        if (!inFlightRequests.has(cacheKey)) {
+          const bgPromise = execRequest()
+            .then((fresh) => {
+              const current = apiCache.get(cacheKey);
+              if (current) current.data = fresh;
+              return fresh;
+            })
+            .catch(() => {})
+            .finally(() => {
+              inFlightRequests.delete(cacheKey);
+            });
+          inFlightRequests.set(cacheKey, bgPromise);
+        }
+        return cached.data as T;
+      }
     }
 
     // Return in-flight promise if an identical GET is already resolving
@@ -121,7 +146,7 @@ export async function apiRequest<T = any>(
     }
   }
 
-  const execRequest = async (): Promise<T> => {
+  async function execRequest(): Promise<T> {
     const token = localStorage.getItem("knots_token");
     const headers = new Headers(options?.headers);
 
@@ -209,22 +234,50 @@ export async function apiRequest<T = any>(
 
     const result = json.data as T;
 
-    // Cache lightweight GET requests for 10 seconds
+    // Cache GET requests to reduce redundant network calls and enable instant tab renders
     if (isGet) {
-      const cacheableEndpoints = [
+      // Identity/meta endpoints (stable, fresh 60s, stale 5m)
+      const longCacheEndpoints = [
         "/users/me",
+        "/users/roles",
+        "/jobs/companies",
+        "/events/categories",
+      ];
+      // Dynamic lists & feeds (fresh 20s, stale 2m)
+      const shortCacheEndpoints = [
         "/notifications/unread-count",
         "/messages/unread/count",
         "/analytics/stats",
         "/analytics/platform/engagement-summary",
+        "/posts/feed",
+        "/jobs",
+        "/jobs/applications/me",
+        "/events",
+        "/clubs",
+        "/departments",
+        "/opportunities",
+        "/connections",
+        "/profiles",
       ];
-      if (cacheableEndpoints.some((ep) => endpoint.startsWith(ep))) {
-        apiCache.set(cacheKey, { data: result, expiry: Date.now() + 10000 });
+
+      const now = Date.now();
+      if (longCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
+        apiCache.set(cacheKey, {
+          data: result,
+          freshUntil: now + 60000,
+          staleUntil: now + 300000,
+        });
+      } else if (shortCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
+        apiCache.set(cacheKey, {
+          data: result,
+          freshUntil: now + 20000,
+          staleUntil: now + 120000,
+        });
       }
     }
 
     return result;
-  };
+  }
 
   if (isGet) {
     const p = execRequest().finally(() => {

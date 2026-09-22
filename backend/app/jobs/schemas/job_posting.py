@@ -22,6 +22,9 @@ class JobPostingBase(BaseModel):
         default_factory=list, description="List of required skills"
     )
     application_deadline: datetime | None = None
+    form_link: str | None = Field(
+        None, max_length=500, description="External application or form link"
+    )
     status: JobStatusEnum = Field(default=JobStatusEnum.OPEN)
 
     @field_validator("job_type", mode="before")
@@ -76,6 +79,7 @@ class JobPostingUpdate(BaseModel):
     required_skills: list[str] | None = None
     application_deadline: datetime | None = None
     status: JobStatusEnum | None = None
+    form_link: str | None = Field(None, max_length=500)
 
     @field_validator("job_type", mode="before")
     @classmethod
@@ -119,6 +123,7 @@ class JobPostingResponse(JobPostingBase):
     created_at: datetime
     updated_at: datetime
     company: CompanyResponse | None = None
+    applications_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 

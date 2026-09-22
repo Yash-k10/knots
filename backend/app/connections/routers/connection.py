@@ -26,8 +26,10 @@ async def create_connection(
     service = ConnectionService(db)
     try:
         conn = await service.request_connection(current_user.id, payload.addressee_id)
+        await db.commit()
         return APIResponse(message="Connection request sent", data=conn)
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -41,8 +43,10 @@ async def accept_connection(
     service = ConnectionService(db)
     try:
         conn = await service.accept_connection(connection_id, current_user.id)
+        await db.commit()
         return APIResponse(message="Connection accepted", data=conn)
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -56,8 +60,10 @@ async def reject_connection(
     service = ConnectionService(db)
     try:
         conn = await service.reject_connection(connection_id, current_user.id)
+        await db.commit()
         return APIResponse(message="Connection rejected", data=conn)
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -71,8 +77,10 @@ async def withdraw_connection_request(
     service = ConnectionService(db)
     try:
         res = await service.withdraw_connection_request(connection_id, current_user.id)
+        await db.commit()
         return APIResponse(message="Connection request withdrawn", data=res)
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -132,3 +140,39 @@ async def get_connection_suggestions(
     service = ConnectionService(db)
     suggestions = await service.get_connection_suggestions(current_user.id, limit=limit)
     return APIResponse(message="Connection suggestions generated", data=suggestions)
+
+
+@router.get("/status/{target_user_id}", response_model=APIResponse[dict])
+async def get_connection_status(
+    target_user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get connection status between current user and target user."""
+    from app.connections.models.connection import ConnectionStatus
+    from app.connections.repository.connection import ConnectionRepository
+
+    repo = ConnectionRepository(db)
+    conn = await repo.get_connection_between_users(current_user.id, target_user_id)
+    if not conn:
+        return APIResponse(
+            data={"status": "NONE", "connection_id": None, "is_tie": False}
+        )
+
+    if conn.status == ConnectionStatus.ACCEPTED:
+        return APIResponse(
+            data={"status": "ACCEPTED", "connection_id": conn.id, "is_tie": True}
+        )
+    elif conn.status == ConnectionStatus.PENDING:
+        if conn.requester_id == current_user.id:
+            return APIResponse(
+                data={"status": "SENT", "connection_id": conn.id, "is_tie": False}
+            )
+        else:
+            return APIResponse(
+                data={"status": "RECEIVED", "connection_id": conn.id, "is_tie": False}
+            )
+    else:
+        return APIResponse(
+            data={"status": "REJECTED", "connection_id": conn.id, "is_tie": False}
+        )

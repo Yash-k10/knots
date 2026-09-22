@@ -77,6 +77,9 @@ class Event(Base):
     club_id = Column(Integer, ForeignKey("clubs.id"), nullable=True, index=True)
     head_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     co_head_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    faculty_coordinator_id = Column(
+        Integer, ForeignKey("users.id"), nullable=True, index=True
+    )
 
     # ── Timestamps ───────────────────────────────────────────────────────────
     created_at = Column(
@@ -95,6 +98,7 @@ class Event(Base):
     organizer = relationship("User", foreign_keys=[organizer_id])
     head = relationship("User", foreign_keys=[head_id])
     co_head = relationship("User", foreign_keys=[co_head_id])
+    faculty_coordinator = relationship("User", foreign_keys=[faculty_coordinator_id])
     category = relationship("EventCategory", back_populates="events")
     club = relationship("Club", foreign_keys=[club_id])
     rsvps = relationship("RSVP", back_populates="event", cascade="all, delete-orphan")

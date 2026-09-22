@@ -10,9 +10,15 @@ import {
   Loader2,
   Briefcase,
   Shield,
+  UserPlus,
+  MessageSquare,
+  Check,
+  Clock,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ProfileResponse } from "../../services/profile";
 import { profileService } from "../../services/profile";
+import { apiRequest } from "../../services/api";
 import ProfilePictureUploader from "./ProfilePictureUploader";
 import { formatRoleLabel } from "../../utils/role";
 
@@ -45,6 +51,73 @@ export default function ProfileHeader({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloadingResume, setIsDownloadingResume] = useState(false);
+
+  // Connection & Tie states for other profiles
+  const [tieStatus, setTieStatus] = useState<
+    "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE" | "LOADING"
+  >("LOADING");
+  const [connectionId, setConnectionId] = useState<number | null>(null);
+  const [isTieActionLoading, setIsTieActionLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOwnProfile || !profile.user_id) return;
+    let isMounted = true;
+    const checkStatus = async () => {
+      try {
+        const res = await apiRequest<{
+          status: "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE";
+          connection_id: number | null;
+          is_tie: boolean;
+        }>(`/connections/status/${profile.user_id}`);
+        if (isMounted) {
+          setTieStatus(res.status);
+          setConnectionId(res.connection_id);
+        }
+      } catch {
+        if (isMounted) setTieStatus("NONE");
+      }
+    };
+    checkStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, [profile.user_id, isOwnProfile]);
+
+  const handleSendTieRequest = async () => {
+    if (!profile.user_id) return;
+    setIsTieActionLoading(true);
+    try {
+      await apiRequest("/connections", {
+        method: "POST",
+        body: JSON.stringify({ addressee_id: profile.user_id }),
+      });
+      setTieStatus("SENT");
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.toLowerCase().includes("already")) {
+        setTieStatus("SENT");
+      } else {
+        onError(msg || "Failed to send tie request.");
+      }
+    } finally {
+      setIsTieActionLoading(false);
+    }
+  };
+
+  const handleAcceptTieRequest = async () => {
+    if (!connectionId) return;
+    setIsTieActionLoading(true);
+    try {
+      await apiRequest(`/connections/${connectionId}/accept`, {
+        method: "PATCH",
+      });
+      setTieStatus("ACCEPTED");
+    } catch (err: any) {
+      onError(err?.message || "Failed to accept tie request.");
+    } finally {
+      setIsTieActionLoading(false);
+    }
+  };
 
   // Form states
   const [firstName, setFirstName] = useState(profile.first_name || "");
@@ -614,6 +687,72 @@ export default function ProfileHeader({
                 <Edit2 className="h-4 w-4 text-[#4B63D2]" />
                 Edit Info
               </button>
+            )}
+
+            {!isOwnProfile && (
+              <div className="flex items-center gap-2.5">
+                {tieStatus === "ACCEPTED" ? (
+                  <Link
+                    to={`/messaging?target=${profile.user_id}`}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#4B63D2] hover:bg-[#3E53BE] text-white font-bold text-sm transition shadow-sm cursor-pointer active:scale-95"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Message</span>
+                  </Link>
+                ) : tieStatus === "SENT" ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-200 text-[#4B63D2] font-bold text-xs">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>Tie Request Sent</span>
+                    </span>
+                    <Link
+                      to={`/messaging?target=${profile.user_id}`}
+                      className="p-2.5 rounded-xl border border-[#EAE4F7] hover:bg-[#FAF9FD] text-[#5851A4] transition"
+                      title="Open Conversation"
+                    >
+                      <MessageSquare className="h-4 w-4 text-[#4B63D2]" />
+                    </Link>
+                  </div>
+                ) : tieStatus === "RECEIVED" ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAcceptTieRequest}
+                      disabled={isTieActionLoading}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span>{isTieActionLoading ? "Accepting..." : "Accept Tie Request"}</span>
+                    </button>
+                    <Link
+                      to={`/messaging?target=${profile.user_id}`}
+                      className="p-2.5 rounded-xl border border-[#EAE4F7] hover:bg-[#FAF9FD] text-[#5851A4] transition"
+                      title="Open Conversation"
+                    >
+                      <MessageSquare className="h-4 w-4 text-[#4B63D2]" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSendTieRequest}
+                      disabled={isTieActionLoading}
+                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:opacity-90 text-white font-bold text-xs shadow-sm shadow-[#4B63D2]/25 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span>{isTieActionLoading ? "Sending..." : "Send Tie Request"}</span>
+                    </button>
+                    <Link
+                      to={`/messaging?target=${profile.user_id}`}
+                      className="p-2.5 rounded-xl border border-[#EAE4F7] hover:bg-[#FAF9FD] text-[#5851A4] transition"
+                      title="Direct Chat"
+                    >
+                      <MessageSquare className="h-4 w-4 text-[#4B63D2]" />
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

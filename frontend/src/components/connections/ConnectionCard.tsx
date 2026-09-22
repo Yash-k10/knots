@@ -62,8 +62,12 @@ export default function ConnectionCard({
 
   // Normalize role tag
   const normalizedRole = role || (
-    email?.includes('prof') ? 'Faculty' :
+    email?.includes('prof') || email?.includes('faculty') || email?.includes('teacher') ? 'Faculty' :
     email?.includes('hod') ? 'HOD' :
+    email?.includes('dean') ? 'Dean' :
+    email?.includes('principal') ? 'Principal' :
+    email?.includes('ceo') ? 'CEO' :
+    email?.includes('tpo') ? 'TPO' :
     email?.includes('controller') ? 'Controller' :
     email?.includes('alumni') ? 'Alumni' : 'Student'
   );
@@ -73,11 +77,23 @@ export default function ConnectionCard({
     if (lower.includes('alumni')) {
       return { label: 'Alumni', style: 'bg-amber-50 text-amber-800 border-amber-200' };
     }
-    if (lower.includes('faculty') || lower.includes('prof')) {
+    if (lower.includes('faculty') || lower.includes('prof') || lower.includes('teacher')) {
       return { label: 'Faculty', style: 'bg-purple-50 text-purple-800 border-purple-200' };
     }
     if (lower.includes('hod') || lower.includes('head')) {
       return { label: 'HOD', style: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    }
+    if (lower.includes('dean')) {
+      return { label: 'Dean', style: 'bg-purple-50 text-purple-800 border-purple-200' };
+    }
+    if (lower.includes('principal')) {
+      return { label: 'Principal', style: 'bg-purple-50 text-purple-800 border-purple-200' };
+    }
+    if (lower.includes('ceo')) {
+      return { label: 'CEO', style: 'bg-purple-50 text-purple-800 border-purple-200' };
+    }
+    if (lower.includes('tpo')) {
+      return { label: 'TPO', style: 'bg-indigo-50 text-indigo-800 border-indigo-200' };
     }
     if (lower.includes('controller') || lower.includes('admin')) {
       return { label: 'Controller', style: 'bg-indigo-50 text-[#4B63D2] border-[#D5CBEE]' };

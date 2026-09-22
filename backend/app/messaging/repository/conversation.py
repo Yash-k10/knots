@@ -14,12 +14,14 @@ class ConversationRepository(BaseRepository[Conversation]):
     async def get_conversation_with_participants(
         self, conversation_id: int
     ) -> Conversation | None:
+        user_opt = selectinload(self.model.participants).selectinload(
+            ConversationParticipant.user
+        )
         stmt = (
             select(self.model)
             .options(
-                selectinload(self.model.participants)
-                .selectinload(ConversationParticipant.user)
-                .selectinload(User.role)
+                user_opt.selectinload(User.role),
+                user_opt.selectinload(User.profile),
             )
             .where(self.model.id == conversation_id)
         )
@@ -47,12 +49,14 @@ class ConversationRepository(BaseRepository[Conversation]):
             ConversationParticipant.user_id == user2_id
         )
 
+        user_opt = selectinload(self.model.participants).selectinload(
+            ConversationParticipant.user
+        )
         stmt = (
             select(self.model)
             .options(
-                selectinload(self.model.participants)
-                .selectinload(ConversationParticipant.user)
-                .selectinload(User.role)
+                user_opt.selectinload(User.role),
+                user_opt.selectinload(User.profile),
             )
             .where(
                 and_(
@@ -106,12 +110,14 @@ class ConversationRepository(BaseRepository[Conversation]):
             ConversationParticipant.user_id == user_id
         )
 
+        user_opt = selectinload(self.model.participants).selectinload(
+            ConversationParticipant.user
+        )
         stmt = (
             select(self.model)
             .options(
-                selectinload(self.model.participants)
-                .selectinload(ConversationParticipant.user)
-                .selectinload(User.role)
+                user_opt.selectinload(User.role),
+                user_opt.selectinload(User.profile),
             )
             .where(self.model.id.in_(subq))
             .order_by(self.model.updated_at.desc())

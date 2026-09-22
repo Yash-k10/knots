@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.jobs.models.application import Application
+from app.jobs.models.enums import ApplicationStatusEnum
 from app.jobs.repository.application import ApplicationRepository
 from app.jobs.repository.job import JobPostingRepository
 from app.jobs.schemas.application import ApplicationCreate, ApplicationUpdate
@@ -33,6 +34,11 @@ class ApplicationService:
         data = application_in.model_dump()
         data["applicant_id"] = applicant_id
         data["job_posting_id"] = job_posting_id
+        if not data.get("status"):
+            if getattr(job, "form_link", None):
+                data["status"] = ApplicationStatusEnum.APPLIED
+            else:
+                data["status"] = ApplicationStatusEnum.PENDING
         app_obj = await self.repository.create(data)
 
         # Trigger email notification to job poster

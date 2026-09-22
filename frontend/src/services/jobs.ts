@@ -4,6 +4,8 @@ export type JobType = "FULL_TIME" | "PART_TIME" | "INTERNSHIP" | "CONTRACT";
 export type WorkplaceType = "ON_SITE" | "HYBRID" | "REMOTE";
 export type JobStatus = "OPEN" | "CLOSED" | "DRAFT";
 export type ApplicationStatus =
+  | "applied"
+  | "APPLIED"
   | "pending"
   | "reviewed"
   | "shortlisted"
@@ -41,6 +43,8 @@ export interface JobPosting {
   salary_range?: string;
   required_skills?: string[];
   application_deadline?: string;
+  form_link?: string;
+  applications_count?: number;
   status: JobStatus;
   created_at: string;
   updated_at: string;
@@ -114,6 +118,7 @@ export async function createJobPosting(data: {
   workplace_type?: WorkplaceType;
   salary_range?: string;
   required_skills?: string[];
+  form_link?: string;
 }): Promise<JobPosting> {
   return apiRequest<JobPosting>("/jobs", {
     method: "POST",
@@ -175,3 +180,30 @@ export async function updateApplicationStatus(
     body: JSON.stringify({ status: status.toLowerCase() }),
   });
 }
+
+export async function updateJobPosting(
+  id: number,
+  data: Partial<JobPosting>,
+): Promise<JobPosting> {
+  return apiRequest<JobPosting>(`/jobs/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteJobPosting(id: number): Promise<void> {
+  return apiRequest<void>(`/jobs/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function updateCandidatePlacementStatus(
+  userId: number,
+  placementStatus: "Placed" | "Not Placed" | "Internship",
+): Promise<any> {
+  return apiRequest<any>(`/profiles/${userId}/placement-status`, {
+    method: "PATCH",
+    body: JSON.stringify({ placement_status: placementStatus }),
+  });
+}
+

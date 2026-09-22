@@ -20,6 +20,7 @@ import {
   Play,
   Pause,
   Reply,
+  Copy,
   Trash2,
   FileText,
   Image as ImageIcon,
@@ -27,6 +28,7 @@ import {
   ExternalLink,
   Share2,
   AlertCircle,
+  UserPlus,
 } from "lucide-react";
 import {
   fetchConversations,
@@ -64,6 +66,21 @@ const formatFullTooltip = (dateStr: string): string => {
   } catch {
     return dateStr;
   }
+};
+
+const cleanSnippetText = (raw: string): string => {
+  if (!raw) return "";
+  let cleaned = raw;
+  while (cleaned.startsWith("[Replying to @")) {
+    const nextClean = cleaned.replace(/^\[Replying to @.+?:\s*"[\s\S]*?"\]\n?/s, "").trim();
+    if (nextClean === cleaned) break;
+    cleaned = nextClean;
+  }
+  if (cleaned.startsWith("[Image]")) return "📷 Photo";
+  if (cleaned.startsWith("[Document]")) return "📄 Document";
+  if (cleaned.startsWith("[Voice Note]")) return "🎤 Voice Note";
+  if (cleaned.startsWith("[Shared Post")) return "📌 Shared Post";
+  return cleaned.length > 70 ? cleaned.slice(0, 70) + "..." : cleaned;
 };
 
 // Categorized Emojis for Popover Picker
@@ -143,11 +160,28 @@ const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🎉", "💡"];
 type ChatFilter = "all" | "direct" | "group";
 
 export const COMMUNICATION_HIERARCHY: Record<string, string[]> = {
-  student: ["faculty", "alumni"],
-  faculty: ["student", "students", "hod", "controller", "alumni"],
-  hod: ["faculty", "controller", "alumni", "tpo", "dean"],
+  student: [
+    "student",
+    "students",
+    "faculty",
+    "teacher",
+    "hod",
+    "alumni",
+    "mentor",
+  ],
+  students: [
+    "student",
+    "students",
+    "faculty",
+    "teacher",
+    "hod",
+    "alumni",
+    "mentor",
+  ],
+  faculty: ["student", "students", "hod", "controller", "alumni", "faculty", "teacher"],
+  hod: ["faculty", "teacher", "controller", "alumni", "tpo", "dean", "student", "students"],
   controller: ["faculty", "hod", "alumni"],
-  alumni: ["student", "students", "faculty", "controller", "tpo"],
+  alumni: ["student", "students", "faculty", "teacher", "controller", "tpo", "alumni"],
   tpo: [
     "central admin",
     "admin",
@@ -159,39 +193,11 @@ export const COMMUNICATION_HIERARCHY: Record<string, string[]> = {
     "alumni",
     "hod",
   ],
-  dean: ["hod", "tpo", "principal", "ceo"],
-  principal: ["tpo", "dean", "ceo"],
-  ceo: ["principal"],
-  "central admin": [
-    "tpo",
-    "dean",
-    "principal",
-    "controller",
-    "hod",
-    "faculty",
-    "alumni",
-    "student",
-    "students",
-    "admin",
-    "super admin",
-    "superadmin",
-    "ceo",
-  ],
-  admin: [
-    "tpo",
-    "dean",
-    "principal",
-    "controller",
-    "hod",
-    "faculty",
-    "alumni",
-    "student",
-    "students",
-    "central admin",
-    "super admin",
-    "superadmin",
-    "ceo",
-  ],
+  dean: ["hod", "tpo", "principal", "ceo", "faculty"],
+  principal: ["tpo", "dean", "ceo", "faculty", "hod"],
+  ceo: ["principal", "dean"],
+  "central admin": ["*"],
+  admin: ["*"],
   "super admin": ["*"],
   superadmin: ["*"],
   management: ["*"],
@@ -201,12 +207,28 @@ export const canMessageUser = (
   senderRole?: string,
   recipientRole?: string,
 ): boolean => {
-  if (!senderRole || !recipientRole) return false;
+  if (!senderRole || !recipientRole) return true;
   const sRole = senderRole.toLowerCase().trim();
   const rRole = recipientRole.toLowerCase().trim();
-  const allowed = COMMUNICATION_HIERARCHY[sRole] || [];
+
+  // Strict check: Students can NEVER directly message central admin, controller, ceo, dean, principal, super admin, admin
+  if (sRole === "student" || sRole === "students") {
+    const blockedKeywords = [
+      "central admin",
+      "controller",
+      "ceo",
+      "dean",
+      "principal",
+      "admin",
+    ];
+    if (blockedKeywords.some((b) => rRole.includes(b))) {
+      return false;
+    }
+  }
+
+  const allowed = COMMUNICATION_HIERARCHY[sRole] || ["*"];
   if (allowed.includes("*")) return true;
-  return allowed.includes(rRole);
+  return allowed.some((a) => rRole.includes(a));
 };
 
 // --- Custom Audio Voice Note Player Component ---
@@ -310,8 +332,11 @@ function VoiceNotePlayer({
 export default function Messaging() {
   const location = useLocation();
   const navigate = useNavigate();
-  const targetUserId = (location.state as { targetUserId?: number })
-    ?.targetUserId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const queryTarget = searchParams.get("target") || searchParams.get("userId");
+  const targetUserId =
+    (location.state as { targetUserId?: number })?.targetUserId ||
+    (queryTarget ? parseInt(queryTarget, 10) : undefined);
 
   // 1. Current Authenticated User
   const [currentUser, setCurrentUser] = useState<{
@@ -344,6 +369,7 @@ export default function Messaging() {
   const [isSearchInChatOpen, setIsSearchInChatOpen] = useState(false);
   const [inChatSearchQuery, setInChatSearchQuery] = useState("");
   const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
+  const [copiedToast, setCopiedToast] = useState<string | null>(null);
 
   // 5. Voice Note Recording States
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
@@ -364,6 +390,33 @@ export default function Messaging() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [selectedUserRoleFilter, setSelectedUserRoleFilter] = useState("ALL");
+
+  // 8. Tie & Message Request States
+  const [activeConnectionStatus, setActiveConnectionStatus] = useState<{
+    status: "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE" | "LOADING";
+    connection_id: number | null;
+    is_tie: boolean;
+    other_user_id: number | null;
+  }>({
+    status: "ACCEPTED",
+    connection_id: null,
+    is_tie: true,
+    other_user_id: null,
+  });
+  const [isTieActionLoading, setIsTieActionLoading] = useState(false);
+  const [tieNotice, setTieNotice] = useState<string | null>(null);
+
+  // Map of targetUserId -> connection status for campus users in New Chat modal
+  const [userTieStatusMap, setUserTieStatusMap] = useState<
+    Record<
+      number,
+      {
+        status: "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE";
+        connection_id?: number | null;
+      }
+    >
+  >({});
+  const [sendingTieUserId, setSendingTieUserId] = useState<number | null>(null);
 
   // Group creation fields
   const [groupName, setGroupName] = useState("");
@@ -412,6 +465,10 @@ export default function Messaging() {
           role?: { name: string };
         }>("/users/me");
         setCurrentUser(userRes);
+        currentUserRef.current = userRes;
+        if (activeConvIdRef.current) {
+          checkActiveConvTieStatus(activeConvIdRef.current, undefined, userRes);
+        }
       } catch (err) {
         console.error("Failed to load current user for messaging:", err);
       }
@@ -438,12 +495,12 @@ export default function Messaging() {
           if (prevMsgs.some((m) => m.id === incoming.id)) {
             return prevMsgs;
           }
-          // If this is the sender's own incoming confirmation, replace matching temporary sending message
+          // If this is the sender's own incoming confirmation, replace matching temporary or sending message
           const pendingOptIndex = prevMsgs.findIndex(
             (m) =>
-              m.status === "sending" &&
+              (m.id > 1000000000000 || m.status === "sending") &&
               m.sender_id === incoming.sender_id &&
-              m.content === incoming.content,
+              m.content.trim() === incoming.content.trim(),
           );
           if (pendingOptIndex !== -1) {
             const updated = [...prevMsgs];
@@ -530,19 +587,105 @@ export default function Messaging() {
     }
   };
 
-  const selectConversation = async (convId: number) => {
+  const checkActiveConvTieStatus = async (
+    convId: number,
+    targetConvParam?: Conversation,
+    userOverride?: { id: number; email: string; role?: { name: string } } | null,
+  ) => {
+    const user = userOverride !== undefined ? userOverride : (currentUser || currentUserRef.current);
+    const targetConv = targetConvParam || conversations.find((c) => c.id === convId);
+
+    if (!targetConv || targetConv.is_group) {
+      setActiveConnectionStatus({
+        status: "ACCEPTED",
+        connection_id: null,
+        is_tie: true,
+        other_user_id: null,
+      });
+      return;
+    }
+
+    const otherPart = targetConv.participants?.find(
+      (p) => !user?.id || p.user_id !== user.id,
+    );
+    const otherUserId = otherPart?.user_id;
+
+    if (!otherUserId) {
+      setActiveConnectionStatus({
+        status: "ACCEPTED",
+        connection_id: null,
+        is_tie: true,
+        other_user_id: null,
+      });
+      return;
+    }
+
+    const otherRole = (otherPart?.user?.role?.name || "").toLowerCase();
+    const isFaculty =
+      otherRole.includes("faculty") ||
+      otherRole.includes("prof") ||
+      otherRole.includes("teacher") ||
+      otherRole.includes("hod");
+
+    if (isFaculty) {
+      setActiveConnectionStatus({
+        status: "ACCEPTED",
+        connection_id: null,
+        is_tie: true,
+        other_user_id: otherUserId,
+      });
+      return;
+    }
+
+    try {
+      setActiveConnectionStatus({
+        status: "LOADING",
+        connection_id: null,
+        is_tie: false,
+        other_user_id: otherUserId,
+      });
+      const res = await apiRequest<{
+        status: "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE";
+        connection_id: number | null;
+        is_tie: boolean;
+      }>(`/connections/status/${otherUserId}`);
+      setActiveConnectionStatus({
+        status: res.status,
+        connection_id: res.connection_id,
+        is_tie: res.is_tie,
+        other_user_id: otherUserId,
+      });
+    } catch {
+      setActiveConnectionStatus({
+        status: "NONE",
+        connection_id: null,
+        is_tie: false,
+        other_user_id: otherUserId,
+      });
+    }
+  };
+
+  const selectConversation = async (convId: number, targetConvParam?: Conversation) => {
     setActiveConvId(convId);
     setIsLoadingMsgs(true);
     setReplyingToMessage(null);
     setIsSearchInChatOpen(false);
     setInChatSearchQuery("");
+    setTieNotice(null);
+
+    const targetConv = targetConvParam || conversations.find((c) => c.id === convId);
+    await checkActiveConvTieStatus(convId, targetConv);
+
     try {
       const msgs = await fetchConversationMessages(convId);
-      const enriched = msgs.map((m) => ({
-        ...m,
-        status: m.is_read ? ("read" as const) : ("delivered" as const),
-      }));
-      setMessages(enriched);
+      const uniqueMap = new Map<number, Message>();
+      for (const m of msgs) {
+        uniqueMap.set(m.id, {
+          ...m,
+          status: m.is_read ? ("read" as const) : ("delivered" as const),
+        });
+      }
+      setMessages(Array.from(uniqueMap.values()));
       await markConversationAsRead(convId);
       wsClient.markRead(convId);
 
@@ -557,8 +700,68 @@ export default function Messaging() {
     }
   };
 
+  const handleSendMessageRequest = async () => {
+    if (!activeConnectionStatus.other_user_id) return;
+    setIsTieActionLoading(true);
+    setTieNotice(null);
+    try {
+      await apiRequest("/connections", {
+        method: "POST",
+        body: JSON.stringify({ addressee_id: activeConnectionStatus.other_user_id }),
+      });
+      setActiveConnectionStatus((prev) => ({ ...prev, status: "SENT", is_tie: false }));
+      setTieNotice("Tie request sent! Once accepted, your messages will be delivered.");
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.toLowerCase().includes("already")) {
+        setActiveConnectionStatus((prev) => ({ ...prev, status: "SENT", is_tie: false }));
+        setTieNotice("Tie request is already pending.");
+      } else {
+        alert(msg || "Failed to send tie request.");
+      }
+    } finally {
+      setIsTieActionLoading(false);
+    }
+  };
+
+  const handleAcceptMessageRequest = async () => {
+    if (!activeConnectionStatus.connection_id) return;
+    setIsTieActionLoading(true);
+    try {
+      await apiRequest(`/connections/${activeConnectionStatus.connection_id}/accept`, {
+        method: "PATCH",
+      });
+      setActiveConnectionStatus((prev) => ({ ...prev, status: "ACCEPTED", is_tie: true }));
+      setTieNotice("Tie request accepted! You are now connected and can chat freely.");
+    } catch (err: any) {
+      alert(err?.message || "Failed to accept tie request.");
+    } finally {
+      setIsTieActionLoading(false);
+    }
+  };
+
+  const handleRejectMessageRequest = async () => {
+    if (!activeConnectionStatus.connection_id) return;
+    setIsTieActionLoading(true);
+    try {
+      await apiRequest(`/connections/${activeConnectionStatus.connection_id}/reject`, {
+        method: "PATCH",
+      });
+      setActiveConnectionStatus((prev) => ({ ...prev, status: "NONE", is_tie: false }));
+      setTieNotice("Tie request declined.");
+    } catch (err: any) {
+      alert(err?.message || "Failed to decline tie request.");
+    } finally {
+      setIsTieActionLoading(false);
+    }
+  };
+
   const sendMessageContent = async (rawContent: string) => {
     if (!rawContent.trim() || activeConvId === null || !currentUser) return;
+    if (!activeConnectionStatus.is_tie) {
+      alert("A tie / message request must be accepted before messages can be delivered.");
+      return;
+    }
 
     let finalContent = rawContent.trim();
     if (replyingToMessage) {
@@ -566,7 +769,7 @@ export default function Messaging() {
         replyingToMessage.sender_id === currentUser.id
           ? "You"
           : activeConv?.participants?.find((p) => p.user_id === replyingToMessage.sender_id)?.user?.email?.split("@")[0] || "User";
-      const snippet = replyingToMessage.content.slice(0, 60).replace(/\n/g, " ");
+      const snippet = cleanSnippetText(replyingToMessage.content);
       finalContent = `[Replying to @${replySender}: "${snippet}"]\n${finalContent}`;
       setReplyingToMessage(null);
     }
@@ -608,14 +811,6 @@ export default function Messaging() {
       } catch (err) {
         console.error("Failed to send message via REST fallback:", err);
       }
-    } else {
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId ? { ...m, status: "delivered" } : m,
-          ),
-        );
-      }, 400);
     }
   };
 
@@ -666,6 +861,34 @@ export default function Messaging() {
     } catch (err) {
       console.error("Failed to delete message:", err);
       alert("Could not delete message. Please try again.");
+    }
+  };
+
+  const handleCopyMessage = async (rawContent: string) => {
+    try {
+      let textToCopy = rawContent;
+      const replyMatch = rawContent.match(/^\[Replying to @[a-zA-Z0-9_.\s]+:\s*"[\s\S]*?"\]\n([\s\S]*)$/);
+      if (replyMatch) {
+        textToCopy = replyMatch[1];
+      }
+      const imgMatch = textToCopy.match(/^\[Image\]\s*(.+?)(?:\|(.*))?$/);
+      if (imgMatch) {
+        textToCopy = getMediaUrl(imgMatch[1]) || imgMatch[1];
+      }
+      const docMatch = textToCopy.match(/^\[Document\]\s*(.+?)(?:\|(.*?))?(?:\|(.*?))?$/);
+      if (docMatch) {
+        textToCopy = getMediaUrl(docMatch[1]) || docMatch[1];
+      }
+      const voiceMatch = textToCopy.match(/^\[Voice Note\]\s*(.+)$/);
+      if (voiceMatch) {
+        textToCopy = getMediaUrl(voiceMatch[1]) || voiceMatch[1];
+      }
+
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedToast("Message copied to clipboard");
+      setTimeout(() => setCopiedToast(null), 2200);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
     }
   };
 
@@ -761,7 +984,7 @@ export default function Messaging() {
     }
   };
 
-  // Open New Chat Modal & load campus directory
+  // Open New Chat Modal & load campus directory with connection statuses
   const handleOpenNewChatModal = async () => {
     setIsModalOpen(true);
     setModalTab("direct");
@@ -770,13 +993,91 @@ export default function Messaging() {
     setUserSearchQuery("");
     setIsLoadingUsers(true);
     try {
-      const users = await fetchCampusUsers(0, 100);
-      const otherUsers = users.filter((u) => u.id !== currentUser?.id);
+      const myUserId = currentUser?.id || currentUserRef.current?.id;
+      const [users, myConns, sentReqs, incomingReqs] = await Promise.all([
+        fetchCampusUsers(0, 100),
+        apiRequest<any[]>("/connections/me").catch(() => []),
+        apiRequest<any[]>("/connections/me/sent-requests").catch(() => []),
+        apiRequest<any[]>("/connections/me/requests").catch(() => []),
+      ]);
+      const otherUsers = users.filter((u) => u.id !== myUserId);
       setCampusUsers(otherUsers);
+
+      const statusMap: Record<
+        number,
+        {
+          status: "ACCEPTED" | "PENDING" | "SENT" | "RECEIVED" | "NONE";
+          connection_id?: number | null;
+        }
+      > = {};
+
+      for (const c of myConns || []) {
+        const otherId = c.requester_id === myUserId ? c.addressee_id : c.requester_id;
+        if (otherId) statusMap[otherId] = { status: "ACCEPTED", connection_id: c.id };
+      }
+      for (const c of sentReqs || []) {
+        if (c.addressee_id) statusMap[c.addressee_id] = { status: "SENT", connection_id: c.id };
+      }
+      for (const c of incomingReqs || []) {
+        if (c.requester_id) statusMap[c.requester_id] = { status: "RECEIVED", connection_id: c.id };
+      }
+      setUserTieStatusMap(statusMap);
     } catch (err) {
       console.error("Failed to load campus users for new chat:", err);
     } finally {
       setIsLoadingUsers(false);
+    }
+  };
+
+  const handleSendTieRequestFromModal = async (targetUserId: number, userName: string) => {
+    setSendingTieUserId(targetUserId);
+    try {
+      await apiRequest("/connections", {
+        method: "POST",
+        body: JSON.stringify({ addressee_id: targetUserId }),
+      });
+      setUserTieStatusMap((prev) => ({
+        ...prev,
+        [targetUserId]: { status: "SENT", connection_id: null },
+      }));
+      setTieNotice(`Tie request sent to ${userName}! Once accepted, you will be able to chat.`);
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (msg.toLowerCase().includes("already")) {
+        setUserTieStatusMap((prev) => ({
+          ...prev,
+          [targetUserId]: { status: "SENT", connection_id: null },
+        }));
+        setTieNotice(`Tie request with ${userName} is already pending.`);
+      } else {
+        alert(msg || "Failed to send tie request.");
+      }
+    } finally {
+      setSendingTieUserId(null);
+    }
+  };
+
+  const handleAcceptTieRequestFromModal = async (
+    connectionId: number | null | undefined,
+    targetUserId: number,
+    userName: string,
+  ) => {
+    if (!connectionId) return;
+    setSendingTieUserId(targetUserId);
+    try {
+      await apiRequest(`/connections/${connectionId}/accept`, {
+        method: "PATCH",
+      });
+      setUserTieStatusMap((prev) => ({
+        ...prev,
+        [targetUserId]: { status: "ACCEPTED", connection_id: connectionId },
+      }));
+      setTieNotice(`Tie request accepted! You are now connected with ${userName}.`);
+      await handleStartDirectChat(targetUserId);
+    } catch (err: any) {
+      alert(err?.message || "Failed to accept tie request.");
+    } finally {
+      setSendingTieUserId(null);
     }
   };
 
@@ -791,7 +1092,7 @@ export default function Messaging() {
         }
         return [conv, ...prev];
       });
-      selectConversation(conv.id);
+      selectConversation(conv.id, conv);
     } catch (err: any) {
       console.error("Failed to initiate direct conversation:", err);
       alert(err.message || "Could not start conversation. Please try again.");
@@ -853,7 +1154,11 @@ export default function Messaging() {
       (p) => p.user_id !== currentUser?.id,
     );
     const email = otherParticipant?.user?.email || `User #${otherParticipant?.user_id || "Direct"}`;
-    const cleanName = email.split("@")[0].replace(/[._]/g, " ");
+    const profile = otherParticipant?.user?.profile;
+    const fullName = profile?.first_name || profile?.last_name
+      ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+      : "";
+    const cleanName = fullName || email.split("@")[0].replace(/[._]/g, " ");
     const roleName = otherParticipant?.user?.role?.name || "Campus Member";
 
     return {
@@ -887,15 +1192,27 @@ export default function Messaging() {
     });
   }, [conversations, searchQuery, chatFilter, currentUser]);
 
-  // Filtered Campus Directory in Modal (Strict Communication Hierarchy)
+  // Filtered Campus Directory in Modal (Strict Communication Hierarchy & Username/Email search)
   const filteredCampusUsers = useMemo(() => {
     const senderRole = currentUser?.role?.name || "Student";
+    const q = userSearchQuery.toLowerCase().trim();
 
     return campusUsers.filter((u) => {
-      const matchesSearch = u.email
-        .toLowerCase()
-        .includes(userSearchQuery.toLowerCase());
+      const email = u.email.toLowerCase();
+      const usernameHandle = email.split("@")[0].toLowerCase();
+      const firstName = (u.profile?.first_name || "").toLowerCase();
+      const lastName = (u.profile?.last_name || "").toLowerCase();
+      const fullName = `${firstName} ${lastName}`.trim();
       const roleName = u.role?.name || "Student";
+
+      const matchesSearch =
+        !q ||
+        email.includes(q) ||
+        usernameHandle.includes(q) ||
+        firstName.includes(q) ||
+        lastName.includes(q) ||
+        fullName.includes(q);
+
       const matchesRole =
         selectedUserRoleFilter === "ALL" ||
         roleName.toLowerCase() === selectedUserRoleFilter.toLowerCase();
@@ -916,15 +1233,15 @@ export default function Messaging() {
     );
   }, [messages, inChatSearchQuery]);
 
-  // Delivery status badge
+  // Delivery status badge (WhatsApp style ticks)
   const renderDeliveryStatus = (msg: Message) => {
     if (msg.status === "sending") {
-      return <Clock className="w-3 h-3 text-slate-300 animate-spin" />;
+      return <Clock className="w-3 h-3 text-white/70 animate-spin" />;
     }
     if (msg.status === "read" || msg.is_read) {
-      return <CheckCheck className="w-3.5 h-3.5 text-sky-400 font-bold" />;
+      return <CheckCheck className="w-3.5 h-3.5 text-[#38bdf8] font-bold" />;
     }
-    return <CheckCheck className="w-3.5 h-3.5 text-white/70" />;
+    return <CheckCheck className="w-3.5 h-3.5 text-white/80" />;
   };
 
   // Role Badge Helper
@@ -945,20 +1262,45 @@ export default function Messaging() {
     }
   };
 
-  // --- Rich Message Body Content Renderer ---
+  // --- Rich Message Body Content Renderer (WhatsApp Style) ---
   const renderMessageContent = (content: string, isSentByMe: boolean) => {
     // 1. Quoted Reply Header check
     let replySnippet: { author: string; text: string } | null = null;
     let mainBody = content;
 
-    const replyMatch = content.match(/^\[Replying to @(.*?):\s*"(.*?)"\]\n([\s\S]*)$/);
+    const replyMatch = content.match(/^\[Replying to @([a-zA-Z0-9_.\s]+):\s*"([\s\S]*?)"\]\n([\s\S]*)$/);
     if (replyMatch) {
       replySnippet = {
         author: replyMatch[1],
-        text: replyMatch[2],
+        text: cleanSnippetText(replyMatch[2]),
       };
       mainBody = replyMatch[3];
     }
+
+    const renderReplyBox = () => {
+      if (!replySnippet) return null;
+      return (
+        <div
+          className={`px-3 py-1.5 rounded-xl mb-2 text-xs border-l-4 select-none ${
+            isSentByMe
+              ? "bg-black/20 border-[#FFD21A] text-white"
+              : "bg-[#F3EFFB] border-[#4B63D2] text-[#1E2746]"
+          }`}
+        >
+          <p
+            className={`font-bold text-[11px] flex items-center gap-1 mb-0.5 ${
+              isSentByMe ? "text-[#FFD21A]" : "text-[#4B63D2]"
+            }`}
+          >
+            <Reply className="w-3 h-3" />
+            <span>{replySnippet.author}</span>
+          </p>
+          <p className="text-[11px] opacity-85 truncate max-w-xs font-normal">
+            {replySnippet.text}
+          </p>
+        </div>
+      );
+    };
 
     // 2. Shared Post Card Check
     const postShareMatch = mainBody.match(/^\[Shared Post #(\d+) by (.*?)\]:\s*"(.*?)"\n\nView post:\s*(\/feed#post-\d+)$/);
@@ -969,14 +1311,7 @@ export default function Messaging() {
 
       return (
         <div>
-          {replySnippet && (
-            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
-              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
-            }`}>
-              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
-            </div>
-          )}
-
+          {renderReplyBox()}
           <div className="bg-white text-[#1E2746] rounded-2xl border border-[#D5CBEE] p-3 shadow-md my-1 space-y-2 max-w-sm">
             <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-1.5">
               <span className="text-[10px] font-black uppercase text-[#4B63D2] flex items-center gap-1">
@@ -1007,13 +1342,7 @@ export default function Messaging() {
     if (voiceNoteMatch) {
       return (
         <div>
-          {replySnippet && (
-            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
-              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
-            }`}>
-              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
-            </div>
-          )}
+          {renderReplyBox()}
           <VoiceNotePlayer src={voiceNoteMatch[1]} isSentByMe={isSentByMe} />
         </div>
       );
@@ -1027,14 +1356,11 @@ export default function Messaging() {
 
       return (
         <div>
-          {replySnippet && (
-            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
-              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
-            }`}>
-              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
-            </div>
-          )}
-          <div className="rounded-xl overflow-hidden border border-black/10 my-1 max-w-xs group relative cursor-pointer" onClick={() => setSelectedLightboxImage(imgUrl || null)}>
+          {renderReplyBox()}
+          <div
+            className="rounded-xl overflow-hidden border border-black/10 my-1 max-w-xs group relative cursor-pointer"
+            onClick={() => setSelectedLightboxImage(imgUrl || null)}
+          >
             <img
               src={imgUrl}
               alt={imgName}
@@ -1059,16 +1385,12 @@ export default function Messaging() {
 
       return (
         <div>
-          {replySnippet && (
-            <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
-              isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
-            }`}>
-              <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
-            </div>
-          )}
+          {renderReplyBox()}
           <div
             className={`flex items-center justify-between gap-3 p-3 rounded-2xl my-1 max-w-sm ${
-              isSentByMe ? "bg-white/15 text-white border border-white/20" : "bg-[#FAF9FD] text-[#1E2746] border border-[#EAE4F7]"
+              isSentByMe
+                ? "bg-white/15 text-white border border-white/20"
+                : "bg-[#FAF9FD] text-[#1E2746] border border-[#EAE4F7]"
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1086,7 +1408,9 @@ export default function Messaging() {
               rel="noopener noreferrer"
               download={docName}
               className={`p-2 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0 transition-transform active:scale-95 ${
-                isSentByMe ? "bg-white text-[#4B63D2] hover:bg-white/90" : "bg-[#4B63D2] text-white hover:bg-[#3E53BE]"
+                isSentByMe
+                  ? "bg-white text-[#4B63D2] hover:bg-white/90"
+                  : "bg-[#4B63D2] text-white hover:bg-[#3E53BE]"
               }`}
             >
               <Download className="w-3.5 h-3.5" />
@@ -1099,14 +1423,8 @@ export default function Messaging() {
     // 6. Regular Text Message
     return (
       <div>
-        {replySnippet && (
-          <div className={`p-2 rounded-lg mb-2 text-[11px] border-l-4 ${
-            isSentByMe ? "bg-white/10 border-[#FFD21A] text-white/90" : "bg-[#FAF9FD] border-[#4B63D2] text-[#5851A4]"
-          }`}>
-            <span className="font-bold">Replying to @{replySnippet.author}:</span> {replySnippet.text}
-          </div>
-        )}
-        <p className="whitespace-pre-wrap leading-relaxed font-medium">
+        {renderReplyBox()}
+        <p className="whitespace-pre-wrap leading-relaxed font-medium text-xs break-words">
           {mainBody}
         </p>
       </div>
@@ -1416,6 +1734,104 @@ export default function Messaging() {
               </div>
             )}
 
+            {/* Tie / Message Request Action Banner */}
+            {tieNotice && (
+              <div className="bg-[#FAF9FD] border-b border-[#EAE4F7] px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-[#4B63D2]">
+                <span>{tieNotice}</span>
+                <button
+                  type="button"
+                  onClick={() => setTieNotice(null)}
+                  className="text-[#9188BE] hover:text-[#1E2746]"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {!activeConnectionStatus.is_tie && (
+              <div className="p-4 border-b border-[#EAE4F7] bg-white">
+                {activeConnectionStatus.status === "NONE" && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-900 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 shrink-0 font-black text-lg">
+                        🤝
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-amber-950">
+                          Tie Request Required
+                        </h4>
+                        <p className="text-[11px] text-amber-800 font-medium">
+                          You and {activeConvInfo.title} are not connected as ties yet. Send a tie request to begin chatting.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSendMessageRequest}
+                      disabled={isTieActionLoading}
+                      className="bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      {isTieActionLoading ? "Sending..." : "Send Tie Request"}
+                    </button>
+                  </div>
+                )}
+
+                {activeConnectionStatus.status === "SENT" && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center gap-3 text-blue-900 shadow-sm">
+                    <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-[#4B63D2] shrink-0">
+                      <Clock className="w-5 h-5 text-[#4B63D2]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-blue-950">
+                        Tie Request Pending
+                      </h4>
+                      <p className="text-[11px] text-blue-800 font-medium">
+                        Your tie request was sent to {activeConvInfo.title}. Once they accept, messages will be delivered and you can chat freely.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {activeConnectionStatus.status === "RECEIVED" && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-emerald-900 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800 shrink-0 font-black text-lg">
+                        📩
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-emerald-950">
+                          {activeConvInfo.title} sent you a tie request
+                        </h4>
+                        <p className="text-[11px] text-emerald-800 font-medium">
+                          Accept their tie request to start chatting and exchange direct messages.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleRejectMessageRequest}
+                        disabled={isTieActionLoading}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-white border border-slate-200 transition-all cursor-pointer"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAcceptMessageRequest}
+                        disabled={isTieActionLoading}
+                        className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        {isTieActionLoading ? "Accepting..." : "Accept Tie Request"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Message History Feed */}
             <div className="flex-1 p-6 space-y-3.5 overflow-y-auto bg-[#F8F6FD] relative">
               {isLoadingMsgs ? (
@@ -1496,7 +1912,7 @@ export default function Messaging() {
                         )}
 
                         <div className="relative max-w-md">
-                          {/* Hover Message Action Bar (Reply, Delete, Quick Reactions) */}
+                          {/* Hover Message Action Bar (Reply, Copy, Delete, Quick Reactions) */}
                           {hoveredMessageId === msg.id && (
                             <div
                               className={`absolute -top-7 ${
@@ -1533,6 +1949,16 @@ export default function Messaging() {
                                 <Reply className="w-3.5 h-3.5" />
                               </button>
 
+                              {/* Copy Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleCopyMessage(msg.content)}
+                                className="text-[#5851A4] hover:text-[#4B63D2] p-1 rounded-full transition-colors cursor-pointer"
+                                title="Copy text"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* Delete Button (Only for own messages) */}
                               {isSentByMe && (
                                 <button
@@ -1549,7 +1975,11 @@ export default function Messaging() {
 
                           {/* Message Bubble */}
                           <div
-                            className={`p-3.5 rounded-2xl text-xs shadow-sm transition-all ${
+                            onDoubleClick={() => {
+                              setReplyingToMessage(msg);
+                              inputRef.current?.focus();
+                            }}
+                            className={`p-3.5 rounded-2xl text-xs shadow-sm transition-all select-text cursor-default ${
                               isSentByMe
                                 ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white rounded-tr-none"
                                 : "bg-white border border-[#EAE4F7] text-[#1E2746] rounded-tl-none"
@@ -1619,24 +2049,27 @@ export default function Messaging() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Quoted Message Preview Banner above Input */}
+            {/* Quoted Message Preview Banner above Input (WhatsApp Style) */}
             {replyingToMessage && (
-              <div className="bg-[#FAF9FD] border-t border-[#EAE4F7] px-4 py-2 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 border-l-4 border-[#4B63D2] pl-2 min-w-0">
-                  <Reply className="w-4 h-4 text-[#4B63D2] shrink-0" />
+              <div className="bg-[#FAF9FD] border-t border-[#EAE4F7] px-4 py-2.5 flex items-center justify-between gap-3 text-xs animate-in slide-in-from-bottom-2 duration-150">
+                <div className="flex items-center gap-3 border-l-4 border-[#4B63D2] pl-3 min-w-0">
+                  <div className="h-8 w-8 rounded-xl bg-[#4B63D2]/10 flex items-center justify-center text-[#4B63D2] shrink-0">
+                    <Reply className="w-4 h-4" />
+                  </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-[#4B63D2] truncate text-[11px]">
-                      Replying to {replyingToMessage.sender_id === currentUser?.id ? "Yourself" : "Message"}
+                    <p className="font-bold text-[#4B63D2] truncate text-xs">
+                      Replying to {replyingToMessage.sender_id === currentUser?.id ? "Yourself" : activeConv?.participants?.find((p) => p.user_id === replyingToMessage.sender_id)?.user?.email?.split("@")[0] || "User"}
                     </p>
-                    <p className="text-[#5851A4] truncate text-[10px]">
-                      {replyingToMessage.content}
+                    <p className="text-[#5851A4] truncate text-[11px] font-medium">
+                      {cleanSnippetText(replyingToMessage.content)}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setReplyingToMessage(null)}
-                  className="p-1 text-[#9188BE] hover:text-[#1E2746] rounded-lg hover:bg-white cursor-pointer"
+                  className="p-1.5 text-[#9188BE] hover:text-[#1E2746] rounded-xl hover:bg-white border border-transparent hover:border-[#EAE4F7] transition-all cursor-pointer"
+                  title="Cancel reply"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1717,16 +2150,23 @@ export default function Messaging() {
                 </div>
               ) : (
                 <form
-                  onSubmit={handleSendMessage}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!activeConnectionStatus.is_tie) {
+                      alert("A message request must be accepted before messages can be delivered.");
+                      return;
+                    }
+                    handleSendMessage(e);
+                  }}
                   className="flex gap-2 items-center"
                 >
                   {/* File Attachment Button */}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingAttachment}
-                    className="p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer"
-                    title="Attach Image or Document"
+                    disabled={isUploadingAttachment || !activeConnectionStatus.is_tie}
+                    className="p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    title={!activeConnectionStatus.is_tie ? "Connect first to attach files" : "Attach Image or Document"}
                   >
                     {isUploadingAttachment ? (
                       <div className="h-5 w-5 border-2 border-[#4B63D2] border-t-transparent rounded-full animate-spin" />
@@ -1739,10 +2179,11 @@ export default function Messaging() {
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className={`p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] transition-all cursor-pointer ${
+                    disabled={!activeConnectionStatus.is_tie}
+                    className={`p-2.5 rounded-xl text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer ${
                       showEmojiPicker ? "bg-[#FAF9FD] text-[#4B63D2]" : ""
                     }`}
-                    title="Choose Emoji"
+                    title={!activeConnectionStatus.is_tie ? "Connect first to use emojis" : "Choose Emoji"}
                   >
                     <Smile className="w-5 h-5" />
                   </button>
@@ -1750,16 +2191,26 @@ export default function Messaging() {
                   <input
                     ref={inputRef}
                     type="text"
-                    placeholder={`Message ${activeConvInfo.title}...`}
+                    disabled={!activeConnectionStatus.is_tie}
+                    placeholder={
+                      !activeConnectionStatus.is_tie
+                        ? activeConnectionStatus.status === "SENT"
+                          ? "Message request pending approval..."
+                          : activeConnectionStatus.status === "RECEIVED"
+                          ? "Accept request above to reply..."
+                          : "Send a message request above to chat..."
+                        : `Message ${activeConvInfo.title}...`
+                    }
                     value={inputContent}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
+                        if (!activeConnectionStatus.is_tie) return;
                         handleSendMessage();
                       }
                     }}
-                    className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
+                    className="flex-1 bg-[#FAF9FD] disabled:bg-[#F3EFFB]/60 disabled:cursor-not-allowed border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/10 font-medium"
                   />
 
                   {/* Voice Note Record Trigger Button */}
@@ -1767,8 +2218,9 @@ export default function Messaging() {
                     <button
                       type="button"
                       onClick={startVoiceRecording}
-                      className="p-2.5 rounded-xl text-[#4B63D2] hover:bg-[#FAF9FD] transition-all cursor-pointer"
-                      title="Record Voice Note"
+                      disabled={!activeConnectionStatus.is_tie}
+                      className="p-2.5 rounded-xl text-[#4B63D2] hover:bg-[#FAF9FD] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                      title={!activeConnectionStatus.is_tie ? "Connect first to record voice note" : "Record Voice Note"}
                     >
                       <Mic className="w-5 h-5" />
                     </button>
@@ -1778,7 +2230,8 @@ export default function Messaging() {
                   {inputContent.trim() && (
                     <button
                       type="submit"
-                      className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#4B63D2] px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      disabled={!activeConnectionStatus.is_tie}
+                      className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#4B63D2] disabled:opacity-30 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>Send</span>
                       <Send className="w-3.5 h-3.5" />
@@ -1960,7 +2413,7 @@ export default function Messaging() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
                   <input
                     type="text"
-                    placeholder="Search by name or @sbjit.edu.in email..."
+                    placeholder="Enter username (e.g. aarav.sharma) or email to chat..."
                     value={userSearchQuery}
                     onChange={(e) => setUserSearchQuery(e.target.value)}
                     className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-9 pr-3 py-2 text-xs font-medium text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2]"
@@ -1969,14 +2422,10 @@ export default function Messaging() {
 
                 {/* Role Chips filter */}
                 <div className="flex items-center gap-1 overflow-x-auto pb-1">
-                  {[
-                    "ALL",
-                    "Student",
-                    "Faculty",
-                    "Controller",
-                    "Management",
-                    "Alumni",
-                  ].map((role) => (
+                  {(currentUser?.role?.name?.toLowerCase().includes("student")
+                    ? ["ALL", "Student", "Faculty", "Alumni"]
+                    : ["ALL", "Student", "Faculty", "Controller", "Management", "Alumni"]
+                  ).map((role) => (
                     <button
                       key={role}
                       type="button"
@@ -2001,9 +2450,18 @@ export default function Messaging() {
                     <span>Loading campus directory...</span>
                   </div>
                 ) : filteredCampusUsers.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-[#5851A4] font-medium flex items-center justify-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-500" />
-                    <span>No members match your search query or hierarchy permissions.</span>
+                  <div className="p-6 text-center text-xs text-[#5851A4] font-medium flex flex-col items-center justify-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-500" />
+                    <span>
+                      {userSearchQuery
+                        ? `No members found matching "${userSearchQuery}".`
+                        : "No members found."}
+                    </span>
+                    {currentUser?.role?.name?.toLowerCase().includes("student") && (
+                      <span className="text-[11px] text-[#9188BE] max-w-xs">
+                        Students can message other students, alumni, and faculty. Leadership and controller accounts are restricted.
+                      </span>
+                    )}
                   </div>
                 ) : (
                   filteredCampusUsers.map((user) => {
@@ -2011,6 +2469,10 @@ export default function Messaging() {
                     const cleanName = user.email
                       .split("@")[0]
                       .replace(/[._]/g, " ");
+                    const profileName = user.profile?.first_name || user.profile?.last_name
+                      ? `${user.profile?.first_name || ""} ${user.profile?.last_name || ""}`.trim()
+                      : "";
+                    const displayName = profileName || cleanName;
                     const roleName = user.role?.name || "Member";
 
                     return (
@@ -2031,11 +2493,11 @@ export default function Messaging() {
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="h-8 w-8 rounded-xl bg-[#EAE4F7] text-[#4B63D2] flex items-center justify-center font-bold text-xs shrink-0 capitalize">
-                            {cleanName.substring(0, 2).toUpperCase()}
+                            {displayName.substring(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <h5 className="text-xs font-bold text-[#1E2746] truncate capitalize">
-                              {cleanName}
+                              {displayName}
                             </h5>
                             <p className="text-[10px] text-[#5851A4] truncate font-medium">
                               {user.email}
@@ -2062,14 +2524,100 @@ export default function Messaging() {
                             >
                               {isSelected && <Check className="w-3.5 h-3.5" />}
                             </div>
-                          ) : (
-                            <button
-                              type="button"
-                              className="text-[11px] font-bold text-[#4B63D2] hover:underline cursor-pointer"
-                            >
-                              Chat →
-                            </button>
-                          )}
+                          ) : (() => {
+                            const isFaculty =
+                              roleName.toLowerCase().includes("faculty") ||
+                              roleName.toLowerCase().includes("prof") ||
+                              roleName.toLowerCase().includes("teacher") ||
+                              roleName.toLowerCase().includes("hod");
+                            const tieInfo = userTieStatusMap[user.id] || { status: "NONE" };
+
+                            if (isFaculty || tieInfo.status === "ACCEPTED") {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartDirectChat(user.id);
+                                  }}
+                                  className="text-xs font-bold text-[#4B63D2] hover:text-[#3E53BE] hover:underline flex items-center gap-1 cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-[#4B63D2]/10 transition"
+                                >
+                                  Chat →
+                                </button>
+                              );
+                            }
+
+                            if (tieInfo.status === "SENT") {
+                              return (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-[#4B63D2]" />
+                                    Tie Request Sent
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleStartDirectChat(user.id);
+                                    }}
+                                    className="text-[11px] font-bold text-[#5851A4] hover:text-[#4B63D2] px-1.5 py-1 rounded cursor-pointer"
+                                  >
+                                    View
+                                  </button>
+                                </div>
+                              );
+                            }
+
+                            if (tieInfo.status === "RECEIVED") {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAcceptTieRequestFromModal(
+                                      tieInfo.connection_id,
+                                      user.id,
+                                      displayName,
+                                    );
+                                  }}
+                                  disabled={sendingTieUserId === user.id}
+                                  className="text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  {sendingTieUserId === user.id ? "Accepting..." : "Accept Tie"}
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSendTieRequestFromModal(user.id, displayName);
+                                  }}
+                                  disabled={sendingTieUserId === user.id}
+                                  className="text-[11px] font-bold text-white bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:opacity-95 disabled:opacity-50 px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-1 cursor-pointer transition active:scale-95"
+                                  title="Send a Tie Request to connect"
+                                >
+                                  <UserPlus className="w-3.5 h-3.5" />
+                                  {sendingTieUserId === user.id ? "Sending..." : "Send Tie Request"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartDirectChat(user.id);
+                                  }}
+                                  className="text-[11px] font-bold text-[#5851A4] hover:text-[#4B63D2] border border-[#EAE4F7] px-2 py-1.5 rounded-lg transition hover:bg-[#FAF9FD]"
+                                  title="Open conversation view"
+                                >
+                                  Chat →
+                                </button>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
@@ -2113,6 +2661,14 @@ export default function Messaging() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification for Copy & Actions */}
+      {copiedToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#1E2746] text-white text-xs font-semibold px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <span>{copiedToast}</span>
         </div>
       )}
     </div>

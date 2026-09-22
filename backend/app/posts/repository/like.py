@@ -18,6 +18,17 @@ class LikeRepository(BaseRepository[Like]):
         )
         return result.scalars().first()
 
+    async def get_liked_post_ids(self, post_ids: list[int], user_id: int) -> set[int]:
+        """Batch-fetch which posts the user has liked. Returns a set of post IDs."""
+        if not post_ids:
+            return set()
+        result = await self.db.execute(
+            select(Like.post_id).filter(
+                and_(Like.post_id.in_(post_ids), Like.user_id == user_id)
+            )
+        )
+        return set(result.scalars().all())
+
     async def count_by_post(self, post_id: int) -> int:
         """Return the total number of likes on a post."""
         result = await self.db.execute(

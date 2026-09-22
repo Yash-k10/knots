@@ -8,5 +8,5 @@ select = ["E", "F", "W"]
 # Ignore line too long, imports not at top of file, and boolean equality checks
 ignore = ["E501", "E402", "E712", "B008", "DTZ003", "DTZ004", "SIM210", "G201", "BLE001"]
 
-# Ignore unused imports in __init__.py files
-per-file-ignores = { "__init__.py" = ["F401"] }
+# Ignore unused imports in __init__.py files and model registry
+per-file-ignores = { "__init__.py" = ["F401"], "app/core/base.py" = ["F401"] }

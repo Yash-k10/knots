@@ -34,10 +34,21 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
 def _is_user_admin(user: User) -> bool:
-    return user.role_id == 1 or (
-        getattr(user, "role", None) is not None
-        and user.role.name.lower().strip() in ("admin", "super admin", "superadmin")
-    )
+    if getattr(user, "role_id", None) in (1, 2, 9):
+        return True
+    if getattr(user, "role", None) is not None:
+        r = user.role.name.lower().strip()
+        return r in (
+            "admin",
+            "super admin",
+            "superadmin",
+            "central admin",
+            "central_admin",
+            "controller",
+            "tpo",
+            "management",
+        )
+    return False
 
 
 # --- Companies Endpoints ---

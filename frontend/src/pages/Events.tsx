@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Calendar,
   Clock,
@@ -15,9 +15,61 @@ import {
   Crown,
   UserCheck,
   Loader2,
+  Eye,
+  Filter,
+  ShieldCheck,
+  Trash2,
 } from "lucide-react";
 
 import { apiRequest } from "../services/api";
+import { getRoleNameById } from "../utils/role";
+import AlumniMeetGallery from "../components/events/AlumniMeetGallery";
+
+/** Canonical department matching — mirrors the Python _depts_match() helper. */
+function deptMatches(userDept: string, otherDept: string): boolean {
+  const u = userDept.toLowerCase().trim();
+  const o = otherDept.toLowerCase().trim();
+  if (u === o) return true;
+  if (["central", "central level", "campus-wide", "central club"].includes(o)) return false;
+  if (u.includes("aiml")) return o.includes("aiml");
+  if (u.includes("aids")) return o.includes("aids");
+  if (u === "cse") return o === "cse" || o === "computer science" || o === "computer science & engineering";
+  if (u === "it") return o === "it" || o.includes("information technology");
+  if (u === "etc" || u === "ece") return o === "etc" || o === "ece" || (o.includes("electronics") && o.includes("telecommunication")) || o.includes("ece");
+  if (u === "ee") return o === "ee" || o.includes("electrical");
+  if (u === "me") return o === "me" || o.includes("mechanical");
+  if (u === "bca") return o === "bca";
+  if (u === "mca") return o === "mca";
+  if (u === "mba") return o === "mba";
+  if (u.includes("first") || u === "fy") return o.includes("first") || o === "fy";
+  if (u.includes("sport")) return o.includes("sport");
+  return false;
+}
+
+function eventMatchesDept(event: CampusEvent, targetDept: string): boolean {
+  if (targetDept === "ALL") return true;
+  if (targetDept.toLowerCase() === "central") {
+    const org = (event.organizer || "").toLowerCase();
+    return org.includes("central") || org.includes("campus") || org.includes("council") || org.includes("management");
+  }
+  // Check organizer string with canonical deptMatches
+  if (deptMatches(targetDept, event.organizer || "")) return true;
+  // Also check if title or tagline contains the department name
+  const text = `${event.title} ${event.tagline} ${event.organizer}`.toLowerCase();
+  const d = targetDept.toLowerCase();
+  if (d === "cse(aiml)") return text.includes("aiml") || text.includes("ai/ml");
+  if (d === "cse(aids)") return text.includes("aids") || text.includes("data science");
+  if (d === "cse") return text.includes("cse") || text.includes("computer science");
+  if (d === "it") return text.includes("information technology") || text.includes("it ");
+  if (d === "etc") return text.includes("etc") || text.includes("ece") || text.includes("electronics") || text.includes("telecommunication");
+  if (d === "ee") return text.includes("electrical") || text.includes("ee ");
+  if (d === "me") return text.includes("mechanical") || text.includes("me ");
+  if (d === "bca") return text.includes("bca");
+  if (d === "mca") return text.includes("mca");
+  if (d === "mba") return text.includes("mba");
+  if (d === "first year") return text.includes("first year") || text.includes("fy");
+  return text.includes(d);
+}
 
 interface EventTimelineItem {
   time: string;
@@ -74,8 +126,10 @@ export interface CampusEvent {
   organizer_id?: number;
   head_id?: number | null;
   co_head_id?: number | null;
+  faculty_coordinator_id?: number | null;
   head?: EventLeadUser | null;
   co_head?: EventLeadUser | null;
+  faculty_coordinator?: EventLeadUser | null;
   isUpcoming: boolean;
   google_form_url?: string;
 }
@@ -86,10 +140,39 @@ export default function Events() {
     email: string;
     role_id?: number;
     role?: { name: string };
+    profile?: {
+      first_name?: string | null;
+      last_name?: string | null;
+      department?: string | null;
+    } | null;
   } | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
+  
+  // Tab switcher with URL persistence
+  const initialTab =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("tab") === "alumni_gallery"
+      ? "alumni_gallery"
+      : "college";
+  const [activeTab, setActiveTab] = useState<"college" | "alumni_gallery">(initialTab);
+
+  const handleTabChange = (tab: "college" | "alumni_gallery") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "alumni_gallery") {
+        url.searchParams.set("tab", "alumni_gallery");
+      } else {
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
 
   // Department Students List (for Controller to pick Event Head & Co-Head)
   const [departmentStudents, setDepartmentStudents] = useState<any[]>([]);
+  // Faculty Candidates List (for Controller to pick Faculty Coordinator)
+  const [facultyCandidates, setFacultyCandidates] = useState<EventLeadUser[]>([]);
 
   // Event Creation Modal state (Controller & Admin restricted)
   const [showCreateEventModal, setShowCreateEventModal] = useState<boolean>(false);
@@ -103,6 +186,7 @@ export default function Events() {
   const [newEventHighlights, setNewEventHighlights] = useState<string>("");
   const [newEventHeadId, setNewEventHeadId] = useState<number | null>(null);
   const [newEventCoHeadId, setNewEventCoHeadId] = useState<number | null>(null);
+  const [newEventFacultyCoordinatorId, setNewEventFacultyCoordinatorId] = useState<number | null>(null);
   const [isSubmittingCreate, setIsSubmittingCreate] = useState<boolean>(false);
   const [createEventError, setCreateEventError] = useState<string | null>(null);
   const [createEventSuccess, setCreateEventSuccess] = useState<string | null>(null);
@@ -111,6 +195,7 @@ export default function Events() {
   const [leadsModalEvent, setLeadsModalEvent] = useState<CampusEvent | null>(null);
   const [appointedHeadId, setAppointedHeadId] = useState<number | null>(null);
   const [appointedCoHeadId, setAppointedCoHeadId] = useState<number | null>(null);
+  const [appointedFacultyCoordinatorId, setAppointedFacultyCoordinatorId] = useState<number | null>(null);
   const [isSubmittingLeads, setIsSubmittingLeads] = useState<boolean>(false);
   const [leadsSuccess, setLeadsSuccess] = useState<string | null>(null);
   const [leadsError, setLeadsError] = useState<string | null>(null);
@@ -353,12 +438,18 @@ export default function Events() {
   // Fetch current user, backend events, and department students
   const loadInitialData = async () => {
     try {
+      setLoadingUser(true);
       // 1. Current user
       const userData = await apiRequest<{
         id: number;
         email: string;
         role_id?: number;
         role?: { name: string };
+        profile?: {
+          first_name?: string | null;
+          last_name?: string | null;
+          department?: string | null;
+        } | null;
       }>("/users/me").catch(() => null);
       if (userData) setCurrentUser(userData);
 
@@ -407,8 +498,10 @@ export default function Events() {
             organizer_id: evt.organizer_id,
             head_id: evt.head_id,
             co_head_id: evt.co_head_id,
+            faculty_coordinator_id: evt.faculty_coordinator_id,
             head: evt.head,
             co_head: evt.co_head,
+            faculty_coordinator: evt.faculty_coordinator,
             isUpcoming: true,
             google_form_url: evt.google_form_url,
           };
@@ -435,8 +528,32 @@ export default function Events() {
           .filter((s) => s.name && !s.name.toLowerCase().includes("admin"));
         setDepartmentStudents(cleanStudents);
       }
+
+      // 4. Fetch faculty candidates for Event Faculty Coordinator
+      try {
+        const facRes = await apiRequest<any[]>("/clubs/faculty-candidates").catch(() => []);
+        if (Array.isArray(facRes) && facRes.length > 0) {
+          setFacultyCandidates(facRes);
+        } else {
+          const usersRes = await apiRequest<any[]>("/users?limit=60").catch(() => []);
+          const facList = usersRes
+            .filter((u: any) => u.role?.name?.toLowerCase().includes("faculty") || u.role_id === 6 || u.role_id === 10)
+            .map((u: any) => ({
+              id: u.id,
+              email: u.email,
+              first_name: u.first_name || u.profile?.first_name,
+              last_name: u.last_name || u.profile?.last_name,
+              department: u.department || u.profile?.department,
+            }));
+          setFacultyCandidates(facList);
+        }
+      } catch (err) {
+        console.error("Failed to load faculty candidates for events", err);
+      }
     } catch (err) {
       console.error("Failed to load events initial data", err);
+    } finally {
+      setLoadingUser(false);
     }
   };
 
@@ -445,32 +562,77 @@ export default function Events() {
   }, []);
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
+  const isExecutiveObserver = ["ceo", "dean", "principal"].includes(roleName);
+  const isAlumni =
+    roleName === "alumni" ||
+    currentUser?.role_id === 4 ||
+    (currentUser?.role_id ? getRoleNameById(currentUser.role_id).toLowerCase() === "alumni" : false);
+
+  const isCentralAdmin =
+    !isExecutiveObserver &&
+    (currentUser?.role_id === 9 ||
+      roleName === "central admin" ||
+      roleName.includes("central admin"));
+
   const isAdmin =
-    currentUser?.role_id === 1 ||
-    ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName) ||
-    currentUser?.email?.toLowerCase().includes("admin") ||
-    false;
+    !isExecutiveObserver &&
+    (currentUser?.role_id === 1 ||
+      currentUser?.role_id === 9 ||
+      isCentralAdmin ||
+      ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName) ||
+      currentUser?.email?.toLowerCase().includes("admin") ||
+      false);
+
+  const isHod = roleName === "hod" || roleName.includes("hod");
 
   const isController =
-    roleName === "controller" ||
-    roleName === "tpo" ||
-    roleName === "hod" ||
-    currentUser?.email?.toLowerCase().includes("controller") ||
-    false;
+    !isExecutiveObserver &&
+    !isHod &&
+    (roleName === "controller" ||
+      roleName === "tpo" ||
+      currentUser?.email?.toLowerCase().includes("controller") ||
+      false);
 
-  const canCreateEvent = isAdmin || isController;
+  const canCreateEvent = !isExecutiveObserver && !isHod && (isAdmin || isController);
 
-  // ── Join / RSVP Action ──────────────────────────────────────────────────────
+  const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>("ALL");
+
+  const EXECUTIVE_DEPARTMENTS = [
+    "ALL",
+    "First year",
+    "CSE",
+    "CSE(AIML)",
+    "CSE(AIDS)",
+    "IT",
+    "ETC",
+    "EE",
+    "ME",
+    "BCA",
+    "MCA",
+    "MBA",
+    "Central",
+  ];
+
+  const filteredUpcomingEvents = useMemo(() => {
+    return events.filter((e) => eventMatchesDept(e, selectedDepartmentFilter));
+  }, [events, selectedDepartmentFilter]);
+
+  const filteredPreviousEvents = useMemo(() => {
+    return previousEvents.filter((e) => eventMatchesDept(e, selectedDepartmentFilter));
+  }, [previousEvents, selectedDepartmentFilter]);
+
+  // ── RSVP Action ─────────────────────────────────────────────────────────────
   const handleRequestOrRSVP = async (event: CampusEvent) => {
+    if (isExecutiveObserver) return;
     if (event.google_form_url) {
       window.open(event.google_form_url, "_blank");
       return;
     }
 
     try {
-      // If already attending or pending, toggle/cancel
+      // If already attending, toggle/cancel RSVP
       if (event.userRsvpStatus === "GOING" || event.userRsvpStatus === "PENDING") {
-        if (!window.confirm("Do you want to cancel your attendance / join request?")) return;
+        if (!window.confirm("Do you want to cancel your RSVP for this event?")) return;
         await apiRequest(`/events/${event.id}/rsvp`, { method: "DELETE" }).catch(() => null);
         setEvents((prev) =>
           prev.map((e) =>
@@ -479,7 +641,7 @@ export default function Events() {
                   ...e,
                   isRsvp: false,
                   userRsvpStatus: null,
-                  rsvpCount: e.userRsvpStatus === "GOING" ? Math.max(0, e.rsvpCount - 1) : e.rsvpCount,
+                  rsvpCount: e.userRsvpStatus === "GOING" ? Math.max(0, (e.rsvpCount || 1) - 1) : e.rsvpCount,
                 }
               : e
           )
@@ -487,13 +649,13 @@ export default function Events() {
         return;
       }
 
-      // Submit new join request (PENDING)
+      // Directly RSVP (GOING) — count increases immediately with no approval needed
       const res = await apiRequest<any>(`/events/${event.id}/rsvp`, {
         method: "POST",
-        body: JSON.stringify({ status: "PENDING" }),
-      }).catch(() => null);
+        body: JSON.stringify({ status: "GOING" }),
+      });
 
-      const nextStatus = res?.status || "PENDING";
+      const nextStatus = res?.status || "GOING";
       setEvents((prev) =>
         prev.map((e) =>
           e.id === event.id
@@ -501,14 +663,13 @@ export default function Events() {
                 ...e,
                 isRsvp: nextStatus === "GOING",
                 userRsvpStatus: nextStatus,
-                pendingRequestsCount: (e.pendingRequestsCount || 0) + 1,
+                rsvpCount: nextStatus === "GOING" ? (e.rsvpCount || 0) + 1 : e.rsvpCount,
               }
             : e
         )
       );
-      alert("Your request to join the event has been sent to the Event Head & Co-Head for approval!");
     } catch (err: any) {
-      alert(err?.message || "Failed to submit event request");
+      alert(err?.message || "Failed to RSVP for event");
     }
   };
 
@@ -517,6 +678,7 @@ export default function Events() {
     setLeadsModalEvent(event);
     setAppointedHeadId(event.head_id || null);
     setAppointedCoHeadId(event.co_head_id || null);
+    setAppointedFacultyCoordinatorId(event.faculty_coordinator_id || null);
     setLeadsSuccess(null);
     setLeadsError(null);
   };
@@ -538,11 +700,13 @@ export default function Events() {
         body: JSON.stringify({
           head_id: appointedHeadId || null,
           co_head_id: appointedCoHeadId || null,
+          faculty_coordinator_id: appointedFacultyCoordinatorId || null,
         }),
       });
 
       const headObj = departmentStudents.find((s) => s.id === appointedHeadId);
       const coHeadObj = departmentStudents.find((s) => s.id === appointedCoHeadId);
+      const facultyObj = facultyCandidates.find((f) => f.id === appointedFacultyCoordinatorId);
 
       setEvents((prev) =>
         prev.map((evt) =>
@@ -551,6 +715,7 @@ export default function Events() {
                 ...evt,
                 head_id: appointedHeadId,
                 co_head_id: appointedCoHeadId,
+                faculty_coordinator_id: appointedFacultyCoordinatorId,
                 head: headObj
                   ? {
                       id: headObj.id,
@@ -569,12 +734,21 @@ export default function Events() {
                       department: coHeadObj.department,
                     }
                   : null,
+                faculty_coordinator: facultyObj
+                  ? {
+                      id: facultyObj.id,
+                      email: facultyObj.email,
+                      first_name: facultyObj.first_name,
+                      last_name: facultyObj.last_name,
+                      department: facultyObj.department,
+                    }
+                  : null,
               }
             : evt
         )
       );
 
-      setLeadsSuccess("Event Head and Co-Head successfully appointed!");
+      setLeadsSuccess("Event Head, Co-Head, and Faculty Coordinator successfully appointed!");
       setTimeout(() => {
         setLeadsModalEvent(null);
         setLeadsSuccess(null);
@@ -636,11 +810,132 @@ export default function Events() {
     }
   };
 
+  const handleDeleteEvent = async (eventId: number, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete event "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await apiRequest(`/events/${eventId}`, { method: "DELETE" });
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+      alert("Event deleted successfully!");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete event.");
+    }
+  };
+
+  if (loadingUser) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
+        <span className="text-xs sm:text-sm font-bold text-[#5851A4]">
+          Loading events portal...
+        </span>
+      </div>
+    );
+  }
+
+  // ALUMNI EXCLUSIVE RESTRICTION:
+  // In alumni login in the events section, the alumni should ONLY see Alumni Meet Gallery.
+  // Other college upcoming and previous events should NOT be seen to the alumni account.
+  if (isAlumni) {
+    return <AlumniMeetGallery currentUser={currentUser} />;
+  }
+
   return (
-    <div className="space-y-10">
-      {/* ========================================================================= */}
-      {/* 1. UPCOMING COLLEGE EVENTS SECTION                                         */}
-      {/* ========================================================================= */}
+    <div className="space-y-8">
+      {/* Role Navigation for non-alumni: Campus Events vs Alumni Meet Gallery */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAE4F7] pb-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleTabChange("college")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "college"
+                ? "bg-[#4B63D2] text-white shadow-sm"
+                : "bg-white text-[#5851A4] hover:bg-[#FAF9FD] border border-[#EAE4F7]"
+            }`}
+          >
+            <span>Campus Events</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                activeTab === "college" ? "bg-white/20 text-white" : "bg-[#EAE4F7] text-[#5851A4]"
+              }`}
+            >
+              {events.length}
+            </span>
+          </button>
+          <button
+            onClick={() => handleTabChange("alumni_gallery")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "alumni_gallery"
+                ? "bg-[#4B63D2] text-white shadow-sm"
+                : "bg-white text-[#5851A4] hover:bg-[#FAF9FD] border border-[#EAE4F7]"
+            }`}
+          >
+            <span>🎓 Alumni Meet Gallery</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
+                activeTab === "alumni_gallery" ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
+              }`}
+            >
+              Photos & Reunions
+            </span>
+          </button>
+        </div>
+
+        {/* Controller / Admin Visibility & Quick Switch Helper */}
+        {(isController || isAdmin) && (
+          <div className="flex items-center gap-2 text-[11px] font-medium text-[#5851A4] bg-[#FAF9FD] border border-[#EAE4F7] px-3 py-1.5 rounded-xl">
+            <span className="font-bold text-[#1E2746]">
+              {isController ? "Department Controller View:" : "Admin View:"}
+            </span>
+            {activeTab === "college" ? (
+              <button
+                onClick={() => handleTabChange("alumni_gallery")}
+                className="text-[#4B63D2] hover:underline font-bold cursor-pointer inline-flex items-center gap-1"
+              >
+                <span>View Alumni Meet Gallery</span>
+                <span>&rarr;</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => handleTabChange("college")}
+                className="text-[#4B63D2] hover:underline font-bold cursor-pointer inline-flex items-center gap-1"
+              >
+                <span>Back to Campus Events</span>
+                <span>&rarr;</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Executive Observer Portal Banner */}
+        {isExecutiveObserver && (
+          <div className="flex items-center gap-2 text-[11px] font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-1.5 rounded-xl">
+            <Eye className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span className="font-bold">
+              Executive Observer Portal ({roleName.toUpperCase()}):
+            </span>
+            <span>Institutional campus events monitor across all departments. Publishing and RSVP actions are disabled.</span>
+          </div>
+        )}
+
+        {/* Head of Department (HOD) Portal Banner */}
+        {isHod && (
+          <div className="flex items-center gap-2 text-[11px] font-medium text-blue-700 bg-blue-50 border border-blue-200 px-3.5 py-1.5 rounded-xl">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="font-bold">Head of Department (HOD) Portal:</span>
+            <span>Department monitoring view. Track upcoming events and student participation. Event creation and coordination are managed by the Department Controller.</span>
+          </div>
+        )}
+      </div>
+
+      {activeTab === "alumni_gallery" ? (
+        <AlumniMeetGallery currentUser={currentUser} />
+      ) : (
+        <>
+          {/* ========================================================================= */}
+          {/* 1. UPCOMING COLLEGE EVENTS SECTION                                         */}
+          {/* ========================================================================= */}
       <section className="space-y-6">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -658,10 +953,26 @@ export default function Events() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 bg-white border border-[#D5CBEE] rounded-xl px-2.5 py-1 shadow-2xs">
+              <Filter className="w-3.5 h-3.5 text-[#5851A4]" />
+              <span className="text-[11px] font-bold text-[#5851A4] hidden sm:inline">Dept:</span>
+              <select
+                value={selectedDepartmentFilter}
+                onChange={(e) => setSelectedDepartmentFilter(e.target.value)}
+                className="text-xs font-bold text-[#1E2746] bg-transparent outline-none cursor-pointer"
+              >
+                {EXECUTIVE_DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept === "ALL" ? "All Departments" : dept}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              {events.length} Upcoming Events
+              {filteredUpcomingEvents.length} Upcoming Events
             </span>
 
             {canCreateEvent && (
@@ -676,6 +987,7 @@ export default function Events() {
                   setNewEventHighlights("");
                   setNewEventHeadId(null);
                   setNewEventCoHeadId(null);
+                  setNewEventFacultyCoordinatorId(null);
                   setCreateEventError(null);
                   setCreateEventSuccess(null);
                   setShowCreateEventModal(true);
@@ -691,11 +1003,29 @@ export default function Events() {
 
         {/* Event Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {events.map((event) => {
+          {filteredUpcomingEvents.map((event) => {
             const isExpanded = expandedEventId === event.id;
             const isHead = currentUser?.id === event.head_id;
             const isCoHead = currentUser?.id === event.co_head_id;
-            const canManage = isHead || isCoHead || isController || isAdmin || event.organizer_id === currentUser?.id;
+
+            // Department scoping: Controller can only manage events belonging to their department
+            // Primary: organizer_id match (the current controller created the event)
+            // Secondary: canonical dept matching against organizer's org string (for same-dept cross-view)
+            const controllerDept = (currentUser?.profile?.department || "").trim();
+            const eventOrganizerStr = event.organizer;
+            const isMyDepartmentEvent =
+              isAdmin ||
+              (isController &&
+                (event.organizer_id === currentUser?.id ||
+                  (controllerDept.length > 0 &&
+                    deptMatches(controllerDept, eventOrganizerStr))));
+
+            const canManage =
+              !isExecutiveObserver &&
+              (isHead ||
+                isCoHead ||
+                isMyDepartmentEvent ||
+                event.organizer_id === currentUser?.id);
 
             return (
               <div
@@ -761,14 +1091,14 @@ export default function Events() {
                     </div>
                   </div>
 
-                  {/* Appointed Leads Badges (Event Head & Event Co-Head) */}
-                  {(event.head || event.co_head) && (
+                  {/* Appointed Leads Badges (Head, Co-Head & Faculty Coordinator) */}
+                  {(event.head || event.co_head || event.faculty_coordinator) && (
                     <div className="p-4 bg-gradient-to-r from-[#FAF9FD] to-white border-b border-[#EAE4F7] space-y-2">
                       <div className="text-[10px] font-black uppercase tracking-wider text-[#5851A4] flex items-center gap-1">
-                        <Crown className="w-3 h-3 text-amber-500" /> Appointed Student Leads
+                        <Crown className="w-3 h-3 text-amber-500" /> Event Leadership & Coordination
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {event.head && (
                           <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200/80 rounded-xl">
                             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
@@ -796,6 +1126,22 @@ export default function Events() {
                               </span>
                               <div className="text-xs font-bold text-[#1E2746] truncate">
                                 {event.co_head.first_name} {event.co_head.last_name || ""}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {event.faculty_coordinator && (
+                          <div className="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200/80 rounded-xl sm:col-span-2 lg:col-span-1">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                              {event.faculty_coordinator.first_name ? event.faculty_coordinator.first_name[0] : "F"}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-[9px] font-black uppercase text-emerald-800 tracking-wider block">
+                                🎓 Faculty Coord
+                              </span>
+                              <div className="text-xs font-bold text-[#1E2746] truncate">
+                                {event.faculty_coordinator.first_name} {event.faculty_coordinator.last_name || ""}
                               </div>
                             </div>
                           </div>
@@ -855,14 +1201,18 @@ export default function Events() {
 
                 {/* Management Bar (If user can manage or appoint leads) */}
                 <div className="p-4 bg-[#FAF9FD] border-t border-[#EAE4F7] flex flex-wrap items-center justify-between gap-2">
-                  {/* Left: Appoint Leads Button (Controller / Admin) */}
-                  {(isController || isAdmin) && (
+                  {/* Left: Appoint Leads Button (Controller for their dept / Admin for all) */}
+                  {isMyDepartmentEvent && (
                     <button
                       onClick={() => handleOpenLeadsModal(event)}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-[#D5CBEE] text-[11px] font-bold text-[#1E2746] hover:bg-[#FAF9FD] transition cursor-pointer"
                     >
                       <UserCheck className="w-3.5 h-3.5 text-[#4B63D2]" />
-                      <span>{event.head || event.co_head ? "Edit Leads" : "Appoint Leads"}</span>
+                      <span>
+                        {event.head || event.co_head || event.faculty_coordinator
+                          ? "Edit Leads & Coord"
+                          : "Appoint Leads"}
+                      </span>
                     </button>
                   )}
 
@@ -893,34 +1243,47 @@ export default function Events() {
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
 
-                  <button
-                    onClick={() => handleRequestOrRSVP(event)}
-                    className={`py-2.5 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
-                      event.google_form_url
-                        ? "bg-purple-600 text-white hover:bg-purple-700"
-                        : event.userRsvpStatus === "GOING"
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : event.userRsvpStatus === "PENDING"
-                        ? "bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200"
-                        : "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:shadow-md active:scale-95"
-                    }`}
-                  >
-                    {event.google_form_url ? (
-                      <span>Register via Google Form ↗</span>
-                    ) : event.userRsvpStatus === "GOING" ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>Enrolled / Attending</span>
-                      </>
-                    ) : event.userRsvpStatus === "PENDING" ? (
-                      <>
-                        <Clock className="w-4 h-4 text-amber-700" />
-                        <span>Request Pending</span>
-                      </>
-                    ) : (
-                      <span>Request to Join</span>
-                    )}
-                  </button>
+                  {isExecutiveObserver ? (
+                    <span className="py-2.5 px-4 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center justify-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Observer View</span>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleRequestOrRSVP(event)}
+                      className={`py-2.5 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
+                        event.google_form_url
+                          ? "bg-purple-600 text-white hover:bg-purple-700"
+                          : event.userRsvpStatus === "GOING"
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white hover:shadow-md active:scale-95"
+                      }`}
+                    >
+                      {event.google_form_url ? (
+                        <span>Register via Google Form ↗</span>
+                      ) : event.userRsvpStatus === "GOING" ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>RSVP'd (Attending)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="w-4 h-4" />
+                          <span>RSVP</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {(isAdmin || isCentralAdmin) && (
+                    <button
+                      onClick={() => handleDeleteEvent(event.id, event.title)}
+                      className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 transition-all cursor-pointer shrink-0"
+                      title="Delete Event"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -950,7 +1313,7 @@ export default function Events() {
 
           {showPreviousEvents && (
             <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
-              {previousEvents.map((pe) => (
+              {filteredPreviousEvents.map((pe) => (
                 <div
                   key={pe.id}
                   className="bg-white border border-[#EAE4F7] rounded-3xl p-5 space-y-3 shadow-sm hover:shadow-md transition-all opacity-90 hover:opacity-100"
@@ -986,6 +1349,8 @@ export default function Events() {
           )}
         </div>
       </section>
+      </>
+      )}
 
       {/* ========================================================================= */}
       {/* 3. CONTROLLER & ADMIN EVENT CREATION MODAL WITH LEADS APPOINTMENT         */}
@@ -1047,6 +1412,8 @@ export default function Events() {
                     google_form_url: newEventGoogleFormUrl.trim() || null,
                     head_id: newEventHeadId || null,
                     co_head_id: newEventCoHeadId || null,
+                    faculty_coordinator_id: newEventFacultyCoordinatorId || null,
+                    department: currentUser?.profile?.department || undefined,
                   };
 
                   const createdRes = await apiRequest<any>("/events", {
@@ -1056,6 +1423,7 @@ export default function Events() {
 
                   const headObj = departmentStudents.find((s) => s.id === newEventHeadId);
                   const coHeadObj = departmentStudents.find((s) => s.id === newEventCoHeadId);
+                  const facultyObj = facultyCandidates.find((f) => f.id === newEventFacultyCoordinatorId);
 
                   const newEvt: CampusEvent = {
                     id: createdRes?.id || Date.now(),
@@ -1078,6 +1446,7 @@ export default function Events() {
                     organizer_id: currentUser?.id,
                     head_id: newEventHeadId,
                     co_head_id: newEventCoHeadId,
+                    faculty_coordinator_id: newEventFacultyCoordinatorId,
                     head: headObj
                       ? {
                           id: headObj.id,
@@ -1096,13 +1465,22 @@ export default function Events() {
                           department: coHeadObj.department,
                         }
                       : null,
+                    faculty_coordinator: facultyObj
+                      ? {
+                          id: facultyObj.id,
+                          email: facultyObj.email,
+                          first_name: facultyObj.first_name,
+                          last_name: facultyObj.last_name,
+                          department: facultyObj.department,
+                        }
+                      : null,
                     isUpcoming: true,
                     timeline: [],
                     google_form_url: newEventGoogleFormUrl.trim() || undefined,
                   };
 
                   setEvents((prev) => [newEvt, ...prev]);
-                  setCreateEventSuccess("Event published and Student Leads appointed successfully!");
+                  setCreateEventSuccess("Event published and Leadership appointed successfully!");
                   setTimeout(() => {
                     setShowCreateEventModal(false);
                     setCreateEventSuccess(null);
@@ -1115,6 +1493,22 @@ export default function Events() {
               }}
               className="space-y-4"
             >
+              {/* Department (Strictly locked to Coordinator's Department) */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#1E2746]">
+                    Host Department
+                  </label>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    🔒 Locked to Your Department
+                  </span>
+                </div>
+                <div className="w-full px-3.5 py-2 bg-[#FAF9FD] border border-[#D5CBEE] rounded-xl text-xs font-bold text-[#1E2746] flex items-center justify-between">
+                  <span>{currentUser?.profile?.department || "Department Event"}</span>
+                  <span className="text-[11px] text-[#5851A4] font-medium">Department Coordinator Scope</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#1E2746] mb-1">
@@ -1160,14 +1554,14 @@ export default function Events() {
                 />
               </div>
 
-              {/* Appoint Event Head & Co-Head (Department Controller Feature) */}
+              {/* Appoint Event Head, Co-Head & Faculty Coordinator (Department Controller Feature) */}
               <div className="bg-gradient-to-r from-[#FAF9FD] to-amber-50/50 p-3.5 rounded-2xl border border-amber-200 space-y-3">
                 <div className="flex items-center gap-1.5 text-xs font-black text-[#1E2746]">
                   <Crown className="w-4 h-4 text-amber-500" />
-                  <span>Appoint Student Event Leads (Optional)</span>
+                  <span>Appoint Student Leads & Faculty Coordinator (Optional)</span>
                 </div>
                 <p className="text-[11px] text-[#5851A4]">
-                  Appointed students will receive <strong>Event Head</strong> and <strong>Event Co-Head</strong> badges and the authority to approve/decline participant join requests.
+                  Controller can appoint a student <strong>Event Head</strong>, student <strong>Event Co-Head</strong>, and a faculty <strong>Faculty Coordinator</strong> to supervise this event.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -1206,6 +1600,24 @@ export default function Events() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-900 mb-1">
+                    🎓 Appoint Faculty Coordinator (Faculty Member)
+                  </label>
+                  <select
+                    value={newEventFacultyCoordinatorId || ""}
+                    onChange={(e) => setNewEventFacultyCoordinatorId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-3 py-2 bg-white border border-emerald-300 focus:border-emerald-600 rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none cursor-pointer"
+                  >
+                    <option value="">-- Select Faculty Member --</option>
+                    {facultyCandidates.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.first_name || ""} {f.last_name || ""} ({f.email}) {f.department ? `• ${f.department}` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1313,7 +1725,7 @@ export default function Events() {
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-amber-500" />
                 <div>
-                  <h3 className="text-base font-black text-[#1E2746]">Appoint Event Student Leads</h3>
+                  <h3 className="text-base font-black text-[#1E2746]">Appoint Event Leadership & Faculty Coordinator</h3>
                   <p className="text-[11px] text-[#5851A4]">{leadsModalEvent.title}</p>
                 </div>
               </div>
@@ -1379,6 +1791,27 @@ export default function Events() {
                 </select>
                 <p className="text-[10px] text-[#5851A4]">
                   Receives "Event Co-Head" badge and secondary authority to review participant requests.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-emerald-900">
+                  🎓 Event Faculty Coordinator (Faculty Member)
+                </label>
+                <select
+                  value={appointedFacultyCoordinatorId || ""}
+                  onChange={(e) => setAppointedFacultyCoordinatorId(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF9FD] border border-emerald-300 focus:bg-white focus:border-emerald-600 rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none cursor-pointer"
+                >
+                  <option value="">-- No Faculty Coordinator Assigned --</option>
+                  {facultyCandidates.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.first_name || ""} {f.last_name || ""} ({f.email}) {f.department ? `• ${f.department}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-[#5851A4]">
+                  Supervises college compliance, safety, and departmental event operations.
                 </p>
               </div>
 

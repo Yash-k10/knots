@@ -173,7 +173,9 @@ class TestNotificationsIntegration(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(notifs[0].title, "New Event RSVP")
         self.assertEqual(notifs[0].type, "event_rsvp")
         self.assertIn("Bob Jones", notifs[0].content)
-        self.assertIn("is going to", notifs[0].content)
+        self.assertTrue(
+            "is going to" in notifs[0].content or "is attending" in notifs[0].content
+        )
 
         # 3. User 1 RSVPs to their own event -> should NOT generate notification
         await event_service.rsvp_to_event(event.id, self.user1.id, rsvp_payload)

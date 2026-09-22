@@ -252,6 +252,24 @@ async def promote_user_to_superadmin(email: str, password: str = "password123"):
 
 DEMO_USERS = [
     {
+        "email": "studentdemo@sbjit.edu.in",
+        "role": "Student",
+        "first_name": "Student",
+        "last_name": "Demo",
+        "bio": "Student Demo Account at SBJIT.",
+        "department": "Computer Science",
+        "password": "Password123",
+    },
+    {
+        "email": "studentdemo1@sbjit.edu.in",
+        "role": "Student",
+        "first_name": "Student",
+        "last_name": "Demo 1",
+        "bio": "Second Student Demo Account at SBJIT.",
+        "department": "Computer Science",
+        "password": "Password123",
+    },
+    {
         "email": "student.demo@sbjit.edu.in",
         "role": "Student",
         "first_name": "Aarav",

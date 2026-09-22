@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import (
     AuthorizationError,
@@ -60,6 +62,45 @@ def _map_rsvp_user(user: User | None) -> RSVPUserInfo | None:
     )
 
 
+def _depts_match(user_dept: str, other_dept: str) -> bool:
+    """Exact canonical department matching — CSE(AIML) never matches plain CSE, etc."""
+    u = user_dept.lower().strip()
+    o = other_dept.lower().strip()
+    if u == o:
+        return True
+    if o in ("central", "central level", "campus-wide", "central club"):
+        return False
+    if "aiml" in u:
+        return "aiml" in o
+    if "aids" in u:
+        return "aids" in o
+    if u == "cse":
+        return o in ("cse", "computer science", "computer science & engineering")
+    if u == "it":
+        return o == "it" or "information technology" in o
+    if u in ("etc", "ece"):
+        return (
+            o in ("etc", "ece")
+            or ("electronics" in o and "telecommunication" in o)
+            or "ece" in o
+        )
+    if u == "ee":
+        return o == "ee" or "electrical" in o
+    if u == "me":
+        return o == "me" or "mechanical" in o
+    if u == "bca":
+        return o == "bca"
+    if u == "mca":
+        return o == "mca"
+    if u == "mba":
+        return o == "mba"
+    if "first" in u or u == "fy":
+        return "first" in o or o == "fy"
+    if "sport" in u:
+        return "sport" in o
+    return False
+
+
 class EventService:
     """Business-logic layer for Events, Categories, and RSVPs."""
 
@@ -72,7 +113,24 @@ class EventService:
     # ── Event CRUD ────────────────────────────────────────────────────────────
 
     async def create_event(self, organizer_id: int, payload: EventCreate) -> Event:
-        """Create and schedule a new event."""
+        stmt = (
+            select(User)
+            .options(selectinload(User.role), selectinload(User.profile))
+            .filter(User.id == organizer_id)
+        )
+        organizer = (await self.db.execute(stmt)).scalars().first()
+        role_name = (
+            organizer.role.name.lower().strip() if organizer and organizer.role else ""
+        )
+        if role_name in ("ceo", "dean", "principal"):
+            raise AuthorizationError(
+                message="Executive leadership roles (CEO, Dean, Principal) have read-only access and cannot create events."
+            )
+        if role_name == "hod" or "hod" in role_name:
+            raise AuthorizationError(
+                message="HOD accounts cannot create events; event creation and scheduling are managed by Department Controllers."
+            )
+
         # 1. Date/Time checks
         if payload.end_datetime and payload.end_datetime <= payload.start_datetime:
             raise ValidationError(message="End date/time must be after start date/time")
@@ -105,6 +163,12 @@ class EventService:
                 raise NotFoundError(
                     message=f"Appointed Event Co-Head user id {payload.co_head_id} not found"
                 )
+        if payload.faculty_coordinator_id:
+            fac_user = await self.db.get(User, payload.faculty_coordinator_id)
+            if not fac_user:
+                raise NotFoundError(
+                    message=f"Appointed Faculty Coordinator user id {payload.faculty_coordinator_id} not found"
+                )
 
         data = payload.model_dump()
         if data.get("start_datetime") and data["start_datetime"].tzinfo:
@@ -117,7 +181,11 @@ class EventService:
             )
         data["organizer_id"] = organizer_id
         data["status"] = EventStatus.PUBLISHED
-        return await self.event_repo.create(data)
+        event = await self.event_repo.create(data)
+        from app.core.cache import events_cache
+
+        events_cache.clear()
+        return event
 
     async def get_event(self, event_id: int) -> Event:
         """Fetch a single raw event or raise NotFoundError."""
@@ -182,8 +250,10 @@ class EventService:
             category=category_info,
             head_id=event.head_id,
             co_head_id=event.co_head_id,
+            faculty_coordinator_id=event.faculty_coordinator_id,
             head=_map_lead_user(event.head),
             co_head=_map_lead_user(event.co_head),
+            faculty_coordinator=_map_lead_user(event.faculty_coordinator),
             rsvp_count=rsvp_count,
             pending_requests_count=pending_count,
             user_rsvp_status=user_rsvp_status,
@@ -221,7 +291,14 @@ class EventService:
         )
 
         if current_user_id:
-            user = await self.db.get(User, current_user_id)
+            from app.auth.repository.auth import AuthRepository
+            from app.core.cache import user_cache
+
+            user = user_cache.get(f"user:{current_user_id}")
+            if not user:
+                user = await AuthRepository(self.db).get(current_user_id)
+                if user:
+                    user_cache.set(f"user:{current_user_id}", user, ttl_seconds=60.0)
             if user:
                 role_name = (
                     getattr(user.role, "name", "student").lower().strip()
@@ -234,38 +311,38 @@ class EventService:
                         if getattr(user, "profile", None)
                         else None
                     )
+                    dept_str = user_dept.strip() if user_dept else ""
                     events = [
                         e
                         for e in events
-                        if getattr(e.organizer, "profile", None)
-                        and getattr(e.organizer.profile, "department", None)
-                        == user_dept
+                        if not getattr(e, "organizer", None)
+                        or not getattr(e.organizer, "profile", None)
+                        or not getattr(e.organizer.profile, "department", None)
+                        or _depts_match(dept_str, e.organizer.profile.department)
                     ]
-                elif role_name == "central admin":
-                    events = [
-                        e
-                        for e in events
-                        if not getattr(e.organizer, "profile", None)
-                        or getattr(e.organizer.profile, "department", None)
-                        in [None, "Central", ""]
-                    ]
+                elif role_name in (
+                    "central admin",
+                    "central_admin",
+                    "admin",
+                    "super admin",
+                    "superadmin",
+                ):
+                    pass
+
+        event_ids = [e.id for e in events]
+        rsvp_counts_map = await self.rsvp_repo.get_rsvp_counts_for_events(event_ids)
+        user_rsvps_map = (
+            await self.rsvp_repo.get_user_rsvps_for_events(event_ids, current_user_id)
+            if current_user_id
+            else {}
+        )
 
         results: list[EventResponse] = []
         for event in events:
-            rsvp_count = await self.rsvp_repo.count_by_event(
-                event.id, status=RSVPStatus.GOING
-            )
-            pending_count = await self.rsvp_repo.count_by_event(
-                event.id, status=RSVPStatus.PENDING
-            )
-
-            user_rsvp_status = None
-            if current_user_id:
-                user_rsvp = await self.rsvp_repo.get_by_event_and_user(
-                    event.id, current_user_id
-                )
-                if user_rsvp:
-                    user_rsvp_status = user_rsvp.status
+            counts = rsvp_counts_map.get(event.id, {"going": 0, "pending": 0})
+            rsvp_count = counts["going"]
+            pending_count = counts["pending"]
+            user_rsvp_status = user_rsvps_map.get(event.id)
 
             organizer_info = None
             if event.organizer:
@@ -300,8 +377,10 @@ class EventService:
                     category=category_info,
                     head_id=event.head_id,
                     co_head_id=event.co_head_id,
+                    faculty_coordinator_id=event.faculty_coordinator_id,
                     head=_map_lead_user(event.head),
                     co_head=_map_lead_user(event.co_head),
+                    faculty_coordinator=_map_lead_user(event.faculty_coordinator),
                     rsvp_count=rsvp_count,
                     pending_requests_count=pending_count,
                     user_rsvp_status=user_rsvp_status,
@@ -318,7 +397,14 @@ class EventService:
         events = await self.event_repo.get_upcoming(skip=skip, limit=limit)
 
         if current_user_id:
-            user = await self.db.get(User, current_user_id)
+            from app.auth.repository.auth import AuthRepository
+            from app.core.cache import user_cache
+
+            user = user_cache.get(f"user:{current_user_id}")
+            if not user:
+                user = await AuthRepository(self.db).get(current_user_id)
+                if user:
+                    user_cache.set(f"user:{current_user_id}", user, ttl_seconds=60.0)
             if user:
                 role_name = (
                     getattr(user.role, "name", "student").lower().strip()
@@ -331,38 +417,44 @@ class EventService:
                         if getattr(user, "profile", None)
                         else None
                     )
+                    dept_str = user_dept.strip().lower() if user_dept else ""
                     events = [
                         e
                         for e in events
-                        if getattr(e.organizer, "profile", None)
-                        and getattr(e.organizer.profile, "department", None)
-                        == user_dept
+                        if (
+                            not getattr(e.organizer, "profile", None)
+                            or getattr(e.organizer.profile, "department", None)
+                            in [None, "Central", ""]
+                        )
+                        or (
+                            dept_str
+                            and getattr(e.organizer.profile, "department", None)
+                            and dept_str in e.organizer.profile.department.lower()
+                        )
                     ]
-                elif role_name == "central admin":
-                    events = [
-                        e
-                        for e in events
-                        if not getattr(e.organizer, "profile", None)
-                        or getattr(e.organizer.profile, "department", None)
-                        in [None, "Central", ""]
-                    ]
+                elif role_name in (
+                    "central admin",
+                    "central_admin",
+                    "admin",
+                    "super admin",
+                    "superadmin",
+                ):
+                    pass
+
+        event_ids = [e.id for e in events]
+        rsvp_counts_map = await self.rsvp_repo.get_rsvp_counts_for_events(event_ids)
+        user_rsvps_map = (
+            await self.rsvp_repo.get_user_rsvps_for_events(event_ids, current_user_id)
+            if current_user_id
+            else {}
+        )
 
         results: list[EventResponse] = []
         for event in events:
-            rsvp_count = await self.rsvp_repo.count_by_event(
-                event.id, status=RSVPStatus.GOING
-            )
-            pending_count = await self.rsvp_repo.count_by_event(
-                event.id, status=RSVPStatus.PENDING
-            )
-
-            user_rsvp_status = None
-            if current_user_id:
-                user_rsvp = await self.rsvp_repo.get_by_event_and_user(
-                    event.id, current_user_id
-                )
-                if user_rsvp:
-                    user_rsvp_status = user_rsvp.status
+            counts = rsvp_counts_map.get(event.id, {"going": 0, "pending": 0})
+            rsvp_count = counts["going"]
+            pending_count = counts["pending"]
+            user_rsvp_status = user_rsvps_map.get(event.id)
 
             organizer_info = None
             if event.organizer:
@@ -397,8 +489,10 @@ class EventService:
                     category=category_info,
                     head_id=event.head_id,
                     co_head_id=event.co_head_id,
+                    faculty_coordinator_id=event.faculty_coordinator_id,
                     head=_map_lead_user(event.head),
                     co_head=_map_lead_user(event.co_head),
+                    faculty_coordinator=_map_lead_user(event.faculty_coordinator),
                     rsvp_count=rsvp_count,
                     pending_requests_count=pending_count,
                     user_rsvp_status=user_rsvp_status,
@@ -414,18 +508,46 @@ class EventService:
         """Update event details (organizer, controller, or admin only)."""
         event = await self.get_event(event_id)
         role_name = current_user.role.name.lower().strip() if current_user.role else ""
-        is_authorized = event.organizer_id == current_user.id or role_name in [
-            "controller",
-            "admin",
-            "super admin",
-            "superadmin",
-            "management",
-            "central admin",
-        ]
-        if not is_authorized:
-            raise AuthorizationError(
-                message="You can only update events you organized or manage"
+        is_admin = (
+            current_user.role_id in (1, 2, 9)
+            or role_name
+            in (
+                "admin",
+                "super admin",
+                "superadmin",
+                "management",
+                "central admin",
+                "central_admin",
             )
+            or "admin" in current_user.email.lower()
+        )
+
+        if role_name in ("ceo", "dean", "principal"):
+            raise AuthorizationError(
+                message="Executive leadership roles (CEO, Dean, Principal) have read-only access and cannot update events."
+            )
+        if role_name == "hod" or "hod" in role_name:
+            raise AuthorizationError(
+                message="HOD accounts cannot update events; event management is handled by Department Controllers."
+            )
+
+        if not is_admin:
+            if role_name == "controller":
+                user_dept = (
+                    getattr(current_user.profile, "department", None) or ""
+                ).strip()
+                org_dept = (
+                    (getattr(event.organizer.profile, "department", None) or "").strip()
+                    if getattr(event, "organizer", None)
+                    and getattr(event.organizer, "profile", None)
+                    else ""
+                )
+                if not (user_dept and org_dept and _depts_match(user_dept, org_dept)):
+                    raise AuthorizationError(
+                        "Controllers can only update events belonging to their own department"
+                    )
+            elif event.organizer_id != current_user.id:
+                raise AuthorizationError("You can only update events you organized")
 
         update_data = payload.model_dump(exclude_unset=True)
         if update_data.get("start_datetime") and update_data["start_datetime"].tzinfo:
@@ -469,6 +591,15 @@ class EventService:
                 raise NotFoundError(
                     message=f"Student id {update_data['co_head_id']} not found"
                 )
+        if (
+            "faculty_coordinator_id" in update_data
+            and update_data["faculty_coordinator_id"]
+        ):
+            fac_user = await self.db.get(User, update_data["faculty_coordinator_id"])
+            if not fac_user:
+                raise NotFoundError(
+                    message=f"Faculty id {update_data['faculty_coordinator_id']} not found"
+                )
 
         return await self.event_repo.update(event, update_data)
 
@@ -478,22 +609,53 @@ class EventService:
         current_user: User,
         head_id: int | None,
         co_head_id: int | None,
+        faculty_coordinator_id: int | None = None,
     ) -> Event:
-        """Appoint or update Event Head and Co-Head (Organizer, Controller, or Admin)."""
+        """Appoint or update Event Head, Co-Head, and Faculty Coordinator (Organizer, Controller, or Admin)."""
         event = await self.get_event(event_id)
         role_name = current_user.role.name.lower().strip() if current_user.role else ""
-        is_authorized = event.organizer_id == current_user.id or role_name in [
-            "controller",
-            "admin",
-            "super admin",
-            "superadmin",
-            "management",
-            "central admin",
-        ]
-        if not is_authorized:
-            raise AuthorizationError(
-                message="Only the organizer or controller can appoint event leads"
+        is_admin = (
+            current_user.role_id in (1, 2, 9)
+            or role_name
+            in (
+                "admin",
+                "super admin",
+                "superadmin",
+                "management",
+                "central admin",
+                "central_admin",
             )
+            or "admin" in current_user.email.lower()
+        )
+
+        if role_name in ("ceo", "dean", "principal"):
+            raise AuthorizationError(
+                message="Executive leadership roles (CEO, Dean, Principal) have read-only access and cannot appoint event leads."
+            )
+        if role_name == "hod" or "hod" in role_name:
+            raise AuthorizationError(
+                message="HOD accounts cannot appoint event leads; appointments are managed by Department Controllers."
+            )
+
+        if not is_admin:
+            if role_name == "controller":
+                user_dept = (
+                    getattr(current_user.profile, "department", None) or ""
+                ).strip()
+                org_dept = (
+                    (getattr(event.organizer.profile, "department", None) or "").strip()
+                    if getattr(event, "organizer", None)
+                    and getattr(event.organizer, "profile", None)
+                    else ""
+                )
+                if not (user_dept and org_dept and _depts_match(user_dept, org_dept)):
+                    raise AuthorizationError(
+                        "Controllers can only appoint leads for events belonging to their own department"
+                    )
+            elif event.organizer_id != current_user.id:
+                raise AuthorizationError(
+                    "Only the organizer or department controller can appoint event leads"
+                )
 
         if head_id:
             h_user = await self.db.get(User, head_id)
@@ -503,12 +665,23 @@ class EventService:
             c_user = await self.db.get(User, co_head_id)
             if not c_user:
                 raise NotFoundError(message=f"Student id {co_head_id} not found")
+        if faculty_coordinator_id:
+            f_user = await self.db.get(User, faculty_coordinator_id)
+            if not f_user:
+                raise NotFoundError(
+                    message=f"Faculty id {faculty_coordinator_id} not found"
+                )
 
         updated = await self.event_repo.update(
-            event, {"head_id": head_id, "co_head_id": co_head_id}
+            event,
+            {
+                "head_id": head_id,
+                "co_head_id": co_head_id,
+                "faculty_coordinator_id": faculty_coordinator_id,
+            },
         )
 
-        # Notify appointed students
+        # Notify appointed leads and faculty coordinator
         from app.notifications.services.notification import NotificationService
 
         notif_service = NotificationService(self.db)
@@ -526,27 +699,68 @@ class EventService:
                 content=f"You have been appointed as the Event Co-Head for '{event.title}'. You can now review and approve student join requests.",
                 type="event_role",
             )
+        if faculty_coordinator_id and faculty_coordinator_id != current_user.id:
+            await notif_service.create_notification(
+                user_id=faculty_coordinator_id,
+                title="Appointed as Event Faculty Coordinator! 🎓",
+                content=f"You have been appointed as the Faculty Coordinator for '{event.title}'.",
+                type="event_role",
+            )
 
+        from app.core.cache import events_cache
+
+        events_cache.clear()
         return updated
 
     async def delete_event(self, event_id: int, current_user: User) -> None:
         """Delete an event (organizer, controller, or admin only)."""
         event = await self.get_event(event_id)
         role_name = current_user.role.name.lower().strip() if current_user.role else ""
-        is_authorized = event.organizer_id == current_user.id or role_name in [
-            "controller",
-            "admin",
-            "super admin",
-            "superadmin",
-            "management",
-            "central admin",
-        ]
-        if not is_authorized:
+        is_admin = (
+            current_user.role_id in (1, 2, 9)
+            or role_name
+            in (
+                "admin",
+                "super admin",
+                "superadmin",
+                "management",
+                "central admin",
+                "central_admin",
+            )
+            or "admin" in current_user.email.lower()
+        )
+
+        if role_name in ("ceo", "dean", "principal"):
             raise AuthorizationError(
-                message="You can only delete events you organized or manage"
+                message="Executive leadership roles (CEO, Dean, Principal) have read-only access and cannot delete events."
+            )
+        if role_name == "hod" or "hod" in role_name:
+            raise AuthorizationError(
+                message="HOD accounts cannot delete events; event management is handled by Department Controllers."
             )
 
+        if not is_admin:
+            if role_name == "controller":
+                user_dept = (
+                    getattr(current_user.profile, "department", None) or ""
+                ).strip()
+                org_dept = (
+                    (getattr(event.organizer.profile, "department", None) or "").strip()
+                    if getattr(event, "organizer", None)
+                    and getattr(event.organizer, "profile", None)
+                    else ""
+                )
+                if not (user_dept and org_dept and _depts_match(user_dept, org_dept)):
+                    raise AuthorizationError(
+                        "Controllers can only delete events belonging to their own department"
+                    )
+            elif event.organizer_id != current_user.id:
+                raise AuthorizationError("You can only delete events you organized")
+
         await self.event_repo.remove(event_id)
+        from app.core.cache import events_cache
+
+        events_cache.clear()
 
     # ── RSVPs & Join Requests ──────────────────────────────────────────────────
 
@@ -554,6 +768,16 @@ class EventService:
         self, event_id: int, user_id: int, payload: RSVPCreate
     ) -> RSVP:
         """Create or update user's RSVP status / join request to an event."""
+        user_res = await self.db.execute(
+            select(User).options(selectinload(User.role)).where(User.id == user_id)
+        )
+        user = user_res.scalars().first()
+        role_name = user.role.name.lower().strip() if user and user.role else ""
+        if role_name in ("ceo", "dean", "principal"):
+            raise AuthorizationError(
+                message="Executive leadership roles (CEO, Dean, Principal) have read-only access and cannot RSVP for events."
+            )
+
         event = await self.get_event(event_id)
         if event.status != EventStatus.PUBLISHED:
             raise ValidationError(
@@ -624,6 +848,9 @@ class EventService:
                 type="event_rsvp",
             )
 
+        from app.core.cache import events_cache
+
+        events_cache.clear()
         return result_rsvp
 
     async def update_rsvp_status(
@@ -753,6 +980,9 @@ class EventService:
             raise NotFoundError(message="You have not RSVPed to this event")
 
         await self.rsvp_repo.remove(existing_rsvp.id)
+        from app.core.cache import events_cache
+
+        events_cache.clear()
 
     async def get_event_rsvps(
         self, event_id: int, skip: int = 0, limit: int = 100

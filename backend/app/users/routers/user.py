@@ -135,7 +135,13 @@ async def update_user(
 ):
     """Update a user's details. Users can only update their own account unless they are Admin or Super Admin."""
     role_name = current_user.role.name.lower().strip() if current_user.role else ""
-    is_admin = role_name in ("admin", "super admin", "superadmin")
+    is_admin = current_user.role_id == 1 or role_name in (
+        "admin",
+        "super admin",
+        "superadmin",
+        "central admin",
+        "central_admin",
+    )
     if current_user.id != user_id and not is_admin:
         raise AuthorizationError("You are not authorized to update this user")
 
@@ -153,13 +159,45 @@ async def delete_user(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a user account. Users can only delete their own account unless they are Admin or Super Admin."""
+    """Delete a user account. Users can delete their own account; Admins can delete any account; Controllers can delete student accounts of their department."""
     role_name = current_user.role.name.lower().strip() if current_user.role else ""
-    is_admin = role_name in ("admin", "super admin", "superadmin")
-    if current_user.id != user_id and not is_admin:
-        raise AuthorizationError("You are not authorized to delete this user")
-
+    is_admin = current_user.role_id == 1 or role_name in (
+        "admin",
+        "super admin",
+        "superadmin",
+        "central admin",
+        "central_admin",
+    )
     service = UserService(db)
+
+    if current_user.id != user_id and not is_admin:
+        if role_name == "controller":
+            target_user = await service.get_user(user_id)
+            target_role = (
+                target_user.role.name.lower().strip() if target_user.role else ""
+            )
+            curr_dept = (
+                (current_user.profile.department or "").strip().lower()
+                if current_user.profile
+                else ""
+            )
+            target_dept = (
+                (target_user.profile.department or "").strip().lower()
+                if target_user.profile
+                else ""
+            )
+            is_same_dept = bool(
+                curr_dept
+                and target_dept
+                and (curr_dept in target_dept or target_dept in curr_dept)
+            )
+            if target_role != "student" or not is_same_dept:
+                raise AuthorizationError(
+                    "Controllers can only delete student accounts belonging to their specific department"
+                )
+        else:
+            raise AuthorizationError("You are not authorized to delete this user")
+
     user = await service.delete_user(user_id)
     return APIResponse(message="User deleted successfully", data=user)
 

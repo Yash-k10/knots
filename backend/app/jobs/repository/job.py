@@ -41,6 +41,7 @@ class JobPostingRepository(BaseRepository[JobPosting]):
             selectinload(JobPosting.company),
             selectinload(JobPosting.posted_by).selectinload(User.profile),
             selectinload(JobPosting.posted_by).selectinload(User.role),
+            selectinload(JobPosting.applications),
         )
 
         filters = []

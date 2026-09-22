@@ -29,6 +29,10 @@ class ClubRepository(BaseRepository[Club]):
                 selectinload(Club.head).selectinload(User.role),
                 selectinload(Club.co_head).selectinload(User.profile),
                 selectinload(Club.co_head).selectinload(User.role),
+                selectinload(Club.faculty_coordinator).selectinload(User.profile),
+                selectinload(Club.faculty_coordinator).selectinload(User.role),
+                selectinload(Club.alumni_mentor).selectinload(User.profile),
+                selectinload(Club.alumni_mentor).selectinload(User.role),
                 selectinload(Club.members)
                 .selectinload(ClubMember.user)
                 .selectinload(User.profile),
@@ -44,6 +48,7 @@ class ClubRepository(BaseRepository[Club]):
         self,
         category: str | None = None,
         search: str | None = None,
+        faculty_coordinator_id: int | None = None,
         skip: int = 0,
         limit: int = 20,
     ) -> list[Club]:
@@ -53,6 +58,10 @@ class ClubRepository(BaseRepository[Club]):
             selectinload(Club.head).selectinload(User.role),
             selectinload(Club.co_head).selectinload(User.profile),
             selectinload(Club.co_head).selectinload(User.role),
+            selectinload(Club.faculty_coordinator).selectinload(User.profile),
+            selectinload(Club.faculty_coordinator).selectinload(User.role),
+            selectinload(Club.alumni_mentor).selectinload(User.profile),
+            selectinload(Club.alumni_mentor).selectinload(User.role),
         )
         if category:
             query = query.filter(Club.category == category)
@@ -61,6 +70,8 @@ class ClubRepository(BaseRepository[Club]):
                 (Club.name.ilike(f"%{search}%"))
                 | (Club.description.ilike(f"%{search}%"))
             )
+        if faculty_coordinator_id is not None:
+            query = query.filter(Club.faculty_coordinator_id == faculty_coordinator_id)
         query = query.offset(skip).limit(limit)
         result = await self.db.execute(query)
         return list(result.scalars().all())
@@ -69,6 +80,7 @@ class ClubRepository(BaseRepository[Club]):
         self,
         category: str | None = None,
         search: str | None = None,
+        faculty_coordinator_id: int | None = None,
     ) -> int:
         """Count clubs matching optional category or search text."""
         query = select(func.count()).select_from(Club)
@@ -79,5 +91,7 @@ class ClubRepository(BaseRepository[Club]):
                 (Club.name.ilike(f"%{search}%"))
                 | (Club.description.ilike(f"%{search}%"))
             )
+        if faculty_coordinator_id is not None:
+            query = query.filter(Club.faculty_coordinator_id == faculty_coordinator_id)
         result = await self.db.execute(query)
         return result.scalar_one()

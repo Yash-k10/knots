@@ -51,6 +51,7 @@ class Post(Base):
         SQLEnum(PostVisibility),
         default=PostVisibility.PUBLIC,
         nullable=False,
+        index=True,
     )
 
     # ── Foreign Keys ─────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ class Post(Base):
         DateTime,
         default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
         nullable=False,
+        index=True,
     )
     updated_at = Column(
         DateTime,

@@ -49,7 +49,7 @@ export const eventsService = {
   rsvpToEvent: async (eventId: number): Promise<any> => {
     return apiRequest<any>(`/events/${eventId}/rsvp`, {
       method: "POST",
-      body: JSON.stringify({ status: "Going" }),
+      body: JSON.stringify({ status: "GOING" }),
     });
   }
 };

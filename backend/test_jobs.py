@@ -213,6 +213,51 @@ class TestJobsModule(unittest.IsolatedAsyncioTestCase):
         user_refs = await referral_service.get_user_referrals(user_id=15)
         self.assertEqual(len(user_refs), 1)
 
+    async def test_job_posting_form_link_and_applied_status(self):
+        company_service = CompanyService(self.db)
+        job_service = JobService(self.db)
+        app_service = ApplicationService(self.db)
+
+        company = await company_service.create_company(
+            CompanyCreate(name="Amazon", industry="Cloud Computing")
+        )
+
+        # 1. Create job with form_link
+        job = await job_service.create_job(
+            posted_by_id=1,
+            job_in=JobPostingCreate(
+                title="SDE-1 Graduate Engineer",
+                description="Hiring via official portal",
+                company_id=company.id,
+                form_link="https://forms.gle/AmazonHiring2026",
+            ),
+        )
+        self.assertIsNotNone(job.id)
+        self.assertEqual(job.form_link, "https://forms.gle/AmazonHiring2026")
+        self.assertEqual(job.applications_count, 0)
+
+        # 2. Candidate applies via form link, changing status to APPLIED
+        app_in = ApplicationCreate(
+            job_posting_id=job.id,
+            resume_url="https://forms.gle/AmazonHiring2026",
+            cover_letter="Applied via external recruiter form.",
+            status=ApplicationStatusEnum.APPLIED,
+        )
+        application = await app_service.apply_for_job(
+            applicant_id=101,
+            job_posting_id=job.id,
+            application_in=app_in,
+        )
+        self.assertIsNotNone(application.id)
+        self.assertEqual(application.status, ApplicationStatusEnum.APPLIED)
+
+        # 3. Verify job application count is incremented in fresh session
+        await self.db.commit()
+        async with self.SessionLocal() as session:
+            fresh_job_service = JobService(session)
+            refreshed_job = await fresh_job_service.get_job(job.id)
+            self.assertEqual(refreshed_job.applications_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

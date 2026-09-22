@@ -130,6 +130,11 @@ class ProfileService:
             return await self.get_profile_by_user_id(user_id)
 
         await self.profile_repo.update(profile, data)
+        from app.auth.dependencies.auth import invalidate_user_cache
+        from app.core.cache import dept_cache
+
+        invalidate_user_cache(user_id)
+        dept_cache.clear()
         return await self.get_profile_by_user_id(user_id)
 
     async def list_profiles(

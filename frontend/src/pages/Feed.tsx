@@ -6,23 +6,18 @@ import {
   Send,
   Loader2,
   AlertCircle,
-  Sparkles,
   Globe,
   Users as UsersIcon,
-  Image,
+  Image as ImageIcon,
   X,
-  GraduationCap,
-  Check,
   Trash2,
   FileText,
-  Link as LinkIcon,
   Maximize2,
   Share2,
   Download,
   Eye,
   FileSpreadsheet,
   CheckCircle2,
-  FileCheck,
   ArrowUp,
   Bookmark,
   BookmarkCheck,
@@ -33,9 +28,9 @@ import {
   MessageCircle,
   SendHorizontal,
   Search,
+  Flag,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
-import TiesRecommendations from "../components/feed/TiesRecommendations";
 import { formatTimeAgo } from "../utils/date";
 import {
   fetchConversations,
@@ -108,6 +103,7 @@ export interface AuthorProfile {
 export interface PostAuthor {
   id: number;
   email: string;
+  role?: { id: number; name: string } | null;
   profile?: AuthorProfile | null;
 }
 
@@ -156,6 +152,7 @@ export default function Feed() {
     email: string;
     role_id?: number;
     role?: { id: number; name: string };
+    profile?: AuthorProfile | null;
   } | null>(null);
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
@@ -164,20 +161,6 @@ export default function Feed() {
     currentUser?.role_id === 1 ||
     roleName === "admin" ||
     isSuperAdmin;
-  const isController = roleName === "controller" || isSuperAdminOrAdmin;
-
-  // Create post states
-  const [newPostContent, setNewPostContent] = useState("");
-  const [newPostVisibility, setNewPostVisibility] = useState("STUDENTS_AND_ALUMNI");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [attachedDoc, setAttachedDoc] = useState<{
-    name: string;
-    size: string;
-    file: File;
-  } | null>(null);
-  const [externalLinkUrl, setExternalLinkUrl] = useState<string>("");
-  const [showLinkInput, setShowLinkInput] = useState<boolean>(false);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(
     null
   );
@@ -186,25 +169,11 @@ export default function Feed() {
     name: string;
   } | null>(null);
   const [copiedPostId, setCopiedPostId] = useState<number | null>(null);
-  const [submittingPost, setSubmittingPost] = useState(false);
-  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
 
   // Pagination state
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 10;
-
-  // Filter tab state ("FOR_YOU", "ALL", "CONNECTIONS", "OPPORTUNITIES", "EVENTS", "DOCS", "MEDIA", "SAVED")
-  const [activeFilter, setActiveFilter] = useState<string>("FOR_YOU");
-
-  // HOD & Department-wise Student Sorting Filter States
-  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>("ALL");
-  const [selectedCohortFilter, setSelectedCohortFilter] = useState<string>("ALL");
-  const [selectedSectionFilter, setSelectedSectionFilter] = useState<string>("ALL");
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>("ALL");
-  const [selectedPostTypeFilter, setSelectedPostTypeFilter] = useState<string>("ALL");
 
   // Bookmarking / Saved Posts state
   const [savedPostIds, setSavedPostIds] = useState<number[]>(() => {
@@ -215,6 +184,41 @@ export default function Feed() {
       return [];
     }
   });
+
+  // Active Comment Post Selection for Attached Side Drawer
+  const [activeCommentPostId, setActiveCommentPostId] = useState<number | null>(null);
+  const [cachedCommentPost, setCachedCommentPost] = useState<PostResponse | null>(null);
+
+  const activeCommentPost = posts.find((p) => p.id === activeCommentPostId);
+
+  useEffect(() => {
+    if (activeCommentPost) {
+      setCachedCommentPost(activeCommentPost);
+    }
+  }, [activeCommentPost]);
+
+  const displayCommentPost = activeCommentPost || cachedCommentPost;
+
+  const handleSelectPostComments = (postId: number) => {
+    if (activeCommentPostId === postId) {
+      setActiveCommentPostId(null);
+    } else {
+      setActiveCommentPostId(postId);
+      if (!commentsByPost[postId]) {
+        setLoadingCommentsByPost((prev) => ({ ...prev, [postId]: true }));
+        apiRequest<CommentResponse[]>(`/posts/${postId}/comments`)
+          .then((comments) => {
+            setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
+          })
+          .catch(() => {
+            alert("Failed to load comments.");
+          })
+          .finally(() => {
+            setLoadingCommentsByPost((prev) => ({ ...prev, [postId]: false }));
+          });
+      }
+    }
+  };
 
   const handleToggleBookmark = (postId: number) => {
     setSavedPostIds((prev) => {
@@ -372,10 +376,98 @@ export default function Feed() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [activePostMenuId]);
 
+  // Post Reporting state & handlers
+  const [reportingPost, setReportingPost] = useState<PostResponse | null>(null);
+  const [reportCategory, setReportCategory] = useState("Inappropriate Content / Code of Conduct");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSuccessToast, setReportSuccessToast] = useState<string | null>(null);
+
+  const handleOpenReportModal = (post: PostResponse) => {
+    setReportingPost(post);
+    setReportCategory("Inappropriate Content / Code of Conduct");
+    setReportDetails("");
+  };
+
+  const handleSubmitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportingPost) return;
+    setIsSubmittingReport(true);
+    try {
+      const fullReason = `${reportCategory}${reportDetails.trim() ? `: ${reportDetails.trim()}` : ""}`;
+      try {
+        await apiRequest(`/posts/${reportingPost.id}/flag`, {
+          method: "POST",
+          body: JSON.stringify({ reason: fullReason }),
+        });
+      } catch (err) {
+        console.warn("Backend flag API warning:", err);
+      }
+
+      const authorDept =
+        reportingPost.author?.profile?.department ||
+        "Artificial Intelligence & Machine Learning";
+
+      const newReportItem = {
+        id: Date.now(),
+        postId: reportingPost.id,
+        authorName:
+          `${reportingPost.author?.profile?.first_name || ""} ${reportingPost.author?.profile?.last_name || ""}`.trim() ||
+          reportingPost.author?.email.split("@")[0] ||
+          "Campus Member",
+        authorRole: reportingPost.author?.role?.name || "STUDENT",
+        authorEmail: reportingPost.author?.email || "",
+        department: authorDept,
+        content: reportingPost.content,
+        imageUrl: reportingPost.image_url,
+        likes: reportingPost.likes_count || 0,
+        commentsCount: reportingPost.comments_count || 0,
+        reportedBy:
+          `${currentUser?.profile?.first_name || ""} ${currentUser?.profile?.last_name || ""}`.trim() ||
+          currentUser?.email.split("@")[0] ||
+          "Campus User",
+        reporterRole: currentUser?.role?.name || "STUDENT",
+        reporterEmail: currentUser?.email || "",
+        reportReason: reportCategory,
+        reportDetails: reportDetails.trim(),
+        reportedAt: "Just now",
+        status: "PENDING" as const,
+      };
+
+      try {
+        const stored = localStorage.getItem("KNOTS_REPORTED_POSTS");
+        const parsed = stored ? JSON.parse(stored) : [];
+        const updated = [newReportItem, ...parsed.filter((r: any) => r.postId !== reportingPost.id)];
+        localStorage.setItem("KNOTS_REPORTED_POSTS", JSON.stringify(updated));
+      } catch {}
+
+      window.dispatchEvent(
+        new CustomEvent("knots-post-reported", { detail: newReportItem })
+      );
+
+      setReportSuccessToast(`Post reported to ${authorDept} Controller for safety review.`);
+      setTimeout(() => setReportSuccessToast(null), 4000);
+      setReportingPost(null);
+    } catch (err: any) {
+      alert(err.message || "Failed to submit post report.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  // Real-time listener for posts deleted by Department Controller
+  useEffect(() => {
+    const handlePostDeleted = (event: any) => {
+      const deletedId = event.detail?.postId;
+      if (deletedId) {
+        setPosts((prev) => prev.filter((p) => p.id !== deletedId));
+      }
+    };
+    window.addEventListener("knots-post-deleted", handlePostDeleted);
+    return () => window.removeEventListener("knots-post-deleted", handlePostDeleted);
+  }, []);
+
   // Comments and Inputs State indexed by postId
-  const [expandedPosts, setExpandedPosts] = useState<Record<number, boolean>>(
-    {}
-  );
   const [commentsByPost, setCommentsByPost] = useState<
     Record<number, CommentResponse[]>
   >({});
@@ -588,101 +680,26 @@ export default function Feed() {
       syncLatestPosts();
     }, 6000);
 
-    return () => clearInterval(interval);
+    const handlePostCreated = (e: any) => {
+      if (e.detail) {
+        setPosts((prev) => [e.detail, ...prev]);
+      } else {
+        fetchFeed(true);
+      }
+    };
+    const handleRefreshFeed = () => fetchFeed(true);
+
+    window.addEventListener("post-created", handlePostCreated);
+    window.addEventListener("refresh-feed", handleRefreshFeed);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("post-created", handlePostCreated);
+      window.removeEventListener("refresh-feed", handleRefreshFeed);
+    };
   }, []);
 
-  // Create post action handlers
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size exceeds 5MB limit.");
-        return;
-      }
-      setSelectedImage(file);
-      setAttachedDoc(null);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    let contentToSubmit = newPostContent.trim();
-    if (externalLinkUrl.trim()) {
-      contentToSubmit = contentToSubmit
-        ? `${contentToSubmit}\n\n${externalLinkUrl.trim()}`
-        : externalLinkUrl.trim();
-    }
-
-    const fileToUpload = selectedImage || attachedDoc?.file;
-
-    if (!contentToSubmit) {
-      if (attachedDoc) {
-        contentToSubmit = `Shared a document: ${attachedDoc.name}`;
-      } else if (selectedImage) {
-        contentToSubmit = `Shared a photo`;
-      } else {
-        alert(
-          "Please write a post message, upload a file, or add a link before sharing."
-        );
-        return;
-      }
-    }
-
-    setSubmittingPost(true);
-    try {
-      let imageUrl: string | null = null;
-
-      if (fileToUpload) {
-        const formData = new FormData();
-        formData.append("file", fileToUpload);
-        imageUrl = await apiRequest<string>("/posts/upload-image", {
-          method: "POST",
-          body: formData,
-        });
-      }
-
-      const newPost = await apiRequest<PostResponse>("/posts", {
-        method: "POST",
-        body: JSON.stringify({
-          content: contentToSubmit,
-          image_url: imageUrl,
-          visibility: newPostVisibility,
-        }),
-      });
-
-      // Add new post to start of state
-      setPosts((prev) => [newPost, ...prev]);
-
-      // Reset form states
-      setNewPostContent("");
-      setNewPostVisibility("STUDENTS_AND_ALUMNI");
-      handleRemoveImage();
-      setAttachedDoc(null);
-      if (docInputRef.current) {
-        docInputRef.current.value = "";
-      }
-      setShowLinkInput(false);
-      setExternalLinkUrl("");
-    } catch (err: any) {
-      alert(err.message || "Failed to share the post.");
-    } finally {
-      setSubmittingPost(false);
-    }
-  };
 
   // Infinite Scroll logic using Intersection Observer
   useEffect(() => {
@@ -758,26 +775,6 @@ export default function Feed() {
     }
   };
 
-  // Load comments for a specific post
-  const toggleComments = async (postId: number) => {
-    const isExpanded = !!expandedPosts[postId];
-    setExpandedPosts((prev) => ({ ...prev, [postId]: !isExpanded }));
-
-    if (!isExpanded && !commentsByPost[postId]) {
-      setLoadingCommentsByPost((prev) => ({ ...prev, [postId]: true }));
-      try {
-        const comments = await apiRequest<CommentResponse[]>(
-          `/posts/${postId}/comments`
-        );
-        setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
-      } catch (err) {
-        alert("Failed to load comments.");
-      } finally {
-        setLoadingCommentsByPost((prev) => ({ ...prev, [postId]: false }));
-      }
-    }
-  };
-
   // Add a new comment
   const handleAddComment = async (e: React.FormEvent, postId: number) => {
     e.preventDefault();
@@ -850,524 +847,19 @@ export default function Feed() {
     );
   };
 
-  const getVisibilityBadge = (visibility: string) => {
-    switch (visibility) {
-      case "STUDENTS_ONLY":
-        return (
-          <span
-            title="Visible to students only"
-            className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full"
-          >
-            <GraduationCap className="w-3 h-3 text-emerald-600" />
-            <span>Students Only</span>
-          </span>
-        );
-      case "STUDENTS_AND_ALUMNI":
-        return (
-          <span
-            title="Visible to students and alumni"
-            className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-2.5 py-0.5 rounded-full"
-          >
-            <UsersIcon className="w-3 h-3 text-purple-600" />
-            <span>Students & Alumni</span>
-          </span>
-        );
-      case "CONNECTIONS":
-        return (
-          <span
-            title="Visible to connections only"
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full"
-          >
-            <UsersIcon className="w-3 h-3 text-slate-500" />
-            <span>Connections</span>
-          </span>
-        );
-      default:
-        return (
-          <span
-            title="Visible campus wide"
-            className="inline-flex items-center gap-1 text-[10px] font-bold text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-0.5 rounded-full"
-          >
-            <Globe className="w-3 h-3 text-[#4B63D2]" />
-            <span>Campus Wide</span>
-          </span>
-        );
-    }
-  };
+
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
-        {/* Main Feed Stream */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Title Header Card */}
-          <div className="relative overflow-hidden bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-7 shadow-sm">
-            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-gradient-to-br from-[#C8B6E2]/20 via-[#4B63D2]/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-            <div className="space-y-1 relative z-10">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 bg-[#4B63D2]/10 rounded-2xl text-[#4B63D2] shadow-sm">
-                  <Sparkles className="w-5 h-5" />
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
-                  Campus Discussions Feed
-                </h2>
-              </div>
-              <p className="text-[#5851A4] text-xs sm:text-sm max-w-xl font-medium pt-0.5">
-                Share updates, ask doubts, discuss projects, and connect across the SBJIT campus network.
-              </p>
-            </div>
-          </div>
-
-          {/* Create Post Form Card */}
-          <form
-            onSubmit={handleCreatePost}
-            className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 shadow-sm"
-          >
-            <div className="flex gap-3.5 items-start">
-              <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-bold text-white text-sm shadow-md shadow-[#4B63D2]/20 shrink-0">
-                {getInitials(currentUser?.email)}
-              </div>
-              <div className="flex-1 space-y-3">
-                <textarea
-                  placeholder={
-                    currentUser
-                      ? `What's happening on campus, ${getEmailPrefix(
-                          currentUser.email
-                        )}?`
-                      : "What's on your mind? Share a post, note, or project link..."
-                  }
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  rows={3}
-                  className="w-full bg-[#FAF9FD] border border-[#EAE4F7] focus:bg-white rounded-2xl p-3.5 resize-none text-[#1E2746] text-xs sm:text-sm placeholder-[#9188BE] focus:ring-2 focus:ring-[#4B63D2]/20 focus:border-[#4B63D2] focus:outline-none min-h-[75px] transition-all font-medium"
-                />
-
-                {/* Selected Image Preview */}
-                {imagePreview && (
-                  <div className="relative rounded-2xl overflow-hidden border border-[#EAE4F7] bg-[#FAF9FD] aspect-video max-h-[280px] shadow-sm animate-in zoom-in-95 duration-200">
-                    <img
-                      src={imagePreview}
-                      alt="Attachment preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute top-2.5 right-2.5 p-1.5 bg-[#1E2746]/80 hover:bg-[#1E2746] rounded-full text-white transition-all shadow-md cursor-pointer"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Attached Document Preview Pill */}
-                {attachedDoc && (
-                  <div className="flex items-center justify-between p-3 bg-[#4B63D2]/5 border border-[#4B63D2]/20 rounded-2xl text-xs font-bold text-[#4B63D2] animate-in fade-in duration-200">
-                    <div className="flex items-center gap-2.5 truncate">
-                      <FileCheck className="w-4 h-4 text-[#4B63D2] shrink-0" />
-                      <span className="truncate">
-                        {attachedDoc.name}{" "}
-                        <span className="text-[#9188BE] font-normal">
-                          ({attachedDoc.size})
-                        </span>
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAttachedDoc(null)}
-                      className="p-1 hover:bg-[#4B63D2]/10 rounded-full text-[#5851A4] transition-colors cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-
-                {/* External Link Input Field */}
-                {showLinkInput && (
-                  <div className="flex items-center gap-2 p-2.5 bg-[#FAF9FD] border border-[#D5CBEE] rounded-2xl text-xs animate-in fade-in slide-in-from-top-1 duration-150 shadow-xs">
-                    <LinkIcon className="w-4 h-4 text-[#4B63D2] shrink-0 ml-1" />
-                    <input
-                      type="url"
-                      placeholder="Paste external link URL (e.g., https://github.com/project-repo)"
-                      value={externalLinkUrl}
-                      onChange={(e) => setExternalLinkUrl(e.target.value)}
-                      className="flex-1 bg-transparent text-[#1E2746] placeholder-[#9188BE] font-semibold focus:outline-none text-xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowLinkInput(false);
-                        setExternalLinkUrl("");
-                      }}
-                      className="p-1 text-[#9188BE] hover:text-[#1E2746] cursor-pointer"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Divider and Actions Panel */}
-            <div className="border-t border-[#EAE4F7] pt-3.5 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* Image Upload Button */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={handleImageChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
-                >
-                  <Image className="w-4 h-4 text-[#4B63D2]" />
-                  <span>Photo</span>
-                </button>
-
-                {/* Document Upload Button (.pdf, .doc, .docx) */}
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
-                  className="hidden"
-                  ref={docInputRef}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-                      setAttachedDoc({
-                        name: file.name,
-                        size: `${sizeMb} MB`,
-                        file,
-                      });
-                      setSelectedImage(null);
-                      setImagePreview(null);
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => docInputRef.current?.click()}
-                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
-                >
-                  <FileText className="w-4 h-4 text-emerald-600" />
-                  <span>PDF / Notes</span>
-                </button>
-
-                {/* External Link Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowLinkInput(!showLinkInput)}
-                  className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#4B63D2] font-bold text-xs py-2 px-3 rounded-xl hover:bg-[#FAF9FD] transition-all cursor-pointer border border-transparent hover:border-[#EAE4F7]"
-                >
-                  <LinkIcon className="w-4 h-4 text-purple-600" />
-                  <span>Add Link</span>
-                </button>
-
-                {/* Visibility Selector */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowVisibilityDropdown(!showVisibilityDropdown)
-                    }
-                    className="flex items-center gap-1.5 text-[#5851A4] hover:text-[#1E2746] font-bold text-xs py-2 px-3 rounded-xl bg-[#FAF9FD] border border-[#EAE4F7] hover:border-[#D5CBEE] transition-all cursor-pointer"
-                  >
-                    {newPostVisibility === "STUDENTS_ONLY" && (
-                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-                    )}
-                    {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
-                      <UsersIcon className="w-3.5 h-3.5 text-purple-600" />
-                    )}
-                    <span>
-                      {newPostVisibility === "STUDENTS_ONLY" && "Students Only"}
-                      {newPostVisibility === "STUDENTS_AND_ALUMNI" &&
-                        "Students & Alumni"}
-                    </span>
-                  </button>
-
-                  {showVisibilityDropdown && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowVisibilityDropdown(false)}
-                      />
-                      <div className="absolute left-0 mt-2 w-72 bg-white border border-[#EAE4F7] rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD]">
-                        <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#9188BE]">
-                          Who can see this post?
-                        </div>
-
-
-
-                        {/* Option 2: Students Only */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewPostVisibility("STUDENTS_ONLY");
-                            setShowVisibilityDropdown(false);
-                          }}
-                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                            newPostVisibility === "STUDENTS_ONLY"
-                              ? "bg-[#FAF9FD]"
-                              : ""
-                          }`}
-                        >
-                          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
-                            <GraduationCap className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-[#1E2746]">
-                                For Students Only
-                              </span>
-                              {newPostVisibility === "STUDENTS_ONLY" && (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              )}
-                            </div>
-                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                              Visible only to enrolled students
-                            </p>
-                          </div>
-                        </button>
-
-                        {/* Option 3: Students & Alumni */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewPostVisibility("STUDENTS_AND_ALUMNI");
-                            setShowVisibilityDropdown(false);
-                          }}
-                          className={`flex items-start gap-3 w-full text-left px-3.5 py-2.5 hover:bg-[#FAF9FD] transition-all cursor-pointer ${
-                            newPostVisibility === "STUDENTS_AND_ALUMNI"
-                              ? "bg-[#FAF9FD]"
-                              : ""
-                          }`}
-                        >
-                          <div className="p-2 rounded-xl bg-purple-50 text-purple-600 shrink-0 mt-0.5">
-                            <UsersIcon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-[#1E2746]">
-                                For Students & Alumni
-                              </span>
-                              {newPostVisibility === "STUDENTS_AND_ALUMNI" && (
-                                <Check className="w-3.5 h-3.5 text-purple-600" />
-                              )}
-                            </div>
-                            <p className="text-[11px] text-[#5851A4] font-medium leading-tight mt-0.5">
-                              For campus career networking & alumni discussions
-                            </p>
-                          </div>
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={
-                  submittingPost ||
-                  (!newPostContent.trim() &&
-                    !externalLinkUrl.trim() &&
-                    !selectedImage &&
-                    !attachedDoc)
-                }
-                className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] disabled:opacity-50 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all flex items-center gap-2 shadow-md shadow-[#4B63D2]/25 cursor-pointer active:scale-95"
-              >
-                {submittingPost ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#FFD21A]" />
-                    <span>Sharing Post...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Share Post</span>
-                    <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Department-wise Student Sorting Bar (Only visible to Controller & Admin) */}
-          {isController && (
-            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EAE4F7] pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#4B63D2] bg-[#4B63D2]/10 border border-[#4B63D2]/20 px-2.5 py-1 rounded-lg">
-                    {selectedDeptFilter === "ALL"
-                      ? "All Departments Feed"
-                      : selectedDeptFilter === "OTHER"
-                      ? "Other Departments Feed"
-                      : `${selectedDeptFilter} Department Feed`}
-                  </span>
-                  <span className="text-xs font-bold text-[#1E2746]">
-                    {selectedDeptFilter === "ALL"
-                      ? "All Departments Student & Faculty Activity"
-                      : selectedDeptFilter === "OTHER"
-                      ? "Interdisciplinary & Other Department Activity"
-                      : `${selectedDeptFilter} Student & Faculty Activity`}
-                  </span>
-                </div>
-                {selectedDeptFilter !== "ALL" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedDeptFilter("ALL");
-                      setSelectedCohortFilter("ALL");
-                      setSelectedSectionFilter("ALL");
-                      setSelectedRoleFilter("ALL");
-                      setSelectedPostTypeFilter("ALL");
-                    }}
-                    className="text-[11px] text-[#4B63D2] hover:underline font-bold self-start sm:self-auto cursor-pointer"
-                  >
-                    Reset to All Departments
-                  </button>
-                )}
-              </div>
-
-              {/* Department Filter Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
-                {[
-                  { id: "ALL", label: "🌐 All Departments" },
-                  { id: "CSE", label: "💻 CSE" },
-                  { id: "AIML", label: "🤖 AIML" },
-                  { id: "IT", label: "⚡ IT" },
-                  { id: "ECE", label: "📡 ECE" },
-                  { id: "OTHER", label: "🏛️ Other Departments" },
-                ].map((dept) => {
-                  const isActive = selectedDeptFilter === dept.id;
-                  return (
-                    <button
-                      key={dept.id}
-                      type="button"
-                      onClick={() => setSelectedDeptFilter(dept.id)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
-                        isActive
-                          ? "bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/25"
-                          : "bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:border-[#D5CBEE] hover:text-[#1E2746]"
-                      }`}
-                    >
-                      {dept.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Additional Sub-Filters: Year, Section, Role, Post Type */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#FAF9FD] text-[11px]">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                    Academic Year:
-                  </span>
-                  <select
-                    value={selectedCohortFilter}
-                    onChange={(e) => setSelectedCohortFilter(e.target.value)}
-                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                  >
-                    <option value="ALL">All Years</option>
-                    <option value="First Year">First Year</option>
-                    <option value="Second Year">Second Year</option>
-                    <option value="Third Year">Third Year</option>
-                    <option value="Fourth Year">Final Year</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                    Section:
-                  </span>
-                  <select
-                    value={selectedSectionFilter}
-                    onChange={(e) => setSelectedSectionFilter(e.target.value)}
-                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                  >
-                    <option value="ALL">All Sections</option>
-                    <option value="Section A">Section A</option>
-                    <option value="Section B">Section B</option>
-                    <option value="Section C">Section C</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                    User Role:
-                  </span>
-                  <select
-                    value={selectedRoleFilter}
-                    onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                  >
-                    <option value="ALL">All Roles</option>
-                    <option value="student">Student</option>
-                    <option value="faculty">Faculty</option>
-                    <option value="alumni">Alumni</option>
-                    <option value="admin">Management / Admin</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <span className="text-[#5851A4] font-black text-[10px] uppercase">
-                    Post Type:
-                  </span>
-                  <select
-                    value={selectedPostTypeFilter}
-                    onChange={(e) => setSelectedPostTypeFilter(e.target.value)}
-                    className="bg-[#FAF9FD] border border-[#EAE4F7] text-[#1E2746] font-bold rounded-xl px-2.5 py-1.5 outline-none text-[11px] focus:ring-1 focus:ring-[#4B63D2]"
-                  >
-                    <option value="ALL">All Types</option>
-                    <option value="achievements">Achievements 🏆</option>
-                    <option value="opportunities">Opportunities 💼</option>
-                    <option value="projects">Projects 🚀</option>
-                    <option value="events">Events & Notices 📢</option>
-                    <option value="docs">PDF & Notes 📄</option>
-                    <option value="photos">Photos 📸</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Feed Filter Chips Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
-            {[
-              { id: "FOR_YOU", label: "🌟 For You", badge: "Smart" },
-              { id: "CONNECTIONS", label: "👥 Connections" },
-              { id: "OPPORTUNITIES", label: "💼 Opportunities & Projects" },
-              { id: "EVENTS", label: "🏛️ Events & Notices" },
-              { id: "DOCS", label: "📄 PDF & Notes" },
-              { id: "MEDIA", label: "🖼️ Photos" },
-              {
-                id: "SAVED",
-                label: `🔖 Saved (${savedPostIds.length})`,
-              },
-              { id: "ALL", label: "🌐 All Posts" },
-            ].map((tab) => {
-              const isActive = activeFilter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveFilter(tab.id)}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap flex items-center gap-1.5 ${
-                    isActive
-                      ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                      : "bg-white text-[#5851A4] border border-[#EAE4F7] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
+    <div className="w-full">
+      <div className="w-full flex justify-center items-start">
+        {/* Main Feed Stream - Slides left smoothly with spring bezier when comment panel is opened */}
+        <div
+          className={`shrink-0 w-full transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] space-y-6 ${
+            activeCommentPostId
+              ? "lg:max-w-[580px] xl:max-w-[660px]"
+              : "max-w-2xl xl:max-w-3xl"
+          }`}
+        >
           {/* Real-time New Posts Discovery Banner (LinkedIn Style) */}
           {newIncomingPosts.length > 0 && (
             <div className="flex justify-center sticky top-20 z-20 py-2">
@@ -1421,211 +913,7 @@ export default function Feed() {
             </div>
           ) : (
             <div className="space-y-6">
-              {posts
-                .filter((post) => {
-                  const contentLower = (post.content || "").toLowerCase();
-                  const authorDept = (post.author?.profile?.department || "").toLowerCase();
-                  const authorEmail = (post.author?.email || "").toLowerCase();
-
-                  // 1. Tab filter
-                  if (activeFilter === "DOCS" && !isDocumentUrl(post.image_url)) return false;
-                  if (activeFilter === "MEDIA" && (!post.image_url || isDocumentUrl(post.image_url))) return false;
-                  if (activeFilter === "SAVED" && !savedPostIds.includes(post.id)) return false;
-                  if (activeFilter === "OPPORTUNITIES" && !(
-                    contentLower.includes("project") ||
-                    contentLower.includes("intern") ||
-                    contentLower.includes("job") ||
-                    contentLower.includes("hackathon") ||
-                    contentLower.includes("github") ||
-                    contentLower.includes("hiring") ||
-                    contentLower.includes("placement") ||
-                    contentLower.includes("referral") ||
-                    contentLower.includes("repo")
-                  )) return false;
-                  if (activeFilter === "EVENTS" && !(
-                    contentLower.includes("event") ||
-                    contentLower.includes("workshop") ||
-                    contentLower.includes("webinar") ||
-                    contentLower.includes("club") ||
-                    contentLower.includes("announcement") ||
-                    contentLower.includes("notice") ||
-                    contentLower.includes("fest") ||
-                    contentLower.includes("session")
-                  )) return false;
-                  if (activeFilter === "CONNECTIONS" && !(
-                    post.visibility === "CONNECTIONS" ||
-                    post.visibility === "STUDENTS_AND_ALUMNI" ||
-                    authorEmail.includes("alumni") ||
-                    authorEmail.includes("prof")
-                  )) return false;
-
-                  // 2. Department-wise filter
-                  if (selectedDeptFilter === "CSE") {
-                    const isCse =
-                      authorDept.includes("cse") ||
-                      authorDept.includes("computer") ||
-                      authorEmail.includes("cse") ||
-                      authorEmail.includes("hod") ||
-                      contentLower.includes("cse") ||
-                      contentLower.includes("computer science");
-                    if (!isCse) return false;
-                  } else if (selectedDeptFilter === "AIML") {
-                    const isAiml =
-                      authorDept.includes("aiml") ||
-                      authorDept.includes("ai") ||
-                      authorDept.includes("machine learning") ||
-                      authorEmail.includes("aiml") ||
-                      contentLower.includes("aiml") ||
-                      contentLower.includes("ai/ml") ||
-                      contentLower.includes("machine learning");
-                    if (!isAiml) return false;
-                  } else if (selectedDeptFilter === "IT") {
-                    const isIt =
-                      authorDept.includes("it") ||
-                      authorDept.includes("information tech") ||
-                      authorEmail.includes("it@") ||
-                      contentLower.includes("it department") ||
-                      contentLower.includes("information technology");
-                    if (!isIt) return false;
-                  } else if (selectedDeptFilter === "ECE") {
-                    const isEce =
-                      authorDept.includes("ece") ||
-                      authorDept.includes("electronics") ||
-                      authorEmail.includes("ece") ||
-                      contentLower.includes("ece") ||
-                      contentLower.includes("electronics");
-                    if (!isEce) return false;
-                  } else if (selectedDeptFilter === "OTHER") {
-                    const isCoreTech =
-                      authorDept.includes("cse") ||
-                      authorDept.includes("aiml") ||
-                      authorDept.includes("it") ||
-                      authorDept.includes("ece");
-                    if (isCoreTech && !contentLower.includes("interdisciplinary")) return false;
-                  }
-
-                  // 3. Academic Year / Cohort filter
-                  if (selectedCohortFilter === "First Year") {
-                    const isFirst =
-                      contentLower.includes("1st year") ||
-                      contentLower.includes("first year") ||
-                      contentLower.includes("2028") ||
-                      contentLower.includes("sem 1") ||
-                      contentLower.includes("sem 2");
-                    if (!isFirst) return false;
-                  } else if (selectedCohortFilter === "Second Year") {
-                    const isSecond =
-                      contentLower.includes("2nd year") ||
-                      contentLower.includes("second year") ||
-                      contentLower.includes("2027") ||
-                      contentLower.includes("sem 3") ||
-                      contentLower.includes("sem 4");
-                    if (!isSecond) return false;
-                  } else if (selectedCohortFilter === "Third Year") {
-                    const isThird =
-                      contentLower.includes("3rd year") ||
-                      contentLower.includes("third year") ||
-                      contentLower.includes("2026") ||
-                      contentLower.includes("sem 5") ||
-                      contentLower.includes("sem 6");
-                    if (!isThird) return false;
-                  } else if (selectedCohortFilter === "Fourth Year") {
-                    const isFourth =
-                      contentLower.includes("4th year") ||
-                      contentLower.includes("final year") ||
-                      contentLower.includes("2025") ||
-                      contentLower.includes("sem 7") ||
-                      contentLower.includes("sem 8");
-                    if (!isFourth) return false;
-                  }
-
-                  // 4. Section filter
-                  if (selectedSectionFilter === "Section A") {
-                    if (!contentLower.includes("sec a") && !contentLower.includes("section a")) return false;
-                  } else if (selectedSectionFilter === "Section B") {
-                    if (!contentLower.includes("sec b") && !contentLower.includes("section b")) return false;
-                  } else if (selectedSectionFilter === "Section C") {
-                    if (!contentLower.includes("sec c") && !contentLower.includes("section c")) return false;
-                  }
-
-                  // 5. User Role filter
-                  if (selectedRoleFilter === "student") {
-                    const isNotStudent =
-                      authorEmail.includes("prof") ||
-                      authorEmail.includes("admin") ||
-                      authorEmail.includes("hod") ||
-                      authorEmail.includes("dean") ||
-                      authorEmail.includes("alumni");
-                    if (isNotStudent) return false;
-                  } else if (selectedRoleFilter === "faculty") {
-                    const isFaculty =
-                      authorEmail.includes("prof") ||
-                      authorEmail.includes("faculty") ||
-                      authorEmail.includes("teacher");
-                    if (!isFaculty) return false;
-                  } else if (selectedRoleFilter === "alumni") {
-                    const isAlumni =
-                      authorEmail.includes("alumni") ||
-                      post.visibility === "STUDENTS_AND_ALUMNI";
-                    if (!isAlumni) return false;
-                  } else if (selectedRoleFilter === "admin") {
-                    const isAdminUser =
-                      authorEmail.includes("admin") ||
-                      authorEmail.includes("hod") ||
-                      authorEmail.includes("dean") ||
-                      authorEmail.includes("principal");
-                    if (!isAdminUser) return false;
-                  }
-
-                  // 6. Post Type filter
-                  if (selectedPostTypeFilter === "achievements") {
-                    const isAch =
-                      contentLower.includes("achieve") ||
-                      contentLower.includes("winner") ||
-                      contentLower.includes("won") ||
-                      contentLower.includes("rank") ||
-                      contentLower.includes("prize") ||
-                      contentLower.includes("certif") ||
-                      contentLower.includes("award");
-                    if (!isAch) return false;
-                  } else if (selectedPostTypeFilter === "opportunities") {
-                    const isOpp =
-                      contentLower.includes("intern") ||
-                      contentLower.includes("job") ||
-                      contentLower.includes("hiring") ||
-                      contentLower.includes("placement") ||
-                      contentLower.includes("referral") ||
-                      contentLower.includes("opening");
-                    if (!isOpp) return false;
-                  } else if (selectedPostTypeFilter === "projects") {
-                    const isProj =
-                      contentLower.includes("project") ||
-                      contentLower.includes("github") ||
-                      contentLower.includes("repo") ||
-                      contentLower.includes("demo") ||
-                      contentLower.includes("build") ||
-                      contentLower.includes("dev");
-                    if (!isProj) return false;
-                  } else if (selectedPostTypeFilter === "events") {
-                    const isEvt =
-                      contentLower.includes("event") ||
-                      contentLower.includes("workshop") ||
-                      contentLower.includes("webinar") ||
-                      contentLower.includes("fest") ||
-                      contentLower.includes("session") ||
-                      contentLower.includes("notice");
-                    if (!isEvt) return false;
-                  } else if (selectedPostTypeFilter === "docs") {
-                    const isDoc = isDocumentUrl(post.image_url) || contentLower.includes("pdf") || contentLower.includes("notes");
-                    if (!isDoc) return false;
-                  } else if (selectedPostTypeFilter === "photos") {
-                    const isPhoto = post.image_url && !isDocumentUrl(post.image_url);
-                    if (!isPhoto) return false;
-                  }
-
-                  return true;
-                })
-                .map((post) => {
+              {posts.map((post) => {
                   const isSaved = savedPostIds.includes(post.id);
                   const isCommentsLocked = !!lockedCommentPostIds[post.id];
                   const isAuthorOrAdmin =
@@ -1639,7 +927,11 @@ export default function Feed() {
                     <article
                       key={post.id}
                       id={`post-${post.id}`}
-                      className="bg-white border border-[#EAE4F7] rounded-3xl p-5 sm:p-6 space-y-4 hover:border-[#D5CBEE] transition-all duration-300 hover:shadow-md shadow-sm"
+                      className={`bg-white border rounded-3xl p-5 sm:p-6 space-y-4 transition-all duration-300 shadow-sm ${
+                        activeCommentPostId === post.id
+                          ? "border-[#4B63D2] ring-2 ring-[#4B63D2]/25 shadow-md"
+                          : "border-[#EAE4F7] hover:border-[#D5CBEE] hover:shadow-md"
+                      }`}
                     >
                       {/* Card Header: Author Profile Info */}
                       <div className="flex items-start justify-between gap-2">
@@ -1729,8 +1021,7 @@ export default function Feed() {
                                   </span>
                                 </>
                               )}
-                              <span className="text-[#C8B6E2] text-[10px]">•</span>
-                              {getVisibilityBadge(post.visibility)}
+
                             </div>
                           </div>
                         </Link>
@@ -1812,6 +1103,19 @@ export default function Feed() {
                                     <span>Save Post</span>
                                   </>
                                 )}
+                              </button>
+
+                              {/* Report Post (Available to everyone) */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActivePostMenuId(null);
+                                  handleOpenReportModal(post);
+                                }}
+                                className="w-full px-3.5 py-2 text-left text-xs font-bold text-amber-600 hover:bg-amber-50 flex items-center gap-2 cursor-pointer transition-colors"
+                              >
+                                <Flag className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Report Post</span>
                               </button>
 
                               {/* Delete Post (Author or Admin) */}
@@ -1923,7 +1227,7 @@ export default function Feed() {
                           <div className="my-2 p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] flex items-center justify-between gap-3 shadow-xs">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div className="w-9 h-9 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2] flex items-center justify-center shrink-0">
-                                <Image className="w-5 h-5 text-[#4B63D2]" />
+                                <ImageIcon className="w-5 h-5 text-[#4B63D2]" />
                               </div>
                               <div className="min-w-0">
                                 <p className="text-xs font-bold text-[#1E2746] truncate">
@@ -1975,10 +1279,10 @@ export default function Feed() {
 
                           {/* Comment Toggle Button */}
                           <button
-                            onClick={() => toggleComments(post.id)}
+                            onClick={() => handleSelectPostComments(post.id)}
                             className={`flex items-center gap-1.5 transition-colors duration-200 py-1.5 px-3 rounded-xl hover:bg-[#FAF9FD] cursor-pointer ${
-                              expandedPosts[post.id]
-                                ? "text-[#4B63D2] font-bold bg-[#4B63D2]/10"
+                              activeCommentPostId === post.id
+                                ? "text-[#4B63D2] font-bold bg-[#4B63D2]/15 ring-1 ring-[#4B63D2]/30"
                                 : "text-[#5851A4] hover:text-[#1E2746]"
                             }`}
                           >
@@ -2044,157 +1348,6 @@ export default function Feed() {
                           </button>
                         </div>
                       </div>
-
-                      {/* Card Expanded Comments Section */}
-                      {expandedPosts[post.id] && (
-                        <div className="mt-4 border-t border-[#EAE4F7] pt-4 space-y-3.5 animate-in fade-in duration-200">
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-xs font-bold text-[#5851A4] uppercase tracking-wider">
-                              Discussion Comments
-                            </h5>
-                            {isCommentsLocked && (
-                              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                                <Lock className="w-3 h-3 text-amber-600" />
-                                <span>Comments Locked</span>
-                              </span>
-                            )}
-                          </div>
-
-                          {loadingCommentsByPost[post.id] ? (
-                            <div className="flex items-center gap-2 py-3 text-[#5851A4] text-xs">
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#4B63D2]" />
-                              <span>Loading discussion comments...</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
-                              {!commentsByPost[post.id] ||
-                              commentsByPost[post.id].length === 0 ? (
-                                <p className="text-[#5851A4] text-xs italic py-2">
-                                  No comments yet. Be the first to share your thoughts!
-                                </p>
-                              ) : (
-                                commentsByPost[post.id].map((comment) => (
-                                  <div
-                                    key={comment.id}
-                                    className="bg-[#FAF9FD] rounded-2xl p-3.5 border border-[#EAE4F7] text-xs space-y-1 group"
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <Link
-                                        to={
-                                          comment.author_id
-                                            ? `/profile/${comment.author_id}`
-                                            : "/profile"
-                                        }
-                                        className="flex items-center gap-2 font-black text-[#4B63D2] hover:underline"
-                                      >
-                                        {getMediaUrl(
-                                          comment.author?.profile
-                                            ?.profile_picture
-                                        ) ? (
-                                          <img
-                                            src={getMediaUrl(
-                                              comment.author?.profile
-                                                ?.profile_picture
-                                            )}
-                                            alt="Commenter Avatar"
-                                            className="h-5 w-5 rounded-full object-cover border border-[#EAE4F7]"
-                                          />
-                                        ) : (
-                                          <div className="h-5 w-5 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white text-[10px] font-bold">
-                                            {getInitials(comment.author?.email)}
-                                          </div>
-                                        )}
-                                        <span>
-                                          {comment.author?.profile
-                                            ?.first_name ||
-                                          comment.author?.profile?.last_name
-                                            ? `${
-                                                comment.author.profile
-                                                  .first_name || ""
-                                              } ${
-                                                comment.author.profile
-                                                  .last_name || ""
-                                              }`.trim()
-                                            : getEmailPrefix(
-                                                comment.author?.email
-                                              )}
-                                        </span>
-                                      </Link>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[#9188BE] text-[10px] font-medium">
-                                          {formatTimeAgo(comment.created_at)}
-                                        </span>
-                                        {(isSuperAdminOrAdmin ||
-                                          comment.author_id ===
-                                            currentUser?.id ||
-                                          post.author_id ===
-                                            currentUser?.id) && (
-                                          <button
-                                            onClick={() =>
-                                              handleDeleteComment(
-                                                post.id,
-                                                comment.id
-                                              )
-                                            }
-                                            title="Delete comment"
-                                            className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5 cursor-pointer"
-                                          >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-[#1E2746] leading-relaxed font-medium">
-                                      {comment.content}
-                                    </p>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          )}
-
-                          {/* Add Comment Form or Comments Locked Notice */}
-                          {isCommentsLocked ? (
-                            <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-2xl text-amber-800 text-xs font-semibold flex items-center gap-2">
-                              <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                              <span>Comments are turned off for this post.</span>
-                            </div>
-                          ) : (
-                            <form
-                              onSubmit={(e) => handleAddComment(e, post.id)}
-                              className="flex items-center gap-2 pt-1"
-                            >
-                              <input
-                                type="text"
-                                placeholder="Write a supportive comment or answer..."
-                                value={commentInputs[post.id] || ""}
-                                onChange={(e) =>
-                                  setCommentInputs((prev) => ({
-                                    ...prev,
-                                    [post.id]: e.target.value,
-                                  }))
-                                }
-                                disabled={submittingCommentByPost[post.id]}
-                                className="flex-1 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl px-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition-all font-medium"
-                              />
-                              <button
-                                type="submit"
-                                disabled={
-                                  submittingCommentByPost[post.id] ||
-                                  !commentInputs[post.id]?.trim()
-                                }
-                                className="p-2.5 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center shrink-0 shadow-md shadow-[#4B63D2]/20 cursor-pointer active:scale-95"
-                              >
-                                {submittingCommentByPost[post.id] ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
-                                )}
-                              </button>
-                            </form>
-                          )}
-                        </div>
-                      )}
                     </article>
                   );
                 })}
@@ -2227,12 +1380,236 @@ export default function Feed() {
           )}
         </div>
 
-        {/* Right Column: Ties Recommendations Sidebar */}
-        <div className="lg:col-span-4 space-y-6">
-          <div className="sticky top-24">
-            <TiesRecommendations />
-          </div>
-        </div>
+        {/* ========================================================================= */}
+        {/* ATTACHED SLIDING COMMENT PANEL (Attached to right border of feed)         */}
+        {/* ========================================================================= */}
+        {displayCommentPost && (
+          <>
+            {/* Desktop Attached Right-Hand Panel with Smooth Premium Transition */}
+            <div
+              className={`hidden lg:block shrink-0 sticky top-24 z-20 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden ${
+                activeCommentPostId
+                  ? "w-[380px] xl:w-[420px] opacity-100 translate-x-0 ml-4 lg:ml-6"
+                  : "w-0 opacity-0 translate-x-8 ml-0 pointer-events-none"
+              }`}
+            >
+              <aside className="w-[380px] xl:w-[420px] bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl shadow-xl flex flex-col h-[calc(100vh-220px)] max-h-[calc(100dvh-220px)] min-h-[380px] overflow-hidden">
+                {/* Header */}
+                <div className="p-4 sm:p-5 border-b border-[#EAE4F7] dark:border-[#1F2937] flex items-center justify-between bg-[#FAF9FD] dark:bg-[#0F172A] shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-2 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2]">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-[#1E2746] dark:text-[#F1F5F9] flex items-center gap-2">
+                        <span>Comments</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4B63D2] text-white">
+                          {displayCommentPost.comments_count}
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-semibold truncate">
+                        {displayCommentPost.author?.profile?.first_name || displayCommentPost.author?.email.split("@")[0]}'s post
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveCommentPostId(null)}
+                    title="Close comments"
+                    className="p-1.5 rounded-xl text-[#9188BE] hover:text-[#1E2746] hover:bg-[#EAE4F7] dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Post Snippet Preview */}
+                <div className="p-3 mx-4 mt-3 bg-[#FAF9FD] dark:bg-[#1E293B]/70 border border-[#EAE4F7] dark:border-[#334155] rounded-2xl text-xs space-y-1 shrink-0">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-[#4B63D2]">
+                    <span>Post Snippet</span>
+                    <span>•</span>
+                    <span className="text-[#5851A4] dark:text-[#94A3B8] font-normal">{formatTimeAgo(displayCommentPost.created_at)}</span>
+                  </div>
+                  <p className="text-[#1E2746] dark:text-[#F1F5F9] font-medium line-clamp-2">
+                    {displayCommentPost.content}
+                  </p>
+                </div>
+
+                {/* Scrollable Comments List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {loadingCommentsByPost[displayCommentPost.id] ? (
+                    <div className="flex items-center justify-center py-12 gap-2 text-xs text-[#5851A4]">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#4B63D2]" />
+                      <span>Loading comments...</span>
+                    </div>
+                  ) : !commentsByPost[displayCommentPost.id] || commentsByPost[displayCommentPost.id].length === 0 ? (
+                    <div className="text-center py-12 space-y-2">
+                      <MessageSquare className="w-8 h-8 text-[#C8B6E2] mx-auto" />
+                      <p className="text-xs font-bold text-[#1E2746] dark:text-[#F1F5F9]">No comments yet</p>
+                      <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8]">Be the first to join the conversation!</p>
+                    </div>
+                  ) : (
+                    commentsByPost[displayCommentPost.id].map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="bg-[#FAF9FD] dark:bg-[#1E293B]/60 rounded-2xl p-3 border border-[#EAE4F7] dark:border-[#334155] text-xs space-y-1.5 group"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <Link
+                            to={comment.author_id ? `/profile/${comment.author_id}` : "/profile"}
+                            className="flex items-center gap-2 font-black text-[#4B63D2] hover:underline"
+                          >
+                            {getMediaUrl(comment.author?.profile?.profile_picture) ? (
+                              <img
+                                src={getMediaUrl(comment.author?.profile?.profile_picture)}
+                                alt="Commenter Avatar"
+                                className="h-6 w-6 rounded-full object-cover border border-[#EAE4F7]"
+                              />
+                            ) : (
+                              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] flex items-center justify-center text-white text-[10px] font-bold">
+                                {getInitials(comment.author?.email)}
+                              </div>
+                            )}
+                            <span className="truncate max-w-[150px]">
+                              {comment.author?.profile?.first_name || comment.author?.profile?.last_name
+                                ? `${comment.author?.profile?.first_name || ""} ${comment.author?.profile?.last_name || ""}`.trim()
+                                : getEmailPrefix(comment.author?.email)}
+                            </span>
+                          </Link>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[#9188BE] text-[10px] font-medium">
+                              {formatTimeAgo(comment.created_at)}
+                            </span>
+                            {(isSuperAdminOrAdmin ||
+                              comment.author_id === currentUser?.id ||
+                              displayCommentPost.author_id === currentUser?.id) && (
+                              <button
+                                onClick={() => handleDeleteComment(displayCommentPost.id, comment.id)}
+                                title="Delete comment"
+                                className="opacity-0 group-hover:opacity-100 text-[#9188BE] hover:text-rose-600 transition-all p-0.5 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-[#1E2746] dark:text-[#F1F5F9] leading-relaxed break-words font-medium pl-8">
+                          {comment.content}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Sticky Bottom Comment Composer */}
+                <form
+                  onSubmit={(e) => handleAddComment(e, displayCommentPost.id)}
+                  className="p-3 sm:p-3.5 border-t border-[#EAE4F7] dark:border-[#1F2937] bg-white dark:bg-[#111827] flex items-center gap-2 shrink-0 rounded-b-3xl"
+                >
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#5851A4] to-[#4B63D2] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    {getInitials(currentUser?.email)}
+                  </div>
+                  <input
+                    type="text"
+                    value={commentInputs[displayCommentPost.id] || ""}
+                    onChange={(e) =>
+                      setCommentInputs((prev) => ({
+                        ...prev,
+                        [displayCommentPost.id]: e.target.value,
+                      }))
+                    }
+                    placeholder="Add to discussion..."
+                    className="flex-1 bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-xl px-3 py-2 text-xs text-[#1E2746] dark:text-[#F1F5F9] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] font-medium"
+                  />
+                  <button
+                    type="submit"
+                    disabled={
+                      submittingCommentByPost[displayCommentPost.id] ||
+                      !(commentInputs[displayCommentPost.id] || "").trim()
+                    }
+                    className="px-3.5 py-2 bg-[#4B63D2] hover:bg-[#3E53BE] disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    {submittingCommentByPost[displayCommentPost.id] ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
+                    )}
+                  </button>
+                </form>
+              </aside>
+            </div>
+
+            {/* Mobile Slide-over Drawer (< lg) */}
+            {activeCommentPostId && (
+              <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+                <div className="w-full max-w-md bg-white dark:bg-[#111827] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 pb-20">
+                  {/* Header */}
+                  <div className="p-4 border-b border-[#EAE4F7] dark:border-[#1F2937] flex items-center justify-between bg-[#FAF9FD] dark:bg-[#0F172A]">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-[#4B63D2]" />
+                      <h3 className="text-sm font-black text-[#1E2746] dark:text-[#F1F5F9]">
+                        Comments ({displayCommentPost.comments_count})
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setActiveCommentPostId(null)}
+                      className="p-1.5 rounded-xl text-[#9188BE] hover:text-[#1E2746]"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* List */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {loadingCommentsByPost[displayCommentPost.id] ? (
+                      <div className="flex items-center justify-center py-12 gap-2 text-xs text-[#5851A4]">
+                        <Loader2 className="w-5 h-5 animate-spin text-[#4B63D2]" />
+                        <span>Loading comments...</span>
+                      </div>
+                    ) : !commentsByPost[displayCommentPost.id] || commentsByPost[displayCommentPost.id].length === 0 ? (
+                      <p className="text-[#5851A4] text-xs text-center py-8 italic">No comments yet</p>
+                    ) : (
+                      commentsByPost[displayCommentPost.id].map((comment) => (
+                        <div key={comment.id} className="bg-[#FAF9FD] dark:bg-[#1E293B]/60 p-3 rounded-2xl border border-[#EAE4F7] dark:border-[#334155] text-xs space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-[#4B63D2]">
+                              {comment.author?.profile?.first_name || comment.author?.email.split("@")[0]}
+                            </span>
+                            <span className="text-[10px] text-[#9188BE]">{formatTimeAgo(comment.created_at)}</span>
+                          </div>
+                          <p className="text-[#1E2746] dark:text-[#F1F5F9] font-medium">{comment.content}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Input */}
+                  <form
+                    onSubmit={(e) => handleAddComment(e, displayCommentPost.id)}
+                    className="p-3 border-t border-[#EAE4F7] dark:border-[#1F2937] flex items-center gap-2 bg-white dark:bg-[#111827]"
+                  >
+                    <input
+                      type="text"
+                      value={commentInputs[displayCommentPost.id] || ""}
+                      onChange={(e) =>
+                        setCommentInputs((prev) => ({
+                          ...prev,
+                          [displayCommentPost.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Write a comment..."
+                      className="flex-1 bg-[#FAF9FD] dark:bg-[#1E293B] border border-[#EAE4F7] rounded-xl px-3 py-2 text-xs"
+                    />
+                    <button type="submit" className="p-2 bg-[#4B63D2] text-white rounded-xl">
+                      <Send className="w-4 h-4 text-[#FFD21A]" />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -2488,6 +1865,140 @@ export default function Feed() {
         <div className="fixed bottom-6 right-6 z-50 bg-[#1E2746] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 animate-in slide-in-from-bottom-5 duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{chatShareToast}</span>
+        </div>
+      )}
+
+      {/* Floating Report Post Success Toast */}
+      {reportSuccessToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#1E2746] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-200 border border-amber-400/30">
+          <Flag className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{reportSuccessToast}</span>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* REPORT POST MODAL (SUBMITS TO DEPARTMENT CONTROLLER)                      */}
+      {/* ========================================================================= */}
+      {reportingPost && (
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#EAE4F7] dark:border-slate-800 w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-5 border-b border-[#EAE4F7] dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+                  <Flag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#1E2746] dark:text-white">
+                    Report Post to Department Controller
+                  </h3>
+                  <p className="text-[11px] text-[#5851A4] dark:text-slate-400 font-medium">
+                    Reviewed by the author's Department Controller for campus safety
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportingPost(null)}
+                className="p-1 rounded-xl text-[#9188BE] hover:text-[#1E2746] hover:bg-[#FAF9FD] dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmitReport} className="p-5 space-y-4 overflow-y-auto">
+              {/* Post Snippet */}
+              <div className="p-3.5 bg-[#FAF9FD] dark:bg-slate-800/60 border border-[#EAE4F7] dark:border-slate-700 rounded-2xl text-xs space-y-1">
+                <div className="flex items-center justify-between text-[10px] font-bold text-[#4B63D2]">
+                  <span>Post Author: {reportingPost.author?.profile?.first_name ? `${reportingPost.author.profile.first_name} ${reportingPost.author.profile.last_name || ""}`.trim() : reportingPost.author?.email}</span>
+                  <span className="bg-blue-50 text-[#4B63D2] px-2 py-0.5 rounded-full font-bold">
+                    Dept: {reportingPost.author?.profile?.department || "AIML"}
+                  </span>
+                </div>
+                <p className="text-[#1E2746] dark:text-slate-200 font-medium line-clamp-2 pt-0.5">
+                  "{reportingPost.content}"
+                </p>
+              </div>
+
+              {/* Reason Category */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#1E2746] dark:text-slate-200 block">
+                  Why are you reporting this post? *
+                </label>
+                <div className="space-y-2">
+                  {[
+                    "Inappropriate Content / Code of Conduct",
+                    "Harassment, Bullying, or Hate Speech",
+                    "Academic Dishonesty / Unauthorized Exam Material",
+                    "Spam, Scam, or Misinformation",
+                    "Other Department Safety Violation",
+                  ].map((category) => (
+                    <label
+                      key={category}
+                      className={`flex items-center gap-3 p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                        reportCategory === category
+                          ? "bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 text-amber-900 dark:text-amber-200 shadow-xs"
+                          : "bg-white dark:bg-slate-800 border-[#EAE4F7] dark:border-slate-700 text-[#1E2746] dark:text-slate-300 hover:border-amber-200"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="reportCategory"
+                        value={category}
+                        checked={reportCategory === category}
+                        onChange={(e) => setReportCategory(e.target.value)}
+                        className="accent-amber-500 w-4 h-4 cursor-pointer"
+                      />
+                      <span>{category}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Context */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#5851A4] dark:text-slate-300 block">
+                  Additional Details or Context (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Provide any additional remarks for the department controller..."
+                  className="w-full bg-[#FAF9FD] dark:bg-slate-800 border border-[#D5CBEE] dark:border-slate-700 focus:bg-white dark:focus:bg-slate-900 rounded-xl p-3 text-xs text-[#1E2746] dark:text-white placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] font-medium resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setReportingPost(null)}
+                  className="px-4 py-2.5 rounded-xl border border-[#D5CBEE] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReport}
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-black transition shadow-md shadow-amber-500/25 flex items-center gap-2 cursor-pointer"
+                >
+                  {isSubmittingReport ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Flag className="w-4 h-4" />
+                      <span>Submit Report</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

@@ -25,6 +25,7 @@ class EventRepository(BaseRepository[Event]):
                 selectinload(Event.organizer),
                 selectinload(Event.head).selectinload(User.profile),
                 selectinload(Event.co_head).selectinload(User.profile),
+                selectinload(Event.faculty_coordinator).selectinload(User.profile),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -41,6 +42,7 @@ class EventRepository(BaseRepository[Event]):
                 selectinload(Event.organizer).selectinload(User.profile),
                 selectinload(Event.head).selectinload(User.profile),
                 selectinload(Event.co_head).selectinload(User.profile),
+                selectinload(Event.faculty_coordinator).selectinload(User.profile),
                 selectinload(Event.category),
                 selectinload(Event.rsvps),
             )
@@ -125,6 +127,7 @@ class EventRepository(BaseRepository[Event]):
             selectinload(Event.organizer).selectinload(User.profile),
             selectinload(Event.head).selectinload(User.profile),
             selectinload(Event.co_head).selectinload(User.profile),
+            selectinload(Event.faculty_coordinator).selectinload(User.profile),
             selectinload(Event.category),
             selectinload(Event.rsvps),
         )

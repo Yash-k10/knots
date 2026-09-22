@@ -19,6 +19,9 @@ class ApplicationRepository(BaseRepository[Application]):
             .options(
                 selectinload(Application.applicant),
                 selectinload(Application.job_posting).selectinload(JobPosting.company),
+                selectinload(Application.job_posting).selectinload(
+                    JobPosting.applications
+                ),
             )
             .filter(Application.id == id)
         )
@@ -33,6 +36,9 @@ class ApplicationRepository(BaseRepository[Application]):
             .options(
                 selectinload(Application.applicant),
                 selectinload(Application.job_posting).selectinload(JobPosting.company),
+                selectinload(Application.job_posting).selectinload(
+                    JobPosting.applications
+                ),
             )
             .filter(
                 Application.applicant_id == applicant_id,
@@ -50,6 +56,9 @@ class ApplicationRepository(BaseRepository[Application]):
             .options(
                 selectinload(Application.applicant),
                 selectinload(Application.job_posting).selectinload(JobPosting.company),
+                selectinload(Application.job_posting).selectinload(
+                    JobPosting.applications
+                ),
             )
             .filter(Application.applicant_id == applicant_id)
             .order_by(Application.applied_at.desc())
@@ -67,6 +76,9 @@ class ApplicationRepository(BaseRepository[Application]):
             .options(
                 selectinload(Application.applicant),
                 selectinload(Application.job_posting).selectinload(JobPosting.company),
+                selectinload(Application.job_posting).selectinload(
+                    JobPosting.applications
+                ),
             )
             .filter(Application.job_posting_id == job_posting_id)
             .order_by(Application.applied_at.desc())

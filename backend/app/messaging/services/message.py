@@ -48,7 +48,7 @@ def validate_communication_hierarchy(
     allowed = COMMUNICATION_HIERARCHY.get(s_role, {"*"})
     if "*" in allowed:
         return True
-    return r_role in allowed
+    return any(r in r_role for r in allowed)
 
 
 class MessagingService:
@@ -58,11 +58,12 @@ class MessagingService:
         self.conversation_repo = ConversationRepository(db)
 
     async def _check_hierarchy_permission(
-        self, sender_id: int, receiver_id: int
+        self, sender_id: int, receiver_id: int, enforce_tie: bool = False
     ) -> None:
-        """Check if sender can initiate communication with receiver based on hierarchy."""
-        from sqlalchemy import select
+        """Check if sender can initiate communication with receiver based on hierarchy & ties."""
+        from sqlalchemy import and_, or_, select
         from sqlalchemy.orm import selectinload
+        from app.connections.models.connection import Connection, ConnectionStatus
         from app.users.models.user import User
 
         sender_res = await self.db.execute(
@@ -102,11 +103,40 @@ class MessagingService:
         # Hierarchy validation
         if not validate_communication_hierarchy(sender_role_name, receiver_role_name):
             raise AuthorizationError(
-                f"Communication hierarchy restriction: {sender_role_name} cannot communicate directly with {receiver_role_name}"
+                f"Communication restriction: Students cannot message {receiver_role_name} directly. Please contact your Faculty or HOD."
             )
+
+        # Check tie status if student is sending to student or alumni
+        if enforce_tie:
+            s_low = sender_role_name.lower()
+            r_low = receiver_role_name.lower()
+            if s_low in ("student", "students") and (
+                "student" in r_low or "alumni" in r_low
+            ):
+                conn_stmt = select(Connection).where(
+                    or_(
+                        and_(
+                            Connection.requester_id == sender_id,
+                            Connection.addressee_id == receiver_id,
+                        ),
+                        and_(
+                            Connection.requester_id == receiver_id,
+                            Connection.addressee_id == sender_id,
+                        ),
+                    )
+                )
+                conn_res = await self.db.execute(conn_stmt)
+                conn = conn_res.scalars().first()
+                if not conn or conn.status != ConnectionStatus.ACCEPTED:
+                    raise ValidationError(
+                        "You must be connected as ties before sending direct messages. Please send a message request first."
+                    )
 
     async def send_message(self, sender_id: int, msg_in: MessageCreate) -> Message:
         """Send a message to a conversation or direct recipient."""
+        from sqlalchemy import and_, select
+        from app.messaging.models.conversation import ConversationParticipant
+
         if not msg_in.conversation_id and not msg_in.receiver_id:
             raise ValidationError(
                 "Either conversation_id or receiver_id must be provided"
@@ -124,11 +154,29 @@ class MessagingService:
                 raise AuthorizationError(
                     "You are not a participant in this conversation"
                 )
+
+            # For 1-on-1 direct conversation, enforce tie check
+            conv_obj = await self.conversation_repo.get(conversation_id)
+            if conv_obj and not conv_obj.is_group:
+                other_part_stmt = select(ConversationParticipant.user_id).where(
+                    and_(
+                        ConversationParticipant.conversation_id == conversation_id,
+                        ConversationParticipant.user_id != sender_id,
+                    )
+                )
+                other_part_res = await self.db.execute(other_part_stmt)
+                other_uid = other_part_res.scalars().first()
+                if other_uid:
+                    await self._check_hierarchy_permission(
+                        sender_id, other_uid, enforce_tie=True
+                    )
         elif receiver_id:
             if sender_id == receiver_id:
                 raise ValidationError("Cannot send a direct message to yourself")
 
-            await self._check_hierarchy_permission(sender_id, receiver_id)
+            await self._check_hierarchy_permission(
+                sender_id, receiver_id, enforce_tie=True
+            )
 
             # Get or create direct conversation
             conv = await self.conversation_repo.get_or_create_direct_conversation(

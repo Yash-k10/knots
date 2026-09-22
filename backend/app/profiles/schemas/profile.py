@@ -91,10 +91,15 @@ class ProfileBase(BaseModel):
     phone_number: str | None = None
     tenth_percentage: float | None = None
     twelfth_diploma_percentage: float | None = None
+    placement_status: str | None = "Not Placed"
 
 
 class ProfileUpdate(ProfileBase):
     pass
+
+
+class PlacementStatusUpdate(BaseModel):
+    placement_status: str  # Must be "Placed", "Not Placed", or "Internship"
 
 
 class SkillEndorsementInfo(BaseModel):

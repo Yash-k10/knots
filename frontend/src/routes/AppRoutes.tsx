@@ -12,11 +12,9 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 
 // Protected Pages
-import Dashboard from "../pages/Dashboard";
 import Feed from "../pages/Feed";
 import Profile from "../pages/Profile";
 import Connections from "../pages/Connections";
-import Jobs from "../pages/Jobs";
 import Events from "../pages/Events";
 import Messaging from "../pages/Messaging";
 import Notifications from "../pages/Notifications";
@@ -34,6 +32,10 @@ import ReportsPage from "../pages/ReportsPage";
 import InstitutionOverview from "../pages/InstitutionOverview";
 import ManagementConnectPage from "../pages/ManagementConnectPage";
 import DepartmentAnalyticsPage from "../pages/DepartmentAnalyticsPage";
+import FacultyOpportunities from "../pages/FacultyOpportunities";
+import OpportunitiesPage from "../pages/OpportunitiesPage";
+import TpoDashboard from "../pages/TpoDashboard";
+import HodDashboard from "../pages/HodDashboard";
 
 // Protected Route Wrapper Component
 interface ProtectedRouteProps {
@@ -75,17 +77,23 @@ const ControllerRoute = ({ children }: ProtectedRouteProps) => {
           role?: { name: string };
         }>("/users/me");
         if (isMounted) {
-          const roleName = user.role?.name?.toLowerCase().trim();
-          const hasAccess =
-            user.role_id === 1 ||
-            roleName === "controller" ||
-            roleName === "admin" ||
-            roleName === "super admin" ||
-            roleName === "superadmin" ||
-            roleName === "management" ||
-            roleName === "central admin";
-          setIsAuthorized(hasAccess);
-        }
+          const roleName = user.role?.name?.toLowerCase().trim() || "";
+            const isFaculty =
+              roleName.includes("faculty") ||
+              roleName.includes("coordinator") ||
+              user.role_id === 6;
+            const hasAccess =
+              !isFaculty &&
+              (user.role_id === 1 ||
+                user.role_id === 8 ||
+                roleName === "controller" ||
+                roleName === "admin" ||
+                roleName === "super admin" ||
+                roleName === "superadmin" ||
+                roleName === "management" ||
+                roleName === "central admin");
+            setIsAuthorized(hasAccess);
+          }
       } catch (err) {
         if (isMounted) {
           setIsAuthorized(false);
@@ -228,7 +236,13 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
           const isAdmin =
             user.role_id === 1 ||
             ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName);
-          setIsAuthorized(isAdmin || allowedRoles.includes(roleName));
+          const isAllowed =
+            isAdmin ||
+            allowedRoles.some((r) => {
+              const clean = r.toLowerCase().trim();
+              return roleName === clean || roleName.includes(clean);
+            });
+          setIsAuthorized(isAllowed);
         }
       } catch (err) {
         if (isMounted) {
@@ -314,7 +328,8 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route index element={<Feed />} />
+        <Route path="dashboard" element={<Feed />} />
         <Route path="feed" element={<Feed />} />
         <Route path="profile" element={<Profile />} />
         <Route path="profile/:userId" element={<Profile />} />
@@ -329,10 +344,11 @@ export default function AppRoutes() {
         <Route path="department-analytics" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin", "management"]}><DepartmentAnalyticsPage /></RoleAllowedRoute>} />
         <Route path="institution" element={<RoleAllowedRoute allowedRoles={["principal", "ceo"]}><InstitutionOverview /></RoleAllowedRoute>} />
         <Route path="academic-overview" element={<RoleAllowedRoute allowedRoles={["dean"]}><InstitutionOverview /></RoleAllowedRoute>} />
-        <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "hod", "recruiter"]}><Jobs /></RoleAllowedRoute>} />
-        <Route path="opportunities" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "hod", "recruiter"]}><Jobs /></RoleAllowedRoute>} />
+        <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
+        <Route path="opportunities" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
+        <Route path="faculty-opportunities" element={<RoleAllowedRoute allowedRoles={["faculty", "coordinator", "hod", "tpo", "controller", "admin", "super admin"]}><FacultyOpportunities /></RoleAllowedRoute>} />
         <Route path="events" element={<Events />} />
-        <Route path="clubs" element={<RoleAllowedRoute allowedRoles={["student", "controller", "central admin", "admin", "super admin", "management"]}><Clubs /></RoleAllowedRoute>} />
+        <Route path="clubs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "central admin", "admin", "super admin", "management", "faculty", "hod", "tpo", "dean", "principal", "ceo"]}><Clubs /></RoleAllowedRoute>} />
         <Route path="messaging" element={<Messaging />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="users" element={<Admin />} />
@@ -350,6 +366,46 @@ export default function AppRoutes() {
             <ControllerRoute>
               <Controller />
             </ControllerRoute>
+          }
+        />
+        <Route
+          path="controller/dashboard"
+          element={
+            <ControllerRoute>
+              <Controller />
+            </ControllerRoute>
+          }
+        />
+        <Route
+          path="tpo"
+          element={
+            <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
+              <TpoDashboard />
+            </RoleAllowedRoute>
+          }
+        />
+        <Route
+          path="tpo/dashboard"
+          element={
+            <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
+              <TpoDashboard />
+            </RoleAllowedRoute>
+          }
+        />
+        <Route
+          path="hod"
+          element={
+            <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
+              <HodDashboard />
+            </RoleAllowedRoute>
+          }
+        />
+        <Route
+          path="hod/dashboard"
+          element={
+            <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
+              <HodDashboard />
+            </RoleAllowedRoute>
           }
         />
         <Route path="settings" element={<Settings />} />

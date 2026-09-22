@@ -69,3 +69,38 @@ class RSVPRepository(BaseRepository[RSVP]):
             query = query.filter(RSVP.status == status)
         result = await self.db.execute(query)
         return result.scalar_one()
+
+    async def get_rsvp_counts_for_events(
+        self, event_ids: list[int]
+    ) -> dict[int, dict[str, int]]:
+        """Batch-fetch RSVP counts for multiple events in a single SQL query."""
+        if not event_ids:
+            return {}
+        query = (
+            select(RSVP.event_id, RSVP.status, func.count(RSVP.id))
+            .filter(RSVP.event_id.in_(event_ids))
+            .group_by(RSVP.event_id, RSVP.status)
+        )
+        result = await self.db.execute(query)
+        counts: dict[int, dict[str, int]] = {
+            eid: {"going": 0, "pending": 0} for eid in event_ids
+        }
+        for eid, status, cnt in result.all():
+            if eid in counts:
+                if status == RSVPStatus.GOING:
+                    counts[eid]["going"] = cnt
+                elif status == RSVPStatus.PENDING:
+                    counts[eid]["pending"] = cnt
+        return counts
+
+    async def get_user_rsvps_for_events(
+        self, event_ids: list[int], user_id: int
+    ) -> dict[int, RSVPStatus]:
+        """Batch-fetch current user's RSVP status across multiple events in a single query."""
+        if not event_ids or not user_id:
+            return {}
+        query = select(RSVP.event_id, RSVP.status).filter(
+            RSVP.event_id.in_(event_ids), RSVP.user_id == user_id
+        )
+        result = await self.db.execute(query)
+        return {row[0]: row[1] for row in result.all()}

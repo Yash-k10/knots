@@ -757,10 +757,13 @@ export default function Login() {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Verifying...</span>
+                      <span>Verifying Email...</span>
                     </>
                   ) : (
-                    <span>Verify & Enter</span>
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Verify Email & Sign In</span>
+                    </>
                   )}
                 </button>
 

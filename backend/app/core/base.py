@@ -33,3 +33,7 @@ from app.jobs.models.referral import Referral  # noqa
 from app.analytics.models.profile_view import ProfileView  # noqa
 from app.analytics.models.post_engagement import PostEngagement  # noqa
 from app.profiles.models.skill_endorsement import SkillEndorsement  # noqa
+from app.opportunities.models.opportunity import Opportunity  # noqa: F401
+from app.opportunities.models.opportunity_application import (
+    OpportunityApplication,  # noqa: F401
+)

@@ -14,6 +14,32 @@ class ApplicationBase(BaseModel):
         None, description="Plain text representation of resume"
     )
     cover_letter: str | None = Field(None, description="Optional cover letter text")
+    status: ApplicationStatusEnum | None = Field(
+        None, description="Application status (e.g. APPLIED, PENDING)"
+    )
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def parse_status(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, ApplicationStatusEnum):
+            return value
+        if isinstance(value, str):
+            val_norm = value.strip().lower().replace("-", "_").replace(" ", "_")
+            if val_norm in [
+                "reviewing",
+                "reviewed",
+                "under_review",
+                "review",
+                "tech_round",
+                "interview",
+            ]:
+                return ApplicationStatusEnum.SHORTLISTED
+            for member in ApplicationStatusEnum:
+                if member.value == val_norm or member.name.lower() == val_norm:
+                    return member
+        return value
 
 
 class ApplicationCreate(ApplicationBase):

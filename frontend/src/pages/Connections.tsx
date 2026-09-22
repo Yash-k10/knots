@@ -256,18 +256,49 @@ export default function Connections() {
   // Filter items based on search query and role filter
   const query = searchQuery.toLowerCase().trim();
 
-  const matchesRoleFilter = (text: string, email: string) => {
+  const matchesRoleFilter = (text: string, email: string, roleName?: string) => {
     if (roleFilter === 'all') return true;
-    const combined = `${text} ${email}`.toLowerCase();
-    if (roleFilter === 'students') {
-      return combined.includes('student') || combined.includes('btech') || combined.includes('cse') || combined.includes('mentee');
-    }
-    if (roleFilter === 'alumni') {
-      return combined.includes('alumni') || combined.includes('alumnus') || combined.includes('class of') || combined.includes('batch') || combined.includes('engineer') || combined.includes('developer');
-    }
+    const combined = `${text} ${email} ${roleName || ''}`.toLowerCase();
+
+    // Faculty includes teachers, professors, HODs, Deans, Principals, CEOs, Controllers, TPOs, Admins
+    const isFacultyMember =
+      combined.includes('faculty') ||
+      combined.includes('prof') ||
+      combined.includes('teacher') ||
+      combined.includes('hod') ||
+      combined.includes('dean') ||
+      combined.includes('principal') ||
+      combined.includes('ceo') ||
+      combined.includes('controller') ||
+      combined.includes('tpo') ||
+      combined.includes('admin') ||
+      combined.includes('management') ||
+      combined.includes('mentor');
+
+    const isAlumniMember =
+      combined.includes('alumni') ||
+      combined.includes('alumnus') ||
+      combined.includes('class of') ||
+      combined.includes('batch');
+
     if (roleFilter === 'faculty') {
-      return combined.includes('faculty') || combined.includes('prof') || combined.includes('teacher') || combined.includes('hod');
+      return isFacultyMember;
     }
+
+    if (roleFilter === 'alumni') {
+      return isAlumniMember && !isFacultyMember;
+    }
+
+    if (roleFilter === 'students') {
+      if (isFacultyMember || isAlumniMember) return false;
+      return (
+        combined.includes('student') ||
+        combined.includes('btech') ||
+        combined.includes('mentee') ||
+        (!isFacultyMember && !isAlumniMember)
+      );
+    }
+
     return true;
   };
 
@@ -296,16 +327,21 @@ export default function Connections() {
     const name = getSuggestionDisplayName(sugg).toLowerCase();
     const email = (sugg.email || '').toLowerCase();
     const reason = (sugg.recommendation_reason || '').toLowerCase();
+    const roleName = (sugg as any).role_name || '';
     const matchesSearch = name.includes(query) || email.includes(query) || reason.includes(query);
-    const matchesRole = matchesRoleFilter(`${name} ${reason} ${sugg.department || ''}`, email);
+    const matchesRole = matchesRoleFilter(`${name} ${reason} ${sugg.department || ''}`, email, roleName);
     return matchesSearch && matchesRole;
   });
 
   const filteredUsers = users.filter(
     (u) =>
       u.id !== currentUser?.id &&
-      u.email.toLowerCase().includes(query) &&
-      matchesRoleFilter(u.email, u.email) &&
+      (u.email.toLowerCase().includes(query) || getUserSimpleDisplayName(u).toLowerCase().includes(query)) &&
+      matchesRoleFilter(
+        `${getUserSimpleDisplayName(u)} ${u.profile?.department || ''}`,
+        u.email,
+        u.role?.name
+      ) &&
       !suggestions.some((s) => s.user_id === u.id) &&
       !connections.some((c) => c.requester_id === u.id || c.addressee_id === u.id) &&
       !sentRequests.some((s) => s.addressee_id === u.id) &&
@@ -461,16 +497,16 @@ export default function Connections() {
             <span className="text-xs font-bold text-[#5851A4] uppercase tracking-wider mr-1 shrink-0">Find:</span>
             {[
               { id: 'all', label: 'All Members' },
-              { id: 'students', label: '🎓 Students (Mentees)' },
-              { id: 'alumni', label: '💼 Alumni (Peers)' },
-              { id: 'faculty', label: '🏛️ Faculty & Mentors' }
+              { id: 'students', label: 'Student' },
+              { id: 'alumni', label: 'Alumni' },
+              { id: 'faculty', label: 'Faculty' }
             ].map((f) => (
               <button
                 key={f.id}
                 onClick={() => setRoleFilter(f.id as any)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                   roleFilter === f.id
-                    ? 'bg-[#1E2746] text-[#FFD21A] shadow-sm'
+                    ? 'bg-[#4B63D2] text-white shadow-sm shadow-[#4B63D2]/30'
                     : 'bg-[#FAF9FD] text-[#5851A4] border border-[#EAE4F7] hover:bg-[#F3EFFB] hover:text-[#1E2746]'
                 }`}
               >

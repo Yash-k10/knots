@@ -381,8 +381,16 @@ def resolve_department_scope(
     user_dept = current_user.profile.department if current_user.profile else None
 
     # Normalize default department names
-    if user_dept and "computer" in user_dept.lower():
-        user_dept = "Computer Science & Engineering"
+    if user_dept:
+        u_lower = user_dept.lower()
+        if (
+            "aiml" in u_lower
+            or "artificial intelligence" in u_lower
+            or "machine learning" in u_lower
+        ):
+            user_dept = "Artificial Intelligence & Machine Learning"
+        elif "computer" in u_lower or u_lower == "cse":
+            user_dept = "Computer Science & Engineering"
 
     # Strict isolation for Controllers and HODs
     if role_name in ("controller", "hod"):
@@ -392,6 +400,15 @@ def resolve_department_scope(
 
     # Central Admin, Super Admin, Management, TPO can view any department
     if requested_dept and requested_dept.strip() and requested_dept.upper() != "ALL":
+        req_lower = requested_dept.lower()
+        if (
+            "aiml" in req_lower
+            or "artificial intelligence" in req_lower
+            or "machine learning" in req_lower
+        ):
+            return "Artificial Intelligence & Machine Learning"
+        elif "computer" in req_lower or req_lower == "cse":
+            return "Computer Science & Engineering"
         return requested_dept.strip()
 
     return user_dept or "Computer Science & Engineering"
@@ -407,6 +424,13 @@ async def get_department_stats(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve comprehensive statistics for a specific department."""
+    from app.core.cache import dept_cache
+
+    cache_key = f"dept_stats:{current_user.id}:{department}"
+    cached = dept_cache.get(cache_key)
+    if cached is not None:
+        return APIResponse(data=cached)
+
     active_dept = resolve_department_scope(current_user, department)
     dept_filter = f"%{active_dept}%"
 
@@ -564,6 +588,7 @@ async def get_department_stats(
         cohorts=cohorts_data,
         batches=batches,
     )
+    dept_cache.set(cache_key, data, ttl_seconds=30.0)
     return APIResponse(data=data)
 
 
@@ -579,10 +604,26 @@ async def get_department_students(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve students strictly within the resolved department scope."""
-    active_dept = resolve_department_scope(current_user, department)
-    dept_filter = f"%{active_dept}%"
+    """Retrieve students strictly within the resolved department scope or campus-wide for Central Admin."""
+    from app.core.cache import dept_cache
 
+    cache_key = (
+        f"dept_students:{current_user.id}:{department}:{batch}:{year_level}:{search}"
+    )
+    cached = dept_cache.get(cache_key)
+    if cached is not None:
+        return APIResponse(data=cached)
+
+    user_role_name = current_user.role.name.lower().strip() if current_user.role else ""
+    is_master_admin = current_user.role_id in (1, 2, 9) or user_role_name in (
+        "admin",
+        "super admin",
+        "superadmin",
+        "central admin",
+        "central_admin",
+    )
+
+    active_dept = None
     query = (
         select(User)
         .join(User.profile)
@@ -592,9 +633,13 @@ async def get_department_students(
         )
         .filter(
             func.lower(Role.name).in_(["student", "alumni"]),
-            Profile.department.ilike(dept_filter),
         )
     )
+
+    if not (is_master_admin and (not department or department.upper() == "ALL")):
+        active_dept = resolve_department_scope(current_user, department)
+        dept_filter = f"%{active_dept}%"
+        query = query.filter(Profile.department.ilike(dept_filter))
 
     if batch:
         query = query.filter(Profile.graduation_year == batch)
@@ -609,7 +654,7 @@ async def get_department_students(
             )
         )
 
-    query = query.order_by(User.id.desc()).limit(100)
+    query = query.order_by(User.id.desc()).limit(150)
     users = (await db.execute(query)).scalars().all()
 
     student_items: list[DepartmentStudentItem] = []
@@ -648,9 +693,9 @@ async def get_department_students(
             academic_yr = "Third Year"
 
         status_val = (
-            "Placed"
-            if grad_yr <= 2025
-            else ("Interning" if grad_yr == 2026 else "Seeking Internship")
+            p.placement_status
+            if p and p.placement_status
+            else ("Placed" if grad_yr <= 2025 else "Not Placed")
         )
 
         student_items.append(
@@ -831,6 +876,7 @@ async def get_department_students(
                 )
             )
 
+    dept_cache.set(cache_key, student_items, ttl_seconds=30.0)
     return APIResponse(data=student_items)
 
 
@@ -844,6 +890,13 @@ async def get_department_faculty(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve faculty members assigned to the resolved department."""
+    from app.core.cache import dept_cache
+
+    cache_key = f"dept_faculty:{current_user.id}:{department}"
+    cached = dept_cache.get(cache_key)
+    if cached is not None:
+        return APIResponse(data=cached)
+
     active_dept = resolve_department_scope(current_user, department)
     dept_filter = f"%{active_dept}%"
 
@@ -1021,6 +1074,7 @@ async def get_department_faculty(
                     )
                 )
 
+    dept_cache.set(cache_key, faculty_items, ttl_seconds=30.0)
     return APIResponse(data=faculty_items)
 
 

@@ -132,3 +132,24 @@ class UserRegisterResponse(BaseModel):
 class RegistrationResponse(BaseModel):
     user: UserRegisterResponse
     verification_token: str
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_college_domain(cls, v: str) -> str:
+        email = v.strip().lower()
+        if not email.endswith("@sbjit.edu.in"):
+            raise ValueError(
+                "Only college email addresses (@sbjit.edu.in) are authorized"
+            )
+        return email
+
+
+class VerifyOTPResponse(BaseModel):
+    message: str
+    email: str
+    verified: bool

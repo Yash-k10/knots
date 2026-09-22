@@ -19,6 +19,8 @@ from app.auth.schemas.auth import (
     TokenResponse,
     UserLogin,
     UserRegister,
+    VerifyOTPRequest,
+    VerifyOTPResponse,
 )
 from app.core import security
 from app.core.config import settings
@@ -45,6 +47,53 @@ logger = logging.getLogger(__name__)
 
 # Fallback In-memory OTP storage
 OTP_STORE: dict[str, dict] = {}
+VERIFIED_EMAILS: dict[str, float] = {}
+
+
+def mark_email_verified(email: str, expires_in: int = 1800) -> None:
+    """Store pre-verified email status (valid for 30 minutes)."""
+    normalized_email = email.strip().lower()
+    now = time.time()
+    VERIFIED_EMAILS[normalized_email] = now + expires_in
+    r = get_redis_client()
+    if r:
+        try:
+            r.set(f"otp_verified:{normalized_email}", "1", ex=expires_in)
+        except Exception as e:
+            logger.warning(f"Failed to persist email verified state to Redis: {e}")
+
+
+def is_email_verified(email: str) -> bool:
+    """Check if email was successfully verified via OTP."""
+    normalized_email = email.strip().lower()
+    now = time.time()
+    r = get_redis_client()
+    if r:
+        try:
+            val = r.get(f"otp_verified:{normalized_email}")
+            if val:
+                return True
+        except Exception as e:
+            logger.warning(f"Redis get error during verified email check: {e}")
+
+    expires_at = VERIFIED_EMAILS.get(normalized_email)
+    if expires_at and expires_at > now:
+        return True
+    elif expires_at:
+        VERIFIED_EMAILS.pop(normalized_email, None)
+    return False
+
+
+def consume_email_verified(email: str) -> None:
+    """Consume the verified email status upon completed registration."""
+    normalized_email = email.strip().lower()
+    VERIFIED_EMAILS.pop(normalized_email, None)
+    r = get_redis_client()
+    if r:
+        try:
+            r.delete(f"otp_verified:{normalized_email}")
+        except Exception:
+            pass
 
 
 def get_redis_client():
@@ -225,7 +274,7 @@ class AuthService:
     async def authenticate_user(self, credentials: UserLogin) -> TokenResponse:
         """Authenticate registered verified user and generate access & refresh tokens."""
         user = await self.repository.get_by_email(credentials.email)
-        if not user or not security.verify_password(
+        if not user or not await security.async_verify_password(
             credentials.password, user.hashed_password
         ):
             raise AuthenticationError(message="Invalid email or password")
@@ -452,6 +501,20 @@ class AuthService:
             expires_in_seconds=300,
         )
 
+    async def verify_otp(self, payload: VerifyOTPRequest) -> VerifyOTPResponse:
+        """Verify candidate OTP against stored record and mark email as verified for registration."""
+        normalized_email = payload.email.strip().lower()
+        candidate_code = payload.otp.strip()
+
+        check_and_consume_otp(normalized_email, candidate_code)
+        mark_email_verified(normalized_email, expires_in=1800)
+
+        return VerifyOTPResponse(
+            message="Email verified successfully.",
+            email=normalized_email,
+            verified=True,
+        )
+
     async def authenticate_otp(self, payload: LoginOTPRequest) -> TokenResponse:
         """Verify OTP for college email and log user in."""
         normalized_email = payload.email.strip().lower()
@@ -573,11 +636,14 @@ class AuthService:
                 message="This college email is already registered. Please sign in."
             )
 
-        # Verify OTP verification code
-        if not check_and_consume_otp(normalized_email, user_in.otp):
-            raise AuthenticationError(
-                message="Invalid, incorrect, or expired email OTP verification code."
-            )
+        # Verify OTP verification code or previously verified email status
+        if is_email_verified(normalized_email):
+            consume_email_verified(normalized_email)
+        else:
+            if not check_and_consume_otp(normalized_email, user_in.otp):
+                raise AuthenticationError(
+                    message="Invalid, incorrect, or expired email OTP verification code."
+                )
 
         # Verify Security Access Key / Activation Code for Controller & Central Admin
         assigned_department = None

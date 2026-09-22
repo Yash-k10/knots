@@ -25,7 +25,7 @@ class EventCategoryResponse(BaseModel):
 class RSVPCreate(BaseModel):
     """Payload to RSVP or request to join an event."""
 
-    status: RSVPStatus = RSVPStatus.PENDING
+    status: RSVPStatus = RSVPStatus.GOING
     note: str | None = Field(None, max_length=300)
 
 
@@ -93,10 +93,11 @@ class EventLeadUser(BaseModel):
 
 
 class EventLeadsUpdate(BaseModel):
-    """Payload to appoint or update event head and co-head."""
+    """Payload to appoint or update event head, co-head, and faculty coordinator."""
 
     head_id: int | None = None
     co_head_id: int | None = None
+    faculty_coordinator_id: int | None = None
 
 
 class EventCreate(BaseModel):
@@ -114,6 +115,7 @@ class EventCreate(BaseModel):
     category_id: int | None = None
     head_id: int | None = None
     co_head_id: int | None = None
+    faculty_coordinator_id: int | None = None
 
 
 class EventUpdate(BaseModel):
@@ -132,6 +134,7 @@ class EventUpdate(BaseModel):
     category_id: int | None = None
     head_id: int | None = None
     co_head_id: int | None = None
+    faculty_coordinator_id: int | None = None
 
 
 class EventOrganizerInfo(BaseModel):
@@ -164,8 +167,10 @@ class EventResponse(BaseModel):
     category: EventCategoryResponse | None = None
     head_id: int | None = None
     co_head_id: int | None = None
+    faculty_coordinator_id: int | None = None
     head: EventLeadUser | None = None
     co_head: EventLeadUser | None = None
+    faculty_coordinator: EventLeadUser | None = None
     rsvp_count: int = 0
     pending_requests_count: int = 0
     user_rsvp_status: RSVPStatus | None = None

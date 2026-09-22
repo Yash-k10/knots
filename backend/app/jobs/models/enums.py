@@ -20,6 +20,7 @@ class JobStatusEnum(str, enum.Enum):
 
 
 class ApplicationStatusEnum(str, enum.Enum):
+    APPLIED = "applied"
     PENDING = "pending"
     REVIEWED = "reviewed"
     SHORTLISTED = "shortlisted"

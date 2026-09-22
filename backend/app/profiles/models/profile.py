@@ -29,6 +29,7 @@ class Profile(Base):
     phone_number = Column(String(50), nullable=True)
     tenth_percentage = Column(Float, nullable=True)
     twelfth_diploma_percentage = Column(Float, nullable=True)
+    placement_status = Column(String(50), nullable=True, default="Not Placed")
 
     user = relationship("User", back_populates="profile")
     employment_history = relationship(

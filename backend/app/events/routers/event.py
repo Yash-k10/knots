@@ -40,8 +40,15 @@ async def list_events(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve all scheduled events list with filtering and pagination."""
-    service = EventService(db)
+    from app.core.cache import events_cache
+
     user_id = current_user.id if current_user else None
+    cache_key = f"events:{user_id}:{status}:{category_id}:{organizer_id}:{search}:{skip}:{limit}"
+    cached = events_cache.get(cache_key)
+    if cached is not None:
+        return APIResponse(data=cached)
+
+    service = EventService(db)
     events = await service.get_events(
         status=status,
         category_id=category_id,
@@ -53,6 +60,7 @@ async def list_events(
         limit=limit,
         current_user_id=user_id,
     )
+    events_cache.set(cache_key, events, ttl_seconds=30.0)
     return APIResponse(data=events)
 
 
@@ -64,11 +72,19 @@ async def get_upcoming_events(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve all upcoming published events."""
-    service = EventService(db)
+    from app.core.cache import events_cache
+
     user_id = current_user.id if current_user else None
+    cache_key = f"events_upcoming:{user_id}:{skip}:{limit}"
+    cached = events_cache.get(cache_key)
+    if cached is not None:
+        return APIResponse(data=cached)
+
+    service = EventService(db)
     events = await service.get_upcoming_events(
         skip=skip, limit=limit, current_user_id=user_id
     )
+    events_cache.set(cache_key, events, ttl_seconds=30.0)
     return APIResponse(data=events)
 
 
@@ -140,7 +156,11 @@ async def update_event_leads(
     """Appoint or update Event Head and Co-Head (Organizer or Controller only)."""
     service = EventService(db)
     await service.update_event_leads(
-        event_id, current_user, payload.head_id, payload.co_head_id
+        event_id,
+        current_user,
+        payload.head_id,
+        payload.co_head_id,
+        payload.faculty_coordinator_id,
     )
     detail = await service.get_event_detail(event_id, current_user_id=current_user.id)
     return APIResponse(message="Event leads updated successfully", data=detail)

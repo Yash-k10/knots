@@ -2,11 +2,15 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
-from app.auth.schemas.auth import SendOTPRequest
+from app.auth.schemas.auth import SendOTPRequest, VerifyOTPRequest
 from app.auth.services.auth import (
     OTP_STORE,
+    VERIFIED_EMAILS,
     check_and_consume_otp,
+    consume_email_verified,
     hash_otp,
+    is_email_verified,
+    mark_email_verified,
     save_otp,
 )
 from app.core.email import send_otp_email
@@ -16,6 +20,7 @@ from app.core.exceptions import AuthenticationError, ValidationError
 class TestAuthOTPFlow(unittest.TestCase):
     def setUp(self):
         OTP_STORE.clear()
+        VERIFIED_EMAILS.clear()
         # Mock Redis client so CI tests run isolated and fast without network calls
         self.redis_patcher = patch(
             "app.auth.services.auth.get_redis_client", return_value=None
@@ -25,6 +30,7 @@ class TestAuthOTPFlow(unittest.TestCase):
     def tearDown(self):
         self.redis_patcher.stop()
         OTP_STORE.clear()
+        VERIFIED_EMAILS.clear()
 
     def test_otp_hashing(self):
         email = "student@sbjit.edu.in"
@@ -33,6 +39,30 @@ class TestAuthOTPFlow(unittest.TestCase):
         h2 = hash_otp(email, otp)
         self.assertEqual(h1, h2)
         self.assertNotEqual(h1, otp)
+
+    def test_verify_email_flow(self):
+        email = "student@sbjit.edu.in"
+        otp = "654321"
+
+        save_otp(email, otp, "register", expires_in=300)
+        self.assertFalse(is_email_verified(email))
+
+        # Verify OTP and mark verified
+        self.assertTrue(check_and_consume_otp(email, otp))
+        mark_email_verified(email, expires_in=1800)
+        self.assertTrue(is_email_verified(email))
+
+        # Consume verification upon registration
+        consume_email_verified(email)
+        self.assertFalse(is_email_verified(email))
+
+    def test_verify_otp_request_schema(self):
+        req = VerifyOTPRequest(email="valid@sbjit.edu.in", otp="123456")
+        self.assertEqual(req.email, "valid@sbjit.edu.in")
+        self.assertEqual(req.otp, "123456")
+
+        with self.assertRaises(Exception):
+            VerifyOTPRequest(email="invalid@gmail.com", otp="123456")
 
     def test_save_and_verify_success(self):
         email = "student@sbjit.edu.in"

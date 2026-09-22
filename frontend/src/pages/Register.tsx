@@ -103,6 +103,11 @@ export default function Register() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
 
+  // Email Verification States
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [emailVerifiedSuccess, setEmailVerifiedSuccess] = useState<string | null>(null);
+
   // Status States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +131,8 @@ export default function Register() {
   const handleEmailChange = (val: string) => {
     setEmail(val);
     setOtpSent(false);
+    setIsEmailVerified(false);
+    setEmailVerifiedSuccess(null);
 
     if (selectedRole === "Student") {
       const lower = val.toLowerCase();
@@ -173,6 +180,7 @@ export default function Register() {
   // Step 1: Send OTP to College Email
   const handleSendOtp = async () => {
     setError(null);
+    setEmailVerifiedSuccess(null);
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
@@ -192,10 +200,12 @@ export default function Register() {
         email: string;
       }>("/auth/send-otp", {
         method: "POST",
-        body: JSON.stringify({ email: trimmedEmail }),
+        body: JSON.stringify({ email: trimmedEmail, purpose: "register" }),
       });
 
       setOtpSent(true);
+      setIsEmailVerified(false);
+      setEmailVerifiedSuccess(null);
       setOtpCountdown(60);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -207,6 +217,57 @@ export default function Register() {
       }
     } finally {
       setSendingOtp(false);
+    }
+  };
+
+  // Step 1.5: Verify Email via 6-Digit OTP
+  const handleVerifyEmail = async () => {
+    setError(null);
+    setEmailVerifiedSuccess(null);
+    const trimmedEmail = email.trim();
+    const trimmedOtp = otp.trim();
+
+    if (!trimmedEmail) {
+      setError("Please provide your college email address.");
+      return;
+    }
+
+    if (!isCollegeDomain(trimmedEmail)) {
+      setError("Only authorized @sbjit.edu.in college email addresses are permitted.");
+      return;
+    }
+
+    if (!trimmedOtp || trimmedOtp.length < 6) {
+      setError("Please enter the complete 6-digit verification code dispatched to your email.");
+      return;
+    }
+
+    setVerifyingEmail(true);
+    try {
+      const res = await apiRequest<{
+        message: string;
+        email: string;
+        verified: boolean;
+      }>("/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({
+          email: trimmedEmail,
+          otp: trimmedOtp,
+        }),
+      });
+
+      setIsEmailVerified(true);
+      setEmailVerifiedSuccess(res.message || "Email verified successfully!");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Invalid or expired OTP verification code. Please check your inbox or request a new code.");
+      }
+    } finally {
+      setVerifyingEmail(false);
     }
   };
 
@@ -233,8 +294,8 @@ export default function Register() {
       return;
     }
 
-    if (!otp.trim() || otp.trim().length < 6) {
-      setError("Please enter the 6-digit verification code dispatched to your college email.");
+    if (!isEmailVerified && (!otp.trim() || otp.trim().length < 6)) {
+      setError("Please enter the 6-digit verification code and verify your college email.");
       return;
     }
 
@@ -873,29 +934,82 @@ export default function Register() {
               </p>
             )}
 
-            {/* OTP Code Input */}
+            {/* OTP Code Input & Verify Email Button */}
             {otpSent && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-2 pt-3 border-t border-[#EAE4F7]">
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-2.5 pt-3 border-t border-[#EAE4F7]">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#1E2746] uppercase tracking-wider">
                     Enter 6-Digit Email Verification Code <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Code Dispatched
-                  </span>
+                  {isEmailVerified ? (
+                    <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300 font-extrabold flex items-center gap-1 shadow-sm">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Email Verified
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Code Dispatched
+                    </span>
+                  )}
                 </div>
-                <div className="relative">
-                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Enter 6-digit OTP code"
-                    className="w-full bg-white border-2 border-[#4B63D2]/40 rounded-xl pl-10 pr-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20 text-sm font-mono font-bold tracking-widest text-center shadow-sm"
-                    required
-                  />
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9188BE]" />
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={otp}
+                      disabled={isEmailVerified || verifyingEmail}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, ""));
+                        setIsEmailVerified(false);
+                        setEmailVerifiedSuccess(null);
+                      }}
+                      placeholder="Enter 6-digit OTP code"
+                      className={`w-full bg-white border-2 rounded-xl pl-10 pr-4 py-2.5 text-[#1E2746] placeholder-[#9188BE] focus:outline-none text-sm font-mono font-bold tracking-widest text-center shadow-sm transition-all ${
+                        isEmailVerified
+                          ? "border-emerald-500 bg-emerald-50/40 text-emerald-900"
+                          : "border-[#4B63D2]/40 focus:border-[#4B63D2] focus:ring-2 focus:ring-[#4B63D2]/20"
+                      }`}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleVerifyEmail}
+                    disabled={verifyingEmail || isEmailVerified || otp.trim().length < 6}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap ${
+                      isEmailVerified
+                        ? "bg-emerald-600 text-white cursor-default shadow-emerald-600/20"
+                        : "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#4A4390] disabled:bg-slate-200 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white shadow-[#4B63D2]/25 active:scale-95"
+                    }`}
+                  >
+                    {verifyingEmail ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : isEmailVerified ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-[#FFD21A]" />
+                        <span>Email Verified</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Verify Email</span>
+                      </>
+                    )}
+                  </button>
                 </div>
+
+                {emailVerifiedSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{emailVerifiedSuccess}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

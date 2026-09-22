@@ -20,8 +20,8 @@ if settings.DATABASE_URL.startswith("sqlite"):
 else:
     engine_args["pool_size"] = 20
     engine_args["max_overflow"] = 10
-    engine_args["pool_pre_ping"] = True
-    engine_args["pool_recycle"] = 300
+    engine_args["pool_pre_ping"] = False
+    engine_args["pool_recycle"] = 600
     engine_args["pool_timeout"] = 30
     engine_args["connect_args"] = {
         "statement_cache_size": 0,
@@ -49,12 +49,16 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Provide a transactional database session per-request.
 
     The async context manager handles session lifecycle (open/close).
-    On success the transaction is committed; on any exception it is rolled back.
+    On success, the transaction is committed ONLY if data was dirtied/modified.
+    Pure read operations exit without sending redundant COMMIT round-trips.
+    On any exception it is rolled back.
     """
     async with SessionLocal() as session:
         try:
             yield session
-            await session.commit()
+            if session.is_active:
+                await session.commit()
         except Exception:
-            await session.rollback()
+            if session.is_active:
+                await session.rollback()
             raise

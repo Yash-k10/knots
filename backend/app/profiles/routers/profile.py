@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.dependencies.auth import get_current_user
 from app.core.database import get_db
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import AuthorizationError, NotFoundError, ValidationError
 from app.core.response_models import APIResponse
 from app.profiles.schemas.profile import (
     EducationCreate,
@@ -16,6 +16,7 @@ from app.profiles.schemas.profile import (
     EmploymentHistoryCreate,
     EmploymentHistoryResponse,
     EmploymentHistoryUpdate,
+    PlacementStatusUpdate,
     ProfileResponse,
     ProfileUpdate,
 )
@@ -730,4 +731,53 @@ async def download_user_resume(
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Access-Control-Expose-Headers": "Content-Disposition",
         },
+    )
+
+
+@router.patch(
+    "/{user_id}/placement-status", response_model=APIResponse[ProfileResponse]
+)
+async def update_placement_status(
+    user_id: int,
+    payload: PlacementStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update student placement status (Central Admin, Admin, Super Admin, TPO only). Allowed values: Placed, Not Placed, Internship."""
+    role_name = current_user.role.name.lower().strip() if current_user.role else ""
+    is_authorized = current_user.role_id in (1, 2, 9, 11) or role_name in (
+        "admin",
+        "super admin",
+        "superadmin",
+        "central admin",
+        "tpo",
+        "management",
+    )
+    if not is_authorized:
+        raise AuthorizationError(
+            message="Only Central Admin, Admin, and TPO can update candidate placement status."
+        )
+
+    allowed_statuses = {"Placed", "Not Placed", "Internship"}
+    normalized_status = None
+    for s in allowed_statuses:
+        if s.lower() == payload.placement_status.strip().lower():
+            normalized_status = s
+            break
+    if not normalized_status:
+        raise ValidationError(
+            message=f"Invalid placement status '{payload.placement_status}'. Allowed values are: Placed, Not Placed, Internship."
+        )
+
+    service = ProfileService(db)
+    profile = await service.get_profile_by_user_id(user_id)
+    if not profile:
+        raise NotFoundError("Profile not found.")
+
+    profile.placement_status = normalized_status
+    await db.commit()
+    await db.refresh(profile)
+
+    return APIResponse(
+        message=f"Placement status updated to {normalized_status}", data=profile
     )

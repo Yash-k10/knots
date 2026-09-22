@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import AuthorizationError, NotFoundError
 from app.posts.models.comment import Comment
 from app.posts.models.like import Like
-from app.posts.models.post import Post, PostVisibility
+from app.posts.models.post import Post
 from app.posts.repository.comment import CommentRepository
 from app.posts.repository.like import LikeRepository
 from app.posts.repository.post import PostRepository
@@ -29,9 +29,12 @@ class PostService:
 
     async def create_post(self, author_id: int, payload: PostCreate) -> Post:
         """Create a new post."""
+        from app.core.cache import feed_cache
+
         data = payload.model_dump()
         data["author_id"] = author_id
         post = await self.post_repo.create(data)
+        feed_cache.clear()
         detailed_post = await self.post_repo.get_with_details(post.id)
         return detailed_post or post
 
@@ -53,25 +56,7 @@ class PostService:
         if not post:
             raise NotFoundError(message=f"Post with id {post_id} not found")
 
-        role_str = user_role.lower().strip() if user_role else ""
-        is_author = current_user_id is not None and post.author_id == current_user_id
-        is_admin = role_str in ("admin", "super admin", "superadmin")
-
-        if not is_admin and not is_author:
-            if (
-                post.visibility == PostVisibility.STUDENTS_ONLY
-                and role_str != "student"
-            ):
-                raise AuthorizationError(
-                    message="This post is visible to students only"
-                )
-            elif (
-                post.visibility == PostVisibility.STUDENTS_AND_ALUMNI
-                and role_str not in ("student", "alumni")
-            ):
-                raise AuthorizationError(
-                    message="This post is visible to students and alumni only"
-                )
+        # All posts are visible to everyone - no visibility check needed
 
         is_liked = False
         if current_user_id:
@@ -102,22 +87,32 @@ class PostService:
         current_user_id: int | None = None,
         user_role: str | None = None,
     ) -> list[PostResponse]:
-        """Fetch the post feed (newest first) matching role visibility permissions."""
-        posts = await self.post_repo.get_feed(
-            skip=skip,
-            limit=limit,
-            user_role=user_role,
-            current_user_id=current_user_id,
-        )
-        results: list[PostResponse] = []
-        for post in posts:
-            is_liked = False
-            if current_user_id:
-                existing = await self.like_repo.get_by_post_and_user(
-                    post.id, current_user_id
-                )
-                is_liked = existing is not None
+        """Fetch the post feed (newest first) matching role visibility permissions with in-memory caching."""
+        from app.core.cache import feed_cache
 
+        cache_key = f"feed_rows:{skip}:{limit}"
+        feed_rows = feed_cache.get(cache_key)
+
+        if feed_rows is None:
+            feed_rows = await self.post_repo.get_feed(
+                skip=skip,
+                limit=limit,
+                user_role=user_role,
+                current_user_id=current_user_id,
+            )
+            feed_cache.set(cache_key, feed_rows, ttl_seconds=15.0)
+
+        # Batch-load liked status in ONE query instead of N individual queries
+        liked_post_ids: set[int] = set()
+        if current_user_id and feed_rows:
+            post_ids = [row["post"].id for row in feed_rows]
+            liked_post_ids = await self.like_repo.get_liked_post_ids(
+                post_ids, current_user_id
+            )
+
+        results: list[PostResponse] = []
+        for row in feed_rows:
+            post = row["post"]
             results.append(
                 PostResponse(
                     id=post.id,
@@ -128,9 +123,9 @@ class PostService:
                     visibility=post.visibility,
                     created_at=post.created_at,
                     updated_at=post.updated_at,
-                    likes_count=len(post.likes),
-                    comments_count=len(post.comments),
-                    is_liked=is_liked,
+                    likes_count=row["likes_count"],
+                    comments_count=row["comments_count"],
+                    is_liked=post.id in liked_post_ids,
                 )
             )
         return results
@@ -170,6 +165,9 @@ class PostService:
             return detailed or post
 
         updated = await self.post_repo.update(post, update_data)
+        from app.core.cache import feed_cache
+
+        feed_cache.clear()
         detailed = await self.post_repo.get_with_details(updated.id)
         return detailed or updated
 
@@ -190,6 +188,9 @@ class PostService:
                 message="You do not have permission to delete this post"
             )
 
+        from app.core.cache import feed_cache
+
+        feed_cache.clear()
         return await self.post_repo.remove(post_id)
 
     # ── Likes ────────────────────────────────────────────────────────────────
@@ -203,6 +204,9 @@ class PostService:
             return existing
 
         like = await self.like_repo.create({"post_id": post_id, "user_id": user_id})
+        from app.core.cache import feed_cache
+
+        feed_cache.clear()
 
         if post.author_id != user_id:
             try:
@@ -239,6 +243,9 @@ class PostService:
         existing = await self.like_repo.get_by_post_and_user(post_id, user_id)
         if existing:
             await self.like_repo.remove(existing.id)
+            from app.core.cache import feed_cache
+
+            feed_cache.clear()
 
     # ── Comments ─────────────────────────────────────────────────────────────
 
@@ -255,6 +262,9 @@ class PostService:
                 "content": payload.content,
             }
         )
+        from app.core.cache import feed_cache
+
+        feed_cache.clear()
 
         if post.author_id != author_id:
             from app.notifications.services.notification import NotificationService
@@ -307,3 +317,6 @@ class PostService:
             )
 
         await self.comment_repo.remove(comment_id)
+        from app.core.cache import feed_cache
+
+        feed_cache.clear()

@@ -14,6 +14,8 @@ from app.auth.schemas.auth import (
     UserLogin,
     UserRegister,
     UserRegisterResponse,
+    VerifyOTPRequest,
+    VerifyOTPResponse,
 )
 from app.auth.services.auth import AuthService
 from app.core.database import get_db
@@ -55,6 +57,14 @@ async def send_otp(payload: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     """Send an authorized 6-digit OTP to a college @sbjit.edu.in email address."""
     service = AuthService(db)
     result = await service.send_otp(payload)
+    return APIResponse(message=result.message, data=result)
+
+
+@router.post("/verify-otp", response_model=APIResponse[VerifyOTPResponse])
+async def verify_otp(payload: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Verify an authorized 6-digit OTP and validate college email address."""
+    service = AuthService(db)
+    result = await service.verify_otp(payload)
     return APIResponse(message=result.message, data=result)
 
 

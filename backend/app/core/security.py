@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import asyncio
 import bcrypt
 
 # Fix compatibility between passlib and bcrypt >= 4.0.0
@@ -36,8 +37,20 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a cleartext password against its hash."""
+    """Verify a cleartext password against its hash (synchronous)."""
     return pwd_context.verify(plain_password[:72], hashed_password)
+
+
+async def async_verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a cleartext password against its hash without blocking the event loop.
+
+    Bcrypt is CPU-intensive (~200-500ms). Running it in a thread pool lets
+    other async tasks (DB queries, WebSocket pings) proceed in parallel.
+    """
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(
+        None, verify_password, plain_password, hashed_password
+    )
 
 
 def create_access_token(

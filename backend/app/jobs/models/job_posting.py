@@ -49,6 +49,7 @@ class JobPosting(Base):
     salary_range = Column(String(100), nullable=True)
     required_skills = Column(JSON, nullable=True)
     application_deadline = Column(DateTime, nullable=True)
+    form_link = Column(String(500), nullable=True)
     status = Column(
         SQLEnum(JobStatusEnum, name="job_status_enum", native_enum=False),
         nullable=False,
@@ -73,6 +74,15 @@ class JobPosting(Base):
         return (
             f"<JobPosting(id={self.id}, title='{self.title}', status='{self.status}')>"
         )
+
+    @property
+    def applications_count(self) -> int:
+        if (
+            "applications" in self.__dict__
+            and self.__dict__["applications"] is not None
+        ):
+            return len(self.__dict__["applications"])
+        return 0
 
 
 # Alias for backward compatibility

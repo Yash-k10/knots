@@ -20,6 +20,12 @@ export interface ConversationParticipantUser {
     id?: number;
     name: string;
   };
+  profile?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    department?: string | null;
+    profile_picture?: string | null;
+  } | null;
 }
 
 export interface ConversationParticipant {
@@ -54,6 +60,12 @@ export interface CampusUser {
     id?: number;
     name: string;
   };
+  profile?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    department?: string | null;
+    profile_picture?: string | null;
+  } | null;
 }
 
 export async function fetchConversations(

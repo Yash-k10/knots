@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.repository.auth import AuthRepository
 from app.core import security
+from app.core.cache import user_cache
 from app.core.database import get_db
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.users.models.user import User
@@ -11,14 +12,24 @@ from app.users.models.user import User
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
+def invalidate_user_cache(user_id: int) -> None:
+    """Invalidate cached user instance upon updates."""
+    user_cache.delete(f"user:{user_id}")
+
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
-    """FastAPI dependency to retrieve the currently logged in user."""
+    """FastAPI dependency to retrieve the currently logged in user with sub-millisecond caching."""
     payload = security.decode_token(token, expected_type="access")
     user_id = payload.get("sub")
     if not user_id:
         raise AuthenticationError("Invalid token subject credentials")
+
+    cache_key = f"user:{user_id}"
+    cached_user = user_cache.get(cache_key)
+    if cached_user is not None:
+        return cached_user
 
     repo = AuthRepository(db)
     user = await repo.get(int(user_id))
@@ -27,6 +38,7 @@ async def get_current_user(
     if not user.is_active:
         raise AuthenticationError("User is inactive")
 
+    user_cache.set(cache_key, user, ttl_seconds=60.0)
     return user
 
 
@@ -46,13 +58,18 @@ class RoleRequired:
         role_lower = role_name.lower().strip()
         allowed_lower = [r.lower().strip() for r in self.allowed_roles]
 
-        # Super Admin has master access across all role-protected endpoints
-        if role_lower in ("super admin", "superadmin"):
+        # Super Admin and Central Admin have master access across all role-protected endpoints
+        if role_lower in (
+            "super admin",
+            "superadmin",
+            "central admin",
+            "central_admin",
+        ):
             return current_user
 
         # Admin checks
         is_admin_check = "admin" in allowed_lower and (
-            role_id == 1 or role_lower == "admin"
+            role_id == 1 or role_lower in ("admin", "central admin", "central_admin")
         )
 
         if not is_admin_check and role_lower not in allowed_lower:
