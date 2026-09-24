@@ -568,7 +568,7 @@ export default function FacultyOpportunities() {
         </div>
 
         {/* ── Tabs Navigation ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-6 pt-5 border-t border-[#EAE4F7] dark:border-[#1F2937]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-[#EAE4F7] dark:border-[#1F2937]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -637,7 +637,7 @@ export default function FacultyOpportunities() {
               <label className="text-xs font-black text-[#1E2746] dark:text-[#F1F5F9] mb-2 block uppercase tracking-wider">
                 Select Opportunity Category *
               </label>
-              <div className="grid grid-cols-2 gap-3 max-w-md">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 max-w-md">
                 <button
                   type="button"
                   onClick={() => setOppType("JOB")}

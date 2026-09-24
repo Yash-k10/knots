@@ -104,10 +104,10 @@ export default function ConnectionCard({
   const rolePill = getRolePill(normalizedRole);
 
   return (
-    <div className="group relative bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 text-center space-y-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
+    <div className="group relative bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 flex flex-col justify-between">
       <div>
         {/* Avatar Container */}
-        <Link to={`/profile/${targetId}`} className="block relative mx-auto h-20 w-20 cursor-pointer mb-3">
+        <Link to={`/profile/${targetId}`} className="block relative mx-auto h-16 w-16 sm:h-20 sm:w-20 cursor-pointer mb-2 sm:mb-3">
           {resolvedAvatar ? (
             <img
               src={resolvedAvatar}

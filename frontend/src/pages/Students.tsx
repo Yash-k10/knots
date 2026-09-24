@@ -187,7 +187,7 @@ export default function Students() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
             <GraduationCap className="h-4 w-4" />
@@ -358,7 +358,7 @@ export default function Students() {
             return (
               <div
                 key={student.id}
-                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
+                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 sm:space-y-4 group"
               >
                 <div>
                   {/* Top row: Avatar + Name + Status */}

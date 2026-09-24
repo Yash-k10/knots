@@ -191,7 +191,7 @@ export default function ManagementConnectPage() {
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Top Header Banner */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
             <Building className="h-4 w-4" />
@@ -336,7 +336,7 @@ export default function ManagementConnectPage() {
 
       {/* ── TAB 2: SEND STRUCTURED REQUEST ─────────────────────────────── */}
       {activeTab === "send_request" && (
-        <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-[#EAE4F7] p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-2xl sm:rounded-3xl border border-[#EAE4F7] p-4 sm:p-6 sm:p-8 shadow-sm space-y-4 sm:space-y-6">
           <div className="border-b border-[#EAE4F7] pb-4">
             <h3 className="text-lg font-black text-[#1E2746]">
               Submit Structured Department Request to Management

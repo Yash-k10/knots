@@ -128,12 +128,14 @@ class Settings(BaseSettings):
 
                     parsed = json.loads(v_trimmed)
                     if isinstance(parsed, list):
-                        return [str(d).strip() for d in parsed if str(d).strip()]
+                        return [
+                            str(d).strip().rstrip("/") for d in parsed if str(d).strip()
+                        ]
                 except Exception:
                     pass
-            return [d.strip() for d in v_trimmed.split(",") if d.strip()]
+            return [d.strip().rstrip("/") for d in v_trimmed.split(",") if d.strip()]
         elif isinstance(v, (list, tuple, set)):
-            return [str(d).strip() for d in v if str(d).strip()]
+            return [str(d).strip().rstrip("/") for d in v if str(d).strip()]
         return v
 
     model_config = SettingsConfigDict(

@@ -116,7 +116,7 @@ export default function PlatformEngagementDonut({
       </div>
 
       {/* Legend Breakdown Grid */}
-      <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-[#EAE4F7] relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 pt-4 border-t border-[#EAE4F7] relative z-10">
         {data.map((item, idx) => {
           const percent =
             total > 0 ? ((item.value / total) * 100).toFixed(0) : "0";

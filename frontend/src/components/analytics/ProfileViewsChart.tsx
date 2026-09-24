@@ -121,7 +121,7 @@ export default function ProfileViewsChart({
       </div>
 
       {/* Stats Summary Badges */}
-      <div className="grid grid-cols-3 gap-3 mb-6 relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6 relative z-10">
         <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 flex items-center justify-between">
           <div>
             <span className="text-[10px] uppercase font-bold text-[#5851A4] tracking-wider">

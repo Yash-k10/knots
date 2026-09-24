@@ -98,7 +98,7 @@ export function AiRecommendationsHub({
               return (
                 <div
                   key={item.user_id}
-                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-4">
@@ -188,7 +188,7 @@ export function AiRecommendationsHub({
             jobRecommendations.map((job) => (
               <div
                 key={job.job_id}
-                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
+                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between relative group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -270,7 +270,7 @@ export function AiRecommendationsHub({
             contentRecommendations.map((post) => (
               <div
                 key={post.post_id}
-                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
+                className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">

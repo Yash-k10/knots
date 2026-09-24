@@ -880,19 +880,19 @@ export default function Feed() {
 
           {/* Main Feed Posts List */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-white rounded-3xl border border-[#EAE4F7]">
+            <div className="flex flex-col items-center justify-center py-12 sm:py-20 space-y-4 bg-white rounded-2xl sm:rounded-3xl border border-[#EAE4F7]">
               <Loader2 className="w-8 h-8 text-[#4B63D2] animate-spin" />
-              <p className="text-[#5851A4] text-sm font-semibold">
+              <p className="text-[#5851A4] text-xs sm:text-sm font-semibold">
                 Gathering latest campus discussions...
               </p>
             </div>
           ) : error ? (
-            <div className="bg-rose-50 border border-rose-200 rounded-3xl p-6 text-center space-y-3">
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center space-y-3">
               <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-              <h3 className="text-[#1E2746] font-bold text-base">
+              <h3 className="text-[#1E2746] font-bold text-sm sm:text-base">
                 Error Loading Feed
               </h3>
-              <p className="text-[#5851A4] text-sm max-w-md mx-auto font-medium">
+              <p className="text-[#5851A4] text-xs sm:text-sm max-w-md mx-auto font-medium">
                 {error}
               </p>
               <button
@@ -903,16 +903,16 @@ export default function Feed() {
               </button>
             </div>
           ) : posts.length === 0 ? (
-            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-12 text-center space-y-4 shadow-sm">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center space-y-4 shadow-sm">
               <MessageSquare className="w-12 h-12 text-[#B9B1D9] mx-auto" />
-              <h3 className="text-[#1E2746] font-bold text-lg">No posts yet</h3>
-              <p className="text-[#5851A4] text-sm max-w-md mx-auto font-medium">
+              <h3 className="text-[#1E2746] font-bold text-base sm:text-lg">No posts yet</h3>
+              <p className="text-[#5851A4] text-xs sm:text-sm max-w-md mx-auto font-medium">
                 The campus discussions are quiet. Be the first to share an update,
                 study material, or project demo with your peers!
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {posts.map((post) => {
                   const isSaved = savedPostIds.includes(post.id);
                   const isCommentsLocked = !!lockedCommentPostIds[post.id];
@@ -927,7 +927,7 @@ export default function Feed() {
                     <article
                       key={post.id}
                       id={`post-${post.id}`}
-                      className={`bg-white border rounded-3xl p-5 sm:p-6 space-y-4 transition-all duration-300 shadow-sm ${
+                      className={`bg-white border rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 transition-all duration-300 shadow-sm ${
                         activeCommentPostId === post.id
                           ? "border-[#4B63D2] ring-2 ring-[#4B63D2]/25 shadow-md"
                           : "border-[#EAE4F7] hover:border-[#D5CBEE] hover:shadow-md"
@@ -1616,8 +1616,8 @@ export default function Feed() {
       {/* EDIT POST MODAL                                                           */}
       {/* ========================================================================= */}
       {editingPost && (
-        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl p-4 sm:p-6 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
               <div className="flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-[#4B63D2]" />
@@ -1675,8 +1675,8 @@ export default function Feed() {
       {/* SEND IN CHAT MODAL                                                        */}
       {/* ========================================================================= */}
       {shareToChatPost && (
-        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#EAE4F7] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
             <div className="p-5 border-b border-[#EAE4F7] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-[#4B63D2]/10 text-[#4B63D2]">
@@ -1880,8 +1880,8 @@ export default function Feed() {
       {/* REPORT POST MODAL (SUBMITS TO DEPARTMENT CONTROLLER)                      */}
       {/* ========================================================================= */}
       {reportingPost && (
-        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[#EAE4F7] dark:border-slate-800 w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-[#1E2746]/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-[#EAE4F7] dark:border-slate-800 w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="p-5 border-b border-[#EAE4F7] dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -2006,8 +2006,8 @@ export default function Feed() {
       {/* IN-APP PDF VIEWER MODAL                                                   */}
       {/* ========================================================================= */}
       {activePdfModalUrl && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-[#EAE4F7]">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-[#EAE4F7]">
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-[#EAE4F7] flex items-center justify-between bg-[#FAF9FD]">
               <div className="flex items-center gap-3 min-w-0">

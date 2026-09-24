@@ -87,7 +87,7 @@ export default function ProfilePictureUploader({
       />
 
       <div
-        className={`h-28 w-28 rounded-full overflow-hidden border-4 border-slate-800 bg-slate-900 flex items-center justify-center shadow-xl transition-all ${isOwnProfile ? "group-hover:border-indigo-500" : ""} relative`}
+        className={`h-20 w-20 sm:h-28 sm:w-28 rounded-full overflow-hidden border-3 sm:border-4 border-slate-800 bg-slate-900 flex items-center justify-center shadow-xl transition-all ${isOwnProfile ? "group-hover:border-indigo-500" : ""} relative shrink-0`}
       >
         {imageUrl ? (
           <img
@@ -97,7 +97,7 @@ export default function ProfilePictureUploader({
           />
         ) : (
           <div
-            className={`text-4xl font-extrabold text-white transition-all ${isUploading ? "opacity-30" : isOwnProfile ? "group-hover:opacity-60" : ""}`}
+            className={`text-2xl sm:text-4xl font-extrabold text-white transition-all ${isUploading ? "opacity-30" : isOwnProfile ? "group-hover:opacity-60" : ""}`}
           >
             {initials}
           </div>
@@ -107,9 +107,9 @@ export default function ProfilePictureUploader({
         {isOwnProfile && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
             {isUploading ? (
-              <Loader2 className="h-8 w-8 text-white animate-spin" />
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-white animate-spin" />
             ) : (
-              <Camera className="h-8 w-8 text-white" />
+              <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             )}
           </div>
         )}

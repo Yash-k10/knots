@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -8,6 +8,12 @@ from app.core.database import Base
 
 class Message(Base):
     __tablename__ = "messages"
+
+    __table_args__ = (
+        Index("ix_messages_receiver_unread", "receiver_id", "is_read"),
+        Index("ix_messages_conv_unread", "conversation_id", "is_read"),
+        Index("ix_messages_sender_receiver", "sender_id", "receiver_id"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(

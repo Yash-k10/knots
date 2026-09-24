@@ -199,7 +199,7 @@ export default function GlobalSearchBar() {
 
       {/* Results Dropdown */}
       {isOpen && query.trim() && (
-        <div className="absolute top-full left-0 w-[380px] sm:w-[480px] md:w-[520px] max-w-[92vw] mt-2 bg-white border border-[#EAE4F7] rounded-3xl shadow-2xl overflow-hidden z-50 max-h-[75vh] flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute top-full left-0 w-[calc(100vw-32px)] sm:w-[480px] md:w-[520px] max-w-[96vw] mt-2 bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden z-50 max-h-[75vh] flex flex-col animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Category Filter Tabs */}
           <div className="flex border-b border-[#EAE4F7] bg-[#FAF9FD] p-2 gap-1.5 text-xs font-bold overflow-x-auto scrollbar-none">
             {[

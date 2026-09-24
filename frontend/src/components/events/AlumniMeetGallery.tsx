@@ -839,7 +839,7 @@ export default function AlumniMeetGallery({ currentUser }: AlumniMeetGalleryProp
           </div>
 
           {/* Quick Metrics Pillar */}
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-4 shrink-0 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/15">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 shrink-0 bg-white/10 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/15">
             <div className="text-center p-3 rounded-xl bg-white/5 border border-white/10">
               <div className="text-2xl sm:text-3xl font-black text-amber-300">{alumniMeets.length}</div>
               <div className="text-[11px] font-bold text-white/75 mt-0.5 uppercase tracking-wider">

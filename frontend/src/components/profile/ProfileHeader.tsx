@@ -247,7 +247,7 @@ export default function ProfileHeader({
   const displayYear = isAlumni && profile.graduation_year ? profile.graduation_year - 4 : profile.graduation_year;
 
   return (
-    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 md:p-8 shadow-sm">
+    <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm">
       {isEditing ? (
         <form onSubmit={handleSave} className="space-y-6">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">

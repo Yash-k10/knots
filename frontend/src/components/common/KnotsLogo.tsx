@@ -1,6 +1,6 @@
 interface KnotsLogoProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'hero';
   animate?: boolean;
 }
 
@@ -11,11 +11,12 @@ export default function KnotsLogo({
   animate = true,
 }: KnotsLogoProps) {
   const sizeClasses = {
-    sm: 'h-6 sm:h-7 w-auto',
-    md: 'h-8 sm:h-9 w-auto',
-    lg: 'h-10 sm:h-12 w-auto',
-    xl: 'h-16 w-auto sm:h-20',
-    hero: 'h-20 w-auto sm:h-24 md:h-28',
+    xs: 'h-4 sm:h-5 w-auto max-w-full',
+    sm: 'h-5 sm:h-6 md:h-7 w-auto max-w-full',
+    md: 'h-5 sm:h-7 md:h-9 w-auto max-w-full',
+    lg: 'h-6 sm:h-9 md:h-11 w-auto max-w-full',
+    xl: 'h-10 sm:h-14 md:h-18 w-auto max-w-full',
+    hero: 'h-12 sm:h-18 md:h-24 w-auto max-w-full',
   };
 
   return (

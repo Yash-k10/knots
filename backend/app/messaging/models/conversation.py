@@ -5,6 +5,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -50,6 +51,7 @@ class ConversationParticipant(Base):
 
     __table_args__ = (
         UniqueConstraint("conversation_id", "user_id", name="uq_conversation_user"),
+        Index("ix_conv_participants_user_conv", "user_id", "conversation_id"),
     )
 
     conversation = relationship("Conversation", back_populates="participants")

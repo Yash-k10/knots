@@ -1607,7 +1607,7 @@ export default function Controller() {
       {activeTab === "analytics" && (
         <div className="space-y-8">
           {/* Metrics Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             <div className="bg-white dark:bg-slate-900 border border-[#EAE4F7] dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-1.5">
               <div className="flex items-center justify-between text-[#4B63D2]">
                 <Users className="w-5 h-5" />
@@ -2552,7 +2552,7 @@ export default function Controller() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">PRN / Roll Number</label>
                   <input
@@ -2577,7 +2577,7 @@ export default function Controller() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">Department</label>
                   <select
@@ -2668,7 +2668,7 @@ export default function Controller() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">Department</label>
                   <select
@@ -2697,7 +2697,7 @@ export default function Controller() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">Academic Year</label>
                   <select
@@ -2816,7 +2816,7 @@ export default function Controller() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">Department / Office</label>
                   <select
@@ -2917,7 +2917,7 @@ export default function Controller() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">Designation</label>
                   <input

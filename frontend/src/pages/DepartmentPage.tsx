@@ -318,14 +318,14 @@ export default function DepartmentPage() {
 
       {/* ── TAB 1: OVERVIEW & COHORTS ──────────────────────────────────── */}
       {activeTab === "overview" && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* 4 Quantitative Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Total Enrolled Students
               </span>
-              <div className="text-2xl font-black text-[#1E2746]">
+              <div className="text-xl sm:text-2xl font-black text-[#1E2746]">
                 {deptStats?.total_students || 623}
               </div>
               <p className="text-[10px] text-emerald-600 font-bold">Across 4 Academic Years</p>
@@ -796,37 +796,37 @@ export default function DepartmentPage() {
 
       {/* ── TAB 5: PLACEMENTS & INTERNSHIPS ─────────────────────────────── */}
       {activeTab === "placements" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Total Placed (Final Year)
               </span>
-              <div className="text-2xl font-black text-[#1E2746]">118 / 142</div>
+              <div className="text-xl sm:text-2xl font-black text-[#1E2746]">118 / 142</div>
               <p className="text-[10px] text-emerald-600 font-bold">83.1% Conversion Rate</p>
             </div>
 
-            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Highest CTC Package
               </span>
-              <div className="text-2xl font-black text-emerald-700">32.0 LPA</div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-700">32.0 LPA</div>
               <p className="text-[10px] text-[#5851A4]">Adobe Systems</p>
             </div>
 
-            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Average CTC Package
               </span>
-              <div className="text-2xl font-black text-[#1E2746]">8.15 LPA</div>
+              <div className="text-xl sm:text-2xl font-black text-[#1E2746]">8.15 LPA</div>
               <p className="text-[10px] text-indigo-600 font-bold">+18% YoY Growth</p>
             </div>
 
-            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Summer Internships
               </span>
-              <div className="text-2xl font-black text-[#1E2746]">138 Active</div>
+              <div className="text-xl sm:text-2xl font-black text-[#1E2746]">138 Active</div>
               <p className="text-[10px] text-[#4B63D2] font-bold">Avg Stipend: ₹28.5k/mo</p>
             </div>
           </div>

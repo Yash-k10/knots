@@ -3569,7 +3569,7 @@ export default function Clubs() {
                 <label className="text-xs font-bold uppercase tracking-wider text-[#1E2746]">
                   Category <span className="text-rose-500">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
                     { id: "Notes", label: "Notes", icon: "📝" },
                     { id: "Question Bank", label: "Question Bank", icon: "🎯" },

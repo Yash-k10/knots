@@ -261,64 +261,64 @@ export default function DashboardLayout() {
       {/* 1. TOP NAVIGATION BAR (As shown in wireframe)                */}
       {/* ============================================================ */}
       <header className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-[#EAE4F7] dark:border-[#1F2937] shadow-xs">
-        <div className="w-full px-4 sm:px-8 lg:px-12 h-20 flex items-center">
+        <div className="w-full px-2 sm:px-6 lg:px-12 h-14 sm:h-20 flex items-center justify-between gap-1 sm:gap-4">
           
-          {/* Left: Knots Infinity Logo (flex-1 to balance right side) */}
-          <div className="flex-1 flex items-center justify-start">
+          {/* Left: Knots Infinity Logo + Brand Name */}
+          <div className="flex items-center justify-start shrink-0 min-w-0">
             <Link
               to="/"
-              className="flex items-center gap-2.5 group transition-transform duration-200 hover:scale-[1.02] shrink-0"
+              className="flex items-center gap-1 sm:gap-2.5 group transition-transform duration-200 hover:scale-[1.02] shrink-0"
               title="Knots Home Feed"
             >
               <KnotsLogo size="lg" />
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors">
+              <span className="text-base sm:text-2xl md:text-3xl font-black tracking-tight text-[#1E2746] dark:text-[#F1F5F9] group-hover:text-[#4B63D2] transition-colors whitespace-nowrap">
                 Knots
               </span>
             </Link>
           </div>
 
           {/* Center: Standard Diagram Icons in Blue Boxes - Centered & Flexed well throughout navbar */}
-          <div className="flex-[2] flex items-center justify-center">
-            <nav className="flex items-center justify-center gap-6 sm:gap-10 md:gap-16 lg:gap-22">
+          <div className="flex-1 flex items-center justify-center px-1 sm:px-4 min-w-0">
+            <nav className="flex items-center justify-center gap-1.5 sm:gap-6 md:gap-10 lg:gap-14">
               {/* Home Feed Icon */}
               <Link
                 to="/"
                 title="Home Feed"
-                className={`relative p-3 sm:p-3.5 rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-110 active:scale-95 ${
+                className={`relative p-1.5 sm:p-3 md:p-3.5 rounded-lg sm:rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-105 active:scale-95 ${
                   isHomeActive
-                    ? "ring-2 ring-[#4B63D2] ring-offset-2 dark:ring-offset-[#111827] scale-105"
+                    ? "ring-2 ring-[#4B63D2] ring-offset-1 sm:ring-offset-2 dark:ring-offset-[#111827] scale-105"
                     : "opacity-90 hover:opacity-100"
                 }`}
               >
-                <Home className="w-6 h-6 sm:w-7 sm:h-7" />
+                <Home className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7" />
               </Link>
 
               {/* Friends Icon */}
               <Link
                 to="/connections"
                 title="Friends & Connections"
-                className={`relative p-3 sm:p-3.5 rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-110 active:scale-95 ${
+                className={`relative p-1.5 sm:p-3 md:p-3.5 rounded-lg sm:rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-105 active:scale-95 ${
                   isFriendsActive
-                    ? "ring-2 ring-[#4B63D2] ring-offset-2 dark:ring-offset-[#111827] scale-105"
+                    ? "ring-2 ring-[#4B63D2] ring-offset-1 sm:ring-offset-2 dark:ring-offset-[#111827] scale-105"
                     : "opacity-90 hover:opacity-100"
                 }`}
               >
-                <Users className="w-6 h-6 sm:w-7 sm:h-7" />
+                <Users className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7" />
               </Link>
 
               {/* Notification Icon */}
               <Link
                 to="/notifications"
                 title="Notifications"
-                className={`relative p-3 sm:p-3.5 rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-110 active:scale-95 ${
+                className={`relative p-1.5 sm:p-3 md:p-3.5 rounded-lg sm:rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-105 active:scale-95 ${
                   isNotificationsActive
-                    ? "ring-2 ring-[#4B63D2] ring-offset-2 dark:ring-offset-[#111827] scale-105"
+                    ? "ring-2 ring-[#4B63D2] ring-offset-1 sm:ring-offset-2 dark:ring-offset-[#111827] scale-105"
                     : "opacity-90 hover:opacity-100"
                 }`}
               >
-                <Bell className="w-6 h-6 sm:w-7 sm:h-7" />
+                <Bell className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 bg-[#FFD21A] text-[#1E2746] text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border-2 border-white dark:border-[#111827]">
+                  <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 min-w-[15px] sm:min-w-[20px] h-[15px] sm:h-[20px] px-0.5 sm:px-1 bg-[#FFD21A] text-[#1E2746] text-[8px] sm:text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border sm:border-2 border-white dark:border-[#111827]">
                     {unreadNotifications > 9 ? "9+" : unreadNotifications}
                   </span>
                 )}
@@ -328,15 +328,15 @@ export default function DashboardLayout() {
               <Link
                 to="/messaging"
                 title="Messages"
-                className={`relative p-3 sm:p-3.5 rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-110 active:scale-95 ${
+                className={`relative p-1.5 sm:p-3 md:p-3.5 rounded-lg sm:rounded-2xl transition-all duration-200 flex items-center justify-center bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/30 hover:shadow-lg hover:shadow-[#4B63D2]/40 hover:scale-105 active:scale-95 ${
                   isMessagesActive
-                    ? "ring-2 ring-[#4B63D2] ring-offset-2 dark:ring-offset-[#111827] scale-105"
+                    ? "ring-2 ring-[#4B63D2] ring-offset-1 sm:ring-offset-2 dark:ring-offset-[#111827] scale-105"
                     : "opacity-90 hover:opacity-100"
                 }`}
               >
-                <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7" />
+                <MessageSquare className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 {unreadMessages > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 bg-[#FFD21A] text-[#1E2746] text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border-2 border-white dark:border-[#111827]">
+                  <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 min-w-[15px] sm:min-w-[20px] h-[15px] sm:h-[20px] px-0.5 sm:px-1 bg-[#FFD21A] text-[#1E2746] text-[8px] sm:text-[10px] font-black rounded-full flex items-center justify-center shadow-xs border sm:border-2 border-white dark:border-[#111827]">
                     {unreadMessages > 9 ? "9+" : unreadMessages}
                   </span>
                 )}
@@ -345,7 +345,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Right: Profile Avatar & Role Tag (flex-1 to balance left side) */}
-          <div className="flex-1 flex items-center justify-end">
+          <div className="flex items-center justify-end shrink-0">
             <div className="relative flex flex-col items-center shrink-0">
               <button
                 type="button"
@@ -359,17 +359,17 @@ export default function DashboardLayout() {
                     <img
                       src={avatarUrl}
                       alt={fullName}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-[#4B63D2]/40 group-hover:border-[#4B63D2] shadow-xs group-hover:scale-105 transition-all"
+                      className="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-cover border sm:border-2 border-[#4B63D2]/40 group-hover:border-[#4B63D2] shadow-xs group-hover:scale-105 transition-all"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-sm text-white border-2 border-white dark:border-[#1F2937] shadow-xs group-hover:scale-105 transition-all">
+                    <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-[11px] sm:text-sm text-white border sm:border-2 border-white dark:border-[#1F2937] shadow-xs group-hover:scale-105 transition-all">
                       {userInitial}
                     </div>
                   )}
                 </div>
 
                 {/* Tag Capsule underneath avatar */}
-                <span className="mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide uppercase bg-[#4B63D2]/10 text-[#4B63D2] dark:bg-[#4B63D2]/20 dark:text-[#818CF8] border border-[#4B63D2]/20 shadow-2xs group-hover:bg-[#4B63D2] group-hover:text-white transition-all">
+                <span className="mt-0.5 sm:mt-1 px-1 sm:px-2.5 py-0.2 sm:py-0.5 rounded-full text-[7px] sm:text-[10px] font-black tracking-wide uppercase bg-[#4B63D2]/10 text-[#4B63D2] dark:bg-[#4B63D2]/20 dark:text-[#818CF8] border border-[#4B63D2]/20 shadow-2xs group-hover:bg-[#4B63D2] group-hover:text-white transition-all max-w-[55px] sm:max-w-none truncate">
                   {roleTag}
                 </span>
               </button>
@@ -381,7 +381,7 @@ export default function DashboardLayout() {
                     className="fixed inset-0 z-10"
                     onClick={() => setProfileDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 top-14 w-60 bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD] dark:divide-[#1F2937]">
+                  <div className="absolute right-0 top-12 sm:top-14 w-56 sm:w-60 bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150 divide-y divide-[#FAF9FD] dark:divide-[#1F2937]">
                     <div className="px-4 py-2">
                       <p className="text-xs font-black text-[#1E2746] dark:text-[#F1F5F9] truncate">
                         {fullName}
@@ -461,7 +461,7 @@ export default function DashboardLayout() {
       {/* ============================================================ */}
       {/* 2. MAIN CENTER CONTENT CANVAS (Feed in Middle)               */}
       {/* ============================================================ */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-28">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 sm:pb-28">
         <Outlet />
       </main>
 
@@ -472,44 +472,44 @@ export default function DashboardLayout() {
         aria-label="Bottom Navigation"
         className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-[#EAE4F7] dark:border-[#1F2937] shadow-xl"
       >
-        <div className="w-full px-6 sm:px-14 md:px-24 lg:px-36 xl:px-48 h-20 flex items-center justify-between relative">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-8 md:px-20 lg:px-36 h-16 sm:h-20 flex items-center justify-between relative">
           {/* Item 1: Settings */}
           <Link
             to="/settings"
             title="Settings"
-            className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 ${
+            className={`flex flex-col items-center justify-center p-1.5 sm:p-2.5 rounded-2xl transition-all duration-200 ${
               isSettingsActive
-                ? "text-[#4B63D2] scale-110 font-black"
+                ? "text-[#4B63D2] scale-105 sm:scale-110 font-black"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:scale-105"
             }`}
           >
-            <Settings className="w-6 h-6 sm:w-7 sm:h-7" />
-            <span className="text-[11px] font-bold mt-1">Settings</span>
+            <Settings className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            <span className="text-[9px] sm:text-[11px] font-bold mt-0.5 sm:mt-1">Settings</span>
           </Link>
 
           {/* Item 2: Opportunities */}
           <Link
             to="/jobs"
             title="Opportunities"
-            className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 ${
+            className={`flex flex-col items-center justify-center p-1.5 sm:p-2.5 rounded-2xl transition-all duration-200 ${
               isOpportunitiesActive
-                ? "text-[#4B63D2] scale-110 font-black"
+                ? "text-[#4B63D2] scale-105 sm:scale-110 font-black"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:scale-105"
             }`}
           >
-            <Briefcase className="w-6 h-6 sm:w-7 sm:h-7" />
-            <span className="text-[11px] font-bold mt-1">Opportunities</span>
+            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            <span className="text-[9px] sm:text-[11px] font-bold mt-0.5 sm:mt-1">Jobs</span>
           </Link>
 
           {/* Item 3 (Center): Prominent Elevated (+) Create Post Button */}
-          <div className="relative -top-5 flex flex-col items-center">
+          <div className="relative -top-3 sm:-top-5 flex flex-col items-center">
             <button
               type="button"
               onClick={() => setCreatePostOpen(true)}
               title="Create New Post"
-              className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-gradient-to-tr from-[#4B63D2] to-[#5851A4] text-white flex items-center justify-center shadow-xl shadow-[#4B63D2]/40 hover:shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer border-4 border-white dark:border-[#111827] group"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-gradient-to-tr from-[#4B63D2] to-[#5851A4] text-white flex items-center justify-center shadow-xl shadow-[#4B63D2]/40 hover:shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer border-2 sm:border-4 border-white dark:border-[#111827] group"
             >
-              <Plus className="w-8 h-8 sm:w-9 sm:h-9 text-[#FFD21A] group-hover:rotate-90 transition-transform duration-200" />
+              <Plus className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 text-[#FFD21A] group-hover:rotate-90 transition-transform duration-200" />
             </button>
           </div>
 
@@ -517,28 +517,28 @@ export default function DashboardLayout() {
           <Link
             to="/clubs"
             title="Clubs"
-            className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 ${
+            className={`flex flex-col items-center justify-center p-1.5 sm:p-2.5 rounded-2xl transition-all duration-200 ${
               isClubsActive
-                ? "text-[#4B63D2] scale-110 font-black"
+                ? "text-[#4B63D2] scale-105 sm:scale-110 font-black"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:scale-105"
             }`}
           >
-            <Compass className="w-6 h-6 sm:w-7 sm:h-7" />
-            <span className="text-[11px] font-bold mt-1">Clubs</span>
+            <Compass className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            <span className="text-[9px] sm:text-[11px] font-bold mt-0.5 sm:mt-1">Clubs</span>
           </Link>
 
           {/* Item 5: Events */}
           <Link
             to="/events"
             title="Events"
-            className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 ${
+            className={`flex flex-col items-center justify-center p-1.5 sm:p-2.5 rounded-2xl transition-all duration-200 ${
               isEventsActive
-                ? "text-[#4B63D2] scale-110 font-black"
+                ? "text-[#4B63D2] scale-105 sm:scale-110 font-black"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-[#F1F5F9] hover:scale-105"
             }`}
           >
-            <Calendar className="w-6 h-6 sm:w-7 sm:h-7" />
-            <span className="text-[11px] font-bold mt-1">Events</span>
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            <span className="text-[9px] sm:text-[11px] font-bold mt-0.5 sm:mt-1">Events</span>
           </Link>
         </div>
       </nav>

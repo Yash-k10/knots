@@ -171,7 +171,7 @@ export default function Notifications() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
         <div>
           <h2 className="text-2xl font-black text-[#1E2746] mb-1">
             Notifications Center

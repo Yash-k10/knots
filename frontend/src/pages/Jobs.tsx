@@ -1131,7 +1131,7 @@ export default function Jobs() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 py-4 sm:py-6">
       {/* Header Banner */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 -mt-6 -mr-6 w-64 h-64 bg-gradient-to-br from-[#4B63D2]/15 via-[#C8B6E2]/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
@@ -1699,7 +1699,7 @@ export default function Jobs() {
       {activeTab === "alumni-companies" && !isFaculty && !isController && (
         <div className="space-y-6">
           {/* Search Bar for Companies */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
@@ -1879,7 +1879,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {activeTab === "applications" && (
         <div className="space-y-6">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm">
             <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
               <FileText className="w-5 h-5 text-[#4B63D2]" />
               My Job & Internship Applications
@@ -1908,7 +1908,7 @@ export default function Jobs() {
               {applications.map((app: ApplicationWithUpdates) => (
                 <div
                   key={app.id}
-                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm space-y-5 transition-all"
+                  className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-5 transition-all"
                 >
                   {/* Top Bar: Job info + Status Badge */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAE4F7]">
@@ -2026,7 +2026,7 @@ export default function Jobs() {
         ) : (
           <div className="space-y-6">
             {/* Header & Metrics */}
-            <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
@@ -2068,7 +2068,7 @@ export default function Jobs() {
               </div>
 
               {/* Metric Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 pt-2">
                 <div className="p-3.5 rounded-2xl bg-[#FAF9FD] border border-[#EAE4F7] text-center">
                   <span className="text-[11px] font-bold text-[#5851A4] uppercase tracking-wider block">Total Received</span>
                   <span className="text-xl font-black text-[#1E2746]">{candidateApplications.length}</span>
@@ -2125,7 +2125,7 @@ export default function Jobs() {
                     return (
                       <div
                         key={app.id}
-                        className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 shadow-sm space-y-4 transition-all"
+                        className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4 transition-all"
                       >
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#EAE4F7]">
                           <div className="space-y-1">
@@ -2260,7 +2260,7 @@ export default function Jobs() {
       {activeTab === "candidate-status" && (
         <div className="space-y-6">
           {/* Header & Metric Cards */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -2289,7 +2289,7 @@ export default function Jobs() {
             </div>
 
             {/* Metrics Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 pt-2">
               <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-4 transition-all">
                 <span className="text-[11px] font-bold text-[#9188BE] uppercase tracking-wider block mb-1">
                   Total Students
@@ -2623,7 +2623,7 @@ export default function Jobs() {
             </div>
           </div>
         ) : (
-        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 max-w-3xl mx-auto">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-sm space-y-6 max-w-3xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20">
               <PlusCircle className="w-6 h-6 text-[#FFD21A]" />
@@ -2789,7 +2789,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {referralModalTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
             <button
               onClick={() => setReferralModalTarget(null)}
               className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
@@ -2922,7 +2922,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {selectedJobForApply && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
             <button
               onClick={() => setSelectedJobForApply(null)}
               className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
@@ -3028,7 +3028,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {showCompanyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-md w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-2xl space-y-4">
+          <div className="relative max-w-md w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
             <button
               onClick={() => setShowCompanyModal(false)}
               className="absolute top-4 right-4 p-2 text-[#5851A4] hover:text-[#1E2746] rounded-full transition-colors cursor-pointer"
@@ -3108,7 +3108,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {selectedCoverLetterApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-4">
+          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-4">
             <button
               onClick={() => setSelectedCoverLetterApp(null)}
               className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
@@ -3151,7 +3151,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {selectedJobDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-xl w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="relative max-w-xl w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setSelectedJobDetails(null)}
               className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
@@ -3323,7 +3323,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {activeTab === "research" && !isFaculty && !isController && !isAlumni && (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-white/20 text-white backdrop-blur-md">
@@ -3425,7 +3425,7 @@ export default function Jobs() {
                   return (
                     <div
                       key={project.id}
-                      className="bg-white border border-[#EAE4F7] rounded-3xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all space-y-4"
+                      className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all space-y-4"
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                         <div className="space-y-1.5 flex-1">
@@ -3549,7 +3549,7 @@ export default function Jobs() {
       {/* ── Faculty Opportunity / Research Application Modal ────────────────────────────────────── */}
       {selectedResearchForApply && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 max-w-lg w-full space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-start gap-4 border-b border-[#EAE4F7] pb-4">
               <div>
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full mb-1">
@@ -3909,7 +3909,7 @@ export default function Jobs() {
       {/* ========================================================================= */}
       {editingJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-2xl w-full bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="relative max-w-2xl w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setEditingJob(null)}
               className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"

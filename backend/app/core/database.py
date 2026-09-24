@@ -18,10 +18,10 @@ if settings.DATABASE_URL.startswith("sqlite"):
         "check_same_thread": False,
     }
 else:
-    engine_args["pool_size"] = 20
-    engine_args["max_overflow"] = 10
-    engine_args["pool_pre_ping"] = False
-    engine_args["pool_recycle"] = 600
+    engine_args["pool_size"] = 10
+    engine_args["max_overflow"] = 5
+    engine_args["pool_pre_ping"] = True
+    engine_args["pool_recycle"] = 300
     engine_args["pool_timeout"] = 30
     engine_args["connect_args"] = {
         "statement_cache_size": 0,
@@ -56,7 +56,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         try:
             yield session
-            if session.is_active:
+            if session.is_active and (session.dirty or session.new or session.deleted):
                 await session.commit()
         except Exception:
             if session.is_active:

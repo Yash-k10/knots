@@ -339,28 +339,28 @@ export default function HodDashboard() {
           </div>
 
           {/* Quick Metrics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3 shrink-0">
-            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3.5 text-center shadow-xs">
-              <p className="text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Students</p>
-              <p className="text-2xl font-black text-[#4B63D2] dark:text-[#818CF8] mt-0.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2.5 sm:gap-3 shrink-0">
+            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3 sm:p-3.5 text-center shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Students</p>
+              <p className="text-xl sm:text-2xl font-black text-[#4B63D2] dark:text-[#818CF8] mt-0.5">
                 {totalDeptStudents}
               </p>
             </div>
-            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3.5 text-center shadow-xs">
-              <p className="text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Faculty</p>
-              <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
+            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3 sm:p-3.5 text-center shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Faculty</p>
+              <p className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
                 {totalFacultyCount}
               </p>
             </div>
-            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3.5 text-center shadow-xs">
-              <p className="text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Applicants</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3 sm:p-3.5 text-center shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Dept Applicants</p>
+              <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                 {totalDeptApplicants}
               </p>
             </div>
-            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3.5 text-center shadow-xs">
-              <p className="text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Placement Rate</p>
-              <p className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+            <div className="bg-white dark:bg-[#1E293B] border border-[#EAE4F7] dark:border-[#334155] rounded-2xl p-3 sm:p-3.5 text-center shadow-xs">
+              <p className="text-[10px] sm:text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8]">Placement Rate</p>
+              <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
                 {placementRatePct}%
               </p>
             </div>
@@ -368,7 +368,7 @@ export default function HodDashboard() {
         </div>
 
         {/* ── Navigation Tabs ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-6 pt-5 border-t border-[#EAE4F7] dark:border-[#1F2937]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-[#EAE4F7] dark:border-[#1F2937]">
           {[
             { id: "overview" as const, label: "Overview & KPIs", icon: TrendingUp },
             {
@@ -1088,7 +1088,7 @@ export default function HodDashboard() {
             <h3 className="text-sm font-black text-[#1E2746] dark:text-[#F1F5F9] mb-3">
               Top Corporate Recruiters for {department}
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
               {["TCS Digital", "Microsoft", "Infosys", "Persistent Systems", "Cognizant", "Amazon AWS", "Wipro Turbo", "Accenture"].map((corp) => (
                 <div
                   key={corp}

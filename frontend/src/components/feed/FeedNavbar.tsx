@@ -75,11 +75,11 @@ export default function FeedNavbar() {
   const initial = fullName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-[#EAE4F7] shadow-sm mb-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-[#EAE4F7] shadow-sm mb-4 sm:mb-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
         {/* 1. Logo on top left */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link to="/feed" className="flex items-center gap-2.5 group">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <Link to="/feed" className="flex items-center gap-1.5 sm:gap-2.5 group">
             <KnotsLogo size="md" />
             <div className="hidden sm:block">
               <span className="text-xl font-black tracking-tight text-[#1E2746] group-hover:text-[#4B63D2] transition-colors">
@@ -93,7 +93,7 @@ export default function FeedNavbar() {
         </div>
 
         {/* 2. Navbar with navigating pages */}
-        <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-1">
+        <nav className="flex items-center gap-0.5 sm:gap-2 overflow-x-auto py-1 no-scrollbar">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.path;
@@ -101,16 +101,16 @@ export default function FeedNavbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 ${
+                className={`relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shrink-0 ${
                   isActive
                     ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/25"
                     : "text-[#5851A4] hover:bg-[#FAF9FD] hover:text-[#1E2746]"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-[#FFD21A]" : "text-[#5851A4]"}`} />
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? "text-[#FFD21A]" : "text-[#5851A4]"}`} />
                 <span className="hidden md:inline">{link.name}</span>
                 {link.badge !== undefined && link.badge > 0 && (
-                  <span className="px-1.5 py-0.2 text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full animate-pulse">
+                  <span className="px-1.5 py-0.2 text-[9px] sm:text-[10px] font-black bg-[#FFD21A] text-[#1E2746] rounded-full animate-pulse">
                     {link.badge > 9 ? "9+" : link.badge}
                   </span>
                 )}
@@ -120,10 +120,10 @@ export default function FeedNavbar() {
         </nav>
 
         {/* 3. User Profile with PFP */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <Link
             to="/profile"
-            className="flex items-center gap-2.5 p-1.5 pl-2 rounded-2xl hover:bg-[#FAF9FD] border border-transparent hover:border-[#EAE4F7] transition-all group"
+            className="flex items-center gap-2 p-1 sm:p-1.5 pl-1.5 sm:pl-2 rounded-xl sm:rounded-2xl hover:bg-[#FAF9FD] border border-transparent hover:border-[#EAE4F7] transition-all group"
             title="View Your Profile"
           >
             <div className="text-right hidden lg:block">
@@ -139,10 +139,10 @@ export default function FeedNavbar() {
               <img
                 src={avatarUrl}
                 alt={fullName}
-                className="h-9 w-9 rounded-xl object-cover border border-[#EAE4F7] shadow-sm group-hover:scale-105 transition-transform"
+                className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl object-cover border border-[#EAE4F7] shadow-sm group-hover:scale-105 transition-transform"
               />
             ) : (
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-sm text-white shadow-sm shadow-[#4B63D2]/25 group-hover:scale-105 transition-transform">
+              <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl bg-gradient-to-tr from-[#5851A4] to-[#4B63D2] flex items-center justify-center font-black text-xs sm:text-sm text-white shadow-sm shadow-[#4B63D2]/25 group-hover:scale-105 transition-transform">
                 {initial}
               </div>
             )}
@@ -150,10 +150,10 @@ export default function FeedNavbar() {
 
           <Link
             to="/settings"
-            className="p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-xl border border-transparent hover:border-[#EAE4F7] transition-all"
+            className="p-1.5 sm:p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-lg sm:rounded-xl border border-transparent hover:border-[#EAE4F7] transition-all"
             title="Settings"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Link>
         </div>
       </div>

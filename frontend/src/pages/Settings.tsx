@@ -280,7 +280,7 @@ export default function Settings() {
 
   if (fetchError) {
     return (
-      <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-3xl p-6 flex items-start gap-3 max-w-2xl mx-auto mt-8 shadow-sm">
+      <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex items-start gap-3 max-w-2xl mx-auto mt-8 shadow-sm">
         <AlertCircle className="h-6 w-6 shrink-0 mt-0.5 text-rose-500" />
         <div>
           <h3 className="font-bold text-[#1E2746] mb-1">Failed to Load Settings</h3>
@@ -299,7 +299,7 @@ export default function Settings() {
   return (
     <div className="space-y-8 max-w-4xl">
       {/* Header with Account Info */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-black text-[#1E2746] flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Email Form */}
-        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
           <div>
             <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
               <Mail className="h-5 w-5 text-[#4B63D2]" /> Update Email Address
@@ -402,7 +402,7 @@ export default function Settings() {
         </div>
 
         {/* Password Form — Now uses current password verification */}
-        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
           <div>
             <h3 className="text-lg font-black text-[#1E2746] flex items-center gap-2">
               <Key className="h-5 w-5 text-[#4B63D2]" /> Change Password
@@ -551,7 +551,7 @@ export default function Settings() {
       </div>
 
       {/* Preferences Section */}
-      <div className="bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl p-6 shadow-sm space-y-6">
+      <div className="bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
         <div>
           <h3 className="text-lg font-black text-[#1E2746] dark:text-[#F1F5F9] flex items-center gap-2">
             <Save className="h-5 w-5 text-[#4B63D2]" /> System Preferences
@@ -647,7 +647,7 @@ export default function Settings() {
       </div>
 
       {/* Danger Zone — Delete Account */}
-      <div className="bg-white border border-rose-200 rounded-3xl p-6 shadow-sm space-y-4">
+      <div className="bg-white border border-rose-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
         <div>
           <h3 className="text-lg font-black text-rose-600 flex items-center gap-2">
             <Trash2 className="h-5 w-5" /> Danger Zone
@@ -668,7 +668,7 @@ export default function Settings() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center">
                 <AlertCircle className="h-5 w-5 text-rose-500" />

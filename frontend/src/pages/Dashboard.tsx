@@ -803,7 +803,7 @@ export default function Dashboard() {
         </div>
 
         {/* 4 Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Enrolled Students</span>
@@ -1127,7 +1127,7 @@ export default function Dashboard() {
         </div>
 
         {/* Faculty KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Mentored Students</span>
@@ -1254,7 +1254,7 @@ export default function Dashboard() {
         </div>
 
         {/* HOD KPI Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Total Students</span>
@@ -1336,7 +1336,7 @@ export default function Dashboard() {
         </div>
 
         {/* Alumni KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Mentorship Mentees</span>
@@ -1420,7 +1420,7 @@ export default function Dashboard() {
         </div>
 
         {/* Controller KPI Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Active Applications</span>
@@ -1504,7 +1504,7 @@ export default function Dashboard() {
         </div>
 
         {/* TPO KPI Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Placed Students</span>
@@ -1687,7 +1687,7 @@ export default function Dashboard() {
         </div>
 
         {/* Master Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Total Accounts</span>
@@ -1778,7 +1778,7 @@ export default function Dashboard() {
         </div>
 
         {/* Executive KPI Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between text-[#5851A4] mb-2">
               <span className="text-xs font-bold uppercase">Total Enrolment</span>

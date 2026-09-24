@@ -140,14 +140,14 @@ export default function ApplicationsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4B63D2]/10 border border-[#4B63D2]/20 text-[#4B63D2] text-xs font-black">
             <FileCheck2 className="h-4 w-4" /> Opportunities & Applications Pipeline
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#1E2746] tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#1E2746] tracking-tight">
             Applications Management Hub
           </h1>
           <p className="text-[#5851A4] text-xs sm:text-sm max-w-xl font-medium">
@@ -156,24 +156,24 @@ export default function ApplicationsPage() {
           </p>
         </div>
 
-        <div className="bg-[#FAF9FD] px-5 py-3 rounded-2xl border border-[#EAE4F7] text-center">
-          <span className="text-xs font-bold text-[#5851A4] block">Pipeline Active</span>
-          <span className="text-xl font-black text-[#1E2746]">
+        <div className="bg-[#FAF9FD] px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl border border-[#EAE4F7] text-center shrink-0 self-start md:self-auto">
+          <span className="text-[11px] sm:text-xs font-bold text-[#5851A4] block">Pipeline Active</span>
+          <span className="text-lg sm:text-xl font-black text-[#1E2746]">
             {filteredApps.length} Submissions
           </span>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-3">
-        <div className="flex-1 relative">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col sm:flex-row gap-2.5 sm:gap-3">
+        <div className="flex-1 relative min-w-0">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9188BE]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by candidate name, company, or job role..."
-            className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
+            className="w-full bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white rounded-xl pl-10 pr-4 py-2 sm:py-2.5 text-xs text-[#1E2746] placeholder-[#9188BE] focus:outline-none focus:border-[#4B63D2] transition font-medium"
           />
         </div>
 
@@ -207,17 +207,17 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Applications Table */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto -mx-3 sm:mx-0">
           <table className="w-full text-left text-xs font-medium">
             <thead className="bg-[#FAF9FD] text-[#5851A4] font-bold uppercase text-[10px] tracking-wider border-b border-[#EAE4F7]">
               <tr>
-                <th className="py-3 px-4">Applicant Candidate</th>
-                <th className="py-3 px-4">Opportunity & Company</th>
-                <th className="py-3 px-4">Department / Batch</th>
-                <th className="py-3 px-4">CGPA</th>
-                <th className="py-3 px-4">Current Stage</th>
-                {isTPOOrController && <th className="py-3 px-4">Stage Action</th>}
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">Applicant Candidate</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">Opportunity & Company</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">Department / Batch</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">CGPA</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">Current Stage</th>
+                {isTPOOrController && <th className="py-2.5 sm:py-3 px-3 sm:px-4 whitespace-nowrap">Stage Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EAE4F7]">

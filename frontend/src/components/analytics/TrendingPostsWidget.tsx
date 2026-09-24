@@ -52,12 +52,12 @@ export default function TrendingPostsWidget({
   }, [days, initialPosts]);
 
   return (
-    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-3xl p-6 shadow-sm relative overflow-hidden transition duration-300 flex flex-col justify-between">
+    <div className="bg-white border border-[#EAE4F7] hover:border-[#D5CBEE] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm relative overflow-hidden transition duration-300 flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 relative z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6 relative z-10">
         <div className="flex items-center gap-2.5">
-          <div className="p-2.5 bg-amber-500/10 text-amber-500 rounded-2xl border border-amber-500/20">
-            <Flame className="h-5 w-5" />
+          <div className="p-2 sm:p-2.5 bg-amber-500/10 text-amber-500 rounded-xl sm:rounded-2xl border border-amber-500/20 shrink-0">
+            <Flame className="h-4 sm:h-5 w-4 sm:w-5" />
           </div>
           <div>
             <h3 className="text-lg font-black text-black tracking-tight">

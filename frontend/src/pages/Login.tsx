@@ -506,7 +506,7 @@ export default function Login() {
 
         {/* RIGHT SIDE: Knots Clean Structured Login Card */}
         <div className="lg:col-span-6 flex justify-center lg:justify-end order-1 lg:order-2">
-          <div className="w-full max-w-md bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-3xl shadow-xl shadow-[#5851A4]/10 dark:shadow-black/40 p-6 sm:p-8 lg:p-10">
+          <div className="w-full max-w-md bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-2xl sm:rounded-3xl shadow-xl shadow-[#5851A4]/10 dark:shadow-black/40 p-4 sm:p-8 lg:p-10">
             
             {/* Card Header */}
             <div className="mb-6 space-y-1 text-left">

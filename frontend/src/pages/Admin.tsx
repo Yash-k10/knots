@@ -905,7 +905,7 @@ export default function Admin() {
           </div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 shadow-sm">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#5851A4]">
                 Total Codes

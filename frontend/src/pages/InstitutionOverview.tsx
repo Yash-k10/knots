@@ -69,7 +69,7 @@ export default function InstitutionOverview() {
       </div>
 
       {/* Strategic KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between text-[#5851A4] mb-2">
             <span className="text-xs font-bold uppercase tracking-wider">Campus Population</span>

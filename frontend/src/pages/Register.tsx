@@ -642,7 +642,7 @@ export default function Register() {
               </div>
 
               {/* Faculty Subtypes: HOD vs Normal Faculty */}
-              <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 {(["HOD", "Normal faculty"] as FacultyType[]).map((type) => {
                   const isChecked = facultyType === type;
                   return (
@@ -758,7 +758,7 @@ export default function Register() {
               </div>
 
               {/* Management Role Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5 pt-1">
                 {(
                   [
                     "Controller",

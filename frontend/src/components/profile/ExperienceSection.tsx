@@ -346,7 +346,7 @@ export default function ExperienceSection({
             </div>
 
             <div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#1E2746] uppercase tracking-wider mb-2">
                     Start Date <span className="text-rose-500">*</span>

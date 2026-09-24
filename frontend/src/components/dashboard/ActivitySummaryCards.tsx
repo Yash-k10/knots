@@ -57,13 +57,13 @@ export function ActivitySummaryCards({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {summaryCards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.title}
-            className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-3xl p-6 hover:shadow-md hover:scale-[1.01] transition-all duration-300 relative group overflow-hidden shadow-sm"
+            className="bg-white border border-[#EAE4F7] hover:border-[#C8B6E2] rounded-2xl sm:rounded-3xl p-4 sm:p-6 hover:shadow-md hover:scale-[1.01] transition-all duration-300 relative group overflow-hidden shadow-sm"
           >
             <div
               className={`absolute inset-0 bg-gradient-to-tr ${card.gradient} opacity-0 group-hover:opacity-100 transition duration-300 pointer-events-none`}

@@ -84,10 +84,10 @@ export default function OpportunitiesPage() {
     return (
       <div className="space-y-4">
         {/* Portal Switcher Header */}
-        <div className="flex items-center justify-between bg-white dark:bg-[#1E2337] border border-[#EAE4F7] dark:border-[#2D334D] rounded-2xl p-2 px-3 shadow-sm max-w-xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-2 bg-white dark:bg-[#1E2337] border border-[#EAE4F7] dark:border-[#2D334D] rounded-2xl p-1.5 sm:p-2 px-2 sm:px-3 shadow-sm max-w-xl mx-auto">
           <button
             onClick={() => setActivePortal("faculty")}
-            className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full sm:flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activePortal === "faculty"
                 ? "bg-[#4B63D2] text-white shadow-sm"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-white"
@@ -98,7 +98,7 @@ export default function OpportunitiesPage() {
           </button>
           <button
             onClick={() => setActivePortal("jobs")}
-            className={`flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full sm:flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activePortal === "jobs"
                 ? "bg-[#4B63D2] text-white shadow-sm"
                 : "text-[#5851A4] dark:text-[#94A3B8] hover:text-[#1E2746] dark:hover:text-white"

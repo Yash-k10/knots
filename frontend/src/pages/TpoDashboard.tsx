@@ -758,7 +758,7 @@ export default function TpoDashboard() {
       {/* ============================================================ */}
       {/* 2. KPI METRICS CARDS                                         */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Metric 1 */}
         <div className="bg-white dark:bg-[#111827] border border-[#EAE4F7] dark:border-[#1F2937] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -2006,7 +2006,7 @@ export default function TpoDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8] mb-1">
                     Department
@@ -2049,7 +2049,7 @@ export default function TpoDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block text-[11px] font-bold text-[#5851A4] dark:text-[#94A3B8] mb-1">
                     Role Offered

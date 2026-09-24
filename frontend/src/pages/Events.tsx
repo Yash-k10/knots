@@ -1357,7 +1357,7 @@ export default function Events() {
       {/* ========================================================================= */}
       {showCreateEventModal && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-[#4B63D2]" />
@@ -1720,7 +1720,7 @@ export default function Events() {
       {/* ========================================================================= */}
       {leadsModalEvent && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3">
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-amber-500" />
@@ -1842,7 +1842,7 @@ export default function Events() {
       {/* ========================================================================= */}
       {requestsModalEvent && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3 shrink-0">
               <div>
                 <div className="flex items-center gap-2">

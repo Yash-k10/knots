@@ -1432,7 +1432,7 @@ export default function Messaging() {
   };
 
   return (
-    <div className="bg-white border border-[#EAE4F7] rounded-3xl overflow-hidden flex h-[calc(100dvh-130px)] min-h-[480px] sm:min-h-[580px] shadow-sm max-w-full">
+    <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl overflow-hidden flex h-[calc(100dvh-115px)] sm:h-[calc(100dvh-130px)] min-h-[440px] sm:min-h-[580px] shadow-sm max-w-full">
       {/* Hidden File Input for Attachments */}
       <input
         ref={fileInputRef}
@@ -2298,8 +2298,8 @@ export default function Messaging() {
       {/* 4. NEW CHAT / USER DIRECTORY MODAL (WhatsApp Style)                       */}
       {/* ========================================================================= */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-[#1E2746]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 bg-[#1E2746]/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             {/* Modal Header */}
             <div className="p-5 border-b border-[#EAE4F7] flex items-center justify-between bg-white">
               <div>

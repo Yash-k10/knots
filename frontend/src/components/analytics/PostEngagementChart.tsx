@@ -68,7 +68,7 @@ export default function PostEngagementChart({
       </div>
 
       {/* Overview Stat Cards */}
-      <div className="grid grid-cols-4 gap-3 mb-6 relative z-10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6 relative z-10">
         <div className="bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl p-3 text-center">
           <div className="p-1.5 bg-[#4B63D2]/10 rounded-xl text-[#4B63D2] w-fit mx-auto mb-1">
             <Eye className="h-4 w-4" />

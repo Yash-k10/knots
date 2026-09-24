@@ -175,7 +175,7 @@ export default function TiesRecommendations() {
   ];
 
   return (
-    <aside className="w-full bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-sm space-y-4">
+    <aside className="w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-sm space-y-3.5 sm:space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-3.5">
         <div className="flex items-center gap-2.5">

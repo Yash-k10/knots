@@ -218,16 +218,16 @@ export default function SkillsSection({
   const categoryEntries = Object.entries(skills);
 
   return (
-    <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
-      <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-4">
-        <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
-          <Hash className="h-5 w-5 text-[#4B63D2]" />
+    <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EAE4F7] pb-4">
+        <h3 className="text-lg sm:text-xl font-black text-[#1E2746] flex items-center gap-2">
+          <Hash className="h-5 w-5 text-[#4B63D2] shrink-0" />
           Skills
         </h3>
         {!isEditing && isOwnProfile && (
           <button
             onClick={handleEditToggle}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:text-[#1E2746] hover:border-[#C8B6E2] hover:bg-[#FAF9FD] transition shadow-sm cursor-pointer"
           >
             <Edit2 className="h-4 w-4 text-[#4B63D2]" />
             Edit Skills

@@ -404,7 +404,7 @@ export default function ReportsPage() {
         <h3 className="text-xs font-black uppercase tracking-wider text-[#5851A4]">
           Select Academic Reporting Pillar (9 Modules)
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
           {reportModules.map((mod) => {
             const Icon = mod.icon;
             const isSelected = selectedType === mod.id;
@@ -412,7 +412,7 @@ export default function ReportsPage() {
               <button
                 key={mod.id}
                 onClick={() => setSelectedType(mod.id)}
-                className={`p-4 rounded-2xl border text-left transition-all relative ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all relative ${
                   isSelected
                     ? "bg-[#4B63D2] text-white border-[#4B63D2] shadow-md shadow-[#4B63D2]/20"
                     : "bg-white text-[#1E2746] border-[#EAE4F7] hover:border-[#C8B6E2] hover:bg-[#FAF9FD]"
@@ -454,7 +454,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Main Active Report Visualizer */}
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-sm space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAE4F7]">
           <div>
             <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ export default function ReportsPage() {
               </span>
               <span className="text-xs font-bold text-[#5851A4]">• {activeDept}</span>
             </div>
-            <h3 className="text-lg font-black text-[#1E2746] mt-1">
+            <h3 className="text-base sm:text-lg font-black text-[#1E2746] mt-1">
               {currentModule.title}
             </h3>
             <p className="text-xs text-[#5851A4] font-medium mt-0.5">
@@ -498,7 +498,7 @@ export default function ReportsPage() {
         </div>
 
         {/* 4 Summary Stat Pills */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {Object.entries(currentModule.metrics).map(([key, val], idx) => (
             <div
               key={idx}

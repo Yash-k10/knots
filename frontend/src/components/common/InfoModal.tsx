@@ -43,7 +43,7 @@ export default function InfoModal({ type, onClose }: InfoModalProps) {
           <p>
             The Knots community is comprised of verified members from engineering, management, sciences, and innovation chapters.
           </p>
-          <div className="grid grid-cols-2 gap-3 py-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 py-2">
             <div className="p-3 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] text-center">
               <span className="text-xl font-black text-[#0F4C5C]">12,450+</span>
               <p className="text-xs text-[#64748B] font-medium mt-0.5">Active Students & Alumni</p>

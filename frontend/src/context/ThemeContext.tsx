@@ -1,17 +1,35 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
+export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  // Responsive viewport states
+  isMobile: boolean;
+  isTablet: boolean;
+  isDesktop: boolean;
+  screenWidth: number;
+  screenHeight: number;
+  breakpoint: Breakpoint;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = "knots-theme";
 const LEGACY_STORAGE_KEY = "knots_theme";
+
+// Helper to calculate active responsive breakpoint
+const getBreakpoint = (width: number): Breakpoint => {
+  if (width < 640) return "xs";
+  if (width < 768) return "sm";
+  if (width < 1024) return "md";
+  if (width < 1280) return "lg";
+  if (width < 1536) return "xl";
+  return "2xl";
+};
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -34,6 +52,29 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     // 3. Default to light
     return "light";
   });
+
+  // Responsive Viewport Dimensions
+  const [windowSize, setWindowSize] = useState<{
+    width: number;
+    height: number;
+  }>(() => {
+    if (typeof window !== "undefined") {
+      return { width: window.innerWidth, height: window.innerHeight };
+    }
+    return { width: 1200, height: 800 };
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -72,8 +113,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     setThemeState(newTheme);
   };
 
+  const isMobile = windowSize.width < 768;
+  const isTablet = windowSize.width >= 768 && windowSize.width < 1024;
+  const isDesktop = windowSize.width >= 1024;
+  const breakpoint = getBreakpoint(windowSize.width);
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        toggleTheme,
+        setTheme,
+        isMobile,
+        isTablet,
+        isDesktop,
+        screenWidth: windowSize.width,
+        screenHeight: windowSize.height,
+        breakpoint,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -86,3 +144,4 @@ export const useTheme = (): ThemeContextType => {
   }
   return context;
 };
+

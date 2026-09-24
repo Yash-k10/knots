@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense, lazy } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { ShieldAlert, ArrowLeft } from "lucide-react";
 import { apiRequest } from "../services/api";
@@ -6,36 +6,48 @@ import { apiRequest } from "../services/api";
 // Layouts
 import DashboardLayout from "../components/layout/DashboardLayout";
 
-// Public Pages
-import Landing from "../pages/Landing";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
+// Public Pages (Lazy Loaded)
+const Landing = lazy(() => import("../pages/Landing"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
 
-// Protected Pages
+// Protected Core Pages (Feed is direct for instant initial render, secondary pages lazy loaded)
 import Feed from "../pages/Feed";
-import Profile from "../pages/Profile";
-import Connections from "../pages/Connections";
-import Events from "../pages/Events";
-import Messaging from "../pages/Messaging";
-import Notifications from "../pages/Notifications";
-import Clubs from "../pages/Clubs";
-import Admin from "../pages/Admin";
-import Controller from "../pages/Controller";
-import Settings from "../pages/Settings";
+const Profile = lazy(() => import("../pages/Profile"));
+const Connections = lazy(() => import("../pages/Connections"));
+const Events = lazy(() => import("../pages/Events"));
+const Messaging = lazy(() => import("../pages/Messaging"));
+const Notifications = lazy(() => import("../pages/Notifications"));
+const Clubs = lazy(() => import("../pages/Clubs"));
+const Admin = lazy(() => import("../pages/Admin"));
+const Controller = lazy(() => import("../pages/Controller"));
+const Settings = lazy(() => import("../pages/Settings"));
 
-// Role-Specific Dedicated Pages
-import Students from "../pages/Students";
-import DepartmentPage from "../pages/DepartmentPage";
-import ApplicationsPage from "../pages/ApplicationsPage";
-import PlacementsPage from "../pages/PlacementsPage";
-import ReportsPage from "../pages/ReportsPage";
-import InstitutionOverview from "../pages/InstitutionOverview";
-import ManagementConnectPage from "../pages/ManagementConnectPage";
-import DepartmentAnalyticsPage from "../pages/DepartmentAnalyticsPage";
-import FacultyOpportunities from "../pages/FacultyOpportunities";
-import OpportunitiesPage from "../pages/OpportunitiesPage";
-import TpoDashboard from "../pages/TpoDashboard";
-import HodDashboard from "../pages/HodDashboard";
+// Role-Specific Dedicated Pages (Lazy Loaded)
+const Students = lazy(() => import("../pages/Students"));
+const DepartmentPage = lazy(() => import("../pages/DepartmentPage"));
+const ApplicationsPage = lazy(() => import("../pages/ApplicationsPage"));
+const PlacementsPage = lazy(() => import("../pages/PlacementsPage"));
+const ReportsPage = lazy(() => import("../pages/ReportsPage"));
+const InstitutionOverview = lazy(() => import("../pages/InstitutionOverview"));
+const ManagementConnectPage = lazy(() => import("../pages/ManagementConnectPage"));
+const DepartmentAnalyticsPage = lazy(() => import("../pages/DepartmentAnalyticsPage"));
+const FacultyOpportunities = lazy(() => import("../pages/FacultyOpportunities"));
+const OpportunitiesPage = lazy(() => import("../pages/OpportunitiesPage"));
+const TpoDashboard = lazy(() => import("../pages/TpoDashboard"));
+const HodDashboard = lazy(() => import("../pages/HodDashboard"));
+
+// Lightweight skeleton fallback during lazy route transitions
+const RouteLoadingFallback = () => (
+  <div className="w-full max-w-5xl mx-auto py-8 px-4 space-y-6 animate-pulse">
+    <div className="h-8 bg-slate-200 dark:bg-slate-800/80 rounded-xl w-48 mb-6"></div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="h-36 bg-slate-200 dark:bg-slate-800/80 rounded-2xl md:col-span-2"></div>
+      <div className="h-36 bg-slate-200 dark:bg-slate-800/80 rounded-2xl"></div>
+    </div>
+    <div className="h-56 bg-slate-200 dark:bg-slate-800/80 rounded-2xl"></div>
+  </div>
+);
 
 // Protected Route Wrapper Component
 interface ProtectedRouteProps {
@@ -266,7 +278,7 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
 
   if (!isAuthorized) {
     return (
-      <div className="p-8 max-w-2xl mx-auto my-12 bg-slate-900 border border-slate-800 rounded-xl text-center space-y-6 shadow-2xl">
+      <div className="p-4 sm:p-8 max-w-2xl mx-4 sm:mx-auto my-6 sm:my-12 bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl text-center space-y-4 sm:space-y-6 shadow-2xl">
         <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full flex items-center justify-center mx-auto">
           <ShieldAlert className="h-8 w-8" />
         </div>
@@ -296,123 +308,125 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      {/* Public Landing & Informational Pages */}
-      <Route path="/landing" element={<Landing />} />
-      <Route path="/welcome" element={<Landing />} />
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
+        {/* Public Landing & Informational Pages */}
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/welcome" element={<Landing />} />
 
-      {/* Public Auth Pages (Redirect to dashboard if already authenticated) */}
-      <Route
-        path="/login"
-        element={
-          <PublicOnlyRoute>
-            <Login />
-          </PublicOnlyRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicOnlyRoute>
-            <Register />
-          </PublicOnlyRoute>
-        }
-      />
+        {/* Public Auth Pages (Redirect to dashboard if already authenticated) */}
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <Login />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <Register />
+            </PublicOnlyRoute>
+          }
+        />
 
-      {/* Main Authenticated Application */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Feed />} />
-        <Route path="dashboard" element={<Feed />} />
-        <Route path="feed" element={<Feed />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="profile/:userId" element={<Profile />} />
-        <Route path="connections" element={<Connections />} />
-        <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo", "controller", "hod"]}><Students /></RoleAllowedRoute>} />
-        <Route path="department" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
-        <Route path="departments" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
-        <Route path="applications" element={<RoleAllowedRoute allowedRoles={["controller", "tpo"]}><ApplicationsPage /></RoleAllowedRoute>} />
-        <Route path="placements" element={<RoleAllowedRoute allowedRoles={["tpo", "hod", "controller"]}><PlacementsPage /></RoleAllowedRoute>} />
-        <Route path="reports" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><ReportsPage /></RoleAllowedRoute>} />
-        <Route path="management-connect" element={<RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "management"]}><ManagementConnectPage /></RoleAllowedRoute>} />
-        <Route path="department-analytics" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin", "management"]}><DepartmentAnalyticsPage /></RoleAllowedRoute>} />
-        <Route path="institution" element={<RoleAllowedRoute allowedRoles={["principal", "ceo"]}><InstitutionOverview /></RoleAllowedRoute>} />
-        <Route path="academic-overview" element={<RoleAllowedRoute allowedRoles={["dean"]}><InstitutionOverview /></RoleAllowedRoute>} />
-        <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
-        <Route path="opportunities" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
-        <Route path="faculty-opportunities" element={<RoleAllowedRoute allowedRoles={["faculty", "coordinator", "hod", "tpo", "controller", "admin", "super admin"]}><FacultyOpportunities /></RoleAllowedRoute>} />
-        <Route path="events" element={<Events />} />
-        <Route path="clubs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "central admin", "admin", "super admin", "management", "faculty", "hod", "tpo", "dean", "principal", "ceo"]}><Clubs /></RoleAllowedRoute>} />
-        <Route path="messaging" element={<Messaging />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="users" element={<Admin />} />
+        {/* Main Authenticated Application */}
         <Route
-          path="admin"
+          path="/"
           element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
           }
-        />
-        <Route
-          path="controller"
-          element={
-            <ControllerRoute>
-              <Controller />
-            </ControllerRoute>
-          }
-        />
-        <Route
-          path="controller/dashboard"
-          element={
-            <ControllerRoute>
-              <Controller />
-            </ControllerRoute>
-          }
-        />
-        <Route
-          path="tpo"
-          element={
-            <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
-              <TpoDashboard />
-            </RoleAllowedRoute>
-          }
-        />
-        <Route
-          path="tpo/dashboard"
-          element={
-            <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
-              <TpoDashboard />
-            </RoleAllowedRoute>
-          }
-        />
-        <Route
-          path="hod"
-          element={
-            <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
-              <HodDashboard />
-            </RoleAllowedRoute>
-          }
-        />
-        <Route
-          path="hod/dashboard"
-          element={
-            <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
-              <HodDashboard />
-            </RoleAllowedRoute>
-          }
-        />
-        <Route path="settings" element={<Settings />} />
-      </Route>
+        >
+          <Route index element={<Feed />} />
+          <Route path="dashboard" element={<Feed />} />
+          <Route path="feed" element={<Feed />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="profile/:userId" element={<Profile />} />
+          <Route path="connections" element={<Connections />} />
+          <Route path="students" element={<RoleAllowedRoute allowedRoles={["faculty", "tpo", "controller", "hod"]}><Students /></RoleAllowedRoute>} />
+          <Route path="department" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
+          <Route path="departments" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><DepartmentPage /></RoleAllowedRoute>} />
+          <Route path="applications" element={<RoleAllowedRoute allowedRoles={["controller", "tpo"]}><ApplicationsPage /></RoleAllowedRoute>} />
+          <Route path="placements" element={<RoleAllowedRoute allowedRoles={["tpo", "hod", "controller"]}><PlacementsPage /></RoleAllowedRoute>} />
+          <Route path="reports" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin"]}><ReportsPage /></RoleAllowedRoute>} />
+          <Route path="management-connect" element={<RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "management"]}><ManagementConnectPage /></RoleAllowedRoute>} />
+          <Route path="department-analytics" element={<RoleAllowedRoute allowedRoles={["hod", "controller", "admin", "super admin", "management"]}><DepartmentAnalyticsPage /></RoleAllowedRoute>} />
+          <Route path="institution" element={<RoleAllowedRoute allowedRoles={["principal", "ceo"]}><InstitutionOverview /></RoleAllowedRoute>} />
+          <Route path="academic-overview" element={<RoleAllowedRoute allowedRoles={["dean"]}><InstitutionOverview /></RoleAllowedRoute>} />
+          <Route path="jobs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
+          <Route path="opportunities" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "tpo", "faculty", "coordinator", "hod", "recruiter", "dean", "principal", "ceo"]}><OpportunitiesPage /></RoleAllowedRoute>} />
+          <Route path="faculty-opportunities" element={<RoleAllowedRoute allowedRoles={["faculty", "coordinator", "hod", "tpo", "controller", "admin", "super admin"]}><FacultyOpportunities /></RoleAllowedRoute>} />
+          <Route path="events" element={<Events />} />
+          <Route path="clubs" element={<RoleAllowedRoute allowedRoles={["student", "alumni", "controller", "central admin", "admin", "super admin", "management", "faculty", "hod", "tpo", "dean", "principal", "ceo"]}><Clubs /></RoleAllowedRoute>} />
+          <Route path="messaging" element={<Messaging />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="users" element={<Admin />} />
+          <Route
+            path="admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="controller"
+            element={
+              <ControllerRoute>
+                <Controller />
+              </ControllerRoute>
+            }
+          />
+          <Route
+            path="controller/dashboard"
+            element={
+              <ControllerRoute>
+                <Controller />
+              </ControllerRoute>
+            }
+          />
+          <Route
+            path="tpo"
+            element={
+              <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
+                <TpoDashboard />
+              </RoleAllowedRoute>
+            }
+          />
+          <Route
+            path="tpo/dashboard"
+            element={
+              <RoleAllowedRoute allowedRoles={["tpo", "admin", "super admin", "central admin", "management"]}>
+                <TpoDashboard />
+              </RoleAllowedRoute>
+            }
+          />
+          <Route
+            path="hod"
+            element={
+              <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
+                <HodDashboard />
+              </RoleAllowedRoute>
+            }
+          />
+          <Route
+            path="hod/dashboard"
+            element={
+              <RoleAllowedRoute allowedRoles={["hod", "admin", "super admin", "central admin", "management"]}>
+                <HodDashboard />
+              </RoleAllowedRoute>
+            }
+          />
+          <Route path="settings" element={<Settings />} />
+        </Route>
 
-      {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

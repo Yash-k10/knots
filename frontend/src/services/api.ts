@@ -255,14 +255,17 @@ export async function apiRequest<T = any>(
 
     // Cache GET requests to reduce redundant network calls and enable instant tab renders
     if (isGet) {
-      // Identity/meta endpoints (stable, fresh 60s, stale 5m)
+      // Identity/meta endpoints (stable, fresh 120s, stale 10m)
       const longCacheEndpoints = [
         "/users/me",
+        "/profiles/me",
         "/users/roles",
         "/jobs/companies",
         "/events/categories",
+        "/departments/faculty",
+        "/departments",
       ];
-      // Dynamic lists & feeds (fresh 20s, stale 2m)
+      // Dynamic lists & feeds (fresh 30s, stale 3m)
       const shortCacheEndpoints = [
         "/notifications/unread-count",
         "/messages/unread/count",
@@ -273,7 +276,6 @@ export async function apiRequest<T = any>(
         "/jobs/applications/me",
         "/events",
         "/clubs",
-        "/departments",
         "/opportunities",
         "/connections",
         "/profiles",
@@ -283,14 +285,14 @@ export async function apiRequest<T = any>(
       if (longCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
         apiCache.set(cacheKey, {
           data: result,
-          freshUntil: now + 60000,
-          staleUntil: now + 300000,
+          freshUntil: now + 120000,
+          staleUntil: now + 600000,
         });
       } else if (shortCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
         apiCache.set(cacheKey, {
           data: result,
-          freshUntil: now + 20000,
-          staleUntil: now + 120000,
+          freshUntil: now + 30000,
+          staleUntil: now + 180000,
         });
       }
     }

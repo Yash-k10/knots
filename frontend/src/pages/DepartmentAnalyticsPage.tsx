@@ -82,24 +82,24 @@ export default function DepartmentAnalyticsPage() {
       </div>
 
       {/* 4 Core Quantitative Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
           <div className="flex items-center justify-between text-[#5851A4] mb-1">
             <span className="text-[10px] font-black uppercase">Weekly Student Engagement</span>
             <Users className="h-4 w-4 text-[#4B63D2]" />
           </div>
-          <div className="text-2xl font-black text-[#1E2746]">88.5%</div>
+          <div className="text-xl sm:text-2xl font-black text-[#1E2746]">88.5%</div>
           <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
             <TrendingUp className="h-3 w-3 inline" /> +4.2% from previous term
           </p>
         </div>
 
-        <div className="bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-1">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl p-4 sm:p-5 shadow-sm space-y-1">
           <div className="flex items-center justify-between text-[#5851A4] mb-1">
             <span className="text-[10px] font-black uppercase">Profile Completion Rate</span>
             <CheckCircle2 className="h-4 w-4 text-[#4B63D2]" />
           </div>
-          <div className="text-2xl font-black text-[#1E2746]">92.4%</div>
+          <div className="text-xl sm:text-2xl font-black text-[#1E2746]">92.4%</div>
           <p className="text-[10px] text-[#4B63D2] font-bold">563 Verified Student Profiles</p>
         </div>
 
@@ -249,7 +249,7 @@ export default function DepartmentAnalyticsPage() {
             <span className="text-xs font-bold text-[#5851A4]">Annual Metrics</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div className="p-4 bg-[#FAF9FD] rounded-2xl border border-[#EAE4F7]">
               <span className="text-[10px] font-black uppercase text-[#5851A4] block">
                 Tier-1 Offers (&gt;10 LPA)

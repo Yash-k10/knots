@@ -262,7 +262,7 @@ export default function Landing() {
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="group relative p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-sm hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
+                className="group relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-sm hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4B63D2]/10 to-[#5851A4]/20 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
@@ -375,7 +375,7 @@ export default function Landing() {
               
               {/* Card 1: Students across departments and batches */}
               <div className="lg:col-span-6 flex justify-start">
-                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-full max-w-md p-4 sm:p-6 md:p-7 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-sm border border-blue-500/20">
                       <Users className="w-6 h-6" />
@@ -407,7 +407,7 @@ export default function Landing() {
 
               {/* Card 2: Faculty and mentors */}
               <div className="lg:col-span-6 flex justify-end">
-                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-full max-w-md p-4 sm:p-6 md:p-7 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 shadow-sm border border-indigo-500/20">
                       <GraduationCap className="w-6 h-6" />
@@ -443,7 +443,7 @@ export default function Landing() {
               
               {/* Card 3: Alumni and industry professionals */}
               <div className="lg:col-span-6 flex justify-start">
-                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-full max-w-md p-4 sm:p-6 md:p-7 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-sm border border-purple-500/20">
                       <Award className="w-6 h-6" />
@@ -475,7 +475,7 @@ export default function Landing() {
 
               {/* Card 4: HODs and department authorities */}
               <div className="lg:col-span-6 flex justify-end">
-                <div className="w-full max-w-md p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
+                <div className="w-full max-w-md p-4 sm:p-6 md:p-7 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-lg shadow-[#5851A4]/5 hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1 transition-all duration-300">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm border border-amber-500/20">
                       <Building className="w-6 h-6" />
@@ -595,7 +595,7 @@ export default function Landing() {
             ].map((opp, idx) => (
               <div
                 key={idx}
-                className="p-6 rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-amber-500/40 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
+                className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-amber-500/40 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">

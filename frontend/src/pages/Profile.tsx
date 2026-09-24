@@ -239,7 +239,7 @@ export default function Profile() {
           />
 
           {/* Recent Activity Feed */}
-          <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-6">
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAE4F7] pb-4">
               <h3 className="text-xl font-black text-[#1E2746] flex items-center gap-2">
                 <Activity className="h-5 w-5 text-[#4B63D2]" />

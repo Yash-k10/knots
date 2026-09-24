@@ -378,7 +378,7 @@ export default function Connections() {
         </div>
       )}
 
-      <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm">
+      <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-black text-[#1E2746] mb-1 flex items-center gap-2.5">
