@@ -31,7 +31,7 @@ import {
   Flag,
 } from "lucide-react";
 import { apiRequest, getMediaUrl } from "../services/api";
-import { formatTimeAgo } from "../utils/date";
+import { formatTimeAgo, parseDate } from "../utils/date";
 import {
   fetchConversations,
   fetchCampusUsers,
@@ -527,7 +527,7 @@ export default function Feed() {
         const uniqueIncoming = newIncomingPosts.filter(
           (p) => !existingIds.has(p.id)
         );
-        return [...uniqueIncoming, ...prev];
+        return [...uniqueIncoming, ...prev].sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime());
       });
       setNewIncomingPosts([]);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -550,10 +550,10 @@ export default function Feed() {
       );
 
       if (reset) {
-        setPosts(response);
+        setPosts(response.sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime()));
         setSkip(LIMIT);
       } else {
-        setPosts((prev) => [...prev, ...response]);
+        setPosts((prev) => [...prev, ...response].sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime()));
         setSkip((prev) => prev + LIMIT);
       }
 

@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  DollarSign,
+  IndianRupee,
   BookOpen,
   Award,
   Trash2,
@@ -1323,7 +1323,7 @@ export default function FacultyOpportunities() {
                         )}
                         {opp.stipend_or_salary && (
                           <span className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" />
+                            <IndianRupee className="w-3 h-3" />
                             {opp.stipend_or_salary}
                           </span>
                         )}

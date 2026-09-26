@@ -134,7 +134,7 @@ export default function Landing() {
 
       {/* Main Content Area */}
       <main className="relative z-10">
-        {/* HERO SECTION */}
+{/* HERO SECTION */}
         <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
           {/* Institutional Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 dark:bg-[#1E293B]/90 border border-[#EAE4F7] dark:border-[#334155] shadow-sm mb-6 animate-fade-in">
@@ -217,68 +217,6 @@ export default function Landing() {
                 <p className="text-[11px] text-[#5851A4] dark:text-[#94A3B8] font-medium mt-0.5">
                   {card.desc}
                 </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* SECTION 1: Discover Your Ideal Career Path */}
-        <section
-          id="career-path"
-          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
-        >
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
-              Discover Your Ideal Career Path
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
-              Harness AI-driven diagnostics and goal-oriented roadmaps tailored
-              specifically to your academic performance and aspirations.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Sparkles,
-                title: "AI-powered career guidance",
-                desc: "Intelligent career trajectory matching based on your coursework, strengths, and technological interest areas.",
-              },
-              {
-                icon: LineChart,
-                title: "Personalized skill-gap analysis",
-                desc: "Real-time benchmarking of your current technical & soft skills against current high-demand industry job standards.",
-              },
-              {
-                icon: Target,
-                title: "Goal-based career roadmaps",
-                desc: "Structured semester-by-semester milestone blueprints for software engineering, core engineering, and competitive exams.",
-              },
-              {
-                icon: Briefcase,
-                title: "Internship and career guidance",
-                desc: "Proactive internship alerts, domain training suggestions, and authorized faculty mentorship checkpoints.",
-              },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="group relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-sm hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4B63D2]/10 to-[#5851A4]/20 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
-                    <item.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base font-black text-[#1E2746] dark:text-white tracking-tight group-hover:text-[#4B63D2] transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-xs text-[#5851A4] dark:text-[#94A3B8] leading-relaxed font-medium">
-                    {item.desc}
-                  </p>
-                </div>
-                <div className="mt-5 pt-4 border-t border-[#EAE4F7]/60 dark:border-[#1F2937] flex items-center text-xs font-bold text-[#4B63D2] dark:text-[#818CF8]">
-                  <span>Learn more</span>
-                  <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
               </div>
             ))}
           </div>
@@ -616,7 +554,184 @@ export default function Landing() {
             ))}
           </div>
         </section>
-      </main>
+      
+        {/* SECTION 3: Generate Your Resume With One Click */}
+        <section
+          id="resume-builder"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#4B63D2]/10 dark:bg-[#4B63D2]/20 border border-[#4B63D2]/20 text-xs font-bold text-[#4B63D2] dark:text-[#818CF8] mb-4">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>One-Click Magic</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#1E2746] dark:text-white mb-6">
+                Generate Your Resume With One Click
+              </h2>
+              <p className="text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium leading-relaxed mb-8">
+                Instantly transform your profile, academic achievements, projects, and skills into a professionally formatted, industry-ready resume. Say goodbye to manual formatting.
+              </p>
+              
+              <ul className="space-y-4 mb-8">
+                {[
+                  "Auto-syncs with your verified college profile",
+                  "ATS-friendly formatting built-in",
+                  "Tailored for engineering & tech roles"
+                ].map((feature, idx) => (
+                  <li key={idx} className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-semibold text-[#1E2746] dark:text-[#E2E8F0]">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <Link to="/register" className="px-6 py-3 w-fit rounded-2xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3f53b5] hover:to-[#4a448d] text-white text-sm font-bold shadow-lg shadow-[#4B63D2]/30 transition-all flex items-center gap-2">
+                <span>Try Resume Builder</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            
+            <div className="order-1 lg:order-2 relative h-[400px] sm:h-[500px] w-full flex items-center justify-center">
+              {/* Background decoration */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#4B63D2]/5 to-purple-500/5 rounded-full blur-3xl" />
+              
+              {/* Back Resume (Rajesh Sharma) */}
+              <div className="absolute right-4 sm:right-12 top-8 sm:top-12 w-[280px] sm:w-[340px] bg-white dark:bg-[#111827] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 transform rotate-6 hover:rotate-3 transition-transform duration-500 z-10 opacity-90 overflow-hidden">
+                <div className="bg-[#374151] p-5 text-white">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 border border-white/30 rounded flex items-center justify-center text-lg font-bold">RS</div>
+                    <div>
+                      <h3 className="text-xl font-bold uppercase tracking-wider">Rajesh Sharma</h3>
+                      <p className="text-[10px] text-gray-300">rajesh.s@example.com / +91-9876543210</p>
+                      <p className="text-[10px] text-gray-300">Mumbai, Maharashtra</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 text-[#374151] dark:text-gray-300 space-y-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">Summary</div>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded mb-1.5" />
+                    <div className="w-5/6 h-2 bg-gray-200 dark:bg-gray-700 rounded mb-1.5" />
+                    <div className="w-4/6 h-2 bg-gray-200 dark:bg-gray-700 rounded" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">Experience</div>
+                    <div className="w-3/4 h-2 bg-gray-200 dark:bg-gray-700 rounded mb-1.5" />
+                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded mb-1.5" />
+                    <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded" />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Front Resume (Arjun Patel) */}
+              <div className="absolute left-4 sm:left-12 bottom-8 sm:bottom-12 w-[280px] sm:w-[340px] bg-white dark:bg-[#111827] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 transform -rotate-3 hover:rotate-0 transition-transform duration-500 z-20 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] p-5 text-white">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 border border-white/30 rounded flex items-center justify-center text-lg font-bold">AP</div>
+                    <div>
+                      <h3 className="text-xl font-bold uppercase tracking-wider">Arjun Patel</h3>
+                      <p className="text-[10px] text-indigo-100">arjun.patel@sbjit.edu.in / +91-9123456789</p>
+                      <p className="text-[10px] text-indigo-100">Nagpur, Maharashtra</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 text-[#374151] dark:text-gray-300 space-y-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[#4B63D2] dark:text-indigo-400 tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">Education</div>
+                    <p className="text-[11px] font-bold">S.B. Jain Institute of Technology</p>
+                    <p className="text-[10px] text-gray-500">B.Tech in Computer Science (2021-2025)</p>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[#4B63D2] dark:text-indigo-400 tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">Skills</div>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {['React', 'TypeScript', 'Python', 'FastAPI'].map(skill => (
+                        <span key={skill} className="text-[9px] px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[#4B63D2] dark:text-indigo-400 tracking-widest border-b border-gray-200 dark:border-gray-700 pb-1 mb-2">Projects</div>
+                    <p className="text-[11px] font-bold">Knots Platform</p>
+                    <p className="text-[10px] text-gray-500 leading-snug">Developed a full-stack campus network using React and FastAPI.</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Decorative badges */}
+              <div className="absolute -bottom-2 -right-2 sm:bottom-4 sm:right-4 z-30 bg-white dark:bg-[#1E293B] p-3 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 rotate-12 transition-transform hover:scale-110">
+                <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 p-2 rounded-xl">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+{/* SECTION 1: Discover Your Ideal Career Path */}
+        <section
+          id="career-path"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20"
+        >
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-[#1E2746] dark:text-white">
+              Discover Your Ideal Career Path
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-[#5851A4] dark:text-[#94A3B8] font-medium">
+              Harness AI-driven diagnostics and goal-oriented roadmaps tailored
+              specifically to your academic performance and aspirations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Sparkles,
+                title: "AI-powered career guidance",
+                desc: "Intelligent career trajectory matching based on your coursework, strengths, and technological interest areas.",
+              },
+              {
+                icon: LineChart,
+                title: "Personalized skill-gap analysis",
+                desc: "Real-time benchmarking of your current technical & soft skills against current high-demand industry job standards.",
+              },
+              {
+                icon: Target,
+                title: "Goal-based career roadmaps",
+                desc: "Structured semester-by-semester milestone blueprints for software engineering, core engineering, and competitive exams.",
+              },
+              {
+                icon: Briefcase,
+                title: "Internship and career guidance",
+                desc: "Proactive internship alerts, domain training suggestions, and authorized faculty mentorship checkpoints.",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="group relative p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/85 dark:bg-[#111827]/85 backdrop-blur-md border border-[#EAE4F7] dark:border-[#1F2937] hover:border-[#4B63D2]/40 dark:hover:border-[#4B63D2]/40 shadow-sm hover:shadow-xl hover:shadow-[#4B63D2]/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#4B63D2]/10 to-[#5851A4]/20 text-[#4B63D2] dark:text-[#818CF8] flex items-center justify-center group-hover:scale-110 transition-transform mb-4">
+                    <item.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-black text-[#1E2746] dark:text-white tracking-tight group-hover:text-[#4B63D2] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-xs text-[#5851A4] dark:text-[#94A3B8] leading-relaxed font-medium">
+                    {item.desc}
+                  </p>
+                </div>
+                <div className="mt-5 pt-4 border-t border-[#EAE4F7]/60 dark:border-[#1F2937] flex items-center text-xs font-bold text-[#4B63D2] dark:text-[#818CF8]">
+                  <span>Learn more</span>
+                  <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        </main>
 
       {/* 3. MULTI-COLUMN KNOTS FOOTER */}
       <footer className="relative z-10 w-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-t border-[#EAE4F7] dark:border-[#1F2937] mt-auto">

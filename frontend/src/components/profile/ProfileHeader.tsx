@@ -243,6 +243,8 @@ export default function ProfileHeader({
     `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "U";
 
   const isAlumni = profile.role_name?.toLowerCase() === "alumni";
+  const roleName = profile.role_name?.toLowerCase().trim() || "student";
+  const canGenerateResume = isOwnProfile && (roleName === "student" || roleName.includes("alumni"));
   const yearBadgeLabel = isAlumni ? "Batch" : "Class of";
   const displayYear = isAlumni && profile.graduation_year ? profile.graduation_year - 4 : profile.graduation_year;
 
@@ -655,7 +657,7 @@ export default function ProfileHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-center md:self-start mt-4 md:mt-0">
-            {isOwnProfile && (
+            {canGenerateResume && (
               <button
                 onClick={handleGenerateResume}
                 disabled={isDownloadingResume}

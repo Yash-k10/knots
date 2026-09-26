@@ -4,7 +4,7 @@ import {
   Briefcase,
   MapPin,
   Building,
-  DollarSign,
+  IndianRupee,
   PlusCircle,
   Clock,
   Send,
@@ -208,6 +208,9 @@ export default function Jobs() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
+      const hasApplied = applications.some((app) => app.job_posting_id === job.id);
+      if (hasApplied) return false;
+
       if (selectedDepartmentFilter === "ALL") return true;
       const d = selectedDepartmentFilter.toLowerCase();
       const content = `${job.title} ${job.description} ${(job.required_skills || []).join(" ")} ${job.department || ""} ${job.company?.name || ""}`.toLowerCase();
@@ -246,7 +249,7 @@ export default function Jobs() {
       }
       return content.includes(d);
     });
-  }, [jobs, selectedDepartmentFilter]);
+  }, [jobs, selectedDepartmentFilter, applications]);
 
   // Company Alumni Search state
   const [companySearchQuery, setCompanySearchQuery] = useState<string>("");
@@ -488,6 +491,18 @@ export default function Jobs() {
 
   // SBJIT Alumni Directory by Company
   const alumniDirectory: AlumniWorkRecord[] = [
+    {
+      id: 999,
+      name: "Sujal Sangle",
+      email: "sujalsangle.aiml23@sbjit.edu.in",
+      company: "TCS",
+      role: "Software Engineer",
+      department: "CSE (AIML)",
+      batch: "2023",
+      status: "CURRENT",
+      linkedInUrl: "https://linkedin.com",
+      hasInfinityBadge: false,
+    },
     {
       id: 1,
       name: "Priya Verma",
@@ -1539,7 +1554,7 @@ export default function Jobs() {
                     {/* Stipend / Salary */}
                     <div className="pt-2 border-t border-[#EAE4F7]">
                       <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1E2746]">
-                        <DollarSign className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span className="text-[#5851A4]">
                           {job.job_type === "INTERNSHIP" ? "Stipend:" : "Salary:"}
                         </span>
@@ -3198,7 +3213,7 @@ export default function Jobs() {
 
             <div className="p-3.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl text-xs space-y-2">
               <div className="flex items-center gap-2 text-[#1E2746] font-bold">
-                <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
+                <IndianRupee className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>
                   {selectedJobDetails.job_type === "INTERNSHIP" ? "Stipend: " : "Salary: "}
                   <strong className="text-emerald-700">

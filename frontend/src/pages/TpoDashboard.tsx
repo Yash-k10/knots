@@ -15,7 +15,7 @@ import {
   Send,
   Loader2,
   ExternalLink,
-  DollarSign,
+  IndianRupee,
   ShieldCheck,
   CheckCircle2,
   X,
@@ -814,7 +814,7 @@ export default function TpoDashboard() {
               Avg / Highest LPA
             </span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
+              <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
@@ -1025,7 +1025,7 @@ export default function TpoDashboard() {
                           <span className="truncate">{job.location || job.workplace_type}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[#5851A4] dark:text-[#94A3B8]">
-                          <DollarSign className="w-3.5 h-3.5 text-[#9188BE]" />
+                          <IndianRupee className="w-3.5 h-3.5 text-[#9188BE]" />
                           <span className="font-bold text-[#1E2746] dark:text-[#F1F5F9]">{job.salary_range || "Competitive"}</span>
                         </div>
                       </div>

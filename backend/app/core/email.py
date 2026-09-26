@@ -530,3 +530,103 @@ def send_application_alert_email(
     except Exception as e:
         logger.warning(f"Failed to dispatch application notification email: {e}")
         return False
+
+
+def _send_referral_via_brevo(
+    recipient: str,
+    alumni_name: str,
+    student_name: str,
+    department: str,
+    opportunity_title: str,
+    company_name: str,
+    student_profile_link: str,
+    opportunity_link: str,
+) -> bool:
+    """Dispatch referral email via Brevo HTTPS REST API using template."""
+    api_key = settings.BREVO_API_KEY.strip()
+    template_id = settings.BREVO_REFERRAL_TEMPLATE_ID
+    if not template_id:
+        logger.warning("BREVO_REFERRAL_TEMPLATE_ID not configured.")
+        return False
+
+    import urllib.request
+    import json
+
+    payload = {
+        "to": [{"email": recipient}],
+        "templateId": int(template_id),
+        "params": {
+            "alumni_name": alumni_name,
+            "student_name": student_name,
+            "department": department,
+            "opportunity_title": opportunity_title,
+            "company_name": company_name,
+            "student_profile_link": student_profile_link,
+            "opportunity_link": opportunity_link,
+        },
+    }
+
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "api-key": api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        if resp.status in (200, 201, 202):
+            logger.info(
+                f"[SUCCESS] Referral email dispatched to {recipient} via Brevo HTTP API"
+            )
+            return True
+        else:
+            resp_body = resp.read().decode("utf-8", errors="replace")
+            logger.error(
+                f"[ERROR] Brevo API responded with status {resp.status}: {resp_body}"
+            )
+            raise RuntimeError(f"Brevo HTTP API failed with status {resp.status}")
+
+
+def send_referral_email(
+    recipient_email: str,
+    alumni_name: str,
+    student_name: str,
+    department: str,
+    opportunity_title: str,
+    company_name: str,
+    student_profile_link: str,
+    opportunity_link: str,
+) -> bool:
+    normalized_recipient = recipient_email.strip().lower()
+    logger.info(
+        f"[REFERRAL DISPATCH] Initiating referral delivery to {normalized_recipient}"
+    )
+
+    try:
+        if settings.BREVO_API_KEY and settings.BREVO_REFERRAL_TEMPLATE_ID:
+            try:
+                return _send_referral_via_brevo(
+                    normalized_recipient,
+                    alumni_name,
+                    student_name,
+                    department,
+                    opportunity_title,
+                    company_name,
+                    student_profile_link,
+                    opportunity_link,
+                )
+            except Exception as e:
+                logger.warning(f"Brevo referral delivery failed: {e}")
+                return False
+        else:
+            logger.warning(
+                "Brevo credentials or template ID missing for referral emails."
+            )
+            return False
+    except Exception as e:
+        logger.warning(f"Failed to dispatch referral notification email: {e}")
+        return False

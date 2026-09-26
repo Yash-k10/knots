@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { profileService, ProfileResponse } from "../services/profile";
 import { apiRequest, getMediaUrl } from "../services/api";
-import { formatTimeAgo } from "../utils/date";
+import { formatTimeAgo, parseDate } from "../utils/date";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import SkillsSection from "../components/profile/SkillsSection";
 import EducationSection from "../components/profile/EducationSection";
@@ -55,7 +55,7 @@ export default function Profile() {
         const posts = await apiRequest<any[]>(
           `/posts/user/${targetProfile.user_id}`,
         );
-        setUserPosts(posts || []);
+        setUserPosts((posts || []).sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime()));
       } catch (err) {
         console.error("Failed to load user posts activity", err);
       } finally {

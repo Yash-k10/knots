@@ -9,7 +9,7 @@ import {
   Search,
   ChevronRight,
   Loader2,
-  DollarSign,
+  IndianRupee,
   ShieldCheck,
   Eye,
   FileSpreadsheet,
@@ -539,7 +539,7 @@ export default function HodDashboard() {
                           </span>
                           {opp.stipend_or_salary && (
                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-0.5">
-                              <DollarSign className="w-3 h-3 text-[#4B63D2]" />
+                              <IndianRupee className="w-3 h-3 text-[#4B63D2]" />
                               {opp.stipend_or_salary}
                             </span>
                           )}
@@ -583,28 +583,33 @@ export default function HodDashboard() {
               </div>
 
               <div className="space-y-3 my-2">
-                {[
-                  { label: "1st Year (FY)", count: students.filter((s) => (s.academic_year || "").includes("1")).length || 110 },
-                  { label: "2nd Year (SY)", count: students.filter((s) => (s.academic_year || "").includes("2")).length || 125 },
-                  { label: "3rd Year (TY)", count: students.filter((s) => (s.academic_year || "").includes("3")).length || 118 },
-                  { label: "4th Year (BTech)", count: students.filter((s) => (s.academic_year || "").includes("4")).length || 97 },
-                ].map((item, idx) => {
-                  const pct = totalDeptStudents > 0 ? Math.round((item.count / totalDeptStudents) * 100) : 25;
-                  return (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-[#1E2746] dark:text-[#F1F5F9]">{item.label}</span>
-                        <span className="text-[#4B63D2]">{item.count} Students ({pct}%)</span>
+                {(() => {
+                  const cohortData = [
+                    { label: "1st Year (FY)", count: students.filter((s) => (s.academic_year || "").includes("1")).length || 110 },
+                    { label: "2nd Year (SY)", count: students.filter((s) => (s.academic_year || "").includes("2")).length || 125 },
+                    { label: "3rd Year (TY)", count: students.filter((s) => (s.academic_year || "").includes("3")).length || 118 },
+                    { label: "4th Year (BTech)", count: students.filter((s) => (s.academic_year || "").includes("4")).length || 97 },
+                  ];
+                  const totalCohortStudents = cohortData.reduce((acc, curr) => acc + curr.count, 0);
+
+                  return cohortData.map((item, idx) => {
+                    const pct = totalCohortStudents > 0 ? Math.round((item.count / totalCohortStudents) * 100) : 25;
+                    return (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="text-[#1E2746] dark:text-[#F1F5F9]">{item.label}</span>
+                          <span className="text-[#4B63D2]">{item.count} Students ({pct}%)</span>
+                        </div>
+                        <div className="w-full bg-[#FAF9FD] dark:bg-[#0F172A] border border-[#EAE4F7] dark:border-[#334155] h-2 rounded-full overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] h-full rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full bg-[#FAF9FD] dark:bg-[#0F172A] border border-[#EAE4F7] dark:border-[#334155] h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-gradient-to-r from-[#4B63D2] to-[#5851A4] h-full rounded-full transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
 
               <div className="pt-3 border-t border-[#EAE4F7] dark:border-[#334155]">
@@ -727,7 +732,7 @@ export default function HodDashboard() {
                         </span>
                         {opp.stipend_or_salary && (
                           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                            <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                            <IndianRupee className="w-3.5 h-3.5 text-emerald-600" />
                             {opp.stipend_or_salary}
                           </span>
                         )}

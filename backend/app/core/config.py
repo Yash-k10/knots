@@ -69,6 +69,7 @@ class Settings(BaseSettings):
         None  # e.g., "KNOTS <onboarding@resend.dev>" or "KNOTS <noreply@yourdomain.com>"
     )
     BREVO_API_KEY: str | None = None
+    BREVO_REFERRAL_TEMPLATE_ID: int | None = None
     MAILJET_API_KEY: str | None = None
     MAILJET_API_SECRET: str | None = None
     SENDGRID_API_KEY: str | None = None
