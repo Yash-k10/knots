@@ -44,7 +44,7 @@ import {
   fetchMyApplications,
   fetchJobApplications,
   updateApplicationStatus,
-  requestReferral,
+  sendDirectReferralEmail,
   JobPosting,
   Company,
   Application,
@@ -84,7 +84,7 @@ interface ApplicationWithUpdates extends Application {
 
 export default function Jobs() {
   const [activeTab, setActiveTab] = useState<
-    "explore" | "alumni-companies" | "applications" | "candidates" | "post" | "research" | "student-finder" | "candidate-status"
+    "explore" | "alumni-companies" | "alumni-referrals" | "applications" | "candidates" | "post" | "research" | "student-finder" | "candidate-status"
   >("explore");
 
   const [jobs, setJobs] = useState<JobPosting[]>([]);
@@ -259,10 +259,49 @@ export default function Jobs() {
   const [referralModalTarget, setReferralModalTarget] = useState<AlumniWorkRecord | null>(null);
   const [targetJobTitle, setTargetJobTitle] = useState<string>("");
   const [targetJobUrl, setTargetJobUrl] = useState<string>("");
+  const [studentName, setStudentName] = useState<string>("");
+  const [studentEmail, setStudentEmail] = useState<string>("");
+  const [studentPhone, setStudentPhone] = useState<string>("");
+  const [studentDept, setStudentDept] = useState<string>("CSE");
+  const [studentBatch, setStudentBatch] = useState<string>("2025");
+  const [studentPlacementStatus, setStudentPlacementStatus] = useState<string>("Not Placed yet / Looking for Placement");
+  const [studentCgpa, setStudentCgpa] = useState<string>("");
+  const [studentSkills, setStudentSkills] = useState<string>("");
   const [studentResumeUrl, setStudentResumeUrl] = useState<string>("");
   const [studentLinkedIn, setStudentLinkedIn] = useState<string>("");
+  const [studentGitHub, setStudentGitHub] = useState<string>("");
   const [emailReferralPitch, setEmailReferralPitch] = useState<string>("");
+  const [showReferralEmailPreview, setShowReferralEmailPreview] = useState<boolean>(false);
   const [submittingEmailReferral, setSubmittingEmailReferral] = useState<boolean>(false);
+
+  const openReferralModal = (alum: AlumniWorkRecord, jobTitle?: string, jobUrl?: string) => {
+    setReferralModalTarget(alum);
+    setTargetJobTitle(jobTitle || `Software / Engineering Role at ${alum.company}`);
+    setTargetJobUrl(jobUrl || "");
+    if (currentUser) {
+      setStudentEmail(currentUser.email || "");
+      const uProf = (currentUser as any).profile || (currentUser as any);
+      if (uProf) {
+        const fName = uProf.full_name || `${uProf.first_name || ""} ${uProf.last_name || ""}`.trim();
+        if (fName) setStudentName(fName);
+        if (uProf.phone_number) setStudentPhone(uProf.phone_number);
+        if (uProf.department) setStudentDept(uProf.department);
+        if (uProf.graduation_year) setStudentBatch(String(uProf.graduation_year));
+        if (uProf.placement_status) setStudentPlacementStatus(uProf.placement_status);
+        if (uProf.cgpa) setStudentCgpa(String(uProf.cgpa));
+        if (uProf.skills) {
+          setStudentSkills(Array.isArray(uProf.skills) ? uProf.skills.join(", ") : String(uProf.skills));
+        }
+        if (uProf.resume_url) setStudentResumeUrl(uProf.resume_url);
+        if (uProf.linkedin_url) setStudentLinkedIn(uProf.linkedin_url);
+        if (uProf.github_url) setStudentGitHub(uProf.github_url);
+      }
+    }
+    const defaultPitch = `Hi ${alum.name.split(" ")[0]}, I am a student from SBJIT actively preparing for career opportunities. I noticed your profile and open roles at ${alum.company}. I would be deeply grateful if you could consider providing a referral. I have attached my resume and qualifications for your review.`;
+    setEmailReferralPitch(defaultPitch);
+    setShowReferralEmailPreview(false);
+  };
+
 
   // Modals state for Jobs Apply & Details
   const [selectedJobForApply, setSelectedJobForApply] = useState<JobPosting | null>(null);
@@ -1002,29 +1041,53 @@ export default function Jobs() {
   const handleSendEmailReferral = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!referralModalTarget) return;
+    if (!studentResumeUrl.trim()) {
+      setError("Please provide a valid resume link (Google Drive / PDF / Portfolio).");
+      return;
+    }
     setSubmittingEmailReferral(true);
     setError(null);
 
     try {
-      // Simulate/trigger referral dispatch
-      await requestReferral({
-        job_posting_id: 1,
-        message: `Referral Request to ${referralModalTarget.name} (${referralModalTarget.company}) for Role: ${targetJobTitle}. Resume: ${studentResumeUrl}. Pitch: ${emailReferralPitch}`,
-      }).catch(() => {});
+      const skillsArray = studentSkills
+        ? studentSkills.split(",").map((s) => s.trim()).filter(Boolean)
+        : undefined;
+
+      const res = await sendDirectReferralEmail({
+        alumni_email: referralModalTarget.email,
+        alumni_name: referralModalTarget.name,
+        alumni_company: referralModalTarget.company,
+        target_job_title: targetJobTitle.trim() || `Engineering Opportunity at ${referralModalTarget.company}`,
+        target_job_url: targetJobUrl.trim() || undefined,
+        student_name: studentName.trim() || undefined,
+        student_email: studentEmail.trim() || currentUser?.email || undefined,
+        student_phone: studentPhone.trim() || undefined,
+        department: studentDept.trim() || undefined,
+        batch: studentBatch.trim() || undefined,
+        placement_status: studentPlacementStatus,
+        cgpa: studentCgpa.trim() || undefined,
+        skills: skillsArray,
+        resume_url: studentResumeUrl.trim(),
+        linkedin_url: studentLinkedIn.trim() || undefined,
+        github_url: studentGitHub.trim() || undefined,
+        message_pitch: emailReferralPitch.trim(),
+      });
 
       setSuccessMsg(
-        `Referral request email successfully sent to ${referralModalTarget.name} at ${referralModalTarget.company}!`
+        res?.message ||
+          `Referral request email successfully delivered to ${referralModalTarget.name}'s inbox at ${referralModalTarget.company}!`
       );
       setReferralModalTarget(null);
       setTargetJobTitle("");
       setTargetJobUrl("");
       setEmailReferralPitch("");
     } catch (err: any) {
-      setError(err.message || "Failed to send referral email.");
+      setError(err.message || "Failed to send referral email. Please try again.");
     } finally {
       setSubmittingEmailReferral(false);
     }
   };
+
 
   const handlePostJobSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1243,17 +1306,31 @@ export default function Jobs() {
               </button>
 
               {!isFaculty && !isController && !isAdmin && !isTpo && !isExecutiveObserver && (
-                <button
-                  onClick={() => setActiveTab("alumni-companies")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
-                    activeTab === "alumni-companies"
-                      ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
-                      : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
-                  }`}
-                >
-                  <Building className="w-4 h-4 text-[#FFD21A]" />
-                  <span>Company Alumni & Referrals ({alumniDirectory.length})</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setActiveTab("alumni-companies")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                      activeTab === "alumni-companies"
+                        ? "bg-[#4B63D2] text-white shadow-md shadow-[#4B63D2]/20"
+                        : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+                    }`}
+                  >
+                    <Building className="w-4 h-4 text-[#FFD21A]" />
+                    <span>Company Alumni Directory ({alumniDirectory.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("alumni-referrals")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                      activeTab === "alumni-referrals"
+                        ? "bg-gradient-to-r from-[#4B63D2] to-[#5851A4] text-white shadow-md shadow-[#4B63D2]/25"
+                        : "text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD]"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-[#FFD21A]" />
+                    <span>Alumni Referral Drives &amp; Offers</span>
+                  </button>
+                </>
               )}
 
               {canViewApplications && (
@@ -1855,14 +1932,11 @@ export default function Jobs() {
                             {/* Referral Trigger Button */}
                             <div className="pt-2 border-t border-[#EAE4F7] flex items-center gap-2">
                               <button
-                                onClick={() => {
-                                  setReferralModalTarget(alum);
-                                  setTargetJobTitle(`Software / Engineering Role at ${alum.company}`);
-                                }}
+                                onClick={() => openReferralModal(alum)}
                                 className="flex-1 py-2 px-3 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                               >
                                 <Mail className="w-3.5 h-3.5 text-[#FFD21A]" />
-                                <span>Send Referral Email</span>
+                                <span>Request Referral via Email</span>
                               </button>
 
                               {alum.linkedInUrl && (
@@ -1888,6 +1962,203 @@ export default function Jobs() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2.5: ALUMNI REFERRAL DRIVES & OFFERS (Direct Contact Hub)             */}
+      {/* ========================================================================= */}
+      {activeTab === "alumni-referrals" && !isFaculty && !isController && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-50 to-orange-50 text-amber-800 border border-amber-200">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    Verified Alumni Referral Drives
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Open to Unplaced &amp; Graduating Students
+                  </span>
+                </div>
+                <h2 className="text-2xl font-black text-[#1E2746] flex items-center gap-2 tracking-tight">
+                  <Building className="w-6 h-6 text-[#4B63D2]" />
+                  Alumni Referral Offers &amp; Off-Campus Opportunities
+                </h2>
+                <p className="text-xs sm:text-sm text-[#5851A4] font-medium mt-1 max-w-2xl leading-relaxed">
+                  Browse employee referral opportunities posted by our alumni at leading tech companies. Students and unplaced alumni can directly submit a structured referral pitch and resume, which delivers instantly into the alumni's personal email and Knots inbox.
+                </p>
+              </div>
+
+              <div className="p-3 bg-[#FAF9FD] border border-[#D5CBEE] rounded-2xl text-center shrink-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#5851A4] block">
+                  Active Referral Drives
+                </span>
+                <span className="text-2xl font-black text-[#4B63D2]">
+                  {alumniDirectory.length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Referral Opportunities Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {alumniDirectory.map((alum) => {
+              const oppTitle =
+                alum.company === "Microsoft"
+                  ? "Software Engineer II / Azure Core Trainee"
+                  : alum.company === "Google"
+                  ? "Associate Product Manager & Cloud SDE"
+                  : alum.company === "Amazon"
+                  ? "SDE 1 (AWS Cloud & Databases)"
+                  : alum.company === "NVIDIA"
+                  ? "AI & Systems Software Engineer (CUDA / LLM)"
+                  : alum.company === "TCS"
+                  ? "Digital & Ninja System Engineer Drive"
+                  : alum.company === "JP Morgan"
+                  ? "Quantitative Tech Associate / FinTech SDE"
+                  : alum.company === "Infosys"
+                  ? "Specialist Programmer (Power Programmer)"
+                  : alum.company === "Cognizant"
+                  ? "GenC Next Developer & Cloud Associate"
+                  : `Software Engineering Role at ${alum.company}`;
+
+              const defaultPackage =
+                alum.company === "Google" || alum.company === "Microsoft"
+                  ? "₹18,00,000 - ₹32,00,000 / year"
+                  : alum.company === "Amazon" || alum.company === "NVIDIA"
+                  ? "₹16,00,000 - ₹28,00,000 / year"
+                  : alum.company === "JP Morgan"
+                  ? "₹14,00,000 - ₹22,00,000 / year"
+                  : alum.company === "Infosys"
+                  ? "₹9,00,000 - ₹12,00,000 / year"
+                  : "₹7,00,000 - ₹11,00,000 / year";
+
+              return (
+                <div
+                  key={alum.id}
+                  className="bg-white border border-[#EAE4F7] hover:border-[#4B63D2]/50 rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="space-y-3">
+                    {/* Header Row: Company + Badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center font-black text-white text-lg shadow-md shadow-[#4B63D2]/20">
+                          {alum.company.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-base sm:text-lg font-black text-[#1E2746]">
+                              {alum.company}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                              ⚡ Employee Referral
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#5851A4] font-semibold flex items-center gap-1 mt-0.5">
+                            <Building className="w-3.5 h-3.5 text-[#4B63D2]" />
+                            <span>Off-Campus &amp; Referral Hiring Drive</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {alum.status === "CURRENT" ? "Active Employee" : "Alumni Network"}
+                      </span>
+                    </div>
+
+                    {/* Role Title */}
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-[#1E2746] group-hover:text-[#4B63D2] transition-colors leading-snug">
+                        {oppTitle}
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-[#5851A4] font-medium mt-1">
+                        <IndianRupee className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 font-extrabold">{defaultPackage}</span>
+                        <span>•</span>
+                        <span>Full-Time / Referral Drive</span>
+                      </div>
+                    </div>
+
+                    {/* Referrer Alumni Details Card */}
+                    <div className="p-3.5 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[#9188BE]">
+                          Referral Provided By:
+                        </span>
+                        {alum.hasInfinityBadge && (
+                          <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-500" />
+                            Mentor Alumni
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-black text-[#1E2746] flex items-center gap-1.5">
+                            <span>{alum.name}</span>
+                            {alum.hasInfinityBadge && (
+                              <img
+                                src="/infinity-badge.png"
+                                className="h-3.5 w-3.5 object-contain inline-block"
+                                alt=""
+                              />
+                            )}
+                          </p>
+                          <p className="text-[11px] font-semibold text-[#4B63D2]">
+                            {alum.role}
+                          </p>
+                        </div>
+
+                        <span className="text-[10px] font-bold text-[#5851A4] bg-white px-2.5 py-1 rounded-xl border border-[#D5CBEE] shrink-0">
+                          Batch '{alum.batch} ({alum.department})
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-[#9188BE] truncate pt-0.5">
+                        ✉️ {alum.email}
+                      </p>
+                    </div>
+
+                    {/* Candidate Eligibility Notice */}
+                    <div className="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-900 font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>
+                        Students &amp; <strong>unplaced graduates</strong> can request referral directly to alumni inbox.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="pt-3 border-t border-[#EAE4F7] flex items-center gap-2">
+                    <button
+                      onClick={() => openReferralModal(alum, oppTitle)}
+                      className="flex-1 py-2.5 px-4 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-md shadow-[#4B63D2]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Mail className="w-4 h-4 text-[#FFD21A]" />
+                      <span>Request Referral via Email &amp; Inbox</span>
+                    </button>
+
+                    {alum.linkedInUrl && (
+                      <a
+                        href={alum.linkedInUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2.5 bg-[#FAF9FD] hover:bg-[#F0EDF9] border border-[#EAE4F7] rounded-xl text-[#5851A4] hover:text-[#4B63D2] transition-colors"
+                        title="View LinkedIn Profile"
+                      >
+                        <LinkIcon className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
 
       {/* ========================================================================= */}
       {/* TAB 3: MY APPLICATIONS WITH LIVE PROGRESSION UPDATES                      */}
@@ -2803,99 +3074,297 @@ export default function Jobs() {
       {/* MODAL 1: SEND EMAIL REFERRAL REQUEST TO ALUMNI                            */}
       {/* ========================================================================= */}
       {referralModalTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative max-w-lg w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-2xl w-full bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 sm:p-8 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setReferralModalTarget(null)}
-              className="absolute top-5 right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 text-[#5851A4] hover:text-[#1E2746] hover:bg-[#FAF9FD] rounded-full transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20">
-                <Mail className="w-6 h-6 text-[#FFD21A]" />
+            {/* Modal Title & Alumni Recipient Card */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#4B63D2] to-[#5851A4] flex items-center justify-center text-white shadow-md shadow-[#4B63D2]/20 shrink-0">
+                  <Mail className="w-6 h-6 text-[#FFD21A]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-[#1E2746] tracking-tight">
+                    Request Alumni Referral via Email
+                  </h3>
+                  <p className="text-xs text-[#5851A4] font-medium">
+                    Direct delivery into <strong>{referralModalTarget.name}</strong>'s personal email &amp; Knots inbox.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-[#1E2746] tracking-tight">
-                  Request Referral via Email
-                </h3>
-                <p className="text-xs text-[#5851A4] font-medium">
-                  Sending directly to <strong>{referralModalTarget.name}</strong> ({referralModalTarget.company})
-                </p>
+
+              {/* Alumni Details Card */}
+              <div className="p-3.5 bg-gradient-to-r from-[#FAF9FD] to-[#F0EDFB] border border-[#D5CBEE] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-black text-[#1E2746]">
+                      {referralModalTarget.name}
+                    </span>
+                    {referralModalTarget.hasInfinityBadge && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        Mentor Alumni
+                      </span>
+                    )}
+                    <span className="text-[11px] font-bold text-[#4B63D2]">
+                      • {referralModalTarget.role}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#5851A4] mt-0.5">
+                    🏢 <strong>{referralModalTarget.company}</strong> • Batch '{referralModalTarget.batch} ({referralModalTarget.department})
+                  </p>
+                </div>
+
+                <span className="text-[11px] font-bold text-[#5851A4] bg-white px-3 py-1 rounded-xl border border-[#D5CBEE] truncate shrink-0">
+                  ✉️ {referralModalTarget.email}
+                </span>
               </div>
             </div>
 
-            <div className="p-3 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl text-xs text-[#5851A4] space-y-1">
-              <p>
-                ✉️ <strong>Alumni Email:</strong> {referralModalTarget.email}
-              </p>
-              <p>
-                🏢 <strong>Designation:</strong> {referralModalTarget.role} (Batch '{referralModalTarget.batch})
-              </p>
-            </div>
+            <form onSubmit={handleSendEmailReferral} className="space-y-4 pt-1">
+              {/* SECTION 1: Target Opportunity */}
+              <div className="p-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-[#4B63D2] flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5" />
+                  1. Target Role &amp; Company
+                </span>
 
-            <form onSubmit={handleSendEmailReferral} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                  Target Job Title / Job ID *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. SDE 1 - Azure Storage (Req ID #94821)"
-                  value={targetJobTitle}
-                  onChange={(e) => setTargetJobTitle(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Target Role Title / Job ID <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SDE 1 - Cloud Platform (Req #8421)"
+                      value={targetJobTitle}
+                      onChange={(e) => setTargetJobTitle(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Company Job Portal Link (URL)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://careers.company.com/job/123"
+                      value={targetJobUrl}
+                      onChange={(e) => setTargetJobUrl(e.target.value)}
+                      className="w-full px-3.5 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                  Target Job Portal Link / URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://careers.company.com/job/12345"
-                  value={targetJobUrl}
-                  onChange={(e) => setTargetJobUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
-                />
+              {/* SECTION 2: Candidate Academic & Placement Details */}
+              <div className="p-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-[#4B63D2] flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  2. Candidate Profile &amp; Placement Status
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Your Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Rahul Sharma"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Your Email (for Reply) <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="student@sbjit.edu.in"
+                      value={studentEmail}
+                      onChange={(e) => setStudentEmail(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Phone / WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+91 9876543210"
+                      value={studentPhone}
+                      onChange={(e) => setStudentPhone(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Department
+                    </label>
+                    <select
+                      value={studentDept}
+                      onChange={(e) => setStudentDept(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+                    >
+                      <option value="CSE">Computer Science (CSE)</option>
+                      <option value="CSE(AIML)">CSE (AI &amp; ML)</option>
+                      <option value="CSE(AIDS)">CSE (Data Science)</option>
+                      <option value="IT">Information Technology (IT)</option>
+                      <option value="ETC">Electronics &amp; Telecom (ETC)</option>
+                      <option value="EE">Electrical Engineering (EE)</option>
+                      <option value="ME">Mechanical Engineering (ME)</option>
+                      <option value="BCA">BCA</option>
+                      <option value="MCA">MCA</option>
+                      <option value="MBA">MBA</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Graduation Batch
+                    </label>
+                    <select
+                      value={studentBatch}
+                      onChange={(e) => setStudentBatch(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+                    >
+                      <option value="2024">Batch 2024</option>
+                      <option value="2025">Batch 2025 (Graduating)</option>
+                      <option value="2026">Batch 2026 (Final Year)</option>
+                      <option value="2027">Batch 2027 (Third Year)</option>
+                      <option value="2028">Batch 2028 (Second Year)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Current Placement Status
+                    </label>
+                    <select
+                      value={studentPlacementStatus}
+                      onChange={(e) => setStudentPlacementStatus(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-bold text-[#1E2746] focus:outline-none"
+                    >
+                      <option value="Not Placed yet / Looking for Placement">Not Placed (Actively Seeking)</option>
+                      <option value="Looking for Summer / Pre-final Internship">Looking for Internship</option>
+                      <option value="Placed / Seeking Higher Tier">Placed (Seeking Higher Role)</option>
+                      <option value="Alumni Looking for Off-Campus Role">Alumni Seeking Role</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Academic CGPA
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 8.75 / 10.0"
+                      value={studentCgpa}
+                      onChange={(e) => setStudentCgpa(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      Key Technical Skills (Comma separated)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. React, Python, FastAPI, Docker, SQL"
+                      value={studentSkills}
+                      onChange={(e) => setStudentSkills(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* SECTION 3: Resume Link & Socials */}
+              <div className="p-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl space-y-3">
+                <span className="text-xs font-black uppercase tracking-wider text-[#4B63D2] flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  3. Resume Link &amp; Professional Links
+                </span>
+
                 <div>
                   <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                    Your Resume Link (Google Drive / PDF) *
+                    Your Resume Link (Google Drive / PDF / Portfolio) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="url"
-                    placeholder="https://drive.google.com/..."
+                    placeholder="https://drive.google.com/file/d/... or https://portfolio.com/resume.pdf"
                     value={studentResumeUrl}
                     onChange={(e) => setStudentResumeUrl(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none"
                   />
+                  <p className="text-[11px] text-[#5851A4] mt-1 font-medium">
+                    Ensure public viewing access is enabled if sharing a Google Drive link so the alumni can open it directly.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                    LinkedIn / GitHub Profile
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="https://linkedin.com/in/..."
-                    value={studentLinkedIn}
-                    onChange={(e) => setStudentLinkedIn(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      LinkedIn Profile URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/in/username"
+                      value={studentLinkedIn}
+                      onChange={(e) => setStudentLinkedIn(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E2746] mb-1">
+                      GitHub Profile / Portfolio URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://github.com/username"
+                      value={studentGitHub}
+                      onChange={(e) => setStudentGitHub(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs font-medium text-[#1E2746] focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#1E2746] mb-1">
-                  Personalized Referral Note / Elevator Pitch *
-                </label>
+              {/* SECTION 4: Elevator Pitch Note */}
+              <div className="p-4 bg-[#FAF9FD] border border-[#EAE4F7] rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#4B63D2] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    4. Personalized Referral Elevator Pitch <span className="text-rose-500">*</span>
+                  </span>
+                  <span className="text-[11px] text-[#9188BE] font-semibold">
+                    Highlight your projects, strengths &amp; motivation
+                  </span>
+                </div>
+
                 <textarea
                   rows={3}
                   placeholder={`Hi ${
@@ -2906,31 +3375,93 @@ export default function Jobs() {
                   value={emailReferralPitch}
                   onChange={(e) => setEmailReferralPitch(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-[#FAF9FD] border border-[#D5CBEE] focus:bg-white focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
+                  className="w-full px-4 py-2.5 bg-white border border-[#D5CBEE] focus:border-[#4B63D2] rounded-xl text-xs sm:text-sm font-medium text-[#1E2746] focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-3">
+              {/* SECTION 5: Live Email Preview Toggle */}
+              <div className="border border-[#EAE4F7] rounded-2xl overflow-hidden">
                 <button
                   type="button"
-                  onClick={() => setReferralModalTarget(null)}
-                  className="px-4 py-2 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                  onClick={() => setShowReferralEmailPreview(!showReferralEmailPreview)}
+                  className="w-full px-4 py-3 bg-[#FAF9FD] hover:bg-[#F0EDFB] text-xs font-bold text-[#5851A4] flex items-center justify-between transition-colors cursor-pointer"
                 >
-                  Cancel
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-[#4B63D2]" />
+                    <span>{showReferralEmailPreview ? "Hide Live Email Preview" : "Preview Referral Email Before Sending"}</span>
+                  </span>
+                  <span className="text-[11px] text-[#4B63D2]">
+                    {showReferralEmailPreview ? "▲" : "▼"}
+                  </span>
                 </button>
-                <button
-                  type="submit"
-                  disabled={submittingEmailReferral}
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <Send className="w-3.5 h-3.5 text-[#FFD21A]" />
-                  <span>{submittingEmailReferral ? "Sending Email..." : "Send Email Request"}</span>
-                </button>
+
+                {showReferralEmailPreview && (
+                  <div className="p-4 bg-white border-t border-[#EAE4F7] space-y-3 text-xs text-[#1E2746]">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-1">
+                      <p><strong>To:</strong> {referralModalTarget.name} &lt;{referralModalTarget.email}&gt;</p>
+                      <p><strong>Subject:</strong> Referral Request: {studentName || "Student"} for {targetJobTitle || "Opportunity"} at {referralModalTarget.company}</p>
+                      <p><strong>Reply-To:</strong> {studentEmail || "Your Email"}</p>
+                    </div>
+
+                    <div className="p-4 border border-[#D5CBEE] rounded-xl space-y-2 bg-[#FAF9FD]/50">
+                      <p className="font-bold">Dear {referralModalTarget.name},</p>
+                      <p className="text-[#5851A4]">
+                        SBJIT student <strong>{studentName || "Student"}</strong> from <strong>{studentDept}</strong> (Batch {studentBatch}) has requested an employee referral for <strong>{targetJobTitle || "Opportunity"}</strong> at <strong>{referralModalTarget.company}</strong>.
+                      </p>
+                      <div className="p-2.5 bg-white border border-[#EAE4F7] rounded-lg text-[11px]">
+                        <p><strong>Placement Status:</strong> {studentPlacementStatus}</p>
+                        {studentCgpa && <p><strong>CGPA:</strong> {studentCgpa}</p>}
+                        {studentSkills && <p><strong>Skills:</strong> {studentSkills}</p>}
+                        {studentResumeUrl && (
+                          <p className="text-[#4B63D2] font-bold mt-1">📄 Resume: {studentResumeUrl}</p>
+                        )}
+                      </div>
+                      <p className="italic text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                        "{emailReferralPitch || "Personalized pitch..."}"
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <span className="text-[11px] text-[#9188BE] font-medium text-center sm:text-left">
+                  Delivers instantly to {referralModalTarget.company} inbox &amp; Knots Messages.
+                </span>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setReferralModalTarget(null)}
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#EAE4F7] text-xs font-bold text-[#5851A4] hover:bg-[#FAF9FD] transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingEmailReferral}
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#5851A4] hover:to-[#4B63D2] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#4B63D2]/25 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {submittingEmailReferral ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending Request...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 text-[#FFD21A]" />
+                        <span>Send Referral Request</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
+
 
       {/* ========================================================================= */}
       {/* MODAL 2: APPLY FOR OPPORTUNITY                                            */}

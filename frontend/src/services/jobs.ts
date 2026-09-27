@@ -175,6 +175,36 @@ export async function requestReferral(data: {
   });
 }
 
+export interface DirectReferralEmailPayload {
+  alumni_email: string;
+  alumni_name: string;
+  alumni_company: string;
+  target_job_title: string;
+  target_job_url?: string;
+  student_name?: string;
+  student_email?: string;
+  student_phone?: string;
+  department?: string;
+  batch?: string;
+  placement_status?: string;
+  cgpa?: string;
+  skills?: string[] | string;
+  resume_url: string;
+  linkedin_url?: string;
+  github_url?: string;
+  message_pitch: string;
+  job_posting_id?: number;
+}
+
+export async function sendDirectReferralEmail(
+  data: DirectReferralEmailPayload
+): Promise<any> {
+  return apiRequest<any>("/jobs/referrals/direct-email", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function updateApplicationStatus(
   applicationId: number,
   status: ApplicationStatus,

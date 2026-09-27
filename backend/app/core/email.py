@@ -532,101 +532,271 @@ def send_application_alert_email(
         return False
 
 
-def _send_referral_via_brevo(
-    recipient: str,
-    alumni_name: str,
-    student_name: str,
-    department: str,
-    opportunity_title: str,
-    company_name: str,
-    student_profile_link: str,
-    opportunity_link: str,
-) -> bool:
-    """Dispatch referral email via Brevo HTTPS REST API using template."""
-    api_key = settings.BREVO_API_KEY.strip()
-    template_id = settings.BREVO_REFERRAL_TEMPLATE_ID
-    if not template_id:
-        logger.warning("BREVO_REFERRAL_TEMPLATE_ID not configured.")
-        return False
-
-    import urllib.request
-    import json
-
-    payload = {
-        "to": [{"email": recipient}],
-        "templateId": int(template_id),
-        "params": {
-            "alumni_name": alumni_name,
-            "student_name": student_name,
-            "department": department,
-            "opportunity_title": opportunity_title,
-            "company_name": company_name,
-            "student_profile_link": student_profile_link,
-            "opportunity_link": opportunity_link,
-        },
-    }
-
-    req = urllib.request.Request(
-        "https://api.brevo.com/v3/smtp/email",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "api-key": api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        if resp.status in (200, 201, 202):
-            logger.info(
-                f"[SUCCESS] Referral email dispatched to {recipient} via Brevo HTTP API"
-            )
-            return True
-        else:
-            resp_body = resp.read().decode("utf-8", errors="replace")
-            logger.error(
-                f"[ERROR] Brevo API responded with status {resp.status}: {resp_body}"
-            )
-            raise RuntimeError(f"Brevo HTTP API failed with status {resp.status}")
-
-
 def send_referral_email(
     recipient_email: str,
     alumni_name: str,
     student_name: str,
-    department: str,
-    opportunity_title: str,
-    company_name: str,
-    student_profile_link: str,
-    opportunity_link: str,
+    department: str = "General",
+    opportunity_title: str = "Job / Internship Opportunity",
+    company_name: str = "Your Company",
+    student_profile_link: str | None = None,
+    opportunity_link: str | None = None,
+    resume_url: str | None = None,
+    linkedin_url: str | None = None,
+    github_url: str | None = None,
+    student_email: str | None = None,
+    student_phone: str | None = None,
+    batch: str | None = None,
+    placement_status: str | None = None,
+    cgpa: str | None = None,
+    skills: list[str] | str | None = None,
+    pitch: str | None = None,
 ) -> bool:
+    """Send an authentic, structured Referral Request email to the alumni's inbox."""
     normalized_recipient = recipient_email.strip().lower()
     logger.info(
-        f"[REFERRAL DISPATCH] Initiating referral delivery to {normalized_recipient}"
+        f"[REFERRAL DISPATCH] Initiating referral email delivery to {normalized_recipient} from {student_name} for {opportunity_title} at {company_name}"
     )
 
+    subject = f"Referral Request: {student_name} for {opportunity_title} at {company_name}"
+
+    # Format skills
+    skills_text = ""
+    skills_html = ""
+    if skills:
+        if isinstance(skills, list):
+            skill_list = [str(s).strip() for s in skills if str(s).strip()]
+        else:
+            skill_list = [s.strip() for s in str(skills).split(",") if s.strip()]
+        if skill_list:
+            skills_text = ", ".join(skill_list)
+            skills_badges = "".join(
+                f'<span style="display: inline-block; background-color: #F0EDFB; color: #4B63D2; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; margin: 2px 4px 2px 0; border: 1px solid #D5CBEE;">{sk}</span>'
+                for sk in skill_list
+            )
+            skills_html = f"""
+            <div style="margin-top: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: #5851A4; display: block; margin-bottom: 4px;">Key Technical Skills:</span>
+              <div>{skills_badges}</div>
+            </div>"""
+
+    # Plain text version
+    plain_text_body = (
+        f"Hello {alumni_name},\n\n"
+        f"You have received a direct referral request on KNOTS from SBJIT student {student_name}.\n\n"
+        f"--- CANDIDATE DETAILS ---\n"
+        f"Name: {student_name}\n"
+        f"Email: {student_email or 'Available on profile'}\n"
+        f"Phone: {student_phone or 'N/A'}\n"
+        f"Department: {department}\n"
+        f"Graduation Batch: {batch or 'N/A'}\n"
+        f"Placement Status: {placement_status or 'Actively Seeking Placement / Opportunities'}\n"
+        f"CGPA: {cgpa or 'N/A'}\n"
+        f"Skills: {skills_text or 'N/A'}\n\n"
+        f"--- TARGET OPPORTUNITY ---\n"
+        f"Company: {company_name}\n"
+        f"Target Role / Job ID: {opportunity_title}\n"
+        f"Job Posting Link: {opportunity_link or 'N/A'}\n\n"
+        f"--- RESUME & PORTFOLIO ---\n"
+        f"Resume URL: {resume_url or 'N/A'}\n"
+        f"LinkedIn: {linkedin_url or 'N/A'}\n"
+        f"GitHub: {github_url or 'N/A'}\n\n"
+        f"--- CANDIDATE'S PITCH / NOTE ---\n"
+        f"\"{pitch or 'I would love to be considered for an employee referral for this role.'}\"\n\n"
+        f"You can contact the student directly by replying to this email ({student_email or normalized_recipient}).\n\n"
+        f"Warm regards,\n"
+        f"KNOTS Alumni & Career Network\n"
+        f"S. B. Jain Institute of Technology, Management & Research, Nagpur"
+    )
+
+    # Resume CTA button
+    resume_cta = ""
+    if resume_url:
+        resume_cta = f"""
+        <div style="text-align: center; margin: 22px 0 16px;">
+          <a href="{resume_url}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #4B63D2 0%, #5851A4 100%); color: #ffffff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 12px 28px; border-radius: 12px; box-shadow: 0 4px 14px rgba(75, 99, 210, 0.35);">
+            📄 Open Candidate Resume / CV
+          </a>
+        </div>"""
+
+    social_links = []
+    if linkedin_url:
+        social_links.append(f'<a href="{linkedin_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">🔗 LinkedIn Profile</a>')
+    if github_url:
+        social_links.append(f'<a href="{github_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">💻 GitHub</a>')
+    if student_profile_link:
+        social_links.append(f'<a href="{student_profile_link}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700;">🌐 KNOTS Profile</a>')
+    social_links_html = " • ".join(social_links) if social_links else ""
+
+    status_badge = placement_status or "Actively Seeking Placement"
+    status_badge_html = f'<span style="display: inline-block; background-color: #FEF3C7; color: #92400E; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; border: 1px solid #FDE68A;">{status_badge}</span>'
+
+    # Rich HTML Email body
+    html_body = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8f6fd; color: #1e2746;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="min-width: 100%; background-color: #f8f6fd; padding: 30px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; border: 1px solid #eae4f7; box-shadow: 0 6px 24px rgba(75, 99, 210, 0.08); overflow: hidden;" cellspacing="0" cellpadding="0">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="padding: 28px 32px; background: linear-gradient(135deg, #1E2746 0%, #2A3558 100%); color: #ffffff;">
+              <table width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <span style="display: inline-block; background: rgba(255, 210, 26, 0.2); color: #FFD21A; border: 1px solid rgba(255, 210, 26, 0.4); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; padding: 3px 8px; border-radius: 6px; margin-bottom: 8px;">
+                      ⚡ SBJIT Alumni Referral Request
+                    </span>
+                    <h1 style="margin: 0; font-size: 20px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px;">
+                      KNOTS Referral Portal
+                    </h1>
+                    <p style="margin: 4px 0 0; font-size: 12px; color: #C8B6E2;">
+                      Connecting {company_name} Alumni with Ambitious SBJIT Juniors
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Body -->
+          <tr>
+            <td style="padding: 30px 32px;">
+              <p style="margin: 0 0 14px; font-size: 15px; font-weight: 600; color: #1e2746;">
+                Dear <strong>{alumni_name}</strong>,
+              </p>
+              <p style="margin: 0 0 20px; font-size: 13.5px; line-height: 1.6; color: #5851A4;">
+                SBJIT student <strong>{student_name}</strong> from <strong>{department}</strong> has reached out to request an employee referral for an open position at <strong>{company_name}</strong>.
+              </p>
+
+              <!-- Target Opportunity Card -->
+              <div style="background-color: #FAF9FD; border: 1px solid #D5CBEE; border-radius: 14px; padding: 16px 18px; margin-bottom: 20px;">
+                <span style="font-size: 11px; font-weight: 800; color: #4B63D2; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
+                  Target Opportunity
+                </span>
+                <div style="font-size: 16px; font-weight: 800; color: #1E2746;">
+                  {opportunity_title}
+                </div>
+                <div style="font-size: 13px; font-weight: 600; color: #5851A4; margin-top: 2px;">
+                  🏢 {company_name}
+                  {f' • <a href="{opportunity_link}" target="_blank" style="color: #4B63D2; font-weight: 700; text-decoration: none;">View Job Link ↗</a>' if opportunity_link else ''}
+                </div>
+              </div>
+
+              <!-- Candidate Profile Card -->
+              <div style="background-color: #ffffff; border: 1px solid #EAE4F7; border-radius: 14px; padding: 18px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <span style="font-size: 11px; font-weight: 800; color: #1E2746; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Candidate Profile Details
+                  </span>
+                  {status_badge_html}
+                </div>
+
+                <table width="100%" cellspacing="0" cellpadding="0" style="font-size: 12.5px; color: #1E2746; line-height: 1.8;">
+                  <tr>
+                    <td width="35%" style="color: #5851A4; font-weight: 600;">Student Name:</td>
+                    <td style="font-weight: 700;">{student_name}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #5851A4; font-weight: 600;">Department & Batch:</td>
+                    <td><strong>{department}</strong> {f'• Batch {batch}' if batch else ''}</td>
+                  </tr>
+                  {f'<tr><td style="color: #5851A4; font-weight: 600;">Academic CGPA:</td><td><strong style="color: #059669;">{cgpa}</strong></td></tr>' if cgpa else ''}
+                  {f'<tr><td style="color: #5851A4; font-weight: 600;">Student Email:</td><td><a href="mailto:{student_email}" style="color: #4B63D2; font-weight: 700;">{student_email}</a></td></tr>' if student_email else ''}
+                  {f'<tr><td style="color: #5851A4; font-weight: 600;">Phone / WhatsApp:</td><td><strong>{student_phone}</strong></td></tr>' if student_phone else ''}
+                </table>
+
+                {skills_html}
+
+                {f'<div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #F0EDFB; font-size: 12px;">{social_links_html}</div>' if social_links_html else ''}
+              </div>
+
+              <!-- Student Pitch Note -->
+              {f'''
+              <div style="background-color: #F0EDFB; border-left: 4px solid #4B63D2; border-radius: 0 12px 12px 0; padding: 14px 16px; margin-bottom: 20px;">
+                <span style="font-size: 11px; font-weight: 800; color: #4B63D2; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
+                  Note from Candidate:
+                </span>
+                <p style="margin: 0; font-size: 13px; font-style: italic; color: #1E2746; line-height: 1.5;">
+                  "{pitch}"
+                </p>
+              </div>''' if pitch else ''}
+
+              <!-- Resume Button CTA -->
+              {resume_cta}
+
+              <!-- Direct Contact Box -->
+              <div style="background-color: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 14px 16px; margin-top: 20px;">
+                <p style="margin: 0; font-size: 12px; color: #065F46; line-height: 1.5;">
+                  💬 <strong>Next Step:</strong> You can contact the student directly by replying to this email or writing to <a href="mailto:{student_email or recipient_email}" style="color: #047857; font-weight: 700;">{student_email or recipient_email}</a> to share your company's internal referral link or schedule a conversation.
+                </p>
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 32px; background-color: #FAF9FD; border-top: 1px solid #eae4f7; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #9ca3af;">
+                S. B. Jain Institute of Technology, Management &amp; Research, Nagpur
+              </p>
+              <p style="margin: 4px 0 0; font-size: 11px; color: #5851A4;">
+                KNOTS • Empowering Alumni-Student Collaboration &amp; Campus Placements
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
     try:
-        if settings.BREVO_API_KEY and settings.BREVO_REFERRAL_TEMPLATE_ID:
+        if settings.EMAIL_WEBHOOK_URL:
             try:
-                return _send_referral_via_brevo(
-                    normalized_recipient,
-                    alumni_name,
-                    student_name,
-                    department,
-                    opportunity_title,
-                    company_name,
-                    student_profile_link,
-                    opportunity_link,
+                return _send_via_webhook(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
+            except Exception as e:
+                logger.warning(f"Webhook referral delivery failed: {e}")
+
+        if settings.RESEND_API_KEY:
+            try:
+                return _send_via_resend(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
+            except Exception as e:
+                logger.warning(f"Resend referral delivery failed: {e}")
+
+        if settings.BREVO_API_KEY:
+            try:
+                return _send_via_brevo(
+                    normalized_recipient, subject, plain_text_body, html_body
                 )
             except Exception as e:
                 logger.warning(f"Brevo referral delivery failed: {e}")
-                return False
-        else:
-            logger.warning(
-                "Brevo credentials or template ID missing for referral emails."
-            )
-            return False
+
+        if settings.SENDGRID_API_KEY:
+            try:
+                return _send_via_sendgrid(
+                    normalized_recipient, subject, plain_text_body, html_body
+                )
+            except Exception as e:
+                logger.warning(f"SendGrid referral delivery failed: {e}")
+
+        return _send_via_smtp(
+            normalized_recipient, subject, plain_text_body, html_body
+        )
+
     except Exception as e:
         logger.warning(f"Failed to dispatch referral notification email: {e}")
         return False

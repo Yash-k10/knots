@@ -21,6 +21,7 @@ from app.jobs.schemas.job_posting import (
     JobPostingUpdate,
 )
 from app.jobs.schemas.referral import (
+    DirectReferralEmailRequest,
     ReferralCreate,
     ReferralResponse,
 )
@@ -143,6 +144,28 @@ async def create_referral(
         referrer_id=current_user.id, referral_in=payload
     )
     return APIResponse(message="Referral submitted successfully", data=referral)
+
+
+@router.post(
+    "/referrals/direct-email",
+    response_model=APIResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def send_direct_alumni_referral_email(
+    payload: DirectReferralEmailRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a direct referral request email and in-app message to a specific alumni."""
+    service = ReferralService(db)
+    result = await service.send_direct_referral_email(
+        current_user_id=current_user.id, payload=payload
+    )
+    return APIResponse(
+        message=result.get("message", "Referral email delivered successfully"),
+        data=result,
+    )
+
 
 
 # --- Job Postings Endpoints ---
