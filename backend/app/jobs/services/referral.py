@@ -36,14 +36,22 @@ class ReferralService:
 
         # Trigger referral email
         try:
-            stmt = select(User).options(selectinload(User.profile)).where(User.id == referrer_id)
+            stmt = (
+                select(User)
+                .options(selectinload(User.profile))
+                .where(User.id == referrer_id)
+            )
             res = await self.db.execute(stmt)
             student = res.scalars().first()
 
             alumni_id = referral_in.referred_user_id or job.posted_by_id
             alumni = None
             if alumni_id:
-                stmt_alumni = select(User).options(selectinload(User.profile)).where(User.id == alumni_id)
+                stmt_alumni = (
+                    select(User)
+                    .options(selectinload(User.profile))
+                    .where(User.id == alumni_id)
+                )
                 res_alumni = await self.db.execute(stmt_alumni)
                 alumni = res_alumni.scalars().first()
 
@@ -92,15 +100,55 @@ class ReferralService:
                     job.company.name if job.company else "Campus Partner",
                     student_profile_link,
                     opportunity_link,
-                    getattr(student.profile, "resume_url", None) if hasattr(student, "profile") and student.profile else None,
-                    getattr(student.profile, "linkedin_url", None) if hasattr(student, "profile") and student.profile else None,
-                    getattr(student.profile, "github_url", None) if hasattr(student, "profile") and student.profile else None,
+                    (
+                        getattr(student.profile, "resume_url", None)
+                        if hasattr(student, "profile") and student.profile
+                        else None
+                    ),
+                    (
+                        getattr(student.profile, "linkedin_url", None)
+                        if hasattr(student, "profile") and student.profile
+                        else None
+                    ),
+                    (
+                        getattr(student.profile, "github_url", None)
+                        if hasattr(student, "profile") and student.profile
+                        else None
+                    ),
                     student.email,
-                    getattr(student.profile, "phone_number", None) if hasattr(student, "profile") and student.profile else None,
-                    str(student.profile.graduation_year) if hasattr(student, "profile") and student.profile and student.profile.graduation_year else None,
-                    getattr(student.profile, "placement_status", "Actively Seeking Placement") if hasattr(student, "profile") and student.profile else "Actively Seeking Placement",
-                    str(student.profile.cgpa) if hasattr(student, "profile") and student.profile and getattr(student.profile, "cgpa", None) else None,
-                    getattr(student.profile, "skills", None) if hasattr(student, "profile") and student.profile else None,
+                    (
+                        getattr(student.profile, "phone_number", None)
+                        if hasattr(student, "profile") and student.profile
+                        else None
+                    ),
+                    (
+                        str(student.profile.graduation_year)
+                        if hasattr(student, "profile")
+                        and student.profile
+                        and student.profile.graduation_year
+                        else None
+                    ),
+                    (
+                        getattr(
+                            student.profile,
+                            "placement_status",
+                            "Actively Seeking Placement",
+                        )
+                        if hasattr(student, "profile") and student.profile
+                        else "Actively Seeking Placement"
+                    ),
+                    (
+                        str(student.profile.cgpa)
+                        if hasattr(student, "profile")
+                        and student.profile
+                        and getattr(student.profile, "cgpa", None)
+                        else None
+                    ),
+                    (
+                        getattr(student.profile, "skills", None)
+                        if hasattr(student, "profile") and student.profile
+                        else None
+                    ),
                     referral_in.message,
                 )
         except Exception as e:
@@ -113,7 +161,11 @@ class ReferralService:
     ) -> dict:
         """Process and send a direct referral request to an alumni's email inbox and internal Knots inbox."""
         # 1. Fetch current student details from database
-        stmt = select(User).options(selectinload(User.profile)).where(User.id == current_user_id)
+        stmt = (
+            select(User)
+            .options(selectinload(User.profile))
+            .where(User.id == current_user_id)
+        )
         res = await self.db.execute(stmt)
         student_user = res.scalars().first()
 
@@ -121,17 +173,64 @@ class ReferralService:
         if not student_name and student_user:
             student_name = (
                 student_user.profile.full_name
-                if (hasattr(student_user, "profile") and student_user.profile and student_user.profile.full_name)
-                else (student_user.first_name + " " + (student_user.last_name or "")).strip() or student_user.email.split("@")[0]
+                if (
+                    hasattr(student_user, "profile")
+                    and student_user.profile
+                    and student_user.profile.full_name
+                )
+                else (
+                    student_user.first_name + " " + (student_user.last_name or "")
+                ).strip()
+                or student_user.email.split("@")[0]
             )
 
-        student_email = payload.student_email or (student_user.email if student_user else "")
-        student_phone = payload.student_phone or (student_user.profile.phone_number if student_user and hasattr(student_user, "profile") and student_user.profile else None)
-        department = payload.department or (student_user.profile.department if student_user and hasattr(student_user, "profile") and student_user.profile else "Engineering")
-        batch = payload.batch or (str(student_user.profile.graduation_year) if student_user and hasattr(student_user, "profile") and student_user.profile and student_user.profile.graduation_year else "2025")
-        placement_status = payload.placement_status or (getattr(student_user.profile, "placement_status", None) if student_user and hasattr(student_user, "profile") and student_user.profile else "Not Placed yet / Looking for Placement")
-        cgpa = payload.cgpa or (str(student_user.profile.cgpa) if student_user and hasattr(student_user, "profile") and student_user.profile and getattr(student_user.profile, "cgpa", None) else None)
-        skills = payload.skills or (getattr(student_user.profile, "skills", None) if student_user and hasattr(student_user, "profile") and student_user.profile else None)
+        student_email = payload.student_email or (
+            student_user.email if student_user else ""
+        )
+        student_phone = payload.student_phone or (
+            student_user.profile.phone_number
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            else None
+        )
+        department = payload.department or (
+            student_user.profile.department
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            else "Engineering"
+        )
+        batch = payload.batch or (
+            str(student_user.profile.graduation_year)
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            and student_user.profile.graduation_year
+            else "2025"
+        )
+        placement_status = payload.placement_status or (
+            getattr(student_user.profile, "placement_status", None)
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            else "Not Placed yet / Looking for Placement"
+        )
+        cgpa = payload.cgpa or (
+            str(student_user.profile.cgpa)
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            and getattr(student_user.profile, "cgpa", None)
+            else None
+        )
+        skills = payload.skills or (
+            getattr(student_user.profile, "skills", None)
+            if student_user
+            and hasattr(student_user, "profile")
+            and student_user.profile
+            else None
+        )
 
         frontend_url = "http://localhost:5173"
         student_profile_link = f"{frontend_url}/profile/{current_user_id}"
@@ -175,7 +274,7 @@ class ReferralService:
                     f"**{student_name}** ({department}, Batch {batch}) has requested a referral for **{payload.target_job_title}** at **{payload.alumni_company}**.\n\n"
                     f"**Status:** {placement_status}\n"
                     f"**Resume Link:** {payload.resume_url}\n"
-                    f"**Candidate Pitch:** \"{payload.message_pitch}\"\n"
+                    f'**Candidate Pitch:** "{payload.message_pitch}"\n'
                     f"**Email:** {student_email}"
                 )
 
@@ -187,7 +286,9 @@ class ReferralService:
                         content=inbox_msg,
                     ),
                 )
-                logger.info(f"Delivered referral message into Knots Inbox for user ID {alumni_user.id}")
+                logger.info(
+                    f"Delivered referral message into Knots Inbox for user ID {alumni_user.id}"
+                )
             except Exception as msg_err:
                 logger.info(f"In-app inbox message dispatch skipped: {msg_err}")
 
@@ -231,4 +332,3 @@ class ReferralService:
         return await self.repository.get_user_referrals(
             user_id=user_id, skip=skip, limit=limit
         )
-

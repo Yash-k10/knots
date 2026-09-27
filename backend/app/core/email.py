@@ -558,7 +558,9 @@ def send_referral_email(
         f"[REFERRAL DISPATCH] Initiating referral email delivery to {normalized_recipient} from {student_name} for {opportunity_title} at {company_name}"
     )
 
-    subject = f"Referral Request: {student_name} for {opportunity_title} at {company_name}"
+    subject = (
+        f"Referral Request: {student_name} for {opportunity_title} at {company_name}"
+    )
 
     # Format skills
     skills_text = ""
@@ -621,11 +623,17 @@ def send_referral_email(
 
     social_links = []
     if linkedin_url:
-        social_links.append(f'<a href="{linkedin_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">🔗 LinkedIn Profile</a>')
+        social_links.append(
+            f'<a href="{linkedin_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">🔗 LinkedIn Profile</a>'
+        )
     if github_url:
-        social_links.append(f'<a href="{github_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">💻 GitHub</a>')
+        social_links.append(
+            f'<a href="{github_url}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700; margin-right: 12px;">💻 GitHub</a>'
+        )
     if student_profile_link:
-        social_links.append(f'<a href="{student_profile_link}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700;">🌐 KNOTS Profile</a>')
+        social_links.append(
+            f'<a href="{student_profile_link}" target="_blank" style="color: #4B63D2; text-decoration: none; font-weight: 700;">🌐 KNOTS Profile</a>'
+        )
     social_links_html = " • ".join(social_links) if social_links else ""
 
     status_badge = placement_status or "Actively Seeking Placement"
@@ -644,7 +652,7 @@ def send_referral_email(
     <tr>
       <td align="center">
         <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; border: 1px solid #eae4f7; box-shadow: 0 6px 24px rgba(75, 99, 210, 0.08); overflow: hidden;" cellspacing="0" cellpadding="0">
-          
+
           <!-- Header Banner -->
           <tr>
             <td style="padding: 28px 32px; background: linear-gradient(135deg, #1E2746 0%, #2A3558 100%); color: #ffffff;">
@@ -793,9 +801,7 @@ def send_referral_email(
             except Exception as e:
                 logger.warning(f"SendGrid referral delivery failed: {e}")
 
-        return _send_via_smtp(
-            normalized_recipient, subject, plain_text_body, html_body
-        )
+        return _send_via_smtp(normalized_recipient, subject, plain_text_body, html_body)
 
     except Exception as e:
         logger.warning(f"Failed to dispatch referral notification email: {e}")

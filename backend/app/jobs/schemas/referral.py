@@ -34,18 +34,27 @@ class DirectReferralEmailRequest(BaseModel):
     alumni_name: str = Field(..., description="Name of the target alumni")
     alumni_company: str = Field(..., description="Company where alumni is working")
     target_job_title: str = Field(..., description="Target job title or requisition ID")
-    target_job_url: str | None = Field(None, description="Optional link to job portal opening")
-    student_name: str | None = Field(None, description="Name of the student requesting referral")
+    target_job_url: str | None = Field(
+        None, description="Optional link to job portal opening"
+    )
+    student_name: str | None = Field(
+        None, description="Name of the student requesting referral"
+    )
     student_email: str | None = Field(None, description="Email of the student")
     student_phone: str | None = Field(None, description="Phone number of the student")
     department: str | None = Field(None, description="Department of the student")
     batch: str | None = Field(None, description="Graduation batch of the student")
-    placement_status: str | None = Field(None, description="Placement status of candidate")
+    placement_status: str | None = Field(
+        None, description="Placement status of candidate"
+    )
     cgpa: str | None = Field(None, description="CGPA or academic score")
     skills: list[str] | str | None = Field(None, description="Key technical skills")
     resume_url: str = Field(..., description="URL link to candidate resume PDF/Drive")
     linkedin_url: str | None = Field(None, description="LinkedIn profile URL")
     github_url: str | None = Field(None, description="GitHub profile URL")
-    message_pitch: str = Field(..., description="Personalized elevator pitch / cover note")
-    job_posting_id: int | None = Field(None, description="Optional associated job posting ID")
-
+    message_pitch: str = Field(
+        ..., description="Personalized elevator pitch / cover note"
+    )
+    job_posting_id: int | None = Field(
+        None, description="Optional associated job posting ID"
+    )

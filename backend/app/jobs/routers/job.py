@@ -167,7 +167,6 @@ async def send_direct_alumni_referral_email(
     )
 
 
-
 # --- Job Postings Endpoints ---
 
 
