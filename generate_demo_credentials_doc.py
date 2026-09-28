@@ -215,9 +215,11 @@ def create_demo_doc():
         r_fd.font.color.rgb = SLATE
         p_f.paragraph_format.space_after = Pt(3)
 
-    output_path = r'd:\yash\final_year_project\knots\KNOTS_Demo_Accounts_Credentials.docx'
+    import os
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'KNOTS_Demo_Accounts_Credentials.docx')
     doc.save(output_path)
     print(f'Successfully generated: {output_path}')
 
 if __name__ == '__main__':
     create_demo_doc()
+

@@ -258,7 +258,6 @@ DEMO_USERS = [
         "last_name": "Demo",
         "bio": "Student Demo Account at SBJIT.",
         "department": "Computer Science",
-        "password": "Password123",
     },
     {
         "email": "studentdemo1@sbjit.edu.in",
@@ -267,7 +266,6 @@ DEMO_USERS = [
         "last_name": "Demo 1",
         "bio": "Second Student Demo Account at SBJIT.",
         "department": "Computer Science",
-        "password": "Password123",
     },
     {
         "email": "student.demo@sbjit.edu.in",
@@ -340,7 +338,6 @@ DEMO_USERS = [
         "last_name": "Deshmukh",
         "bio": "Department Controller overseeing First Year engineering curriculum, orientation, and student activities.",
         "department": "First Year",
-        "password": "Password@123",
     },
     {
         "email": "controller.cse@sbjit.edu.in",
@@ -349,7 +346,6 @@ DEMO_USERS = [
         "last_name": "Deshmukh",
         "bio": "Department Controller overseeing Computer Science & Engineering department approvals, clubs, and academic pipelines.",
         "department": "CSE",
-        "password": "Password@123",
     },
     {
         "email": "controller.aiml@sbjit.edu.in",
@@ -358,7 +354,6 @@ DEMO_USERS = [
         "last_name": "Sharma",
         "bio": "Department Controller overseeing AI & Machine Learning department events, student clubs, and industry collaborations.",
         "department": "CSE(AIML)",
-        "password": "Password@123",
     },
     {
         "email": "controller.aids@sbjit.edu.in",
@@ -367,7 +362,6 @@ DEMO_USERS = [
         "last_name": "Gupta",
         "bio": "Department Controller overseeing AI & Data Science activities, hackathons, and departmental permissions.",
         "department": "CSE(AIDS)",
-        "password": "Password@123",
     },
     {
         "email": "controller.it@sbjit.edu.in",
@@ -376,7 +370,6 @@ DEMO_USERS = [
         "last_name": "Patel",
         "bio": "Department Controller overseeing Information Technology departmental programs and student development.",
         "department": "IT",
-        "password": "Password@123",
     },
     {
         "email": "controller.etc@sbjit.edu.in",
@@ -385,7 +378,6 @@ DEMO_USERS = [
         "last_name": "Kulkarni",
         "bio": "Department Controller overseeing Electronics & Telecommunication Engineering departmental initiatives.",
         "department": "ETC",
-        "password": "Password@123",
     },
     {
         "email": "controller.ee@sbjit.edu.in",
@@ -394,7 +386,6 @@ DEMO_USERS = [
         "last_name": "Joshi",
         "bio": "Department Controller overseeing Electrical Engineering student clubs, labs, and event management.",
         "department": "EE",
-        "password": "Password@123",
     },
     {
         "email": "controller.me@sbjit.edu.in",
@@ -403,7 +394,6 @@ DEMO_USERS = [
         "last_name": "Verma",
         "bio": "Department Controller overseeing Mechanical Engineering student forums, projects, and departmental oversight.",
         "department": "ME",
-        "password": "Password@123",
     },
     {
         "email": "controller.bca@sbjit.edu.in",
@@ -412,7 +402,6 @@ DEMO_USERS = [
         "last_name": "Nair",
         "bio": "Department Controller overseeing Bachelor of Computer Applications events, seminars, and student approvals.",
         "department": "BCA",
-        "password": "Password@123",
     },
     {
         "email": "controller.mca@sbjit.edu.in",
@@ -421,7 +410,6 @@ DEMO_USERS = [
         "last_name": "Rao",
         "bio": "Department Controller overseeing Master of Computer Applications workshops, hackathons, and activities.",
         "department": "MCA",
-        "password": "Password@123",
     },
     {
         "email": "controller.mba@sbjit.edu.in",
@@ -430,7 +418,6 @@ DEMO_USERS = [
         "last_name": "Patil",
         "bio": "Department Controller overseeing Master of Business Administration programs, conclaves, and corporate sessions.",
         "department": "MBA",
-        "password": "Password@123",
     },
     {
         "email": "centraladmin.demo@sbjit.edu.in",
@@ -525,7 +512,7 @@ DEMO_USERS = [
 
 async def seed_demo_users():
     print("Seeding pre-configured Demo Accounts for all roles...")
-    default_password = "password123"
+    default_password = "pass@knots"
     async with SessionLocal() as db:
         for item in DEMO_USERS:
             clean_email = item["email"].strip().lower()
