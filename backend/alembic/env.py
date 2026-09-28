@@ -41,7 +41,18 @@ def run_migrations_online() -> None:
     issues with asyncpg's getaddrinfo resolution.
     """
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = settings.SYNC_DATABASE_URL
+    sync_url = settings.SYNC_DATABASE_URL or settings.DATABASE_URL
+    if sync_url:
+        if sync_url.startswith("postgresql+asyncpg://"):
+            sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+        elif sync_url.startswith("postgres://"):
+            sync_url = sync_url.replace("postgres://", "postgresql://", 1)
+        if "pooler.supabase.com:5432" in sync_url:
+            sync_url = sync_url.replace(
+                "pooler.supabase.com:5432", "pooler.supabase.com:6543"
+            )
+
+    configuration["sqlalchemy.url"] = sync_url
 
     connectable = engine_from_config(
         configuration,

@@ -90,13 +90,28 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str | None = None
     SUPABASE_STORAGE_BUCKET: str = "knots-media"
 
-    @field_validator("DATABASE_URL", "SYNC_DATABASE_URL", mode="before")
+    @field_validator("DATABASE_URL", mode="before")
     @classmethod
-    def rewrite_supabase_pooler_port(cls, v: Any) -> Any:
-        if isinstance(v, str) and "pooler.supabase.com:5432" in v:
-            # Supabase Session Mode (:5432) has a strict limit of 15 connections (EMAXCONNSESSION).
-            # Transaction Mode (:6543) enables pooled multi-tenant connections.
-            return v.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
+    def format_async_database_url(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+                v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            if "pooler.supabase.com:5432" in v:
+                v = v.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
+        return v
+
+    @field_validator("SYNC_DATABASE_URL", mode="before")
+    @classmethod
+    def format_sync_database_url(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                v = v.replace("postgres://", "postgresql://", 1)
+            elif v.startswith("postgresql+asyncpg://"):
+                v = v.replace("postgresql+asyncpg://", "postgresql://", 1)
+            if "pooler.supabase.com:5432" in v:
+                v = v.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
         return v
 
     @field_validator("ALLOWED_EMAIL_DOMAINS", mode="before")
