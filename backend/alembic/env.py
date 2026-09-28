@@ -44,9 +44,15 @@ def run_migrations_online() -> None:
     sync_url = settings.SYNC_DATABASE_URL or settings.DATABASE_URL
     if sync_url:
         if sync_url.startswith("postgresql+asyncpg://"):
-            sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            sync_url = sync_url.replace(
+                "postgresql+asyncpg://", "postgresql+psycopg2://", 1
+            )
         elif sync_url.startswith("postgres://"):
-            sync_url = sync_url.replace("postgres://", "postgresql://", 1)
+            sync_url = sync_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif sync_url.startswith("postgresql://") and not sync_url.startswith(
+            "postgresql+"
+        ):
+            sync_url = sync_url.replace("postgresql://", "postgresql+psycopg2://", 1)
         if "pooler.supabase.com:5432" in sync_url:
             sync_url = sync_url.replace(
                 "pooler.supabase.com:5432", "pooler.supabase.com:6543"

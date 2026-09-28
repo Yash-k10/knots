@@ -38,7 +38,7 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
     SYNC_DATABASE_URL: str = (
-        "postgresql://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+        "postgresql+psycopg2://postgres.lvbrfajzcglykgxthcqg:zWD8jyBRttybHZfP@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
     )
 
     # Redis Settings
@@ -107,9 +107,11 @@ class Settings(BaseSettings):
     def format_sync_database_url(cls, v: Any) -> Any:
         if isinstance(v, str):
             if v.startswith("postgres://"):
-                v = v.replace("postgres://", "postgresql://", 1)
+                v = v.replace("postgres://", "postgresql+psycopg2://", 1)
             elif v.startswith("postgresql+asyncpg://"):
-                v = v.replace("postgresql+asyncpg://", "postgresql://", 1)
+                v = v.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+                v = v.replace("postgresql://", "postgresql+psycopg2://", 1)
             if "pooler.supabase.com:5432" in v:
                 v = v.replace("pooler.supabase.com:5432", "pooler.supabase.com:6543")
         return v
