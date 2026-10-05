@@ -492,33 +492,7 @@ export default function Feed() {
     return () => clearInterval(timer);
   }, []);
 
-  // Background polling for real-time post discovery across users (LinkedIn Style)
-  useEffect(() => {
-    if (posts.length === 0) return;
 
-    const pollTimer = setInterval(async () => {
-      try {
-        const latest = await apiRequest<PostResponse[]>(
-          "/posts/feed?skip=0&limit=5"
-        );
-        if (Array.isArray(latest) && latest.length > 0) {
-          const currentTopId = posts[0]?.id || 0;
-          const freshPosts = latest.filter(
-            (p) =>
-              p.id > currentTopId &&
-              !posts.some((existing) => existing.id === p.id)
-          );
-          if (freshPosts.length > 0) {
-            setNewIncomingPosts(freshPosts);
-          }
-        }
-      } catch (err) {
-        // Silently skip poll error
-      }
-    }, 12000);
-
-    return () => clearInterval(pollTimer);
-  }, [posts]);
 
   const handleApplyNewPosts = () => {
     if (newIncomingPosts.length > 0) {
@@ -672,13 +646,13 @@ export default function Feed() {
   };
 
   useEffect(() => {
-    fetchFeed(true);
-    fetchCurrentUser();
+    // Parallel initial loading for fast render
+    Promise.allSettled([fetchFeed(true), fetchCurrentUser()]);
 
-    // Auto-sync feed every 6 seconds for real-time post & media visibility across users
+    // Lightweight background sync every 25 seconds for real-time posts
     const interval = setInterval(() => {
       syncLatestPosts();
-    }, 6000);
+    }, 25000);
 
     const handlePostCreated = (e: any) => {
       if (e.detail) {

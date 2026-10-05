@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
@@ -69,6 +70,9 @@ def register_middlewares(app: FastAPI):
     so CORSMiddleware is added last to run outermost and ensure that all
     responses (including 4xx/5xx error responses) always have proper CORS headers.
     """
+    # GZip response compression middleware (reduces payload transfer latency)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
+
     # Audit & Process time logging middleware
     app.add_middleware(RequestLoggingMiddleware)
 

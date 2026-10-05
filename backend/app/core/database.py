@@ -18,15 +18,19 @@ if settings.DATABASE_URL.startswith("sqlite"):
         "check_same_thread": False,
     }
 else:
-    engine_args["pool_size"] = 10
-    engine_args["max_overflow"] = 5
+    engine_args["pool_size"] = 20
+    engine_args["max_overflow"] = 10
     engine_args["pool_pre_ping"] = True
-    engine_args["pool_recycle"] = 300
-    engine_args["pool_timeout"] = 30
+    engine_args["pool_recycle"] = 1800
+    engine_args["pool_timeout"] = 20
     engine_args["connect_args"] = {
         "statement_cache_size": 0,
-        "timeout": 30,
-        "command_timeout": 30,
+        "timeout": 20,
+        "command_timeout": 20,
+        "server_settings": {
+            "jit": "off",
+            "application_name": "knots_fastapi_app",
+        },
     }
 
 engine = create_async_engine(settings.DATABASE_URL, **engine_args)

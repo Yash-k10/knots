@@ -99,8 +99,7 @@ async def send_message(
 
     # Real-time WebSocket delivery
     conv_repo = ConversationRepository(db)
-    conv = await conv_repo.get_conversation_with_participants(msg.conversation_id)
-    participant_ids = [p.user_id for p in conv.participants] if conv else []
+    participant_ids = await conv_repo.get_participant_ids(msg.conversation_id)
     if not participant_ids and msg.receiver_id:
         participant_ids = [current_user.id, msg.receiver_id]
 
@@ -134,8 +133,7 @@ async def send_direct_message(
 
     # Real-time WebSocket delivery
     conv_repo = ConversationRepository(db)
-    conv = await conv_repo.get_conversation_with_participants(msg.conversation_id)
-    participant_ids = [p.user_id for p in conv.participants] if conv else []
+    participant_ids = await conv_repo.get_participant_ids(msg.conversation_id)
     if not participant_ids:
         participant_ids = [current_user.id, payload.receiver_id]
 

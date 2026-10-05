@@ -29,7 +29,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         return result.scalars().first()
 
     async def is_participant(self, conversation_id: int, user_id: int) -> bool:
-        stmt = select(ConversationParticipant).where(
+        stmt = select(ConversationParticipant.id).where(
             and_(
                 ConversationParticipant.conversation_id == conversation_id,
                 ConversationParticipant.user_id == user_id,
@@ -37,6 +37,14 @@ class ConversationRepository(BaseRepository[Conversation]):
         )
         result = await self.db.execute(stmt)
         return result.scalars().first() is not None
+
+    async def get_participant_ids(self, conversation_id: int) -> list[int]:
+        """Fetch all participant user IDs for a conversation in a fast single-column index scan."""
+        stmt = select(ConversationParticipant.user_id).where(
+            ConversationParticipant.conversation_id == conversation_id
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_or_create_direct_conversation(
         self, user1_id: int, user2_id: int

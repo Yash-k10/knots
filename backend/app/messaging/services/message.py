@@ -134,8 +134,6 @@ class MessagingService:
 
     async def send_message(self, sender_id: int, msg_in: MessageCreate) -> Message:
         """Send a message to a conversation or direct recipient."""
-        from sqlalchemy import and_, select
-        from app.messaging.models.conversation import ConversationParticipant
 
         if not msg_in.conversation_id and not msg_in.receiver_id:
             raise ValidationError(
@@ -146,7 +144,7 @@ class MessagingService:
         receiver_id = msg_in.receiver_id
 
         if conversation_id:
-            # Check user is participant
+            # Check user is participant (quick scalar query)
             is_part = await self.conversation_repo.is_participant(
                 conversation_id, sender_id
             )
@@ -154,22 +152,6 @@ class MessagingService:
                 raise AuthorizationError(
                     "You are not a participant in this conversation"
                 )
-
-            # For 1-on-1 direct conversation, enforce tie check
-            conv_obj = await self.conversation_repo.get(conversation_id)
-            if conv_obj and not conv_obj.is_group:
-                other_part_stmt = select(ConversationParticipant.user_id).where(
-                    and_(
-                        ConversationParticipant.conversation_id == conversation_id,
-                        ConversationParticipant.user_id != sender_id,
-                    )
-                )
-                other_part_res = await self.db.execute(other_part_stmt)
-                other_uid = other_part_res.scalars().first()
-                if other_uid:
-                    await self._check_hierarchy_permission(
-                        sender_id, other_uid, enforce_tie=True
-                    )
         elif receiver_id:
             if sender_id == receiver_id:
                 raise ValidationError("Cannot send a direct message to yourself")

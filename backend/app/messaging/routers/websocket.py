@@ -107,11 +107,8 @@ async def websocket_chat_endpoint(
 
                         # Fetch conversation participants for broadcasting
                         conv_repo = ConversationRepository(db)
-                        conv = await conv_repo.get_conversation_with_participants(
+                        participant_ids = await conv_repo.get_participant_ids(
                             message.conversation_id
-                        )
-                        participant_ids = (
-                            [p.user_id for p in conv.participants] if conv else []
                         )
 
                         # Fallback for direct message if conv participants not loaded

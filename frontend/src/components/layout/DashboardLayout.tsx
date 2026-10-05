@@ -74,34 +74,39 @@ export default function DashboardLayout() {
     // Connect WebSocket
     wsClient.connect();
 
-    // Fetch user details
-    const fetchUser = async () => {
-      try {
-        const userData = await apiRequest<CurrentUser>("/users/me");
-        setUser(userData);
-      } catch {
-        // Fallback user fetch
+    // Fetch user details, notifications count, and messages count in parallel
+    const fetchInitialData = async () => {
+      const [userRes, notifRes, msgRes] = await Promise.allSettled([
+        apiRequest<CurrentUser>("/users/me"),
+        apiRequest<{ unread_count: number }>("/notifications/unread-count"),
+        apiRequest<{ total_unread: number }>("/messages/unread/count"),
+      ]);
+
+      if (userRes.status === "fulfilled" && userRes.value) {
+        setUser(userRes.value);
+      }
+      if (notifRes.status === "fulfilled" && notifRes.value) {
+        setUnreadNotifications(notifRes.value.unread_count || 0);
+      }
+      if (msgRes.status === "fulfilled" && msgRes.value) {
+        setUnreadMessages(msgRes.value.total_unread || 0);
       }
     };
-    fetchUser();
+    fetchInitialData();
 
-    // Fetch notification count
     const fetchNotifCount = async () => {
       try {
         const res = await apiRequest<{ unread_count: number }>("/notifications/unread-count");
         setUnreadNotifications(res.unread_count || 0);
       } catch {}
     };
-    fetchNotifCount();
 
-    // Fetch messages count
     const fetchMsgCount = async () => {
       try {
         const res = await apiRequest<{ total_unread: number }>("/messages/unread/count");
         setUnreadMessages(res.total_unread || 0);
       } catch {}
     };
-    fetchMsgCount();
 
     // WebSocket listeners
     const unsubNotif = wsClient.onNotification((data) => {

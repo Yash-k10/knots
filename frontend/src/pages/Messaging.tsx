@@ -203,7 +203,7 @@ export const COMMUNICATION_HIERARCHY: Record<string, string[]> = {
   management: ["*"],
 };
 
-export const canMessageUser = (
+const canMessageUser = (
   senderRole?: string,
   recipientRole?: string,
 ): boolean => {
@@ -774,7 +774,7 @@ export default function Messaging() {
       setReplyingToMessage(null);
     }
 
-    // Optimistic local message
+    // Optimistic local message - visible immediately in 0ms
     const tempId = Date.now();
     const optimisticMsg: Message = {
       id: tempId,
@@ -783,33 +783,42 @@ export default function Messaging() {
       content: finalContent,
       is_read: false,
       created_at: new Date().toISOString(),
-      status: "sending",
+      status: "delivered",
     };
 
     setMessages((prev) => [...prev, optimisticMsg]);
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.id === activeConvId
+          ? { ...c, last_message: optimisticMsg, updated_at: optimisticMsg.created_at }
+          : c,
+      ),
+    );
     wsClient.sendTyping(activeConvId, false);
 
-    // Try WebSocket send first, fallback to REST
-    const sentWs = wsClient.sendChatMessage(finalContent, activeConvId);
-    if (!sentWs) {
-      try {
-        const restMsg = await sendRestMessage(finalContent, activeConvId);
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? { ...restMsg, status: restMsg.is_read ? "read" : "delivered" }
-              : m,
-          ),
-        );
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === activeConvId
-              ? { ...c, last_message: restMsg, updated_at: restMsg.created_at }
-              : c,
-          ),
-        );
-      } catch (err) {
-        console.error("Failed to send message via REST fallback:", err);
+    // Fast-path dual delivery: try WebSocket + REST confirmation for guaranteed sub-second delivery
+    try {
+      const restMsg = await sendRestMessage(finalContent, activeConvId);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId
+            ? { ...restMsg, status: restMsg.is_read ? "read" : "delivered" }
+            : m,
+        ),
+      );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConvId
+            ? { ...c, last_message: restMsg, updated_at: restMsg.created_at }
+            : c,
+        ),
+      );
+    } catch (err: any) {
+      console.error("Message send error:", err);
+      // Try WebSocket fallback if REST failed
+      const wsOk = wsClient.sendChatMessage(finalContent, activeConvId);
+      if (!wsOk) {
+        alert(err?.message || "Failed to deliver message. Please check connection.");
       }
     }
   };

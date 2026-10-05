@@ -106,9 +106,26 @@ export async function apiRequest<T = any>(
   const method = (options?.method || "GET").toUpperCase();
   const isGet = method === "GET";
 
-  // Invalidate cache on mutations
+  // Smart granular cache invalidation on mutations (never wipe stable user identity)
   if (!isGet) {
-    clearApiCache();
+    if (endpoint.startsWith("/posts")) {
+      clearApiCache("/posts");
+    } else if (endpoint.startsWith("/connections")) {
+      clearApiCache("/connections");
+    } else if (endpoint.startsWith("/messages") || endpoint.startsWith("/conversations")) {
+      clearApiCache("/conversations");
+      clearApiCache("/messages");
+    } else if (endpoint.startsWith("/notifications")) {
+      clearApiCache("/notifications");
+    } else if (endpoint.startsWith("/jobs")) {
+      clearApiCache("/jobs");
+    } else if (endpoint.startsWith("/events")) {
+      clearApiCache("/events");
+    } else if (endpoint.startsWith("/clubs")) {
+      clearApiCache("/clubs");
+    } else if (endpoint.startsWith("/auth")) {
+      clearApiCache();
+    }
   }
 
   // Check SWR micro-cache for idempotent GET endpoints
@@ -253,9 +270,9 @@ export async function apiRequest<T = any>(
 
     const result = json.data as T;
 
-    // Cache GET requests to reduce redundant network calls and enable instant tab renders
+    // Cache GET requests to enable instantaneous 0ms tab navigation
     if (isGet) {
-      // Identity/meta endpoints (stable, fresh 120s, stale 10m)
+      // Identity/meta endpoints (stable, fresh 5m, stale 20m)
       const longCacheEndpoints = [
         "/users/me",
         "/profiles/me",
@@ -264,20 +281,22 @@ export async function apiRequest<T = any>(
         "/events/categories",
         "/departments/faculty",
         "/departments",
+        "/users",
       ];
-      // Dynamic lists & feeds (fresh 30s, stale 3m)
+      // Dynamic navigation lists & feeds (fresh 45s, stale 5m)
       const shortCacheEndpoints = [
+        "/notifications",
         "/notifications/unread-count",
+        "/conversations",
         "/messages/unread/count",
-        "/analytics/stats",
-        "/analytics/platform/engagement-summary",
+        "/connections",
+        "/analytics",
         "/posts/feed",
         "/jobs",
         "/jobs/applications/me",
         "/events",
         "/clubs",
         "/opportunities",
-        "/connections",
         "/profiles",
       ];
 
@@ -285,14 +304,21 @@ export async function apiRequest<T = any>(
       if (longCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
         apiCache.set(cacheKey, {
           data: result,
-          freshUntil: now + 120000,
-          staleUntil: now + 600000,
+          freshUntil: now + 300000,
+          staleUntil: now + 1200000,
         });
       } else if (shortCacheEndpoints.some((ep) => endpoint.startsWith(ep))) {
         apiCache.set(cacheKey, {
           data: result,
-          freshUntil: now + 30000,
-          staleUntil: now + 180000,
+          freshUntil: now + 45000,
+          staleUntil: now + 300000,
+        });
+      } else {
+        // Generic fallback cache for any other GET endpoint (15s fresh, 60s stale)
+        apiCache.set(cacheKey, {
+          data: result,
+          freshUntil: now + 15000,
+          staleUntil: now + 60000,
         });
       }
     }
