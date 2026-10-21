@@ -76,9 +76,38 @@ const PublicOnlyRoute = ({ children }: ProtectedRouteProps) => {
   return children;
 };
 
+// Helper to synchronously read stored user for 0ms instantaneous route checks
+const getStoredUser = () => {
+  try {
+    const raw = localStorage.getItem("knots_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 // Controller Route Wrapper Component for Role-Based Access Control
 const ControllerRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(() => {
+    const user = getStoredUser();
+    if (!user) return null;
+    const roleName = user.role?.name?.toLowerCase().trim() || "";
+    const isFaculty =
+      roleName.includes("faculty") ||
+      roleName.includes("coordinator") ||
+      user.role_id === 6;
+    return (
+      !isFaculty &&
+      (user.role_id === 1 ||
+        user.role_id === 8 ||
+        roleName === "controller" ||
+        roleName === "admin" ||
+        roleName === "super admin" ||
+        roleName === "superadmin" ||
+        roleName === "management" ||
+        roleName === "central admin")
+    );
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -90,24 +119,24 @@ const ControllerRoute = ({ children }: ProtectedRouteProps) => {
         }>("/users/me");
         if (isMounted) {
           const roleName = user.role?.name?.toLowerCase().trim() || "";
-            const isFaculty =
-              roleName.includes("faculty") ||
-              roleName.includes("coordinator") ||
-              user.role_id === 6;
-            const hasAccess =
-              !isFaculty &&
-              (user.role_id === 1 ||
-                user.role_id === 8 ||
-                roleName === "controller" ||
-                roleName === "admin" ||
-                roleName === "super admin" ||
-                roleName === "superadmin" ||
-                roleName === "management" ||
-                roleName === "central admin");
-            setIsAuthorized(hasAccess);
-          }
+          const isFaculty =
+            roleName.includes("faculty") ||
+            roleName.includes("coordinator") ||
+            user.role_id === 6;
+          const hasAccess =
+            !isFaculty &&
+            (user.role_id === 1 ||
+              user.role_id === 8 ||
+              roleName === "controller" ||
+              roleName === "admin" ||
+              roleName === "super admin" ||
+              roleName === "superadmin" ||
+              roleName === "management" ||
+              roleName === "central admin");
+          setIsAuthorized(hasAccess);
+        }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && isAuthorized === null) {
           setIsAuthorized(false);
         }
       }
@@ -119,11 +148,7 @@ const ControllerRoute = ({ children }: ProtectedRouteProps) => {
   }, []);
 
   if (isAuthorized === null) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <RouteLoadingFallback />;
   }
 
   if (!isAuthorized) {
@@ -158,7 +183,20 @@ const ControllerRoute = ({ children }: ProtectedRouteProps) => {
 
 // Admin Route Wrapper Component for Role-Based Access Control
 const AdminRoute = ({ children }: ProtectedRouteProps) => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(() => {
+    const user = getStoredUser();
+    if (!user) return null;
+    const roleName = user.role?.name?.toLowerCase().trim() || "";
+    return (
+      user.role_id === 1 ||
+      roleName === "admin" ||
+      roleName === "super admin" ||
+      roleName === "superadmin" ||
+      roleName === "central admin" ||
+      roleName === "management" ||
+      roleName === "tpo"
+    );
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -181,7 +219,7 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
           setIsAdmin(hasAdminRole);
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && isAdmin === null) {
           setIsAdmin(false);
         }
       }
@@ -193,11 +231,7 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
   }, []);
 
   if (isAdmin === null) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <RouteLoadingFallback />;
   }
 
   if (!isAdmin) {
@@ -233,7 +267,21 @@ const AdminRoute = ({ children }: ProtectedRouteProps) => {
 
 // Role Allowed Route Wrapper Component for specific role whitelisting
 const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { allowedRoles: string[] }) => {
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(() => {
+    const user = getStoredUser();
+    if (!user) return null;
+    const roleName = user.role?.name?.toLowerCase().trim() || "student";
+    const isAdmin =
+      user.role_id === 1 ||
+      ["admin", "super admin", "superadmin", "management", "central admin"].includes(roleName);
+    return (
+      isAdmin ||
+      allowedRoles.some((r) => {
+        const clean = r.toLowerCase().trim();
+        return roleName === clean || roleName.includes(clean);
+      })
+    );
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -257,7 +305,7 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
           setIsAuthorized(isAllowed);
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && isAuthorized === null) {
           setIsAuthorized(false);
         }
       }
@@ -269,11 +317,7 @@ const RoleAllowedRoute = ({ children, allowedRoles }: ProtectedRouteProps & { al
   }, [allowedRoles.join(",")]);
 
   if (isAuthorized === null) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
-      </div>
-    );
+    return <RouteLoadingFallback />;
   }
 
   if (!isAuthorized) {

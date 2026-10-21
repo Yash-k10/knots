@@ -145,8 +145,14 @@ export default function Events() {
       last_name?: string | null;
       department?: string | null;
     } | null;
-  } | null>(null);
-  const [loadingUser, setLoadingUser] = useState<boolean>(true);
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   
   // Tab switcher with URL persistence
   const initialTab =
@@ -438,7 +444,6 @@ export default function Events() {
   // Fetch current user, backend events, and department students
   const loadInitialData = async () => {
     try {
-      setLoadingUser(true);
       // 1. Current user
       const userData = await apiRequest<{
         id: number;
@@ -552,8 +557,6 @@ export default function Events() {
       }
     } catch (err) {
       console.error("Failed to load events initial data", err);
-    } finally {
-      setLoadingUser(false);
     }
   };
 
@@ -823,16 +826,6 @@ export default function Events() {
     }
   };
 
-  if (loadingUser) {
-    return (
-      <div className="py-24 flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
-        <span className="text-xs sm:text-sm font-bold text-[#5851A4]">
-          Loading events portal...
-        </span>
-      </div>
-    );
-  }
 
   // ALUMNI EXCLUSIVE RESTRICTION:
   // In alumni login in the events section, the alumni should ONLY see Alumni Meet Gallery.

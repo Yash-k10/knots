@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   ChevronRight,
   Check,
-  Loader2,
   ExternalLink,
   Send,
   X,
@@ -36,7 +35,14 @@ export default function DepartmentPage() {
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [selectedDept] = useState("CSE");
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [deptStats, setDeptStats] = useState<DepartmentStatsResponse | null>(null);
   const [students, setStudents] = useState<DepartmentStudentItem[]>([]);
   const [faculty, setFaculty] = useState<DepartmentFacultyItem[]>([]);
@@ -233,11 +239,22 @@ export default function DepartmentPage() {
     return matchesYear && matchesQuery;
   });
 
-  if (loading) {
+  if (loading && !deptStats) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
-        <p className="text-sm font-bold text-[#5851A4]">Loading department data...</p>
+      <div className="space-y-6 pb-12 animate-pulse">
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="h-6 bg-slate-100 rounded-xl w-48" />
+          <div className="h-8 bg-slate-100 rounded-xl w-72" />
+          <div className="h-4 bg-slate-100 rounded-lg w-full max-w-xl" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-white border border-[#EAE4F7] rounded-2xl p-5 shadow-sm space-y-2">
+              <div className="h-4 bg-slate-100 rounded w-1/2" />
+              <div className="h-8 bg-slate-100 rounded w-3/4" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

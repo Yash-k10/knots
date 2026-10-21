@@ -3,7 +3,7 @@ import { apiRequest } from "../services/api";
 import FacultyOpportunities from "./FacultyOpportunities";
 import HodDashboard from "./HodDashboard";
 import Jobs from "./Jobs";
-import { Loader2, Briefcase, GraduationCap } from "lucide-react";
+import { Briefcase, GraduationCap } from "lucide-react";
 
 /**
  * OpportunitiesPage dynamically routes the Opportunities section based on user role:
@@ -11,10 +11,23 @@ import { Loader2, Briefcase, GraduationCap } from "lucide-react";
  * - Faculty, Coordinator, TPO, Admins: Faculty Academic Opportunities Hub (with Faculty Research) and Job Board.
  * - Students & Others: Student Opportunities & Job Board (Faculty Research Collaborations, Job explore, Referrals).
  */
+const getInitialUserRole = (): string => {
+  try {
+    const raw = localStorage.getItem("knots_user");
+    if (!raw) return "student";
+    const user = JSON.parse(raw);
+    return user.role?.name?.toLowerCase().trim() || "student";
+  } catch {
+    return "student";
+  }
+};
+
 export default function OpportunitiesPage() {
-  const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activePortal, setActivePortal] = useState<"faculty" | "jobs">("faculty");
+  const initialRole = getInitialUserRole();
+  const [role, setRole] = useState<string>(initialRole);
+  const [activePortal, setActivePortal] = useState<"faculty" | "jobs">(() => {
+    return initialRole.includes("faculty") || initialRole.includes("coordinator") ? "faculty" : "jobs";
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -38,10 +51,6 @@ export default function OpportunitiesPage() {
           setRole("student");
           setActivePortal("jobs");
         }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
       }
     };
     fetchUser();
@@ -49,17 +58,6 @@ export default function OpportunitiesPage() {
       isMounted = false;
     };
   }, []);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
-        <Loader2 className="w-10 h-10 text-[#4B63D2] animate-spin" />
-        <p className="text-xs font-semibold text-[#5851A4] dark:text-[#94A3B8]">
-          Loading Opportunities...
-        </p>
-      </div>
-    );
-  }
 
   const roleName = (role || "").toLowerCase();
 

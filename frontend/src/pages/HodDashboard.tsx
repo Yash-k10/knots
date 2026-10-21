@@ -71,8 +71,23 @@ export default function HodDashboard() {
   >("overview");
 
   // User and Department
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [department, setDepartment] = useState<string>("Computer Science & Engineering");
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [department, setDepartment] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      const u = raw ? JSON.parse(raw) : null;
+      return u?.profile?.department || "Computer Science & Engineering";
+    } catch {
+      return "Computer Science & Engineering";
+    }
+  });
 
   // Department data
   const [stats, setStats] = useState<DepartmentStatsResponse | null>(null);
@@ -269,13 +284,22 @@ export default function HodDashboard() {
     exportToCsv(`${department.replace(/\s+/g, "_")}_Students_Directory`, headers, rows);
   };
 
-  if (loading) {
+  if (loading && !stats) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4">
-        <Loader2 className="w-10 h-10 text-[#4B63D2] animate-spin" />
-        <p className="text-sm font-bold text-[#5851A4] dark:text-[#94A3B8]">
-          Loading {department} HOD Console...
-        </p>
+      <div className="space-y-6 pb-12 animate-pulse">
+        <div className="bg-white dark:bg-[#1E2337] border border-[#EAE4F7] dark:border-[#2D334D] rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded-xl w-48" />
+          <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-xl w-80" />
+          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-lg w-full max-w-xl" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-white dark:bg-[#1E2337] border border-[#EAE4F7] dark:border-[#2D334D] rounded-2xl p-5 shadow-sm space-y-2">
+              <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
+              <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded w-3/4" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

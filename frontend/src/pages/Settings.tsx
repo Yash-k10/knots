@@ -38,12 +38,26 @@ interface UserData {
 export default function Settings() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [user, setUser] = useState<UserData | null>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loadingUser, setLoadingUser] = useState(() => !localStorage.getItem("knots_user"));
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Email state
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw).email || "" : "";
+    } catch {
+      return "";
+    }
+  });
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -73,7 +87,7 @@ export default function Settings() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        setLoadingUser(true);
+        if (!user) setLoadingUser(true);
         setFetchError(null);
         const response = await apiRequest<UserData>("/users/me");
         setUser(response);
@@ -269,11 +283,23 @@ export default function Settings() {
 
   const passwordStrength = getPasswordStrength(newPassword);
 
-  if (loadingUser) {
+  if (loadingUser && !user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <Loader2 className="h-10 w-10 text-indigo-500 animate-spin" />
-        <p className="text-slate-400 text-sm">Loading user settings...</p>
+      <div className="space-y-8 max-w-4xl animate-pulse">
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="h-7 bg-slate-100 rounded-xl w-64" />
+          <div className="h-4 bg-slate-100 rounded-lg w-96" />
+          <div className="pt-4 border-t border-[#EAE4F7] grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="h-4 bg-slate-100 rounded w-full" />
+            <div className="h-4 bg-slate-100 rounded w-full" />
+            <div className="h-4 bg-slate-100 rounded w-full" />
+          </div>
+        </div>
+        <div className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="h-6 bg-slate-100 rounded-xl w-48" />
+          <div className="h-10 bg-slate-100 rounded-xl w-full" />
+          <div className="h-10 bg-slate-100 rounded-xl w-32" />
+        </div>
       </div>
     );
   }

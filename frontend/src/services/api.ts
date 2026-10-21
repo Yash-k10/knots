@@ -223,6 +223,7 @@ export async function apiRequest<T = any>(
         // Refresh failed or no refresh token - clear credentials and redirect to login
         localStorage.removeItem("knots_token");
         localStorage.removeItem("knots_refresh_token");
+        localStorage.removeItem("knots_user");
         clearApiCache();
         if (
           window.location.pathname !== "/login" &&
@@ -269,6 +270,13 @@ export async function apiRequest<T = any>(
     }
 
     const result = json.data as T;
+
+    // Automatically synchronize knots_user in localStorage for 0ms instant UI rendering
+    if (endpoint === "/users/me" && result && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("knots_user", JSON.stringify(result));
+      } catch {}
+    }
 
     // Cache GET requests to enable instantaneous 0ms tab navigation
     if (isGet) {

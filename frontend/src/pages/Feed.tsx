@@ -153,7 +153,14 @@ export default function Feed() {
     role_id?: number;
     role?: { id: number; name: string };
     profile?: AuthorProfile | null;
-  } | null>(null);
+  } | null>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "";
   const isSuperAdmin = roleName === "super admin" || roleName === "superadmin";
@@ -854,11 +861,31 @@ export default function Feed() {
 
           {/* Main Feed Posts List */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 sm:py-20 space-y-4 bg-white rounded-2xl sm:rounded-3xl border border-[#EAE4F7]">
-              <Loader2 className="w-8 h-8 text-[#4B63D2] animate-spin" />
-              <p className="text-[#5851A4] text-xs sm:text-sm font-semibold">
-                Gathering latest campus discussions...
-              </p>
+            <div className="space-y-4 sm:space-y-6 animate-pulse">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white border border-[#EAE4F7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 shrink-0" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 bg-slate-100 rounded-lg w-1/3" />
+                      <div className="h-3 bg-slate-100 rounded-lg w-1/4" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-slate-100 rounded-lg w-full" />
+                    <div className="h-4 bg-slate-100 rounded-lg w-5/6" />
+                    <div className="h-4 bg-slate-100 rounded-lg w-2/3" />
+                  </div>
+                  <div className="pt-3 border-t border-[#EAE4F7] flex items-center justify-between">
+                    <div className="h-8 bg-slate-100 rounded-xl w-20" />
+                    <div className="h-8 bg-slate-100 rounded-xl w-20" />
+                    <div className="h-8 bg-slate-100 rounded-xl w-20" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="bg-rose-50 border border-rose-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center space-y-3">

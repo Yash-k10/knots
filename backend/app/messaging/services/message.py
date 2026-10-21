@@ -240,13 +240,12 @@ class MessagingService:
             user_id, skip=skip, limit=limit
         )
 
-        response_list = []
-        for conv in conversations:
-            last_msg = await self.message_repo.get_latest_message_for_conversation(
-                conv.id
-            )
-            unread = await self.message_repo.get_unread_count(
-                user_id, conversation_id=conv.id
+        import asyncio
+
+        async def _enrich_conv(conv) -> ConversationResponse:
+            last_msg, unread = await asyncio.gather(
+                self.message_repo.get_latest_message_for_conversation(conv.id),
+                self.message_repo.get_unread_count(user_id, conversation_id=conv.id),
             )
 
             participants_resp = [
@@ -254,20 +253,19 @@ class MessagingService:
             ]
             last_msg_resp = MessageResponse.from_orm(last_msg) if last_msg else None
 
-            response_list.append(
-                ConversationResponse(
-                    id=conv.id,
-                    is_group=conv.is_group,
-                    name=conv.name,
-                    created_at=conv.created_at,
-                    updated_at=conv.updated_at,
-                    participants=participants_resp,
-                    last_message=last_msg_resp,
-                    unread_count=unread,
-                )
+            return ConversationResponse(
+                id=conv.id,
+                is_group=conv.is_group,
+                name=conv.name,
+                created_at=conv.created_at,
+                updated_at=conv.updated_at,
+                participants=participants_resp,
+                last_message=last_msg_resp,
+                unread_count=unread,
             )
 
-        return response_list
+        response_list = await asyncio.gather(*[_enrich_conv(c) for c in conversations])
+        return list(response_list)
 
     async def get_conversation_messages(
         self, user_id: int, conversation_id: int, skip: int = 0, limit: int = 50

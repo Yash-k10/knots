@@ -13,7 +13,6 @@ import {
   Briefcase,
   Compass,
   Building,
-  Loader2,
 } from "lucide-react";
 import {
   departmentService,
@@ -23,8 +22,14 @@ import { apiRequest } from "../services/api";
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<DepartmentReportItem[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Selected report type for preview/generation
   const [selectedType, setSelectedType] = useState<string>("Student Report");
@@ -236,7 +241,6 @@ export default function ReportsPage() {
 
   const loadReports = async () => {
     try {
-      setLoading(true);
       const [userRes, reportsRes] = await Promise.all([
         apiRequest<any>("/users/me").catch(() => null),
         departmentService.getReports().catch(() => []),
@@ -245,8 +249,6 @@ export default function ReportsPage() {
       if (reportsRes) setReports(reportsRes);
     } catch (err) {
       console.error("Failed to load reports", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -345,14 +347,6 @@ export default function ReportsPage() {
   const activeDept =
     currentUser?.profile?.department || "Computer Science & Engineering";
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
-        <p className="text-sm font-bold text-[#5851A4]">Loading reporting suite...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">

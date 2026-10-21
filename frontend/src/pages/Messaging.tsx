@@ -574,7 +574,9 @@ export default function Messaging() {
 
   const loadConversations = async () => {
     try {
-      setIsLoadingConvs(true);
+      if (conversations.length === 0) {
+        setIsLoadingConvs(true);
+      }
       const data = await fetchConversations();
       setConversations(data);
       if (data.length > 0 && activeConvId === null) {
@@ -674,10 +676,13 @@ export default function Messaging() {
     setTieNotice(null);
 
     const targetConv = targetConvParam || conversations.find((c) => c.id === convId);
-    await checkActiveConvTieStatus(convId, targetConv);
 
     try {
-      const msgs = await fetchConversationMessages(convId);
+      const [, msgs] = await Promise.all([
+        checkActiveConvTieStatus(convId, targetConv),
+        fetchConversationMessages(convId),
+      ]);
+
       const uniqueMap = new Map<number, Message>();
       for (const m of msgs) {
         uniqueMap.set(m.id, {
@@ -686,7 +691,9 @@ export default function Messaging() {
         });
       }
       setMessages(Array.from(uniqueMap.values()));
-      await markConversationAsRead(convId);
+
+      // Mark as read in background without blocking message rendering
+      markConversationAsRead(convId).catch(() => {});
       wsClient.markRead(convId);
 
       setConversations((prev) =>

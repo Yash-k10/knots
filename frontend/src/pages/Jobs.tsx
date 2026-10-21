@@ -665,7 +665,9 @@ export default function Jobs() {
   ];
 
   const loadData = async () => {
-    setLoading(true);
+    if (jobs.length === 0) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [fetchedJobs, fetchedCompanies, fetchedApps, userResp, fetchedOpps, fetchedFacultyApps] =
@@ -946,11 +948,6 @@ export default function Jobs() {
 
   useEffect(() => {
     loadData();
-    const handleFocus = () => {
-      loadData();
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
   }, [selectedJobType, selectedWorkplace]);
 
   // Load students for TPO Student Finder tab
@@ -979,14 +976,6 @@ export default function Jobs() {
       loadStudents();
     }
   }, [isTpo, activeTab]);
-
-  useEffect(() => {
-    const handleFocus = () => {
-      loadData();
-    };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, []);
 
 
   const handleSearch = (e: React.FormEvent) => {

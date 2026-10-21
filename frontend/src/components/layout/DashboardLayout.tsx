@@ -51,7 +51,14 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [user, setUser] = useState<CurrentUser | null>(() => {
+    try {
+      const stored = localStorage.getItem("knots_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
   const [unreadMessages, setUnreadMessages] = useState<number>(0);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState<boolean>(false);
@@ -144,6 +151,7 @@ export default function DashboardLayout() {
     wsClient.disconnect();
     localStorage.removeItem("knots_token");
     localStorage.removeItem("knots_refresh_token");
+    localStorage.removeItem("knots_user");
     localStorage.removeItem("token");
     navigate("/login");
   };

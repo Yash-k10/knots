@@ -89,7 +89,9 @@ export default function Connections() {
   // Fetch all network data and current user
   const fetchData = async () => {
     try {
-      setLoading(true);
+      if (!requests.length && !connections.length && !suggestions.length && !users.length) {
+        setLoading(true);
+      }
       const [currentUserData, reqsData, sentData, connsData, suggData, usersData] = await Promise.all([
         apiRequest<{ id: number; email: string }>('/users/me').catch(() => null),
         apiRequest<Connection[]>('/connections/me/requests').catch(() => []),
@@ -348,13 +350,26 @@ export default function Connections() {
       !requests.some((r) => r.requester_id === u.id)
   );
 
-  if (loading && !requests.length && !connections.length && !suggestions.length && !users.length) {
-    return (
-      <div className="text-[#5851A4] p-8 flex items-center justify-center min-h-[50vh] font-semibold">
-        Loading network data...
-      </div>
-    );
-  }
+  const ConnectionSkeletonGrid = () => (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={`conn-skel-${i}`}
+          className="bg-white border border-[#EAE4F7] rounded-3xl p-5 shadow-xs space-y-4 animate-pulse"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-14 h-14 rounded-2xl bg-slate-200" />
+            <div className="space-y-2 flex-1">
+              <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+              <div className="h-3 bg-slate-100 rounded-md w-1/2" />
+            </div>
+          </div>
+          <div className="h-7 bg-slate-100 rounded-xl w-2/3" />
+          <div className="h-10 bg-slate-200 rounded-xl w-full" />
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -521,142 +536,142 @@ export default function Connections() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* DISCOVER TAB */}
         {activeTab === 'discover' && (
-          <>
-            {filteredSuggestions.length === 0 && filteredUsers.length === 0 ? (
-              <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
-                {searchQuery ? 'No suggestions or users match your search.' : 'No new recommendations available right now.'}
-              </div>
-            ) : (
-              <>
-                {filteredSuggestions.map((sugg) => (
-                  <ConnectionCard
-                    key={`sugg-${sugg.user_id}`}
-                    type="discover"
-                    id={sugg.user_id}
-                    targetId={sugg.user_id}
-                    email={sugg.email}
-                    name={getSuggestionDisplayName(sugg)}
-                    role={(sugg as any).role_name || (sugg.email?.includes('prof') ? 'Faculty' : sugg.email?.includes('alumni') ? 'Alumni' : 'Student')}
-                    profilePicture={sugg.profile_picture || sugg.profile?.profile_picture}
-                    subtitle={sugg.department || 'Suggested for You'}
-                    mutualCount={sugg.mutual_count}
-                    reason={sugg.recommendation_reason}
-                    onConnect={handleConnect}
-                  />
-                ))}
-                {filteredUsers.map((user) => (
-                  <ConnectionCard
-                    key={`user-${user.id}`}
-                    type="discover"
-                    id={user.id}
-                    targetId={user.id}
-                    email={user.email}
-                    name={getUserSimpleDisplayName(user)}
-                    role={user.role?.name || (user.email?.includes('prof') ? 'Faculty' : user.email?.includes('alumni') ? 'Alumni' : 'Student')}
-                    profilePicture={user.profile?.profile_picture}
-                    subtitle={user.profile?.department || 'Campus Member'}
-                    onConnect={handleConnect}
-                  />
-                ))}
-              </>
-            )}
-          </>
+          loading && filteredSuggestions.length === 0 && filteredUsers.length === 0 ? (
+            <ConnectionSkeletonGrid />
+          ) : filteredSuggestions.length === 0 && filteredUsers.length === 0 ? (
+            <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
+              {searchQuery ? 'No suggestions or users match your search.' : 'No new recommendations available right now.'}
+            </div>
+          ) : (
+            <>
+              {filteredSuggestions.map((sugg) => (
+                <ConnectionCard
+                  key={`sugg-${sugg.user_id}`}
+                  type="discover"
+                  id={sugg.user_id}
+                  targetId={sugg.user_id}
+                  email={sugg.email}
+                  name={getSuggestionDisplayName(sugg)}
+                  role={(sugg as any).role_name || (sugg.email?.includes('prof') ? 'Faculty' : sugg.email?.includes('alumni') ? 'Alumni' : 'Student')}
+                  profilePicture={sugg.profile_picture || sugg.profile?.profile_picture}
+                  subtitle={sugg.department || 'Suggested for You'}
+                  mutualCount={sugg.mutual_count}
+                  reason={sugg.recommendation_reason}
+                  onConnect={handleConnect}
+                />
+              ))}
+              {filteredUsers.map((user) => (
+                <ConnectionCard
+                  key={`user-${user.id}`}
+                  type="discover"
+                  id={user.id}
+                  targetId={user.id}
+                  email={user.email}
+                  name={getUserSimpleDisplayName(user)}
+                  role={user.role?.name || (user.email?.includes('prof') ? 'Faculty' : user.email?.includes('alumni') ? 'Alumni' : 'Student')}
+                  profilePicture={user.profile?.profile_picture}
+                  subtitle={user.profile?.department || 'Campus Member'}
+                  onConnect={handleConnect}
+                />
+              ))}
+            </>
+          )
         )}
 
         {/* PENDING REQUESTS TAB */}
         {activeTab === 'requests' && (
-          <>
-            {filteredRequests.length === 0 ? (
-              <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
-                {searchQuery ? 'No pending requests match your search.' : 'No incoming pending requests.'}
-              </div>
-            ) : (
-              filteredRequests.map((req) => {
-                const targetUser = req.requester;
-                const name = getUserProfileName(targetUser, req.requester_id);
-                return (
-                  <ConnectionCard
-                    key={req.id}
-                    type="request"
-                    id={req.id}
-                    targetId={req.requester_id}
-                    email={targetUser?.email}
-                    name={name}
-                    role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
-                    profilePicture={targetUser?.profile?.profile_picture}
-                    subtitle="Wants to connect"
-                    isAccepted={!!acceptedRequestIds[req.id]}
-                    onAccept={handleAccept}
-                    onReject={handleReject}
-                    onTieBack={handleConnect}
-                  />
-                );
-              })
-            )}
-          </>
+          loading && filteredRequests.length === 0 ? (
+            <ConnectionSkeletonGrid />
+          ) : filteredRequests.length === 0 ? (
+            <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
+              {searchQuery ? 'No pending requests match your search.' : 'No incoming pending requests.'}
+            </div>
+          ) : (
+            filteredRequests.map((req) => {
+              const targetUser = req.requester;
+              const name = getUserProfileName(targetUser, req.requester_id);
+              return (
+                <ConnectionCard
+                  key={req.id}
+                  type="request"
+                  id={req.id}
+                  targetId={req.requester_id}
+                  email={targetUser?.email}
+                  name={name}
+                  role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
+                  profilePicture={targetUser?.profile?.profile_picture}
+                  subtitle="Wants to connect"
+                  isAccepted={!!acceptedRequestIds[req.id]}
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                  onTieBack={handleConnect}
+                />
+              );
+            })
+          )
         )}
 
         {/* SENT REQUESTS TAB */}
         {activeTab === 'sent' && (
-          <>
-            {filteredSentRequests.length === 0 ? (
-              <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
-                {searchQuery ? 'No sent requests match your search.' : 'No pending sent requests.'}
-              </div>
-            ) : (
-              filteredSentRequests.map((req) => {
-                const targetUser = req.addressee;
-                const name = getUserProfileName(targetUser, req.addressee_id);
-                return (
-                  <ConnectionCard
-                    key={req.id}
-                    type="sent"
-                    id={req.id}
-                    targetId={req.addressee_id}
-                    email={targetUser?.email}
-                    name={name}
-                    role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
-                    profilePicture={targetUser?.profile?.profile_picture}
-                    subtitle="Request Sent (Pending)"
-                    onWithdraw={handleWithdraw}
-                  />
-                );
-              })
-            )}
-          </>
+          loading && filteredSentRequests.length === 0 ? (
+            <ConnectionSkeletonGrid />
+          ) : filteredSentRequests.length === 0 ? (
+            <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
+              {searchQuery ? 'No sent requests match your search.' : 'No pending sent requests.'}
+            </div>
+          ) : (
+            filteredSentRequests.map((req) => {
+              const targetUser = req.addressee;
+              const name = getUserProfileName(targetUser, req.addressee_id);
+              return (
+                <ConnectionCard
+                  key={req.id}
+                  type="sent"
+                  id={req.id}
+                  targetId={req.addressee_id}
+                  email={targetUser?.email}
+                  name={name}
+                  role={targetUser?.email?.includes('prof') ? 'Faculty' : targetUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
+                  profilePicture={targetUser?.profile?.profile_picture}
+                  subtitle="Request Sent (Pending)"
+                  onWithdraw={handleWithdraw}
+                />
+              );
+            })
+          )
         )}
 
         {/* MY CONNECTIONS TAB */}
         {activeTab === 'connections' && (
-          <>
-            {filteredConnections.length === 0 ? (
-              <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
-                {searchQuery ? 'No connections match your search.' : 'No active connections yet. Start connecting from Discover!'}
-              </div>
-            ) : (
-              filteredConnections.map((conn) => {
-                const isRequester = currentUser && conn.requester_id === currentUser.id;
-                const otherUser = isRequester ? conn.addressee : conn.requester;
-                const otherUserId = isRequester ? conn.addressee_id : conn.requester_id;
-                const name = getUserProfileName(otherUser, otherUserId);
+          loading && filteredConnections.length === 0 ? (
+            <ConnectionSkeletonGrid />
+          ) : filteredConnections.length === 0 ? (
+            <div className="col-span-3 text-[#5851A4] text-center py-12 bg-white rounded-3xl border border-[#EAE4F7] font-medium">
+              {searchQuery ? 'No connections match your search.' : 'No active connections yet. Start connecting from Discover!'}
+            </div>
+          ) : (
+            filteredConnections.map((conn) => {
+              const isRequester = currentUser && conn.requester_id === currentUser.id;
+              const otherUser = isRequester ? conn.addressee : conn.requester;
+              const otherUserId = isRequester ? conn.addressee_id : conn.requester_id;
+              const name = getUserProfileName(otherUser, otherUserId);
 
-                return (
-                  <ConnectionCard
-                    key={conn.id}
-                    type="connection"
-                    id={conn.id}
-                    targetId={otherUserId}
-                    email={otherUser?.email}
-                    name={name}
-                    role={otherUser?.email?.includes('prof') ? 'Faculty' : otherUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
-                    profilePicture={otherUser?.profile?.profile_picture}
-                    subtitle="Connected"
-                    onMessage={handleSendMessage}
-                  />
-                );
-              })
-            )}
-          </>
+              return (
+                <ConnectionCard
+                  key={conn.id}
+                  type="connection"
+                  id={conn.id}
+                  targetId={otherUserId}
+                  email={otherUser?.email}
+                  name={name}
+                  role={otherUser?.email?.includes('prof') ? 'Faculty' : otherUser?.email?.includes('alumni') ? 'Alumni' : 'Student'}
+                  profilePicture={otherUser?.profile?.profile_picture}
+                  subtitle="Connected"
+                  onMessage={handleSendMessage}
+                />
+              );
+            })
+          )
         )}
       </div>
     </div>

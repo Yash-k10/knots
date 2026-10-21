@@ -20,7 +20,6 @@ import {
   ExternalLink,
   ChevronRight,
   Info,
-  Loader2,
 } from "lucide-react";
 import {
   departmentService,
@@ -35,7 +34,14 @@ export default function ManagementConnectPage() {
   const initialTab = searchParams.get("tab") || "announcements";
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    try {
+      const raw = localStorage.getItem("knots_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
   const [announcements, setAnnouncements] = useState<ManagementAnnouncement[]>([]);
   const [requests, setRequests] = useState<ManagementConnectRequest[]>([]);
   const [reports, setReports] = useState<DepartmentReportItem[]>([]);
@@ -179,11 +185,23 @@ export default function ManagementConnectPage() {
     }
   };
 
-  if (loading) {
+  if (loading && announcements.length === 0 && requests.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4B63D2]" />
-        <p className="text-sm font-bold text-[#5851A4]">Loading management portal...</p>
+      <div className="space-y-6 pb-12 animate-pulse">
+        <div className="bg-white border border-[#EAE4F7] rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+          <div className="h-6 bg-slate-100 rounded-xl w-48" />
+          <div className="h-8 bg-slate-100 rounded-xl w-80" />
+          <div className="h-4 bg-slate-100 rounded-lg w-full max-w-xl" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-44 bg-white border border-[#EAE4F7] rounded-3xl p-6 shadow-sm space-y-3">
+              <div className="h-5 bg-slate-100 rounded-xl w-3/4" />
+              <div className="h-4 bg-slate-100 rounded-lg w-1/2" />
+              <div className="h-12 bg-slate-100 rounded-xl w-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
