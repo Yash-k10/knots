@@ -320,9 +320,11 @@ function deptMatches(userDept: string, clubCat: string): boolean {
   return false;
 }
 
+let cachedClubsList: ClubResponse[] | null = null;
+
 export default function Clubs() {
   // ── States ─────────────────────────────────────────────────────────────────
-  const [clubs, setClubs] = useState<ClubResponse[]>([]);
+  const [clubs, setClubs] = useState<ClubResponse[]>(() => cachedClubsList || []);
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     email: string;
@@ -340,7 +342,7 @@ export default function Clubs() {
     }
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !cachedClubsList);
   const [error, setError] = useState<string | null>(null);
 
   // Filters & Search
@@ -664,7 +666,9 @@ export default function Clubs() {
   // ── Initial Fetching ───────────────────────────────────────────────────────
 
   const fetchClubsAndUser = async () => {
-    setLoading(true);
+    if (!cachedClubsList) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const userRes = await apiRequest<{
@@ -696,6 +700,7 @@ export default function Clubs() {
         });
       }
 
+      cachedClubsList = mergedClubs;
       setClubs(mergedClubs);
 
       // Fetch department students for appointing Head & Co-Head

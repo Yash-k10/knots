@@ -137,7 +137,25 @@ export default function DashboardLayout() {
     window.addEventListener("refresh-unread-count", fetchNotifCount);
     window.addEventListener("refresh-unread-messages", handleMsgRead);
 
+    // Proactively prefetch tab datasets in the background for true 0ms tab transitions
+    const prefetchTimer = setTimeout(() => {
+      const endpointsToPrefetch = [
+        "/connections/me/requests",
+        "/connections/me",
+        "/connections/suggestions",
+        "/jobs",
+        "/jobs/companies",
+        "/events",
+        "/conversations",
+        "/clubs?skip=0&limit=100",
+      ];
+      endpointsToPrefetch.forEach((ep) => {
+        apiRequest(ep).catch(() => {});
+      });
+    }, 350);
+
     return () => {
+      clearTimeout(prefetchTimer);
       unsubNotif();
       unsubMsg();
       window.removeEventListener("notification-read", handleNotifRead);

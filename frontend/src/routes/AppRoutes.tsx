@@ -11,17 +11,20 @@ const Landing = lazy(() => import("../pages/Landing"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
 
-// Protected Core Pages (Feed is direct for instant initial render, secondary pages lazy loaded)
+// Protected Core Pages (Direct imports for true 0ms instant tab switching)
 import Feed from "../pages/Feed";
-const Profile = lazy(() => import("../pages/Profile"));
-const Connections = lazy(() => import("../pages/Connections"));
-const Events = lazy(() => import("../pages/Events"));
-const Messaging = lazy(() => import("../pages/Messaging"));
-const Notifications = lazy(() => import("../pages/Notifications"));
-const Clubs = lazy(() => import("../pages/Clubs"));
+import Connections from "../pages/Connections";
+import Events from "../pages/Events";
+import Messaging from "../pages/Messaging";
+import Notifications from "../pages/Notifications";
+import Clubs from "../pages/Clubs";
+import Settings from "../pages/Settings";
+import OpportunitiesPage from "../pages/OpportunitiesPage";
+import Profile from "../pages/Profile";
+
+// Administrative & Role-Specific Pages (Lazy Loaded)
 const Admin = lazy(() => import("../pages/Admin"));
 const Controller = lazy(() => import("../pages/Controller"));
-const Settings = lazy(() => import("../pages/Settings"));
 
 // Role-Specific Dedicated Pages (Lazy Loaded)
 const Students = lazy(() => import("../pages/Students"));
@@ -33,7 +36,6 @@ const InstitutionOverview = lazy(() => import("../pages/InstitutionOverview"));
 const ManagementConnectPage = lazy(() => import("../pages/ManagementConnectPage"));
 const DepartmentAnalyticsPage = lazy(() => import("../pages/DepartmentAnalyticsPage"));
 const FacultyOpportunities = lazy(() => import("../pages/FacultyOpportunities"));
-const OpportunitiesPage = lazy(() => import("../pages/OpportunitiesPage"));
 const TpoDashboard = lazy(() => import("../pages/TpoDashboard"));
 const HodDashboard = lazy(() => import("../pages/HodDashboard"));
 

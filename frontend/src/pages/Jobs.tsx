@@ -82,25 +82,36 @@ interface ApplicationWithUpdates extends Application {
   }[];
 }
 
+interface CachedJobsData {
+  jobs: JobPosting[];
+  companies: Company[];
+  applications: ApplicationWithUpdates[];
+  candidateApplications: Application[];
+  facultyOpportunities: Opportunity[];
+  appliedResearchIds: Set<number>;
+  currentUser: any;
+}
+let cachedJobs: CachedJobsData | null = null;
+
 export default function Jobs() {
   const [activeTab, setActiveTab] = useState<
     "explore" | "alumni-companies" | "alumni-referrals" | "applications" | "candidates" | "post" | "research" | "student-finder" | "candidate-status"
   >("explore");
 
-  const [jobs, setJobs] = useState<JobPosting[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [applications, setApplications] = useState<ApplicationWithUpdates[]>([]);
-  const [candidateApplications, setCandidateApplications] = useState<Application[]>([]);
-  const [facultyOpportunities, setFacultyOpportunities] = useState<Opportunity[]>([]);
+  const [jobs, setJobs] = useState<JobPosting[]>(() => cachedJobs?.jobs || []);
+  const [companies, setCompanies] = useState<Company[]>(() => cachedJobs?.companies || []);
+  const [applications, setApplications] = useState<ApplicationWithUpdates[]>(() => cachedJobs?.applications || []);
+  const [candidateApplications, setCandidateApplications] = useState<Application[]>(() => cachedJobs?.candidateApplications || []);
+  const [facultyOpportunities, setFacultyOpportunities] = useState<Opportunity[]>(() => cachedJobs?.facultyOpportunities || []);
   const [selectedFacultyFilter, setSelectedFacultyFilter] = useState<"ALL" | "JOBS" | "RESEARCH" | "MENTORSHIP">("ALL");
   const [selectedResearchForApply, setSelectedResearchForApply] = useState<Opportunity | null>(null);
   const [researchApplyStatement, setResearchApplyStatement] = useState<string>("");
   const [submittingResearchApply, setSubmittingResearchApply] = useState<boolean>(false);
-  const [appliedResearchIds, setAppliedResearchIds] = useState<Set<number>>(new Set());
+  const [appliedResearchIds, setAppliedResearchIds] = useState<Set<number>>(() => cachedJobs?.appliedResearchIds || new Set());
   const [selectedCandidateJobFilter, setSelectedCandidateJobFilter] = useState<number | "ALL">("ALL");
   const [selectedCoverLetterApp, setSelectedCoverLetterApp] = useState<Application | null>(null);
   const [updatingAppId, setUpdatingAppId] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(() => !cachedJobs);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -110,7 +121,15 @@ export default function Jobs() {
     email: string;
     role_id?: number;
     role?: { id: number; name: string };
-  } | null>(null);
+  } | null>(() => {
+    if (cachedJobs?.currentUser) return cachedJobs.currentUser;
+    try {
+      const u = localStorage.getItem("knots_user");
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const roleName = currentUser?.role?.name?.toLowerCase().trim() || "student";
   const isAlumni = roleName === "alumni" || roleName.includes("alumni") || currentUser?.role_id === 4;
@@ -910,11 +929,40 @@ export default function Jobs() {
                   .catch(() => [])
               )
             );
-            setCandidateApplications(candidateResults.flat());
+            const finalCandidateApps = candidateResults.flat();
+            setCandidateApplications(finalCandidateApps);
+            cachedJobs = {
+              jobs: [...mappedFacultyJobs, ...(fetchedJobs || [])],
+              companies: fetchedCompanies,
+              applications: [...facultyRealApps, ...realApps],
+              candidateApplications: finalCandidateApps,
+              facultyOpportunities: allFacultyOpps,
+              appliedResearchIds: appliedIds,
+              currentUser: userResp || currentUser,
+            };
           } else {
             setCandidateApplications([]);
+            cachedJobs = {
+              jobs: [...mappedFacultyJobs, ...(fetchedJobs || [])],
+              companies: fetchedCompanies,
+              applications: [...facultyRealApps, ...realApps],
+              candidateApplications: [],
+              facultyOpportunities: allFacultyOpps,
+              appliedResearchIds: appliedIds,
+              currentUser: userResp || currentUser,
+            };
           }
         }
+      } else {
+        cachedJobs = {
+          jobs: [...mappedFacultyJobs, ...(fetchedJobs || [])],
+          companies: fetchedCompanies,
+          applications: [...facultyRealApps, ...realApps],
+          candidateApplications: [],
+          facultyOpportunities: allFacultyOpps,
+          appliedResearchIds: appliedIds,
+          currentUser: userResp || currentUser,
+        };
       }
     } catch (err: any) {
       if (err instanceof ApiError) {

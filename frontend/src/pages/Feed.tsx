@@ -137,9 +137,11 @@ export interface PostResponse {
   is_liked: boolean;
 }
 
+let cachedFeedPosts: PostResponse[] | null = null;
+
 export default function Feed() {
-  const [posts, setPosts] = useState<PostResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<PostResponse[]>(() => cachedFeedPosts || []);
+  const [loading, setLoading] = useState(() => !cachedFeedPosts);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -519,7 +521,9 @@ export default function Feed() {
   const fetchFeed = async (reset = false) => {
     const currentSkip = reset ? 0 : skip;
     if (reset) {
-      setLoading(true);
+      if (!cachedFeedPosts) {
+        setLoading(true);
+      }
       setError(null);
     } else {
       setLoadingMore(true);
@@ -531,7 +535,9 @@ export default function Feed() {
       );
 
       if (reset) {
-        setPosts(response.sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime()));
+        const sorted = response.sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime());
+        cachedFeedPosts = sorted;
+        setPosts(sorted);
         setSkip(LIMIT);
       } else {
         setPosts((prev) => [...prev, ...response].sort((a, b) => parseDate(b.created_at).getTime() - parseDate(a.created_at).getTime()));

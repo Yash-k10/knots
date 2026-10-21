@@ -329,6 +329,9 @@ function VoiceNotePlayer({
   );
 }
 
+let cachedConversationsList: Conversation[] | null = null;
+let cachedMessagingUser: any = null;
+
 export default function Messaging() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -343,16 +346,24 @@ export default function Messaging() {
     id: number;
     email: string;
     role?: { name: string };
-  } | null>(null);
+  } | null>(() => {
+    if (cachedMessagingUser) return cachedMessagingUser;
+    try {
+      const u = localStorage.getItem("knots_user");
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // 2. Conversation & Message States
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(() => cachedConversationsList || []);
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputContent, setInputContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [chatFilter, setChatFilter] = useState<ChatFilter>("all");
-  const [isLoadingConvs, setIsLoadingConvs] = useState(true);
+  const [isLoadingConvs, setIsLoadingConvs] = useState(() => !cachedConversationsList);
   const [isLoadingMsgs, setIsLoadingMsgs] = useState(false);
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Record<number, boolean>>({});
@@ -574,10 +585,11 @@ export default function Messaging() {
 
   const loadConversations = async () => {
     try {
-      if (conversations.length === 0) {
+      if (!cachedConversationsList && conversations.length === 0) {
         setIsLoadingConvs(true);
       }
       const data = await fetchConversations();
+      cachedConversationsList = data;
       setConversations(data);
       if (data.length > 0 && activeConvId === null) {
         selectConversation(data[0].id);

@@ -47,10 +47,28 @@ interface ConnectionSuggestion {
   profile?: ConnectionUserProfile | null;
 }
 
+interface CachedNetworkData {
+  currentUser: { id: number; email: string } | null;
+  requests: Connection[];
+  sentRequests: Connection[];
+  connections: Connection[];
+  suggestions: ConnectionSuggestion[];
+  users: User[];
+}
+let cachedNetwork: CachedNetworkData | null = null;
+
 export default function Connections() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [currentUser, setCurrentUser] = useState<{ id: number; email: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: number; email: string } | null>(() => {
+    if (cachedNetwork?.currentUser) return cachedNetwork.currentUser;
+    try {
+      const u = localStorage.getItem("knots_user");
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const initialTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState<'requests' | 'sent' | 'connections' | 'discover'>(() => {
@@ -60,12 +78,12 @@ export default function Connections() {
     return 'discover';
   });
 
-  const [requests, setRequests] = useState<Connection[]>([]);
-  const [sentRequests, setSentRequests] = useState<Connection[]>([]);
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [suggestions, setSuggestions] = useState<ConnectionSuggestion[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<Connection[]>(() => cachedNetwork?.requests || []);
+  const [sentRequests, setSentRequests] = useState<Connection[]>(() => cachedNetwork?.sentRequests || []);
+  const [connections, setConnections] = useState<Connection[]>(() => cachedNetwork?.connections || []);
+  const [suggestions, setSuggestions] = useState<ConnectionSuggestion[]>(() => cachedNetwork?.suggestions || []);
+  const [users, setUsers] = useState<User[]>(() => cachedNetwork?.users || []);
+  const [loading, setLoading] = useState(() => !cachedNetwork);
   const [error, setError] = useState('');
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +107,7 @@ export default function Connections() {
   // Fetch all network data and current user
   const fetchData = async () => {
     try {
-      if (!requests.length && !connections.length && !suggestions.length && !users.length) {
+      if (!cachedNetwork) {
         setLoading(true);
       }
       const [currentUserData, reqsData, sentData, connsData, suggData, usersData] = await Promise.all([
@@ -101,12 +119,28 @@ export default function Connections() {
         apiRequest<User[]>('/users').catch(() => [])
       ]);
 
-      if (currentUserData) setCurrentUser(currentUserData);
-      setRequests(Array.isArray(reqsData) ? reqsData : []);
-      setSentRequests(Array.isArray(sentData) ? sentData : []);
-      setConnections(Array.isArray(connsData) ? connsData : []);
-      setSuggestions(Array.isArray(suggData) ? suggData : []);
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      const updatedUser = currentUserData || currentUser;
+      const cleanReqs = Array.isArray(reqsData) ? reqsData : [];
+      const cleanSent = Array.isArray(sentData) ? sentData : [];
+      const cleanConns = Array.isArray(connsData) ? connsData : [];
+      const cleanSuggs = Array.isArray(suggData) ? suggData : [];
+      const cleanUsers = Array.isArray(usersData) ? usersData : [];
+
+      cachedNetwork = {
+        currentUser: updatedUser,
+        requests: cleanReqs,
+        sentRequests: cleanSent,
+        connections: cleanConns,
+        suggestions: cleanSuggs,
+        users: cleanUsers,
+      };
+
+      if (updatedUser) setCurrentUser(updatedUser);
+      setRequests(cleanReqs);
+      setSentRequests(cleanSent);
+      setConnections(cleanConns);
+      setSuggestions(cleanSuggs);
+      setUsers(cleanUsers);
     } catch (err: any) {
       console.error('Failed to fetch network data:', err);
     } finally {
