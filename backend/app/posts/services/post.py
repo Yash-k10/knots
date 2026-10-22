@@ -34,6 +34,7 @@ class PostService:
         data = payload.model_dump()
         data["author_id"] = author_id
         post = await self.post_repo.create(data)
+        await self.db.commit()
         feed_cache.clear()
         detailed_post = await self.post_repo.get_with_details(post.id)
         return detailed_post or post
@@ -165,6 +166,7 @@ class PostService:
             return detailed or post
 
         updated = await self.post_repo.update(post, update_data)
+        await self.db.commit()
         from app.core.cache import feed_cache
 
         feed_cache.clear()
@@ -191,7 +193,9 @@ class PostService:
         from app.core.cache import feed_cache
 
         feed_cache.clear()
-        return await self.post_repo.remove(post_id)
+        removed = await self.post_repo.remove(post_id)
+        await self.db.commit()
+        return removed
 
     # ── Likes ────────────────────────────────────────────────────────────────
 
@@ -236,6 +240,7 @@ class PostService:
             except Exception:
                 pass
 
+        await self.db.commit()
         return like
 
     async def unlike_post(self, post_id: int, user_id: int) -> None:
@@ -246,6 +251,7 @@ class PostService:
             from app.core.cache import feed_cache
 
             feed_cache.clear()
+            await self.db.commit()
 
     # ── Comments ─────────────────────────────────────────────────────────────
 
@@ -286,6 +292,7 @@ class PostService:
             )
 
         loaded_comment = await self.comment_repo.get_by_id_with_author(comment.id)
+        await self.db.commit()
         return loaded_comment or comment
 
     async def get_comments(
@@ -320,3 +327,4 @@ class PostService:
         from app.core.cache import feed_cache
 
         feed_cache.clear()
+        await self.db.commit()

@@ -139,6 +139,17 @@ export interface PostResponse {
 
 let cachedFeedPosts: PostResponse[] | null = null;
 
+if (typeof window !== "undefined") {
+  window.addEventListener("post-created", (e: any) => {
+    if (e.detail && cachedFeedPosts) {
+      cachedFeedPosts = [
+        e.detail,
+        ...cachedFeedPosts.filter((p) => p.id !== e.detail.id),
+      ];
+    }
+  });
+}
+
 export default function Feed() {
   const [posts, setPosts] = useState<PostResponse[]>(() => cachedFeedPosts || []);
   const [loading, setLoading] = useState(() => !cachedFeedPosts);
@@ -587,7 +598,11 @@ export default function Feed() {
 
     try {
       await apiRequest(`/posts/${postId}`, { method: "DELETE" });
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
+      setPosts((prev) => {
+        const next = prev.filter((p) => p.id !== postId);
+        cachedFeedPosts = next;
+        return next;
+      });
     } catch (err: any) {
       alert(err.message || "Failed to delete post.");
     }
@@ -669,7 +684,11 @@ export default function Feed() {
 
     const handlePostCreated = (e: any) => {
       if (e.detail) {
-        setPosts((prev) => [e.detail, ...prev]);
+        setPosts((prev) => {
+          const updated = [e.detail, ...prev.filter((p) => p.id !== e.detail.id)];
+          cachedFeedPosts = updated;
+          return updated;
+        });
       } else {
         fetchFeed(true);
       }

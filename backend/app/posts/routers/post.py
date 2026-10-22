@@ -232,4 +232,5 @@ async def flag_post(
     flagged = await service.flag_post(
         post_id=post_id, flagger_id=current_user.id, reason=payload.reason
     )
+    await db.commit()
     return APIResponse(message="Post flagged successfully", data=flagged)
