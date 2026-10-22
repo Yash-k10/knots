@@ -79,7 +79,7 @@ const cleanSnippetText = (raw: string): string => {
   if (cleaned.startsWith("[Image]")) return "📷 Photo";
   if (cleaned.startsWith("[Document]")) return "📄 Document";
   if (cleaned.startsWith("[Voice Note]")) return "🎤 Voice Note";
-  if (cleaned.startsWith("[Shared Post")) return "📌 Shared Post";
+  if (cleaned.startsWith("[Shared Post") || cleaned.includes("/feed#post-")) return "📌 Shared Post";
   return cleaned.length > 70 ? cleaned.slice(0, 70) + "..." : cleaned;
 };
 
@@ -1331,34 +1331,54 @@ export default function Messaging() {
     };
 
     // 2. Shared Post Card Check
-    const postShareMatch = mainBody.match(/^\[Shared Post #(\d+) by (.*?)\]:\s*"(.*?)"\n\nView post:\s*(\/feed#post-\d+)$/);
-    if (postShareMatch) {
-      const postId = postShareMatch[1];
-      const author = postShareMatch[2];
-      const snippet = postShareMatch[3];
+    const postShareMatch =
+      mainBody.match(
+        /\[Shared Post #(\d+)(?:\s+by\s+([^\]]+?))?\]:\s*["“]?([\s\S]*?)["”]?\s*(?:\r?\n)*\s*View post:\s*(?:https?:\/\/[^\s\/]+)?\/feed#post-(\d+)/i
+      ) ||
+      mainBody.match(
+        /\[Shared Post #(\d+)(?:\s+by\s+([^\]]+?))?\](?::\s*["“]?([\s\S]*?)["”]?)?/i
+      );
+
+    const postLinkOnlyMatch = !postShareMatch
+      ? mainBody.match(/(?:View post:\s*)?(?:https?:\/\/[^\s\/]+)?\/feed#post-(\d+)/i)
+      : null;
+
+    if (postShareMatch || postLinkOnlyMatch) {
+      const postId = postShareMatch ? postShareMatch[1] : (postLinkOnlyMatch ? postLinkOnlyMatch[1] : "");
+      const author = (postShareMatch && postShareMatch[2]?.trim()) || "Campus Member";
+      const rawSnippet = (postShareMatch && postShareMatch[3]?.trim()) || "";
+      const snippet = rawSnippet
+        ? rawSnippet.replace(/^["“]+|["”]+$/g, "").trim()
+        : `Post #${postId} shared from the campus feed`;
 
       return (
         <div>
           {renderReplyBox()}
-          <div className="bg-white text-[#1E2746] rounded-2xl border border-[#D5CBEE] p-3 shadow-md my-1 space-y-2 max-w-sm">
-            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-1.5">
-              <span className="text-[10px] font-black uppercase text-[#4B63D2] flex items-center gap-1">
-                <Share2 className="w-3 h-3" /> Shared Feed Post
+          <div
+            className={`rounded-2xl border p-3.5 shadow-md my-1.5 space-y-2.5 max-w-sm transition-all ${
+              isSentByMe
+                ? "bg-white text-[#1E2746] border-[#D5CBEE]"
+                : "bg-white text-[#1E2746] border-[#EAE4F7] shadow-sm"
+            }`}
+          >
+            <div className="flex items-center justify-between border-b border-[#EAE4F7] pb-2">
+              <span className="text-[10px] font-black uppercase text-[#4B63D2] flex items-center gap-1.5 tracking-wider">
+                <Share2 className="w-3.5 h-3.5 text-[#4B63D2]" /> Shared Feed Post
               </span>
-              <span className="text-[10px] font-bold text-[#5851A4]">
+              <span className="text-[11px] font-bold text-[#5851A4] max-w-[150px] truncate">
                 by {author}
               </span>
             </div>
-            <p className="text-xs text-[#1E2746] italic line-clamp-3">
+            <p className="text-xs text-[#1E2746] font-medium leading-relaxed line-clamp-3 bg-[#FAF9FD] p-2.5 rounded-xl border border-[#F0ECF8] italic whitespace-pre-wrap">
               "{snippet}"
             </p>
             <button
               type="button"
               onClick={() => navigate(`/feed#post-${postId}`)}
-              className="w-full py-1.5 px-3 bg-[#4B63D2] hover:bg-[#3E53BE] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className="w-full py-2 px-3.5 bg-gradient-to-r from-[#4B63D2] to-[#5851A4] hover:from-[#3E53BE] hover:to-[#484288] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.98] group"
             >
               <span>View Post in Feed</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#FFD21A] group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>

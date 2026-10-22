@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Heart,
   MessageSquare,
@@ -151,6 +151,7 @@ if (typeof window !== "undefined") {
 }
 
 export default function Feed() {
+  const location = useLocation();
   const [posts, setPosts] = useState<PostResponse[]>(() => cachedFeedPosts || []);
   const [loading, setLoading] = useState(() => !cachedFeedPosts);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -726,6 +727,45 @@ export default function Feed() {
       if (target) observer.unobserve(target);
     };
   }, [hasMore, loadingMore, loading, skip]);
+
+  // Scroll to hash post and highlight it when linked from chat or share
+  useEffect(() => {
+    if (!location.hash) return;
+    const match = location.hash.match(/^#post-(\d+)$/);
+    if (!match) return;
+
+    const targetPostId = Number(match[1]);
+    const scrollToTarget = () => {
+      const el = document.getElementById(`post-${targetPostId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-4", "ring-[#4B63D2]", "rounded-3xl", "transition-all", "duration-500");
+        setTimeout(() => {
+          el.classList.remove("ring-4", "ring-[#4B63D2]");
+        }, 3500);
+        return true;
+      }
+      return false;
+    };
+
+    if (posts.length > 0) {
+      const found = scrollToTarget();
+      if (!found && !loading) {
+        // If post is not in the currently loaded batch, fetch it directly
+        apiRequest<PostResponse>(`/posts/${targetPostId}`)
+          .then((singlePost) => {
+            if (singlePost) {
+              setPosts((prev) => {
+                if (prev.some((p) => p.id === singlePost.id)) return prev;
+                return [singlePost, ...prev];
+              });
+              setTimeout(scrollToTarget, 150);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [location.hash, posts.length, loading]);
 
   // Like / Unlike action with debounce protection
   const handleLikeToggle = async (
